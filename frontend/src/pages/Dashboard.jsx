@@ -36,23 +36,26 @@ const Dashboard = () => {
       {/* Organization Chart */}
       <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
         {/* Board of Commissioners */}
-        <div className="mb-6">
-          <div className="bg-blue-300 p-3 rounded text-center max-w-xs mx-auto mb-4">
+        <div className="mb-8">
+          <div className="bg-blue-300 p-4 rounded text-center max-w-md mx-auto mb-6">
             <h3 className="font-bold text-sm text-white">BOARD OF COMMISSIONERS</h3>
           </div>
           
-          <div className="flex justify-center gap-2 mb-4">
-            <div className="bg-white border border-gray-400 p-1 rounded shadow-sm w-32 text-center">
-               <p className="text-xs font-semibold mb-1">PRESIDENT COMMISIONER</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs">IRIANTO SANTOSO</p>
+          <div className="flex justify-center gap-6 mb-6">
+            <div className="bg-white border border-gray-400 rounded shadow-sm w-48 text-center min-h-[100px]">
+              <div className="p-2 bg-gray-100 border-b border-gray-300">
+                <p className="text-sm font-semibold">PRESIDENT COMMISIONER</p>
+              </div>
+              <div className="p-4 flex items-center justify-center h-16">
+                <p className="text-xs font-medium">IRIANTO SANTOSO</p>
+              </div>
             </div>
-            <div className="bg-white border border-gray-400 p-1 rounded shadow-sm w-32 text-center">
-              <p className="text-xs font-semibold mb-1">COMMISSIONERS</p>
+            <div className="bg-white border border-gray-400 p-4 rounded shadow-sm w-48 text-center min-h-[100px] flex flex-col justify-center">
+              <p className="text-sm font-semibold mb-3">COMMISSIONERS</p>
+              <hr className="my-2 border-gray-300" />
+              <p className="text-xs mb-1">SUBAGIO</p>
               <hr className="my-1 border-gray-300" />
-              <p className="text-xs">SUBAGIO</p>
-              <hr className="my-1 border-gray-300" />
-              <p className="text-xs">HONG KUO MING</p>
+              <p className="text-xs mb-1">HONG KUO MING</p>
               <hr className="my-1 border-gray-300" />
               <p className="text-xs">LIAO CHIN HSIEN</p>
             </div>
@@ -65,8 +68,8 @@ const Dashboard = () => {
             <div className="bg-blue-300 p-3 rounded text-center">
               <h3 className="font-bold text-xs text-white">BOARD OF DIRECTOR</h3>
             </div>
-            <div className="bg-blue-300 p-3 rounded text-center">
-              <h3 className="font-bold text-xs text-white">&nbsp;</h3>
+            <div className="p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-transparent">&nbsp;</h3>
             </div>
             <div className="bg-blue-300 p-3 rounded text-center">
               <h3 className="font-bold text-xs text-white">DIVISION HEAD</h3>
@@ -112,7 +115,7 @@ const Dashboard = () => {
             </div>
 
             {/* Kolom 2 - Management Functions */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MIO1.0</p>
@@ -125,34 +128,48 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MDO1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MANAGEMENT DEVELOPMENT/PDCA</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">KARINA SATIA SALIM*</p>
-                  <p className="text-xs leading-tight">(23230114)</p>
+              {/* Combined Management Development/PDCA Box */}
+              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[170px]">
+                <div className="flex flex-col h-full">
+                  {/* Header row */}
+                  <div className="flex border-b border-gray-300">
+                   
+                    
+                    <div className="p-2 flex-1 text-center bg-gray-100">
+                      <p className="text-xs font-semibold leading-tight">MANAGEMENT DEVELOPMENT/PDCA</p>
+                    </div>
+                  </div>
+                  
+                  {/* First content row */}
+                  <div className="flex border-b border-gray-300 flex-1">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                      <p className="text-xs font-bold">MDO1.0</p>
+
+                    </div>
+                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs leading-tight">KARINA SATIA SALIM*</p>
+                      <p className="text-xs leading-tight">(23230114)</p>
+                    </div>
+                  </div>
+                  
+                  {/* Second content row */}
+                  <div className="flex flex-1">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                      <p className="text-xs font-bold">MDO2.0</p>
+                    </div>
+                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs leading-tight">WAHYU KARTIKO ADI</p>
+                      <p className="text-xs leading-tight">(23240005)</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MDO2.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">WAHYU KARTIKO ADI</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">(23240005)</p>
-                </div>
-              </div>
-              
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                   <p className="text-xs font-bold">MRO1.0</p>
                 </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">MANAGEMENT REPRESENTATIVE</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">SUGIYARTO*</p>
@@ -160,11 +177,11 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                   <p className="text-xs font-bold">CRO1.0</p>
                 </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 2 WHEEL</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">SUMIYARTO*</p>
@@ -172,11 +189,11 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                   <p className="text-xs font-bold">CO2.0</p>
                 </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 4 WHEEL</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">DWI PURWANTO*</p>
