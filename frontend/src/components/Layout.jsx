@@ -15,12 +15,19 @@ import {
   Key
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../services/api';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [masterDataOpen, setMasterDataOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const { user, logout } = useAuth();
   const dropdownRef = useRef(null);
 
@@ -37,6 +44,46 @@ const Layout = ({ children }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle password form change
+  const handlePasswordFormChange = (e) => {
+    setPasswordForm({
+      ...passwordForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // Handle change password submission
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      alert('New password must be at least 6 characters');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authAPI.changePassword(passwordForm);
+      alert('Password changed successfully');
+      setShowChangePassword(false);
+      setPasswordForm({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(error.response?.data?.message || 'Error changing password. Please try again.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -241,12 +288,7 @@ const Layout = ({ children }) => {
               </button>
             </div>
 
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Handle password change logic here
-              alert('Password change functionality will be implemented');
-              setShowChangePassword(false);
-            }}>
+            <form onSubmit={handleChangePassword}>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="oldPassword" className="block text-sm font-medium text-gray-700 mb-2">
@@ -255,6 +297,9 @@ const Layout = ({ children }) => {
                   <input
                     type="password"
                     id="oldPassword"
+                    name="oldPassword"
+                    value={passwordForm.oldPassword}
+                    onChange={handlePasswordFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="Enter Old Password*"
@@ -268,7 +313,11 @@ const Layout = ({ children }) => {
                   <input
                     type="password"
                     id="newPassword"
+                    name="newPassword"
+                    value={passwordForm.newPassword}
+                    onChange={handlePasswordFormChange}
                     required
+                    minLength="6"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="Enter New Password*"
                   />
@@ -281,6 +330,9 @@ const Layout = ({ children }) => {
                   <input
                     type="password"
                     id="confirmPassword"
+                    name="confirmPassword"
+                    value={passwordForm.confirmPassword}
+                    onChange={handlePasswordFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="Confirm Password*"
@@ -291,16 +343,25 @@ const Layout = ({ children }) => {
               <div className="flex justify-end space-x-4 mt-8">
                 <button
                   type="button"
-                  onClick={() => setShowChangePassword(false)}
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordForm({
+                      oldPassword: '',
+                      newPassword: '',
+                      confirmPassword: ''
+                    });
+                  }}
                   className="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  disabled={passwordLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                  disabled={passwordLoading}
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Change Password
+                  {passwordLoading ? 'Changing...' : 'Change Password'}
                 </button>
               </div>
             </form>
