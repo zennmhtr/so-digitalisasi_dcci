@@ -1,47 +1,513 @@
 const Dashboard = () => {
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Welcome to HR Digitalization System</p>
+    <div className="min-h-screen bg-gray-50 p-4">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+              <span className="text-xl font-bold text-blue-600">DG</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800 mb-1">ORGANIZATION STRUCTURE</h1>
+              <h2 className="text-lg font-semibold text-gray-700">PT DHARMA CONTROLCABLE INDONESIA</h2>
+              <p className="text-sm text-gray-500">Effective Date: 08/09/2025</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="flex space-x-8">
+              <div className="text-center">
+                <p className="text-xs text-gray-500">Prepared By</p>
+                <div className="w-20 h-8 border-b border-gray-300 mt-2"></div>
+                <p className="text-xs text-gray-500 mt-1">Reg No : 08/10/2025</p>
+                <p className="text-xs text-gray-500">Prepared Date : 08/09/2025</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500">Approved By</p>
+                <div className="w-20 h-8 border-b border-gray-300 mt-2"></div>
+                <p className="text-xs text-gray-500 mt-1">Approved Date : 08/09/2025</p>
+                <p className="text-xs text-gray-500">Prepared Date : 08/09/2025</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Users</h3>
-          <p className="text-3xl font-bold text-primary-600">24</p>
+      {/* Organization Chart */}
+      <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
+        {/* Board of Commissioners */}
+        <div className="mb-6">
+          <div className="bg-blue-300 p-3 rounded text-center max-w-xs mx-auto mb-4">
+            <h3 className="font-bold text-sm text-white">BOARD OF COMMISSIONERS</h3>
+          </div>
+          
+          <div className="flex justify-center gap-2 mb-4">
+            <div className="bg-white border border-gray-400 p-1 rounded shadow-sm w-32 text-center">
+               <p className="text-xs font-semibold mb-1">PRESIDENT COMMISIONER</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs">IRIANTO SANTOSO</p>
+            </div>
+            <div className="bg-white border border-gray-400 p-1 rounded shadow-sm w-32 text-center">
+              <p className="text-xs font-semibold mb-1">COMMISSIONERS</p>
+              <hr className="my-1 border-gray-300" />
+              <p className="text-xs">SUBAGIO</p>
+              <hr className="my-1 border-gray-300" />
+              <p className="text-xs">HONG KUO MING</p>
+              <hr className="my-1 border-gray-300" />
+              <p className="text-xs">LIAO CHIN HSIEN</p>
+            </div>
+          </div>
         </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Departments</h3>
-          <p className="text-3xl font-bold text-green-600">8</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Roles</h3>
-          <p className="text-3xl font-bold text-yellow-600">5</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Users</h3>
-          <p className="text-3xl font-bold text-blue-600">22</p>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activities</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-2 border-b">
-            <span className="text-gray-700">New user registered: John Doe</span>
-            <span className="text-sm text-gray-500">2 hours ago</span>
+        {/* Top Level Headers - 5 tabel biru sejajar dengan grid */}
+        <div className="mb-6">
+          <div className="grid grid-cols-5 gap-4">
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white">BOARD OF DIRECTOR</h3>
+            </div>
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white">&nbsp;</h3>
+            </div>
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white">DIVISION HEAD</h3>
+            </div>
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white">DEPARTMENT HEAD</h3>
+            </div>
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white leading-tight">SECTION HEAD / ENGINEERING PRODUCT LEADER</h3>
+            </div>
           </div>
-          <div className="flex items-center justify-between py-2 border-b">
-            <span className="text-gray-700">Department updated: IT Department</span>
-            <span className="text-sm text-gray-500">5 hours ago</span>
+        </div>
+
+        {/* Content untuk 5 kolom sesuai header biru - Grid Layout */}
+        <div className="mb-6">
+          <div className="grid grid-cols-5 gap-4">
+            
+            {/* Kolom 1 - Board of Director */}
+            <div className="space-y-3">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">BOD1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">PRESIDENT DIRECTOR</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">EKO MARYANTO</p>
+                  <p className="text-xs leading-tight">(23100235)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">BOD1.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">DIRECTOR</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">BAMBANG WURYANTO</p>
+                  <p className="text-xs leading-tight">(23200038)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Kolom 2 - Management Functions */}
+            <div className="space-y-3">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MIO1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MI & SHE (5R-SMK3-ISO 14001)</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">ELIATA DUMAR GINTING</p>
+                  <p className="text-xs leading-tight">(23190806)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MDO1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MANAGEMENT DEVELOPMENT/PDCA</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">KARINA SATIA SALIM*</p>
+                  <p className="text-xs leading-tight">(23230114)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MDO2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">WAHYU KARTIKO ADI</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">(23240005)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MRO1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MANAGEMENT REPRESENTATIVE</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">SUGIYARTO*</p>
+                  <p className="text-xs leading-tight">(23600041)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">CRO1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 2 WHEEL</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">SUMIYARTO*</p>
+                  <p className="text-xs leading-tight">(23030015)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">CO2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 4 WHEEL</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DWI PURWANTO*</p>
+                  <p className="text-xs leading-tight">(23030023)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Kolom 3 - Division Head */}
+            <div className="space-y-3">
+              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
+                <span className="leading-tight">CONTROLCABLE BUSINESS</span>
+              </div>
+              
+              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
+                <span className="leading-tight">BATTERY BUSINESS</span>
+              </div>
+              
+              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
+                <span className="leading-tight">AFTERMARKET BUSINESS</span>
+              </div>
+            </div>
+
+            {/* Kolom 4 - Department Head */}
+            <div className="space-y-3">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">QAC1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">QA</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">M BAGUS SANTOSO</p>
+                  <p className="text-xs leading-tight">(23220025)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">PPIC1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">PPC & WAREHOUSE</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DIKI WAHYUDI</p>
+                  <p className="text-xs leading-tight">(23060056)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING & ENGINEERING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">ANDREAS AGUNG S.</p>
+                  <p className="text-xs leading-tight">(23040119)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
+                  <p className="text-xs leading-tight">(23200067)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                   <p className="text-xs font-bold">RND1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">RND</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
+                  <p className="text-xs leading-tight">(23200067)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">QAC2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">QA/QC/DOC</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
+                  <p className="text-xs leading-tight">(23200067)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT3.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">TBR</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">ME1.3</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">TBD</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Kolom 5 - Section Head / Engineering Product Leader */}
+            <div className="space-y-3">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">PRD1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">CONTROLCABLE MANUFACTURE</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">KARNA SATIA SALIM*</p>
+                  <p className="text-xs leading-tight">(23230114)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">PRD2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY PRODUCTION</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
+                  <p className="text-xs leading-tight">(23220105)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">PRD3.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY PME</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
+                  <p className="text-xs leading-tight">(23220105)</p>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT1.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">SAVITRI OCTAVIANI</p>
+                  <p className="text-xs leading-tight">(23130254)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT1.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">SAVITRI OCTAVIANI</p>
+                  <p className="text-xs leading-tight">(23130254)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">ENG1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">ENGINEERING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">SUGIYARTO</p>
+                  <p className="text-xs leading-tight">(2360041)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT2.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">AUX & POWER BATTERY MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">CHRYSNA YULIAWAN**</p>
+                  <p className="text-xs leading-tight">(23240177)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT2.2</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">ESS MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">FERDINAND STEVANUS A**</p>
+                  <p className="text-xs leading-tight">(23220049)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[110px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">RND1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">AUX & POWER BATTERY ENGINEERING PRODUCT LEADER</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">BRIAN BUDI SANTOSO**</p>
+                  <p className="text-xs leading-tight">(23210077)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">RND2.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">ESS ENGINEERING PRODUCT LEADER</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">RAIHAN RAMADHAN**</p>
+                  <p className="text-xs leading-tight">(23220104)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[110px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">RND3.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MICRO CONTROLLER ENGINEERING PRODUCT LEADER</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">ELISABETH GUSTI**</p>
+                  <p className="text-xs leading-tight">(23230087)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">QAC2.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY QA</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">BELLA TIURMA PRATIWI**</p>
+                  <p className="text-xs leading-tight">(23230092)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">MKT3.1</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">TBR</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">HRD1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">HRDGA & IT</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
+                  <p className="text-xs leading-tight">(23060056)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">PCH1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">PURCHASING</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">DUKI WAHYUDI*</p>
+                  <p className="text-xs leading-tight">(23060056)</p>
+                </div>
+              </div>
+
+               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                  <p className="text-xs font-bold">FIN1.0</p>
+                </div>
+                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                  <p className="text-xs font-semibold mb-1 leading-tight">FINANCE</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight">YULIUS PERMATA</p>
+                  <p className="text-xs leading-tight">(23220017)</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center justify-between py-2">
-            <span className="text-gray-700">Role permissions modified: Manager</span>
-            <span className="text-sm text-gray-500">1 day ago</span>
+        </div>
+
+
+
+        {/* Legend */}
+        <div className="mt-8 bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-bold text-sm mb-2">NOTE:</h4>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <p><span className="font-bold">*</span> CONCURE</p>
+              <p><span className="font-bold">INC (</span> ACTING</p>
+              <p><span className="font-bold">INC )</span> INCUMBENT</p>
+            </div>
+            <div>
+              <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
+              <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
+            </div>
           </div>
         </div>
       </div>
