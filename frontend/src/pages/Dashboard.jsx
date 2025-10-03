@@ -5,8 +5,12 @@ const Dashboard = () => {
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-              <span className="text-xl font-bold text-blue-600">DG</span>
+            <div className="w-16 h-16  flex items-center justify-center mr-4 p-2">
+              <img 
+                src="/logo/Logo DG New 2022.png" 
+                alt="Dharma Group Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800 mb-1">ORGANIZATION STRUCTURE</h1>
