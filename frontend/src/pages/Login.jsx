@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { authAPI } from '../services/api';
 
 const Login = () => {
   const { login } = useAuth();
@@ -26,18 +27,12 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
+      const response = await authAPI.login({
+        username: formData.username,
+        password: formData.password
       });
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         // Store token
@@ -54,7 +49,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Network error. Please try again.');
+      alert(`Login error: ${error.response?.data?.message || 'Network error. Please try again.'}`);
     } finally {
       setLoading(false);
     }

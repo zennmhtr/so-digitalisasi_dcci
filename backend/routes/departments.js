@@ -11,13 +11,13 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 100; // Increase limit to show all departments
     const skip = (page - 1) * limit;
 
     const departments = await Department.find()
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ code: 1 }); // Sort by code alphabetically instead of created date
 
     const total = await Department.countDocuments();
 
