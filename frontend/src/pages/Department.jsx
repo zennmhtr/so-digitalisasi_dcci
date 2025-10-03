@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import { departmentsAPI } from '../services/api';
 
 const Department = () => {
   const [departments, setDepartments] = useState([]);
@@ -13,43 +14,25 @@ const Department = () => {
     description: ''
   });
 
-  // Mock data untuk demo
-  useEffect(() => {
-    setTimeout(() => {
-      setDepartments([
-        {
-          id: 1,
-          code: 'IT',
-          name: 'Information Technology',
-          description: 'Responsible for managing company technology infrastructure and software development'
-        },
-        {
-          id: 2,
-          code: 'HR',
-          name: 'Human Resources',
-          description: 'Manages employee relations, recruitment, and organizational development'
-        },
-        {
-          id: 3,
-          code: 'FIN',
-          name: 'Finance',
-          description: 'Handles financial planning, accounting, and budget management'
-        },
-        {
-          id: 4,
-          code: 'MKT',
-          name: 'Marketing',
-          description: 'Responsible for brand promotion, market analysis, and customer engagement'
-        },
-        {
-          id: 5,
-          code: 'OPS',
-          name: 'Operations',
-          description: 'Manages daily business operations and process optimization'
-        }
-      ]);
+  // Fetch departments from API
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      const response = await departmentsAPI.getAll();
+      if (response.data.success) {
+        setDepartments(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      // Show error message to user
+      alert('Error loading departments. Please check if you are logged in.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
   }, []);
 
   const filteredDepartments = departments.filter(dept =>
@@ -74,35 +57,39 @@ const Department = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (deptId) => {
+  const handleDelete = async (deptId) => {
     if (window.confirm('Are you sure you want to delete this department?')) {
-      setDepartments(departments.filter(dept => dept.id !== deptId));
+      try {
+        await departmentsAPI.delete(deptId);
+        // Refresh the list after successful deletion
+        fetchDepartments();
+      } catch (error) {
+        console.error('Error deleting department:', error);
+        alert('Error deleting department. Please try again.');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingDept) {
-      // Update existing department
-      setDepartments(departments.map(dept => 
-        dept.id === editingDept.id 
-          ? { ...dept, code: formData.code, name: formData.name, description: formData.description }
-          : dept
-      ));
-    } else {
-      // Add new department
-      const newDept = {
-        id: Date.now(),
-        code: formData.code,
-        name: formData.name,
-        description: formData.description
-      };
-      setDepartments([...departments, newDept]);
+    try {
+      if (editingDept) {
+        // Update existing department
+        await departmentsAPI.update(editingDept._id, formData);
+      } else {
+        // Add new department
+        await departmentsAPI.create(formData);
+      }
+      
+      // Refresh the list after successful operation
+      fetchDepartments();
+      setIsModalOpen(false);
+      setFormData({ code: '', name: '', description: '' });
+    } catch (error) {
+      console.error('Error saving department:', error);
+      alert('Error saving department. Please try again.');
     }
-    
-    setIsModalOpen(false);
-    setFormData({ code: '', name: '', description: '' });
   };
 
   const handleInputChange = (e) => {
@@ -175,7 +162,7 @@ const Department = () => {
                 </tr>
               ) : (
                 filteredDepartments.map((dept) => (
-                  <tr key={dept.id} className="hover:bg-gray-50">
+                  <tr key={dept._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <span className="inline-flex px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
                         {dept.code}
@@ -196,7 +183,7 @@ const Department = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(dept.id)}
+                          onClick={() => handleDelete(dept._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />

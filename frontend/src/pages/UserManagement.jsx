@@ -1,60 +1,67 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import { usersAPI, rolesAPI, departmentsAPI } from '../services/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
-    noPkn: '',
+    noPNK: '',
     name: '',
     email: '',
     username: '',
     password: '',
     role: '',
     department: '',
-    status: 'Active'
+    status: 'active'
   });
 
-  // Mock data untuk demo
+  // Fetch data from API
+  const fetchUsers = async () => {
+    try {
+      const response = await usersAPI.getAll();
+      if (response.data.success) {
+        setUsers(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await rolesAPI.getAll();
+      if (response.data.success) {
+        setRoles(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await departmentsAPI.getAll();
+      if (response.data.success) {
+        setDepartments(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
+
   useEffect(() => {
-    setTimeout(() => {
-      setUsers([
-        {
-          id: 1,
-          noPkn: 'NPK001',
-          name: 'John Doe',
-          email: 'john.doe@company.com',
-          username: 'johndoe',
-          role: 'Manager',
-          department: 'IT',
-          status: 'Active'
-        },
-        {
-          id: 2,
-          noPkn: 'NPK002',
-          name: 'Jane Smith',
-          email: 'jane.smith@company.com',
-          username: 'janesmith',
-          role: 'Staff',
-          department: 'HR',
-          status: 'Active'
-        },
-        {
-          id: 3,
-          noPkn: 'NPK003',
-          name: 'Bob Johnson',
-          email: 'bob.johnson@company.com',
-          username: 'bobjohnson',
-          role: 'Staff',
-          department: 'Finance',
-          status: 'Inactive'
-        }
-      ]);
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchRoles(), fetchDepartments()]);
       setLoading(false);
-    }, 1000);
+    };
+    fetchData();
   }, []);
 
   const filteredUsers = users.filter(user =>
@@ -66,14 +73,14 @@ const UserManagement = () => {
   const handleAdd = () => {
     setEditingUser(null);
     setFormData({
-      noPkn: '',
+      noPNK: '',
       name: '',
       email: '',
       username: '',
       password: '',
       role: '',
       department: '',
-      status: 'Active'
+      status: 'active'
     });
     setIsModalOpen(true);
   };
@@ -81,54 +88,63 @@ const UserManagement = () => {
   const handleEdit = (user) => {
     setEditingUser(user);
     setFormData({
-      noPkn: user.noPkn,
+      noPNK: user.noPNK,
       name: user.name,
       email: user.email,
       username: user.username,
       password: '',
-      role: user.role,
-      department: user.department,
+      role: user.role._id || user.role,
+      department: user.department._id || user.department,
       status: user.status
     });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (userId) => {
+  const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(user => user.id !== userId));
+      try {
+        await usersAPI.delete(userId);
+        fetchUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Error deleting user. Please try again.');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingUser) {
-      // Update existing user
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...formData }
-          : user
-      ));
-    } else {
-      // Add new user
-      const newUser = {
-        id: Date.now(),
-        ...formData
-      };
-      setUsers([...users, newUser]);
+    try {
+      // Don't send password if it's empty for updates
+      const dataToSend = { ...formData };
+      if (editingUser && !dataToSend.password) {
+        delete dataToSend.password;
+      }
+      
+      if (editingUser) {
+        await usersAPI.update(editingUser._id, dataToSend);
+      } else {
+        await usersAPI.create(dataToSend);
+      }
+      
+      fetchUsers();
+      setIsModalOpen(false);
+      setFormData({
+        noPNK: '',
+        name: '',
+        email: '',
+        username: '',
+        password: '',
+        role: '',
+        department: '',
+        status: 'active'
+      });
+    } catch (error) {
+      console.error('Error saving user:', error);
+      console.error('Error details:', error.response?.data);
+      alert(`Error saving user: ${error.response?.data?.message || 'Please try again.'}`);
     }
-    
-    setIsModalOpen(false);
-    setFormData({
-      noPkn: '',
-      name: '',
-      email: '',
-      username: '',
-      password: '',
-      role: '',
-      department: '',
-      status: 'Active'
-    });
   };
 
   const handleInputChange = (e) => {
@@ -213,9 +229,9 @@ const UserManagement = () => {
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {user.noPkn}
+                      {user.noPNK}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.name}
@@ -227,18 +243,18 @@ const UserManagement = () => {
                       {user.username}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.role}
+                      {user.role?.name || user.role}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.department}
+                      {user.department?.name || user.department}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.status === 'Active'
+                        user.status === 'active'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {user.status}
+                        {user.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -250,7 +266,7 @@ const UserManagement = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(user._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -284,15 +300,15 @@ const UserManagement = () => {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label htmlFor="noPkn" className="block text-sm font-medium text-gray-700 mb-3">
+                  <label htmlFor="noPNK" className="block text-sm font-medium text-gray-700 mb-3">
                     No NPK
                   </label>
                   <input
                     type="text"
-                    id="noPkn"
-                    name="noPkn"
+                    id="noPNK"
+                    name="noPNK"
                     required
-                    value={formData.noPkn}
+                    value={formData.noPNK}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     placeholder="e.g., NPK001"
@@ -376,10 +392,11 @@ const UserManagement = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                   >
                     <option value="">Select Role</option>
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Staff">Staff</option>
+                    {roles.map((role) => (
+                      <option key={role._id} value={role._id}>
+                        {role.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -396,11 +413,11 @@ const UserManagement = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                   >
                     <option value="">Select Department</option>
-                    <option value="IT">Information Technology</option>
-                    <option value="HR">Human Resources</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Operations">Operations</option>
+                    {departments.map((dept) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -416,8 +433,8 @@ const UserManagement = () => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
               </div>

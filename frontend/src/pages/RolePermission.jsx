@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
+import { rolesAPI } from '../services/api';
 
 const RolePermission = () => {
   const [roles, setRoles] = useState([]);
@@ -24,41 +25,24 @@ const RolePermission = () => {
     'Export Data'
   ];
 
-  // Mock data untuk demo
-  useEffect(() => {
-    setTimeout(() => {
-      setRoles([
-        {
-          id: 1,
-          name: 'Super Admin',
-          description: 'Full system access',
-          permissions: ['View Dashboard', 'Manage Users', 'Manage Roles', 'Manage Departments'],
-          active: true
-        },
-        {
-          id: 2,
-          name: 'Manager',
-          description: 'Department manager with limited access',
-          permissions: ['View Dashboard', 'View Users', 'View Departments'],
-          active: true
-        },
-        {
-          id: 3,
-          name: 'Staff',
-          description: 'Basic user access',
-          permissions: ['View Dashboard'],
-          active: true
-        },
-        {
-          id: 4,
-          name: 'HR Admin',
-          description: 'Human Resources administrator',
-          permissions: ['View Dashboard', 'Manage Users', 'View Reports'],
-          active: false
-        }
-      ]);
+  // Fetch roles from API
+  const fetchRoles = async () => {
+    try {
+      setLoading(true);
+      const response = await rolesAPI.getAll();
+      if (response.data.success) {
+        setRoles(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      alert('Error loading roles. Please check if you are logged in.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
   }, []);
 
   const filteredRoles = roles.filter(role =>
@@ -88,38 +72,40 @@ const RolePermission = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (roleId) => {
+  const handleDelete = async (roleId) => {
     if (window.confirm('Are you sure you want to delete this role?')) {
-      setRoles(roles.filter(role => role.id !== roleId));
+      try {
+        await rolesAPI.delete(roleId);
+        fetchRoles();
+      } catch (error) {
+        console.error('Error deleting role:', error);
+        alert('Error deleting role. Please try again.');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingRole) {
-      // Update existing role
-      setRoles(roles.map(role => 
-        role.id === editingRole.id 
-          ? { ...role, ...formData }
-          : role
-      ));
-    } else {
-      // Add new role
-      const newRole = {
-        id: Date.now(),
-        ...formData
-      };
-      setRoles([...roles, newRole]);
+    try {
+      if (editingRole) {
+        await rolesAPI.update(editingRole._id, formData);
+      } else {
+        await rolesAPI.create(formData);
+      }
+      
+      fetchRoles();
+      setIsModalOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        permissions: [],
+        active: true
+      });
+    } catch (error) {
+      console.error('Error saving role:', error);
+      alert('Error saving role. Please try again.');
     }
-    
-    setIsModalOpen(false);
-    setFormData({
-      name: '',
-      description: '',
-      permissions: [],
-      active: true
-    });
   };
 
   const handleInputChange = (e) => {
@@ -207,7 +193,7 @@ const RolePermission = () => {
                 </tr>
               ) : (
                 filteredRoles.map((role) => (
-                  <tr key={role.id} className="hover:bg-gray-50">
+                  <tr key={role._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {role.name}
                     </td>
@@ -244,7 +230,7 @@ const RolePermission = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(role.id)}
+                          onClick={() => handleDelete(role._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="w-4 h-4" />

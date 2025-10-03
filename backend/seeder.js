@@ -103,7 +103,7 @@ const seedData = async () => {
     const salt = await bcrypt.genSalt(10);
     const users = [
       {
-        noPkn: 'ADM001',
+        noPNK: 'ADM001',
         name: 'System Administrator',
         email: 'admin@hr-digital.com',
         username: 'admin',
@@ -113,7 +113,7 @@ const seedData = async () => {
         status: 'active'
       },
       {
-        noPkn: 'HR001',
+        noPNK: 'HR001',
         name: 'HR Manager',
         email: 'hr.manager@hr-digital.com',
         username: 'hrmanager',
@@ -123,7 +123,7 @@ const seedData = async () => {
         status: 'active'
       },
       {
-        noPkn: 'IT001',
+        noPNK: 'IT001',
         name: 'IT Manager',
         email: 'it.manager@hr-digital.com',
         username: 'itmanager',
@@ -133,7 +133,7 @@ const seedData = async () => {
         status: 'active'
       },
       {
-        noPkn: 'FIN001',
+        noPNK: 'FIN001',
         name: 'Finance Manager',
         email: 'finance.manager@hr-digital.com',
         username: 'finmanager',
@@ -143,7 +143,7 @@ const seedData = async () => {
         status: 'active'
       },
       {
-        noPkn: 'EMP001',
+        noPNK: 'EMP001',
         name: 'John Doe',
         email: 'john.doe@hr-digital.com',
         username: 'johndoe',
