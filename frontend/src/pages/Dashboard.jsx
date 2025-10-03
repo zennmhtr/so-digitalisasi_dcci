@@ -116,6 +116,9 @@ const Dashboard = () => {
 
             {/* Kolom 2 - Management Functions */}
             <div className="space-y-4">
+              {/* Empty space to align with President Director */}
+              <div className="min-h-[180px]"></div>
+              
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MIO1.0</p>
@@ -204,14 +207,24 @@ const Dashboard = () => {
 
             {/* Kolom 3 - Division Head */}
             <div className="space-y-3">
-              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
+              {/* Empty spaces to align with CO2.0 */}
+              <div className="min-h-[110px]"></div>
+              <div className="min-h-[120px]"></div>
+              <div className="min-h-[200px]"></div>
+              <div className="min-h-[120px]"></div>
+              <div className="min-h-[130px]"></div>
+              
+              {/* CONTROLCABLE BUSINESS aligned with CO2.0 */}
+              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[100px] flex items-center justify-center">
                 <span className="leading-tight">CONTROLCABLE BUSINESS</span>
               </div>
               
+               <div className="min-h-[100px]"></div>
               <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
                 <span className="leading-tight">BATTERY BUSINESS</span>
               </div>
               
+               <div className="min-h-[570px]"></div>
               <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
                 <span className="leading-tight">AFTERMARKET BUSINESS</span>
               </div>
@@ -219,7 +232,13 @@ const Dashboard = () => {
 
             {/* Kolom 4 - Department Head */}
             <div className="space-y-3">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+              {/* Empty spaces to align with Management Representative */}
+              <div className="min-h-[110px]"></div>
+              <div className="min-h-[150px]"></div>
+              <div className="min-h-[190px]"></div>
+              
+              {/* QA aligned with Management Representative */}
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">QAC1.0</p>
                 </div>
@@ -231,7 +250,11 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+              {/* Space to separate QA and PPC & WAREHOUSE */}
+              <div className="min-h-[10px]"></div>
+              
+              {/* PPC & WAREHOUSE aligned with Customer Representative 2 Wheel */}
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PPIC1.0</p>
                 </div>
@@ -242,8 +265,12 @@ const Dashboard = () => {
                   <p className="text-xs leading-tight">(23060056)</p>
                 </div>
               </div>
+
+               {/* Space to separate PPC & WAREHOUSE and marketing*/}
+              <div className="min-h-[1px]"></div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+              {/* Marketing & Engineering aligned with Customer Representative 4 Wheel */}
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT1.0</p>
                 </div>
@@ -255,6 +282,8 @@ const Dashboard = () => {
                 </div>
               </div>
               
+              {/* Marketing aligned after CONTROLCABLE BUSINESS */}
+               <div className="min-h-[105px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT2.0</p>
@@ -267,6 +296,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
+               <div className="min-h-[110px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                    <p className="text-xs font-bold">RND1.0</p>
@@ -279,6 +309,8 @@ const Dashboard = () => {
                 </div>
               </div>
               
+
+               <div className="min-h-[250px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">QAC2.0</p>
@@ -291,6 +323,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
+               <div className="min-h-[1px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT3.0</p>
@@ -301,20 +334,10 @@ const Dashboard = () => {
                   <p className="text-xs leading-tight">TBR</p>
                 </div>
               </div>
-              
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">ME1.3</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">TBD</p>
-                </div>
-              </div>
             </div>
 
             {/* Kolom 5 - Section Head / Engineering Product Leader */}
+            
             <div className="space-y-3">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
@@ -352,6 +375,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
+               <div className="min-h-[435px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT1.1</p>
@@ -364,18 +388,8 @@ const Dashboard = () => {
                 </div>
               </div>
 
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT1.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SAVITRI OCTAVIANI</p>
-                  <p className="text-xs leading-tight">(23130254)</p>
-                </div>
-              </div>
 
+               <div className="min-h-[10px]"></div>
                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">ENG1.0</p>
@@ -388,6 +402,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
+               <div className="min-h-[10px]"></div>
                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT2.1</p>
