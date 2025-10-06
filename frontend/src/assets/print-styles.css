@@ -1,0 +1,453 @@
+/* Organization Chart Styles */
+.print-container {
+  background: white;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.org-chart-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-buttons {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+  text-decoration: none;
+  color: black;
+}
+
+.btn:hover {
+  background: #f0f0f0;
+}
+
+.btn-back {
+  background: #e3f2fd;
+}
+
+.btn-print {
+  background: #f3e5f5;
+}
+
+.org-grid {
+  background: white;
+  font-size: 12px;
+}
+
+.header-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 300px;
+  border-bottom: 1px solid black;
+}
+
+.logo-cell {
+  border-right: 1px solid black;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 10px;
+}
+
+.company-name {
+  font-weight: bold;
+  font-size: 10px;
+  text-align: center;
+}
+
+.title-cell {
+  padding: 15px;
+  text-align: center;
+  border-right: 1px solid black;
+}
+
+.main-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.company-full {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.department {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.effective-date {
+  font-size: 12px;
+}
+
+.approval-cell {
+  padding: 5px;
+}
+
+.approval-row {
+  display: flex;
+  height: 100%;
+}
+
+.approval-box {
+  flex: 1;
+  border-right: 1px solid black;
+  padding: 5px;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.approval-box:last-child {
+  border-right: none;
+}
+
+.signee {
+  margin-top: auto;
+  padding-top: 30px;
+}
+
+.signee .name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.signee .title {
+  font-size: 9px;
+  font-weight: normal;
+}
+
+.level-header-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid black;
+}
+
+.level-header {
+  background: #c5c5ff;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+  border-right: 1px solid black;
+}
+
+.level-header:last-child {
+  border-right: none;
+}
+
+.content-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  min-height: 300px;
+}
+
+.board-column,
+.department-column,
+.section-column,
+.staff-column {
+  border-right: 1px solid black;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.staff-column {
+  border-right: none;
+}
+
+.org-box {
+  background: #f0f0f0;
+  border: 1px solid #999;
+  padding: 8px;
+  text-align: center;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.code {
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+.position {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.name {
+  font-weight: bold;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.id {
+  font-size: 9px;
+  color: #666;
+}
+
+.footer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border-top: 1px solid black;
+  padding: 10px;
+}
+
+.notes {
+  font-size: 10px;
+}
+
+.note-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.note-item {
+  margin-bottom: 2px;
+}
+
+.form-number {
+  font-weight: bold;
+  font-size: 12px;
+  align-self: end;
+}
+
+/* Print styles for organization chart components */
+@media print {
+  @page {
+    margin: 8mm;
+  }
+  
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  body {
+    background: white !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-container {
+    background: white !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  /* Scale adjustments based on paper size and orientation */
+  .print-container[data-paper="A3"][data-orientation="portrait"] {
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+  
+  .print-container[data-paper="A3"][data-orientation="landscape"] {
+    transform: scale(1.1);
+    transform-origin: top left;
+  }
+  
+  .print-container[data-paper="A4"][data-orientation="portrait"] {
+    transform: scale(0.75);
+    transform-origin: top left;
+  }
+  
+  .print-container[data-paper="A4"][data-orientation="landscape"] {
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+  
+  .print-options {
+    display: none !important;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Keep original grid structure */
+  .org-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  /* Portrait A4 specific grid adjustments */
+  .print-container[data-paper="A4"][data-orientation="portrait"] .org-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Maintain original card sizing and spacing */
+  .space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Preserve header section styling */
+  .border-2.border-black {
+    border: 2px solid #000 !important;
+    padding: 1rem !important;
+  }
+  
+  /* Keep card dimensions consistent */
+  .bg-white.border.border-gray-400 {
+    background: white !important;
+    border: 1px solid #9ca3af !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Preserve text sizes */
+  .text-xs {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  .text-lg {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  .text-xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  /* Preserve colors */
+  .bg-blue-300 {
+    background-color: #93c5fd !important;
+  }
+  
+  .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+  
+  .bg-gray-50 {
+    background-color: #f9fafb !important;
+  }
+  
+  .text-gray-800 {
+    color: #1f2937 !important;
+  }
+  
+  .text-gray-700 {
+    color: #374151 !important;
+  }
+  
+  .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  
+  .text-black {
+    color: #000000 !important;
+  }
+  
+  .text-white {
+    color: #ffffff !important;
+  }
+  
+  /* Preserve borders */
+  .border-black {
+    border-color: #000000 !important;
+  }
+  
+  .border-gray-400 {
+    border-color: #9ca3af !important;
+  }
+  
+  .border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  
+  /* Maintain spacing */
+  .p-2 { padding: 0.5rem !important; }
+  .p-3 { padding: 0.75rem !important; }
+  .p-4 { padding: 1rem !important; }
+  .mb-1 { margin-bottom: 0.25rem !important; }
+  .mb-2 { margin-bottom: 0.5rem !important; }
+  .mb-3 { margin-bottom: 0.75rem !important; }
+  .mb-4 { margin-bottom: 1rem !important; }
+  .mb-6 { margin-bottom: 1.5rem !important; }
+  .mt-8 { margin-top: 2rem !important; }
+  
+  /* Keep flexbox layouts intact */
+  .flex { display: flex !important; }
+  .flex-col { flex-direction: column !important; }
+  .items-center { align-items: center !important; }
+  .justify-center { justify-content: center !important; }
+  .text-center { text-align: center !important; }
+  
+  /* Maintain min heights for cards */
+  .min-h-\[120px\] { min-height: 120px !important; }
+  .min-h-\[200px\] { min-height: 200px !important; }
+  .min-h-\[280px\] { min-height: 280px !important; }
+  .min-h-\[180px\] { min-height: 180px !important; }
+  
+  /* Keep widths consistent */
+  .w-\[280px\] { width: 280px !important; }
+  .w-\[300px\] { width: 300px !important; }
+  .w-\[350px\] { width: 350px !important; }
+  
+  /* Portrait A4 width adjustments */
+  .print-container[data-paper="A4"][data-orientation="portrait"] .w-\[280px\],
+  .print-container[data-paper="A4"][data-orientation="portrait"] .w-\[300px\],
+  .print-container[data-paper="A4"][data-orientation="portrait"] .w-\[350px\] {
+    width: 100% !important;
+    max-width: 250px !important;
+  }
+  
+  .print-container[data-paper="A4"][data-orientation="portrait"] .staff-cards {
+    align-items: center !important;
+  }
+  
+  .print-container[data-paper="A4"][data-orientation="portrait"] .staff-cards > div {
+    max-width: 250px !important;
+  }
+}

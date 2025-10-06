@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom';
+
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       {/* Header */}
@@ -118,25 +122,48 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Kolom 2 - Management Functions */}
+              {/* Kolom 2 - Management Functions */}
             <div className="space-y-4">
               {/* Empty space to align with President Director */}
               <div className="min-h-[180px]"></div>
-              
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+              {/* Combined Management Development/PDCA Box */}
+             <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/mi-she')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/mi-she');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MIO1.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">MI & SHE (5R-SMK3-ISO 14001)</p>
                   <hr className="my-1 border-gray-300" />
+                 <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">ELIATA DUMAR GINTING</p>
                   <p className="text-xs leading-tight">(23190806)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
-              
+
+           
               {/* Combined Management Development/PDCA Box */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[170px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm min-h-[170px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/management-development')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/management-development');
+                  }
+                }}
+              >
                 <div className="flex flex-col h-full">
                   {/* Header row */}
                   <div className="flex border-b border-gray-300">
@@ -167,12 +194,23 @@ const Dashboard = () => {
                     <div className="p-3 flex-1 text-center flex flex-col justify-center">
                       <p className="text-xs leading-tight">WAHYU KARTIKO ADI</p>
                       <p className="text-xs leading-tight">(23240005)</p>
+                      <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/management-representative')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/management-representative');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                   <p className="text-xs font-bold">MRO1.0</p>
                 </div>
@@ -181,6 +219,7 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">SUGIYARTO*</p>
                   <p className="text-xs leading-tight">(23600041)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
               
@@ -258,7 +297,17 @@ const Dashboard = () => {
               <div className="min-h-[10px]"></div>
               
               {/* PPC & WAREHOUSE aligned with Customer Representative 2 Wheel */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/ppic')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/ppic');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PPIC1.0</p>
                 </div>
@@ -267,24 +316,37 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">DIKI WAHYUDI</p>
                   <p className="text-xs leading-tight">(23060056)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
 
                {/* Space to separate PPC & WAREHOUSE and marketing*/}
               <div className="min-h-[1px]"></div>
-              
-              {/* Marketing & Engineering aligned with Customer Representative 4 Wheel */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
+
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/marketing-engineering')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/marketing-engineering');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT1.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING & ENGINEERING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight">MI & SHE (5R-SMK3-ISO 14001)</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">ANDREAS AGUNG S.</p>
                   <p className="text-xs leading-tight">(23040119)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
+            
+             
               
               {/* Marketing aligned after CONTROLCABLE BUSINESS */}
                <div className="min-h-[105px]"></div>
@@ -355,7 +417,17 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/manufactur-battery')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/manufactur-battery');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PRD2.0</p>
                 </div>
@@ -364,6 +436,7 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
                   <p className="text-xs leading-tight">(23220105)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
               
@@ -490,8 +563,18 @@ const Dashboard = () => {
                 </div>
               </div>
 
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+               <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/hrga-it-department')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/hrga-it-department');
+                  }
+                }}
+              >
+               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">HRD1.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
@@ -499,30 +582,53 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
                   <p className="text-xs leading-tight">(23060056)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
-              </div>
+            </div>
 
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+               <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/purchasing')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/purchasing');
+                  }
+                }}
+              >
+                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PCH1.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">PURCHASING</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DUKI WAHYUDI*</p>
+                  <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
                   <p className="text-xs leading-tight">(23060056)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
 
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+               <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/finance-department')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/finance-department');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">FIN1.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">FINANCE</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight">FINANCE & ACCOUNTING</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">YULIUS PERMATA</p>
                   <p className="text-xs leading-tight">(23220017)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
             </div>
