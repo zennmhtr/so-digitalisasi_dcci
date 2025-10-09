@@ -19,6 +19,7 @@ import ManufacturBattery from './pages/ManufacturBattery';
 import ManufacturingCable from './pages/ManufacturingCable';
 import QaDepartment from './pages/QaDepartment';
 import MarketingBatteryDepartment from './pages/MarketingBatteryDepartment';
+import DashboardEditor from './pages/DashboardEditor';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -117,6 +118,11 @@ function AppRoutes() {
       <Route path="/marketing-battery-department" element={
         <ProtectedRoute>
           <MarketingBatteryDepartment />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard-editor" element={
+        <ProtectedRoute>
+          <DashboardEditor />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

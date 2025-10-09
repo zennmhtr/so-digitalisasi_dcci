@@ -61,7 +61,8 @@ const seedData = async () => {
           'Manage Departments',
           'System Configuration',
           'View Reports',
-          'Export Data'
+          'Export Data',
+          'Dashboard Editor'
         ],
         active: true
       },
@@ -73,7 +74,8 @@ const seedData = async () => {
           'Manage Users',
           'View Roles',
           'View Departments',
-          'View Reports'
+          'View Reports',
+          'Dashboard Editor'
         ],
         active: true
       },
@@ -118,7 +120,7 @@ const seedData = async () => {
         email: 'hr.manager@hr-digital.com',
         username: 'hrmanager',
         password: await bcrypt.hash('hrmanager123', salt),
-        role: roles[1]._id, // HR Admin
+        role: roles[0]._id, // Super Admin
         department: departments[1]._id, // HR
         status: 'active'
       },

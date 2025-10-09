@@ -85,6 +85,19 @@ const Layout = ({ children }) => {
     }
   };
 
+  // Check if user has specific permissions
+  const userRole = user?.role;
+  const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
+  const hasDashboardEditorAccess = userPermissions?.includes('Dashboard Editor');
+  
+  // Debug logging
+  console.log('Layout Debug:', {
+    userName: user?.name,
+    userRole: userRole?.name,
+    userPermissions: userPermissions,
+    hasDashboardEditorAccess: hasDashboardEditorAccess
+  });
+
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { 
@@ -95,6 +108,7 @@ const Layout = ({ children }) => {
         { name: 'User Management', href: '/users', icon: Users },
         { name: 'Role & Permission', href: '/roles', icon: Shield },
         { name: 'Department', href: '/departments', icon: Building2 },
+        ...(hasDashboardEditorAccess ? [{ name: 'Dashboard Editor', href: '/dashboard-editor', icon: LayoutDashboard }] : []),
       ]
     },
   ];

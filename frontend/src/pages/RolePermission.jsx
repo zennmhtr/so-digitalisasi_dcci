@@ -22,7 +22,8 @@ const RolePermission = () => {
     'Manage Departments',
     'View Reports',
     'System Settings',
-    'Export Data'
+    'Export Data',
+    'Dashboard Editor'
   ];
 
   // Fetch roles from API

@@ -1,7 +1,151 @@
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [organizationData, setOrganizationData] = useState(null);
+
+  // Initialize organization data - same as DashboardEditor
+  useEffect(() => {
+    const initialData = {
+      header: {
+        title: "ORGANIZATION STRUCTURE",
+        company: "PT DHARMA CONTROLCABLE INDONESIA",
+        effectiveDate: "08/09/2025",
+        regNo: "08/10/2025",
+        preparedDate: "08/09/2025",
+        approvedDate: "08/09/2025"
+      },
+      signatures: {
+        preparedBy: {
+          name: "Diki Wahyudi",
+          date: "08/09/2025"
+        },
+        middleBy: {
+          title: "Bambang Wuryanto",
+          name: "Bambang Wuryanto",
+          date: "08/09/2025"
+        },
+        approvedBy: {
+          name: "Eko Maryanto",
+          date: "08/09/2025"
+        }
+      },
+      commissioners: {
+        president: {
+          title: "PRESIDENT COMMISIONER",
+          name: "IRIANTO SANTOSO"
+        },
+        commissioners: [
+          "SUBAGIO",
+          "HONG KUO MING", 
+          "LIAO CHIN HSIEN"
+        ]
+      },
+      structure: {
+        // Board of Directors - Column 1
+        bod: [
+          { id: 'bod-1', code: 'BOD1.0', title: 'PRESIDENT DIRECTOR', name: 'EKO MARYANTO', empId: '23100235' },
+          { id: 'bod-2', code: 'BOD1.1', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038' }
+        ],
+        // Management Functions - Column 2
+        management: [
+          { id: 'mio-1', code: 'MIO1.0', title: 'MI & SHE (5R-SMK3-ISO 14001)', name: 'ELIATA DUMAR GINTING', empId: '23190806', clickable: true, route: '/mi-she' },
+          { id: 'mdo-1', code: 'MDO1.0', title: 'MANAGEMENT DEVELOPMENT/PDCA', name: 'KARINA SATIA SALIM*', empId: '23230114', type: 'combined', part: 1 },
+          { id: 'mdo-2', code: 'MDO2.0', title: 'MANAGEMENT DEVELOPMENT/PDCA', name: 'WAHYU KARTIKO ADI', empId: '23240005', type: 'combined', part: 2, clickable: true, route: '/management-development' },
+          { id: 'mro-1', code: 'MRO1.0', title: 'MANAGEMENT REPRESENTATIVE', name: 'SUGIYARTO*', empId: '23600041', clickable: true, route: '/management-representative' },
+          { id: 'cro-1', code: 'CRO1.0', title: 'CUSTOMER REPRESENTATIVE 2 WHEEL', name: 'SUMIYARTO*', empId: '23030015' },
+          { id: 'co2-1', code: 'CO2.0', title: 'CUSTOMER REPRESENTATIVE 4 WHEEL', name: 'DWI PURWANTO*', empId: '23030023' }
+        ],
+        // Division Labels - Column 3
+        divisions: [
+          { id: 'div-1', label: 'CONTROLCABLE BUSINESS', type: 'business-label' },
+          { id: 'div-2', label: 'BATTERY BUSINESS', type: 'business-label' },
+          { id: 'div-3', label: 'AFTERMARKET BUSINESS', type: 'business-label' }
+        ],
+        // Department Head - Column 4
+        departments: [
+          { id: 'qa-1', code: 'QAC1.0', title: 'QA', name: 'M BAGUS SANTOSO', empId: '23220025', clickable: true, route: '/qa-department' },
+          { id: 'ppic-1', code: 'PPIC1.0', title: 'PPC & WAREHOUSE', name: 'DIKI WAHYUDI', empId: '23060056', clickable: true, route: '/ppic' },
+          { id: 'mkt-eng', code: 'MKT1.0', title: 'MI & SHE (5R-SMK3-ISO 14001)', name: 'ANDREAS AGUNG S.', empId: '23040119', clickable: true, route: '/marketing-engineering' },
+          { id: 'mkt-2', code: 'MKT2.0', title: 'MARKETING', name: 'RENDRA PRAMONO', empId: '23200067', clickable: true, route: '/marketing-battery-department' },
+          { id: 'rnd-1', code: 'RND1.0', title: 'RND', name: 'RENDRA PRAMONO', empId: '23200067' },
+          { id: 'qac-2', code: 'QAC2.0', title: 'QA/QC/DOC', name: 'RENDRA PRAMONO', empId: '23200067' },
+          { id: 'mkt-3', code: 'MKT3.0', title: 'MARKETING', name: 'TBR', empId: '' }
+        ],
+        // Section Head / Engineering Product Leader - Column 5
+        sections: [
+          { id: 'prd-1', code: 'PRD1.0', title: 'CONTROLCABLE MANUFACTURE', name: 'KARNA SATIA SALIM*', empId: '23230114', clickable: true, route: '/manufacturing-cable' },
+          { id: 'prd-2', code: 'PRD2.0', title: 'BATTERY PRODUCTION', name: 'DIONISIUS AUGUSTO**', empId: '23220105', clickable: true, route: '/manufactur-battery' },
+          { id: 'prd-3', code: 'PRD3.0', title: 'BATTERY PME', name: 'DIONISIUS AUGUSTO**', empId: '23220105', clickable: true, route: '/manufactur-battery' },
+          { id: 'mkt-1-1', code: 'MKT1.1', title: 'MARKETING', name: 'SAVITRI OCTAVIANI', empId: '23130254' },
+          { id: 'eng-1', code: 'ENG1.0', title: 'ENGINEERING', name: 'SUGIYARTO', empId: '2360041' },
+          { id: 'mkt-2-1', code: 'MKT2.1', title: 'AUX & POWER BATTERY MARKETING', name: 'CHRYSNA YULIAWAN**', empId: '23240177' },
+          { id: 'mkt-2-2', code: 'MKT2.2', title: 'ESS MARKETING', name: 'FERDINAND STEVANUS A**', empId: '23220049' },
+          { id: 'rnd-1-0', code: 'RND1.0', title: 'AUX & POWER BATTERY ENGINEERING PRODUCT LEADER', name: 'BRIAN BUDI SANTOSO**', empId: '23210077' },
+          { id: 'rnd-2-0', code: 'RND2.0', title: 'ESS ENGINEERING PRODUCT LEADER', name: 'RAIHAN RAMADHAN**', empId: '23220104' },
+          { id: 'rnd-3-0', code: 'RND3.0', title: 'MICRO CONTROLLER ENGINEERING PRODUCT LEADER', name: 'ELISABETH GUSTI**', empId: '23230087' },
+          { id: 'qac-2-1', code: 'QAC2.1', title: 'BATTERY QA', name: 'BELLA TIURMA PRATIWI**', empId: '23230092' },
+          { id: 'mkt-3-1', code: 'MKT3.1', title: 'MARKETING', name: 'TBR', empId: '' },
+          { id: 'hrd-1', code: 'HRD1.0', title: 'HRDGA & IT', name: 'DIKI WAHYUDI*', empId: '23060056', clickable: true, route: '/hrga-it-department' },
+          { id: 'pch-1', code: 'PCH1.0', title: 'PURCHASING', name: 'DIKI WAHYUDI*', empId: '23060056', clickable: true, route: '/purchasing' },
+          { id: 'fin-1', code: 'FIN1.0', title: 'FINANCE & ACCOUNTING', name: 'YULIUS PERMATA', empId: '23220017', clickable: true, route: '/finance-department' }
+        ]
+      }
+    };
+    
+    // Load from localStorage if exists, otherwise use initial data
+    const savedData = localStorage.getItem('dashboard-organization-data');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setOrganizationData(parsedData);
+      } catch (error) {
+        console.error('Error parsing saved data:', error);
+        setOrganizationData(initialData);
+      }
+    } else {
+      setOrganizationData(initialData);
+    }
+
+    // Listen for localStorage changes (when DashboardEditor saves)
+    const handleStorageChange = (e) => {
+      if (e.key === 'dashboard-organization-data' && e.newValue) {
+        try {
+          const updatedData = JSON.parse(e.newValue);
+          setOrganizationData(updatedData);
+        } catch (error) {
+          console.error('Error parsing updated data:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom event for same-tab updates
+    const handleCustomUpdate = (e) => {
+      setOrganizationData(e.detail);
+    };
+
+    window.addEventListener('dashboard-data-updated', handleCustomUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('dashboard-data-updated', handleCustomUpdate);
+    };
+  }, []);
+
+  // Loading state
+  if (!organizationData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading organization data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -17,24 +161,44 @@ const Dashboard = () => {
               />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800 mb-1">ORGANIZATION STRUCTURE</h1>
-              <h2 className="text-lg font-semibold text-gray-700">PT DHARMA CONTROLCABLE INDONESIA</h2>
-              <p className="text-sm text-gray-500">Effective Date: 08/09/2025</p>
+              <h1 className="text-xl font-bold text-gray-800 mb-1">{organizationData.header.title}</h1>
+              <h2 className="text-lg font-semibold text-gray-700">{organizationData.header.company}</h2>
+              <p className="text-sm text-gray-500">Effective Date: {organizationData.header.effectiveDate}</p>
             </div>
           </div>
           <div className="text-right">
-            <div className="flex space-x-8">
-              <div className="text-center">
-                <p className="text-xs text-gray-500">Prepared By</p>
-                <div className="w-20 h-8 border-b border-gray-300 mt-2"></div>
-                <p className="text-xs text-gray-500 mt-1">Reg No : 08/10/2025</p>
-                <p className="text-xs text-gray-500">Prepared Date : 08/09/2025</p>
+            <div className="grid grid-cols-3 gap-4 border border-gray-400 p-4 bg-white">
+              {/* Prepared By */}
+              <div className="text-center border-r border-gray-400 pr-4">
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
+                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Signature</span>
+                </div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}</p>
+                <p className="text-xs text-gray-500">Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}</p>
               </div>
+
+              {/* Middle - Bambang Wuryanto */}
+              <div className="text-center border-r border-gray-400 pr-4">
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">{organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}</p>
+                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Signature</span>
+                </div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}</p>
+                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}</p>
+              </div>
+
+              {/* Approved By */}
               <div className="text-center">
-                <p className="text-xs text-gray-500">Approved By</p>
-                <div className="w-20 h-8 border-b border-gray-300 mt-2"></div>
-                <p className="text-xs text-gray-500 mt-1">Approved Date : 08/09/2025</p>
-                <p className="text-xs text-gray-500">Prepared Date : 08/09/2025</p>
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
+                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Signature</span>
+                </div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}</p>
+                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}</p>
               </div>
             </div>
           </div>
@@ -52,25 +216,25 @@ const Dashboard = () => {
           <div className="flex justify-center gap-6 mb-6">
             <div className="bg-white border border-gray-400 rounded shadow-sm w-48 text-center min-h-[100px]">
               <div className="p-2 bg-gray-100 border-b border-gray-300">
-                <p className="text-sm font-semibold">PRESIDENT COMMISIONER</p>
+                <p className="text-sm font-semibold">{organizationData.commissioners?.president?.title || 'PRESIDENT COMMISIONER'}</p>
               </div>
               <div className="p-4 flex items-center justify-center h-16">
-                <p className="text-xs font-medium">IRIANTO SANTOSO</p>
+                <p className="text-xs font-medium">{organizationData.commissioners?.president?.name || 'IRIANTO SANTOSO'}</p>
               </div>
             </div>
             <div className="bg-white border border-gray-400 p-4 rounded shadow-sm w-48 text-center min-h-[100px] flex flex-col justify-center">
               <p className="text-sm font-semibold mb-3">COMMISSIONERS</p>
-              <hr className="my-2 border-gray-300" />
-              <p className="text-xs mb-1">SUBAGIO</p>
-              <hr className="my-1 border-gray-300" />
-              <p className="text-xs mb-1">HONG KUO MING</p>
-              <hr className="my-1 border-gray-300" />
-              <p className="text-xs">LIAO CHIN HSIEN</p>
+              {organizationData.commissioners?.commissioners?.map((name, index) => (
+                <React.Fragment key={index}>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs mb-1">{name}</p>
+                </React.Fragment>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Top Level Headers - 5 tabel biru sejajar dengan grid */}
+        {/* Column Headers */}
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-4">
             <div className="bg-blue-300 p-3 rounded text-center">
@@ -91,597 +255,214 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Content untuk 5 kolom sesuai header biru - Grid Layout */}
+        {/* Main Content Grid - 5 Columns - COMPLETE DYNAMIC STRUCTURE */}
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-4">
             
-            {/* Kolom 1 - Board of Director */}
+            {/* Column 1 - Board of Directors */}
             <div className="space-y-3">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">BOD1.0</p>
+              {organizationData.structure?.bod?.map((item) => (
+                <div key={item.id} className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                    <p className="text-xs font-bold">{item.code}</p>
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                    <hr className="my-1 border-gray-300" />
+                    <p className="text-xs leading-tight">{item.name}</p>
+                    <p className="text-xs leading-tight">({item.empId})</p>
+                  </div>
                 </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">PRESIDENT DIRECTOR</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">EKO MARYANTO</p>
-                  <p className="text-xs leading-tight">(23100235)</p>
-                </div>
-              </div>
-              
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">BOD1.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">DIRECTOR</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">BAMBANG WURYANTO</p>
-                  <p className="text-xs leading-tight">(23200038)</p>
-                </div>
-              </div>
+              ))}
             </div>
 
-              {/* Kolom 2 - Management Functions */}
+            {/* Column 2 - Management Functions */}
             <div className="space-y-4">
               {/* Empty space to align with President Director */}
               <div className="min-h-[180px]"></div>
-              {/* Combined Management Development/PDCA Box */}
-             <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/mi-she')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/mi-she');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MIO1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MI & SHE (5R-SMK3-ISO 14001)</p>
-                  <hr className="my-1 border-gray-300" />
-                 <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ELIATA DUMAR GINTING</p>
-                  <p className="text-xs leading-tight">(23190806)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-
-           
-              {/* Combined Management Development/PDCA Box */}
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm min-h-[170px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/management-development')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/management-development');
-                  }
-                }}
-              >
-                <div className="flex flex-col h-full">
-                  {/* Header row */}
-                  <div className="flex border-b border-gray-300">
-                   
-                    
-                    <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-xs font-semibold leading-tight">MANAGEMENT DEVELOPMENT/PDCA</p>
-                    </div>
-                  </div>
-                  
-                  {/* First content row */}
-                  <div className="flex border-b border-gray-300 flex-1">
-                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                      <p className="text-xs font-bold">MDO1.0</p>
-
-                    </div>
-                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs leading-tight">KARINA SATIA SALIM*</p>
-                      <p className="text-xs leading-tight">(23230114)</p>
-                    </div>
-                  </div>
-                  
-                  {/* Second content row */}
-                  <div className="flex flex-1">
-                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                      <p className="text-xs font-bold">MDO2.0</p>
-                    </div>
-                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs leading-tight">WAHYU KARTIKO ADI</p>
-                      <p className="text-xs leading-tight">(23240005)</p>
-                      <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
               
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/management-representative')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/management-representative');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                  <p className="text-xs font-bold">MRO1.0</p>
-                </div>
-                <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MANAGEMENT REPRESENTATIVE</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SUGIYARTO*</p>
-                  <p className="text-xs leading-tight">(23600041)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-              
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
-                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                  <p className="text-xs font-bold">CRO1.0</p>
-                </div>
-                <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 2 WHEEL</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SUMIYARTO*</p>
-                  <p className="text-xs leading-tight">(23030015)</p>
-                </div>
-              </div>
-              
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
-                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                  <p className="text-xs font-bold">CO2.0</p>
-                </div>
-                <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">CUSTOMER REPRESENTATIVE 4 WHEEL</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DWI PURWANTO*</p>
-                  <p className="text-xs leading-tight">(23030023)</p>
-                </div>
-              </div>
+              {/* Management items with special handling for combined MDO */}
+              {organizationData.structure?.management?.map((item) => {
+                if (item.code === 'MDO1.0') {
+                  // Combined MDO box
+                  const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
+                  return (
+                    <div key="mdo-combined" 
+                      className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
+                        mdo2?.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      }`}
+                      onClick={() => {
+                        if (mdo2?.clickable && mdo2?.route) {
+                          navigate(mdo2.route);
+                        }
+                      }}
+                    >
+                      <div className="flex flex-col h-full">
+                        {/* Header row */}
+                        <div className="flex border-b border-gray-300">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-xs font-semibold leading-tight">{item.title}</p>
+                          </div>
+                        </div>
+                        
+                        {/* First content row (MDO1.0) */}
+                        <div className="flex border-b border-gray-300 flex-1">
+                          <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                            <p className="text-xs font-bold">{item.code}</p>
+                          </div>
+                          <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                            <p className="text-xs leading-tight">{item.name}</p>
+                            <p className="text-xs leading-tight">({item.empId})</p>
+                          </div>
+                        </div>
+                        
+                        {/* Second content row (MDO2.0) */}
+                        <div className="flex flex-1">
+                          <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                            <p className="text-xs font-bold">{mdo2?.code}</p>
+                          </div>
+                          <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                            <p className="text-xs leading-tight">{mdo2?.name}</p>
+                            <p className="text-xs leading-tight">({mdo2?.empId})</p>
+                            {mdo2?.clickable && (
+                              <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else if (item.code === 'MDO2.0') {
+                  // Skip MDO2.0 as it's handled in the combined box
+                  return null;
+                } else {
+                  // Regular management item
+                  return (
+                    <div key={item.id} 
+                      className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
+                        item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      }`}
+                      onClick={() => {
+                        if (item.clickable && item.route) {
+                          navigate(item.route);
+                        }
+                      }}
+                    >
+                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                        <p className="text-xs font-bold">{item.code}</p>
+                      </div>
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                        <hr className="my-1 border-gray-300" />
+                        <p className="text-xs leading-tight">{item.name}</p>
+                        <p className="text-xs leading-tight">({item.empId})</p>
+                        {item.clickable && (
+                          <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+              })}
             </div>
 
-            {/* Kolom 3 - Division Head */}
+            {/* Column 3 - Division Head (Business Labels) */}
             <div className="space-y-3">
-              {/* Empty spaces to align with CO2.0 */}
+              {/* Spacers to align with content */}
               <div className="min-h-[110px]"></div>
               <div className="min-h-[120px]"></div>
               <div className="min-h-[200px]"></div>
               <div className="min-h-[120px]"></div>
               <div className="min-h-[130px]"></div>
               
-              {/* CONTROLCABLE BUSINESS aligned with CO2.0 */}
-              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[100px] flex items-center justify-center">
-                <span className="leading-tight">CONTROLCABLE BUSINESS</span>
-              </div>
-              
-               <div className="min-h-[100px]"></div>
-              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
-                <span className="leading-tight">BATTERY BUSINESS</span>
-              </div>
-              
-               <div className="min-h-[570px]"></div>
-              <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[80px] flex items-center justify-center">
-                <span className="leading-tight">AFTERMARKET BUSINESS</span>
-              </div>
+              {organizationData.structure?.divisions?.map((div, index) => (
+                <React.Fragment key={div.id}>
+                  {index > 0 && <div className={index === 1 ? "min-h-[100px]" : "min-h-[570px]"}></div>}
+                  <div className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${index === 0 ? '[100px]' : '[80px]'} flex items-center justify-center`}>
+                    <span className="leading-tight">{div.label}</span>
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
 
-            {/* Kolom 4 - Department Head */}
+            {/* Column 4 - Department Head */}
             <div className="space-y-3">
-              {/* Empty spaces to align with Management Representative */}
+              {/* Spacers */}
               <div className="min-h-[110px]"></div>
               <div className="min-h-[150px]"></div>
               <div className="min-h-[190px]"></div>
               
-              {/* QA aligned with Management Representative */}
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/qa-department')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/qa-department');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">QAC1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">QA</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">M BAGUS SANTOSO</p>
-                  <p className="text-xs leading-tight">(23220025)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-              
-              {/* Space to separate QA and PPC & WAREHOUSE */}
-              <div className="min-h-[10px]"></div>
-              
-              {/* PPC & WAREHOUSE aligned with Customer Representative 2 Wheel */}
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/ppic')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/ppic');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">PPC & WAREHOUSE</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIKI WAHYUDI</p>
-                  <p className="text-xs leading-tight">(23060056)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-
-               {/* Space to separate PPC & WAREHOUSE and marketing*/}
-              <div className="min-h-[1px]"></div>
-
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/marketing-engineering')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/marketing-engineering');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MI & SHE (5R-SMK3-ISO 14001)</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ANDREAS AGUNG S.</p>
-                  <p className="text-xs leading-tight">(23040119)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-            
-             
-              
-              {/* Marketing aligned after CONTROLCABLE BUSINESS */}
-               <div className="min-h-[105px]"></div>
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/marketing-battery-department')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/marketing-battery-department');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT2.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
-                  <p className="text-xs leading-tight">(23200067)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-              
-               <div className="min-h-[110px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                   <p className="text-xs font-bold">RND1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">RND</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
-                  <p className="text-xs leading-tight">(23200067)</p>
-                </div>
-              </div>
-              
-
-               <div className="min-h-[250px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">QAC2.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">QA/QC/DOC</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">RENDRA PRAMONO</p>
-                  <p className="text-xs leading-tight">(23200067)</p>
-                </div>
-              </div>
-              
-               <div className="min-h-[1px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT3.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">TBR</p>
-                </div>
-              </div>
+              {organizationData.structure?.departments?.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {index === 1 && <div className="min-h-[10px]"></div>}
+                  {index === 3 && <div className="min-h-[1px]"></div>}
+                  {index === 4 && <div className="min-h-[105px]"></div>}
+                  {index === 5 && <div className="min-h-[110px]"></div>}
+                  {index === 6 && <div className="min-h-[250px]"></div>}
+                  <div 
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
+                      item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                    }`}
+                    onClick={() => {
+                      if (item.clickable && item.route) {
+                        navigate(item.route);
+                      }
+                    }}
+                  >
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                      <p className="text-xs font-bold">{item.code}</p>
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">{item.name}</p>
+                      {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
+                      {item.clickable && (
+                        <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                      )}
+                    </div>
+                  </div>
+                  {index === 6 && <div className="min-h-[1px]"></div>}
+                </React.Fragment>
+              ))}
             </div>
 
-            {/* Kolom 5 - Section Head / Engineering Product Leader */}
-            
+            {/* Column 5 - Section Head / Engineering Product Leader */}
             <div className="space-y-3">
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/manufacturing-cable')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/manufacturing-cable');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">PRD1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">CONTROLCABLE MANUFACTURE</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">KARNA SATIA SALIM*</p>
-                  <p className="text-xs leading-tight">(23230114)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-              
-              <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/manufactur-battery')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/manufactur-battery');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">PRD2.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY PRODUCTION</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
-                  <p className="text-xs leading-tight">(23220105)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-              
-
-               <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/manufactur-battery')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/manufactur-battery');
-                  }
-                }}
-              >
-               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">PRD3.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY PME</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
-                  <p className="text-xs leading-tight">(23220105)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-             
-              
-               <div className="min-h-[435px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT1.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SAVITRI OCTAVIANI</p>
-                  <p className="text-xs leading-tight">(23130254)</p>
-                </div>
-              </div>
-
-
-               <div className="min-h-[10px]"></div>
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">ENG1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">ENGINEERING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SUGIYARTO</p>
-                  <p className="text-xs leading-tight">(2360041)</p>
-                </div>
-              </div>
-
-               <div className="min-h-[10px]"></div>
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT2.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">AUX & POWER BATTERY MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">CHRYSNA YULIAWAN**</p>
-                  <p className="text-xs leading-tight">(23240177)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT2.2</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">ESS MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">FERDINAND STEVANUS A**</p>
-                  <p className="text-xs leading-tight">(23220049)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[110px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">RND1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">AUX & POWER BATTERY ENGINEERING PRODUCT LEADER</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">BRIAN BUDI SANTOSO**</p>
-                  <p className="text-xs leading-tight">(23210077)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">RND2.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">ESS ENGINEERING PRODUCT LEADER</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">RAIHAN RAMADHAN**</p>
-                  <p className="text-xs leading-tight">(23220104)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[110px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">RND3.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MICRO CONTROLLER ENGINEERING PRODUCT LEADER</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ELISABETH GUSTI**</p>
-                  <p className="text-xs leading-tight">(23230087)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">QAC2.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">BATTERY QA</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">BELLA TIURMA PRATIWI**</p>
-                  <p className="text-xs leading-tight">(23230092)</p>
-                </div>
-              </div>
-
-               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">MKT3.1</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">MARKETING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">TBR</p>
-                </div>
-              </div>
-
-               <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/hrga-it-department')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/hrga-it-department');
-                  }
-                }}
-              >
-               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">HRD1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">HRDGA & IT</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
-                  <p className="text-xs leading-tight">(23060056)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
+              {organizationData.structure?.sections?.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {index === 3 && <div className="min-h-[435px]"></div>}
+                  {index === 4 && <div className="min-h-[10px]"></div>}
+                  {index === 5 && <div className="min-h-[10px]"></div>}
+                  <div 
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
+                      item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                    }`}
+                    onClick={() => {
+                      if (item.clickable && item.route) {
+                        navigate(item.route);
+                      }
+                    }}
+                  >
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                      <p className="text-xs font-bold">{item.code}</p>
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">{item.name}</p>
+                      {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
+                      {item.clickable && (
+                        <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                      )}
+                    </div>
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
 
-               <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/purchasing')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/purchasing');
-                  }
-                }}
-              >
-                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">PCH1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">PURCHASING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
-                  <p className="text-xs leading-tight">(23060056)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-
-               <div 
-                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                onClick={() => navigate('/finance-department')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    navigate('/finance-department');
-                  }
-                }}
-              >
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                  <p className="text-xs font-bold">FIN1.0</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">FINANCE & ACCOUNTING</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">YULIUS PERMATA</p>
-                  <p className="text-xs leading-tight">(23220017)</p>
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-
-
 
         {/* Legend */}
         <div className="mt-8 bg-gray-50 p-4 rounded-lg">
