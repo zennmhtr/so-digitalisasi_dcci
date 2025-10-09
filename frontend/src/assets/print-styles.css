@@ -1,9 +1,125 @@
+/* Additional print optimization for A3 Portrait Dashboard */
+@media print {
+  /* Force single page layout */
+  .dashboard-print-container {
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-inside: avoid !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+  }
+  
+  /* Ensure proper fit for A3 Portrait */
+  @page {
+    size: A3 portrait;
+    margin: 8mm;
+  }
+  
+  /* Hide any remaining interactive elements */
+  .hover\\:bg-blue-700,
+  .hover\\:bg-gray-50,
+  .hover\\:text-gray-600,
+  .transition-colors,
+  .cursor-pointer {
+    pointer-events: none !important;
+  }
+  
+  /* Clean up any remaining web styles */
+  .rounded-lg,
+  .shadow-sm,
+  .shadow-md {
+    border-radius: 0.375rem !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
 /* Organization Chart Styles */
 .print-container {
   background: white;
   min-height: 100vh;
   padding: 20px;
   font-family: Arial, sans-serif;
+}
+
+/* Hide elements during print */
+@media print {
+  /* Hide web interface elements */
+  .no-print,
+  .click-button,
+  nav,
+  .sidebar,
+  .navigation,
+  .menu,
+  button,
+  .btn,
+  .print-button,
+  .edit-button,
+  .save-button,
+  .back-button,
+  .toolbar,
+  .header-actions,
+  .actions,
+  .controls,
+  .scrollbar,
+  ::-webkit-scrollbar,
+  .paste-image,
+  .upload-image,
+  .image-paste,
+  .drag-drop {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Hide any pasted images or file uploads */
+  input[type="file"],
+  .file-upload,
+  .image-upload,
+  .paste-area,
+  .drop-zone {
+    display: none !important;
+  }
+  
+  /* Dashboard print specific styles */
+  .dashboard-print {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  
+  /* A3 paper size optimization - Portrait mode */
+  @page {
+    size: A3 portrait;
+    margin: 8mm;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: white !important;
+    overflow: visible !important;
+  }
+  
+  /* Hide scrollbars */
+  * {
+    overflow: visible !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+  }
+  
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+  }
 }
 
 .org-chart-container {
@@ -269,15 +385,26 @@
     overflow: visible !important;
   }
   
-  /* Scale adjustments based on paper size and orientation */
-  .print-container[data-paper="A3"][data-orientation="portrait"] {
-    transform: scale(0.9);
-    transform-origin: top left;
+  /* Scale adjustments for A3 Portrait - fit everything in one page */
+  .print-container,
+  .dashboard-print,
+  .organization-chart {
+    transform: scale(0.75) !important;
+    transform-origin: top left !important;
+    width: 133% !important; /* Compensate for scale */
+    height: auto !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
   }
   
-  .print-container[data-paper="A3"][data-orientation="landscape"] {
-    transform: scale(1.1);
-    transform-origin: top left;
+  /* Ensure single page layout */
+  .main-content,
+  .dashboard-content,
+  .org-structure {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
   }
   
   .print-container[data-paper="A4"][data-orientation="portrait"] {
@@ -298,18 +425,65 @@
     display: none !important;
   }
   
-  /* Keep original grid structure */
-  .org-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+  /* Keep original grid structure exactly as dashboard */
+  .org-grid,
+  .grid {
+    display: grid !important;
+    gap: 1rem !important;
+    width: 100% !important;
   }
   
-  /* Portrait A4 specific grid adjustments */
-  .print-container[data-paper="A4"][data-orientation="portrait"] .org-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.5rem !important;
+  /* Maintain exact dashboard grid layout */
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
   }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(6, 1fr) !important;
+  }
+  
+  .grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  /* A3 Portrait specific - maintain exact dashboard layout */
+  .print-container .org-grid,
+  .print-container .grid {
+    grid-gap: 1rem !important;
+    gap: 1rem !important;
+  }
+  
+  /* Preserve exact spacing and positioning */
+  .space-y-3 > * + * { margin-top: 0.75rem !important; }
+  .space-y-4 > * + * { margin-top: 1rem !important; }
+  .space-y-6 > * + * { margin-top: 1.5rem !important; }
+  
+  /* Keep exact card positioning */
+  .flex-col {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .items-center {
+    align-items: center !important;
+  }
+  
+  .justify-center {
+    justify-content: center !important;
+  }
+  
+  /* Preserve exact alignment */
+  .text-center { text-align: center !important; }
+  .text-left { text-align: left !important; }
+  .text-right { text-align: right !important; }
   
   /* Maintain original card sizing and spacing */
   .space-y-4 > * + * {
@@ -449,5 +623,58 @@
   
   .print-container[data-paper="A4"][data-orientation="portrait"] .staff-cards > div {
     max-width: 250px !important;
+  }
+  
+  /* Hide all web interface elements for clean SO print */
+  .print\\:hidden,
+  .sidebar,
+  .navbar,
+  .header,
+  .footer,
+  .menu-toggle,
+  .breadcrumb,
+  .tabs,
+  .modal,
+  .popup,
+  .tooltip,
+  .dropdown,
+  .overlay,
+  .backdrop,
+  .alert,
+  .notification,
+  .loading,
+  .spinner {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Only show the organization structure content */
+  .organization-structure,
+  .org-chart,
+  .dashboard-content,
+  .main-org-content {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure no page breaks within content */
+  .organization-chart,
+  .org-structure-container,
+  .dashboard-main {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* Remove any shadows, transitions, transforms that might interfere */
+  * {
+    box-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  /* Preserve only essential shadows for card definition */
+  .bg-white.border.border-gray-400,
+  .shadow-sm {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
   }
 }

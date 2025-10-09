@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import '../assets/print-styles.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [organizationData, setOrganizationData] = useState(null);
+
+  // Check if user has Dashboard Print permission
+  const canPrint = user?.role?.permissions?.includes('Dashboard Print') || false;
 
   // Initialize organization data - same as DashboardEditor
   useEffect(() => {
@@ -135,6 +141,121 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Handle print/download
+  const handlePrint = () => {
+    // Set data attributes for CSS targeting - A3 Portrait
+    const printContainer = document.querySelector('.dashboard-print-container');
+    if (printContainer) {
+      printContainer.setAttribute('data-paper', 'A3');
+      printContainer.setAttribute('data-orientation', 'portrait');
+    }
+    
+    // Set data attributes on document root for @page rules
+    document.documentElement.setAttribute('data-paper', 'A3');
+    document.documentElement.setAttribute('data-orientation', 'portrait');
+    
+    // Create dynamic @page rule for A3 Portrait
+    const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
+    printStyle.id = 'dynamic-print-style';
+    printStyle.innerHTML = `
+      @media print {
+        @page {
+          size: A3 portrait;
+          margin: 8mm;
+        }
+        
+        /* Hide all web interface elements */
+        .no-print, .click-button, nav, .sidebar, .navigation, .menu,
+        button, .btn, .toolbar, .header-actions, .actions, .controls,
+        .scrollbar, ::-webkit-scrollbar, .paste-image, .upload-image,
+        .image-paste, .drag-drop, input[type="file"], .file-upload,
+        .image-upload, .paste-area, .drop-zone {
+          display: none !important;
+          visibility: hidden !important;
+        }
+        
+        /* Hide scrollbars completely */
+        * {
+          overflow: visible !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+        }
+        
+        html, body {
+          overflow: visible !important;
+          height: auto !important;
+          background: white !important;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        
+        /* Scale for A3 Portrait to fit everything in one page */
+        .dashboard-print-container,
+        .organization-chart {
+          transform: scale(0.75) !important;
+          transform-origin: top left !important;
+          width: 133% !important;
+          height: auto !important;
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
+        }
+        
+        /* Maintain exact dashboard layout */
+        .grid {
+          display: grid !important;
+        }
+        
+        .grid-cols-4 {
+          grid-template-columns: repeat(4, 1fr) !important;
+        }
+        
+        .grid-cols-6 {
+          grid-template-columns: repeat(6, 1fr) !important;
+        }
+        
+        /* Keep spacing and positioning exact */
+        .space-y-4 > * + * { margin-top: 1rem !important; }
+        .space-y-3 > * + * { margin-top: 0.75rem !important; }
+        .gap-4 { gap: 1rem !important; }
+        
+        /* Preserve colors and borders */
+        .bg-blue-300 { background-color: #93c5fd !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .border-black { border-color: #000000 !important; }
+        .text-black { color: #000000 !important; }
+        
+        /* Remove interfering effects */
+        * {
+          box-shadow: none !important;
+          transition: none !important;
+          animation: none !important;
+        }
+        
+        /* Keep essential card shadows */
+        .bg-white.border.border-gray-400 {
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        }
+      }
+    `;
+    
+    document.head.appendChild(printStyle);
+    
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   // Loading state
   if (!organizationData) {
     return (
@@ -203,10 +324,25 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        
+        {/* Print Button - Only show if user has permission */}
+        {canPrint && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handlePrint}
+              className="no-print bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print A3
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Organization Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
+      <div className="dashboard-print-container bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
         {/* Board of Commissioners */}
         <div className="mb-8">
           <div className="bg-blue-300 p-4 rounded text-center max-w-md mx-auto mb-6">
@@ -325,7 +461,7 @@ const Dashboard = () => {
                             <p className="text-xs leading-tight">{mdo2?.name}</p>
                             <p className="text-xs leading-tight">({mdo2?.empId})</p>
                             {mdo2?.clickable && (
-                              <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                              <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                             )}
                           </div>
                         </div>
@@ -357,7 +493,7 @@ const Dashboard = () => {
                         <p className="text-xs leading-tight">{item.name}</p>
                         <p className="text-xs leading-tight">({item.empId})</p>
                         {item.clickable && (
-                          <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                          <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                         )}
                       </div>
                     </div>
@@ -418,7 +554,7 @@ const Dashboard = () => {
                       <p className="text-xs leading-tight">{item.name}</p>
                       {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
                       {item.clickable && (
-                        <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                       )}
                     </div>
                   </div>
@@ -453,7 +589,7 @@ const Dashboard = () => {
                       <p className="text-xs leading-tight">{item.name}</p>
                       {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
                       {item.clickable && (
-                        <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                       )}
                     </div>
                   </div>

@@ -17,9 +17,10 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, sidebarVisible = true }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [masterDataOpen, setMasterDataOpen] = useState(false);
+  const [organizationStructureOpen, setOrganizationStructureOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -89,6 +90,7 @@ const Layout = ({ children }) => {
   const userRole = user?.role;
   const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
   const hasDashboardEditorAccess = userPermissions?.includes('Dashboard Editor');
+  const hasSoBagianEditorAccess = userPermissions?.includes('SO Bagian Editor');
   
   // Debug logging
   console.log('Layout Debug:', {
@@ -100,6 +102,15 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    ...(hasDashboardEditorAccess || hasSoBagianEditorAccess ? [{ 
+      name: 'Organization Structure DCI', 
+      icon: Building2,
+      hasChildren: true,
+      children: [
+        ...(hasDashboardEditorAccess ? [{ name: 'Organization Structure', href: '/dashboard-editor', icon: LayoutDashboard }] : []),
+        ...(hasSoBagianEditorAccess ? [{ name: 'SO Bagian', href: '/so-bagian-editor', icon: Building2 }] : [])
+      ]
+    }] : []),
     { 
       name: 'Master Data', 
       icon: Database,
@@ -108,7 +119,6 @@ const Layout = ({ children }) => {
         { name: 'User Management', href: '/users', icon: Users },
         { name: 'Role & Permission', href: '/roles', icon: Shield },
         { name: 'Department', href: '/departments', icon: Building2 },
-        ...(hasDashboardEditorAccess ? [{ name: 'Dashboard Editor', href: '/dashboard-editor', icon: LayoutDashboard }] : []),
       ]
     },
   ];
@@ -116,11 +126,12 @@ const Layout = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0 transition duration-200 ease-in-out`}>
+      {sidebarVisible && (
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0 transition duration-200 ease-in-out`}>
         
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-4 bg-white border-b border-gray-200">
+        <div className="flex items-center h-16 px-4 bg-white border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <img 
               src="/images/dharmabaru.png" 
@@ -139,20 +150,26 @@ const Layout = ({ children }) => {
                 {item.hasChildren ? (
                   <div>
                     <button
-                      onClick={() => setMasterDataOpen(!masterDataOpen)}
+                      onClick={() => {
+                        if (item.name === 'Master Data') {
+                          setMasterDataOpen(!masterDataOpen);
+                        } else if (item.name === 'Organization Structure DCI') {
+                          setOrganizationStructureOpen(!organizationStructureOpen);
+                        }
+                      }}
                       className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
                         <item.icon className="w-5 h-5 mr-3" />
                         {item.name}
                       </div>
-                      {masterDataOpen ? (
+                      {(item.name === 'Master Data' && masterDataOpen) || (item.name === 'Organization Structure DCI' && organizationStructureOpen) ? (
                         <ChevronDown className="w-4 h-4" />
                       ) : (
                         <ChevronRight className="w-4 h-4" />
                       )}
                     </button>
-                    {masterDataOpen && (
+                    {((item.name === 'Master Data' && masterDataOpen) || (item.name === 'Organization Structure DCI' && organizationStructureOpen)) && (
                       <div className="ml-6 mt-2 space-y-1">
                         {item.children.map((child) => (
                           <NavLink
@@ -193,9 +210,10 @@ const Layout = ({ children }) => {
           </div>
         </nav>
       </div>
+      )}
 
       {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
+      {sidebarVisible && sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -203,15 +221,17 @@ const Layout = ({ children }) => {
       )}
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className={`flex flex-col flex-1 overflow-hidden ${!sidebarVisible ? 'w-full' : ''}`}>
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px]">
-          <button
-            className="text-gray-500 hover:text-gray-700 lg:hidden"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {sidebarVisible && (
+            <button
+              className="text-gray-500 hover:text-gray-700 lg:hidden"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          )}
           
           <div className="flex-1"></div>
           

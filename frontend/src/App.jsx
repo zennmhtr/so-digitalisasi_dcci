@@ -20,6 +20,8 @@ import ManufacturingCable from './pages/ManufacturingCable';
 import QaDepartment from './pages/QaDepartment';
 import MarketingBatteryDepartment from './pages/MarketingBatteryDepartment';
 import DashboardEditor from './pages/DashboardEditor';
+import SoBagianEditor from './pages/SoBagianEditor';
+import DepartmentEditor from './components/DepartmentEditor';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -123,6 +125,16 @@ function AppRoutes() {
       <Route path="/dashboard-editor" element={
         <ProtectedRoute>
           <DashboardEditor />
+        </ProtectedRoute>
+      } />
+      <Route path="/so-bagian-editor" element={
+        <ProtectedRoute>
+          <SoBagianEditor />
+        </ProtectedRoute>
+      } />
+      <Route path="/department-editor/:departmentId" element={
+        <ProtectedRoute>
+          <DepartmentEditor />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

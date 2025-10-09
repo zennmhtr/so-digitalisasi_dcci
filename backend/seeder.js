@@ -62,7 +62,9 @@ const seedData = async () => {
           'System Configuration',
           'View Reports',
           'Export Data',
-          'Dashboard Editor'
+          'Dashboard Editor',
+          'SO Bagian Editor',
+          'Dashboard Print'
         ],
         active: true
       },
@@ -75,7 +77,9 @@ const seedData = async () => {
           'View Roles',
           'View Departments',
           'View Reports',
-          'Dashboard Editor'
+          'Dashboard Editor',
+          'SO Bagian Editor',
+          'Dashboard Print'
         ],
         active: true
       },

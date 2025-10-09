@@ -250,7 +250,7 @@ const FinanceDepartment = () => {
                   {/* Header */}
                   <div className="flex border-b border-gray-400">
                     <div className="bg-gray-100 p-3 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      <p className="text-sm font-bold">FIN1.0</p>
+                      <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-3 flex-1 text-center bg-gray-100">
                       <p className="text-sm font-semibold leading-tight whitespace-nowrap">FINANCE & ACCOUNTING</p>

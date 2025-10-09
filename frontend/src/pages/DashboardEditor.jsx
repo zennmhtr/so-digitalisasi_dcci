@@ -344,6 +344,8 @@ const DashboardEditor = () => {
         )}
       </div>
 
+
+
       {/* Main Content - Exact replica of Dashboard structure */}
       <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
         {/* Header Section */}
