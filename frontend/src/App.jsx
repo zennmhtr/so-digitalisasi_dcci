@@ -16,6 +16,9 @@ import ManagementRepresentative from './pages/ManagementRepresentative';
 import Purchasing from './pages/purchasing';
 import Ppic from './pages/Ppic';
 import ManufacturBattery from './pages/ManufacturBattery';
+import ManufacturingCable from './pages/ManufacturingCable';
+import QaDepartment from './pages/QaDepartment';
+import MarketingBatteryDepartment from './pages/MarketingBatteryDepartment';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -99,6 +102,21 @@ function AppRoutes() {
       <Route path="/manufactur-battery" element={
         <ProtectedRoute>
           <ManufacturBattery />
+        </ProtectedRoute>
+      } />
+      <Route path="/manufacturing-cable" element={
+        <ProtectedRoute>
+          <ManufacturingCable />
+        </ProtectedRoute>
+      } />
+      <Route path="/qa-department" element={
+        <ProtectedRoute>
+          <QaDepartment />
+        </ProtectedRoute>
+      } />
+      <Route path="/marketing-battery-department" element={
+        <ProtectedRoute>
+          <MarketingBatteryDepartment />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

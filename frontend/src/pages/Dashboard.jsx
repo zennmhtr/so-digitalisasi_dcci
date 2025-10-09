@@ -281,7 +281,17 @@ const Dashboard = () => {
               <div className="min-h-[190px]"></div>
               
               {/* QA aligned with Management Representative */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/qa-department')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/qa-department');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">QAC1.0</p>
                 </div>
@@ -290,6 +300,7 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">M BAGUS SANTOSO</p>
                   <p className="text-xs leading-tight">(23220025)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
               
@@ -350,7 +361,17 @@ const Dashboard = () => {
               
               {/* Marketing aligned after CONTROLCABLE BUSINESS */}
                <div className="min-h-[105px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/marketing-battery-department')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/marketing-battery-department');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">MKT2.0</p>
                 </div>
@@ -359,6 +380,7 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">RENDRA PRAMONO</p>
                   <p className="text-xs leading-tight">(23200067)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
               
@@ -405,7 +427,17 @@ const Dashboard = () => {
             {/* Kolom 5 - Section Head / Engineering Product Leader */}
             
             <div className="space-y-3">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px]">
+              <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[90px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/manufacturing-cable')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/manufacturing-cable');
+                  }
+                }}
+              >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PRD1.0</p>
                 </div>
@@ -414,6 +446,7 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">KARNA SATIA SALIM*</p>
                   <p className="text-xs leading-tight">(23230114)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
               
@@ -440,8 +473,19 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+
+               <div 
+                className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                onClick={() => navigate('/manufactur-battery')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate('/manufactur-battery');
+                  }
+                }}
+              >
+               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">PRD3.0</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
@@ -449,8 +493,10 @@ const Dashboard = () => {
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight">DIONISIUS AUGUSTO**</p>
                   <p className="text-xs leading-tight">(23220105)</p>
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                 </div>
               </div>
+             
               
                <div className="min-h-[435px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
