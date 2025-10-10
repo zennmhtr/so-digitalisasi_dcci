@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import '../assets/print-styles.css';
@@ -7,9 +7,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [organizationData, setOrganizationData] = useState(null);
+  const [customLayout, setCustomLayout] = useState({ connectors: [], newBoxes: [] });
+  const containerRef = useRef(null);
 
   // Check if user has Dashboard Print permission
   const canPrint = user?.role?.permissions?.includes('Dashboard Print') || false;
+  
+  // Check if user has View SO Details permission
+  const canViewSODetails = user?.role?.permissions?.includes('View SO Details') || false;
 
   // Initialize organization data - same as DashboardEditor
   useEffect(() => {
@@ -114,6 +119,16 @@ const Dashboard = () => {
       setOrganizationData(initialData);
     }
 
+    // Load custom layout (connectors and custom boxes)
+    const savedLayout = localStorage.getItem('dashboard-editor-layout');
+    if (savedLayout) {
+      try {
+        setCustomLayout(JSON.parse(savedLayout));
+      } catch (error) {
+        console.error('Error parsing layout data:', error);
+      }
+    }
+
     // Listen for localStorage changes (when DashboardEditor saves)
     const handleStorageChange = (e) => {
       if (e.key === 'dashboard-organization-data' && e.newValue) {
@@ -122,6 +137,13 @@ const Dashboard = () => {
           setOrganizationData(updatedData);
         } catch (error) {
           console.error('Error parsing updated data:', error);
+        }
+      }
+      if (e.key === 'dashboard-editor-layout' && e.newValue) {
+        try {
+          setCustomLayout(JSON.parse(e.newValue));
+        } catch (error) {
+          console.error('Error parsing layout data:', error);
         }
       }
     };
@@ -161,7 +183,7 @@ const Dashboard = () => {
       @media print {
         @page {
           size: A3 portrait;
-          margin: 8mm;
+          margin: 2mm;
         }
         
         /* Hide all web interface elements */
@@ -199,17 +221,84 @@ const Dashboard = () => {
           print-color-adjust: exact;
         }
         
-        /* Scale for A3 Portrait to fit everything in one page */
+        /* Scale for A3 Portrait - FORCE SINGLE PAGE */
         .dashboard-print-container,
         .organization-chart {
-          transform: scale(0.75) !important;
-          transform-origin: top left !important;
-          width: 133% !important;
+          transform: scale(0.48) !important;
+          transform-origin: center top !important;
+          width: 208% !important;
           height: auto !important;
           page-break-inside: avoid !important;
           page-break-after: avoid !important;
           page-break-before: avoid !important;
+          margin: 0 auto !important;
+          padding: 0.2rem !important;
+          max-height: 90vh !important;
+          overflow: hidden !important;
+          position: relative !important;
+          left: 50% !important;
+          transform: translateX(-50%) scale(0.48) !important;
         }
+        
+        /* Force single page - ABSOLUTE SINGLE PAGE */
+        body, html {
+          height: 100vh !important;
+          max-height: 100vh !important;
+          font-size: 12px !important;
+          overflow: hidden !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+        }
+        
+        /* FORCE EVERYTHING INTO SINGLE PAGE */
+        * {
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
+          break-inside: avoid !important;
+          break-after: avoid !important;
+          break-before: avoid !important;
+        }
+        
+        /* MAXIMUM COMPRESSION to fit all content */
+        .space-y-3 > * + * { margin-top: 0.2rem !important; }
+        .space-y-4 > * + * { margin-top: 0.25rem !important; }
+        .space-y-6 > * + * { margin-top: 0.3rem !important; }
+        .space-y-8 > * + * { margin-top: 0.35rem !important; }
+        .mb-4 { margin-bottom: 0.25rem !important; }
+        .mb-6 { margin-bottom: 0.3rem !important; }
+        .mb-8 { margin-bottom: 0.35rem !important; }
+        .p-4 { padding: 0.25rem !important; }
+        .p-6 { padding: 0.3rem !important; }
+        
+        /* Minimal page margins for maximum content */
+        @page {
+          margin: 2mm !important;
+        }
+        
+        /* COMPRESSED card heights for single page */
+        .min-h-\\[80px\\] { min-height: 45px !important; }
+        .min-h-\\[100px\\] { min-height: 55px !important; }
+        .min-h-\\[110px\\] { min-height: 60px !important; }
+        .min-h-\\[120px\\] { min-height: 65px !important; }
+        .min-h-\\[150px\\] { min-height: 75px !important; }
+        .min-h-\\[170px\\] { min-height: 85px !important; }
+        .min-h-\\[180px\\] { min-height: 90px !important; }
+        .min-h-\\[190px\\] { min-height: 95px !important; }
+        .min-h-\\[200px\\] { min-height: 100px !important; }
+        
+        /* MAXIMUM COMPRESSED spacer heights */
+        .min-h-\\[1px\\] { min-height: 1px !important; }
+        .min-h-\\[10px\\] { min-height: 5px !important; }
+        .min-h-\\[100px\\] { min-height: 45px !important; }
+        .min-h-\\[105px\\] { min-height: 50px !important; }
+        .min-h-\\[110px\\] { min-height: 55px !important; }
+        .min-h-\\[250px\\] { min-height: 110px !important; }
+        .min-h-\\[435px\\] { min-height: 180px !important; }
+        .min-h-\\[570px\\] { min-height: 230px !important; }
         
         /* Maintain exact dashboard layout */
         .grid {
@@ -246,14 +335,177 @@ const Dashboard = () => {
         .bg-white.border.border-gray-400 {
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         }
+        
+        /* Maximum compression of signature section */
+        .mb-16 { margin-bottom: 1rem !important; }
+        
+        /* Minimize header section */
+        .w-24.h-24 { 
+          width: 4rem !important; 
+          height: 4rem !important; 
+        }
+        
+        /* MAXIMUM header compression */
+        .bg-white.rounded-lg.shadow-sm.p-4.mb-4 {
+          padding: 0.2rem !important;
+          margin-bottom: 0.2rem !important;
+        }
+        
+        /* MAXIMUM commissioners compression */
+        .mb-8 { margin-bottom: 0.3rem !important; }
+        
+        /* MAXIMUM commissioners compression */
+        .w-48 { width: 10rem !important; }
+        .min-h-\\[100px\\] { min-height: 55px !important; }
+        
+        /* Tightest possible grid spacing while maintaining structure */
+        .grid-cols-3 { 
+          grid-template-columns: repeat(3, 1fr) !important;
+          gap: 0.25rem !important;
+        }
+        
+        .grid-cols-5 { 
+          grid-template-columns: repeat(5, 1fr) !important;
+          gap: 0.3rem !important;
+        }
+        
+        /* COMPRESSED text sizes for single page */
+        .text-xs { font-size: 0.65rem !important; line-height: 1.1 !important; }
+        .text-sm { font-size: 0.75rem !important; line-height: 1.2 !important; }
+        .text-lg { font-size: 0.9rem !important; line-height: 1.2 !important; }
+        .text-xl { font-size: 1rem !important; line-height: 1.2 !important; }
+        
+        /* Force all content to stay in viewport */
+        * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Ensure no content overflows */
+        .dashboard-print-container * {
+          overflow: visible !important;
+          word-wrap: break-word !important;
+        }
+        
+        /* MAXIMUM notes compression */
+        .mt-8 {
+          margin-top: 0.2rem !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        
+        /* MAXIMUM notes compression */
+        .bg-gray-50.p-4.rounded-lg.border.border-gray-400.max-w-sm {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-before: avoid !important;
+          break-before: avoid !important;
+          margin-top: 0.1rem !important;
+          padding: 0.3rem !important;
+          margin-bottom: 0 !important;
+          max-width: 18rem !important;
+        }
+        
+        /* Ensure entire dashboard content stays together */
+        .dashboard-print-container {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        
+        /* ABSOLUTE SINGLE PAGE ENFORCEMENT */
+        .dashboard-print-container > * {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        
+        /* FORCE FIT - NUCLEAR OPTION */
+        body {
+          zoom: 1 !important;
+          transform: none !important;
+        }
+        
+        html {
+          overflow: hidden !important;
+        }
+        
+        /* MAXIMUM grid compression */
+        .gap-4 { gap: 0.2rem !important; }
+        .gap-6 { gap: 0.25rem !important; }
+        
+        /* MAXIMUM text compression but still readable */
+        h1, h2, h3, h4, h5, h6 {
+          line-height: 1.1 !important;
+          margin: 0 !important;
+        }
+        
+        /* FORCE SINGLE PAGE CONSTRAINT */
+        .dashboard-print-container {
+          max-height: 90vh !important;
+          height: auto !important;
+          box-sizing: border-box !important;
+          display: block !important;
+          position: relative !important;
+        }
+        
+        /* AGGRESSIVE emergency scaling */
+        @media print and (max-height: 420mm) {
+          .dashboard-print-container {
+            transform: translateX(-50%) scale(0.45) !important;
+            left: 50% !important;
+            width: 222% !important;
+          }
+        }
+        
+        /* ENSURE everything centers properly */
+        body > div {
+          margin: 0 auto !important;
+          display: block !important;
+        }
       }
     `;
     
     document.head.appendChild(printStyle);
     
+    // AGGRESSIVE sizing to force single page
     setTimeout(() => {
+      const container = document.querySelector('.dashboard-print-container');
+      if (container) {
+        const containerHeight = container.offsetHeight;
+        const windowHeight = window.innerHeight;
+        
+        // FORCE fit in single page with aggressive scaling
+        if (containerHeight > windowHeight * 0.9) {
+          // Scale down aggressively to fit everything
+          const aggressiveScale = Math.max((windowHeight * 0.88) / containerHeight, 0.4);
+          const scaleWidth = 100 / aggressiveScale;
+          container.style.transform = `translateX(-50%) scale(${aggressiveScale})`;
+          container.style.left = '50%';
+          container.style.width = `${scaleWidth}%`;
+        } else {
+          // Use default aggressive scale
+          container.style.transform = 'translateX(-50%) scale(0.48)';
+          container.style.left = '50%';
+          container.style.width = '208%';
+        }
+        
+        // TRIPLE check - absolute guarantee notes are visible
+        setTimeout(() => {
+          const notesSection = container.querySelector('.mt-8');
+          if (notesSection) {
+            const notesRect = notesSection.getBoundingClientRect();
+            if (notesRect.bottom > windowHeight * 0.95) {
+              // NUCLEAR option - scale down to absolute minimum
+              const nuclearScale = Math.max((windowHeight * 0.85) / containerHeight, 0.35);
+              const nuclearWidth = 100 / nuclearScale;
+              container.style.transform = `translateX(-50%) scale(${nuclearScale})`;
+              container.style.width = `${nuclearWidth}%`;
+            }
+          }
+        }, 50);
+      }
+      
       window.print();
-    }, 100);
+    }, 300);
   };
 
   // Loading state
@@ -274,7 +526,7 @@ const Dashboard = () => {
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <div className="w-16 h-16  flex items-center justify-center mr-4 p-2">
+            <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
               <img 
                 src="/logo/Logo DG New 2022.png" 
                 alt="Dharma Group Logo" 
@@ -292,10 +544,7 @@ const Dashboard = () => {
               {/* Prepared By */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}</p>
                 <p className="text-xs text-gray-500">Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}</p>
               </div>
@@ -303,10 +552,7 @@ const Dashboard = () => {
               {/* Middle - Bambang Wuryanto */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">{organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}</p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}</p>
                 <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}</p>
               </div>
@@ -314,10 +560,7 @@ const Dashboard = () => {
               {/* Approved By */}
               <div className="text-center">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}</p>
                 <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}</p>
               </div>
@@ -425,10 +668,10 @@ const Dashboard = () => {
                   return (
                     <div key="mdo-combined" 
                       className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                        mdo2?.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                        mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
                       }`}
                       onClick={() => {
-                        if (mdo2?.clickable && mdo2?.route) {
+                        if (mdo2?.clickable && mdo2?.route && canViewSODetails) {
                           navigate(mdo2.route);
                         }
                       }}
@@ -460,7 +703,7 @@ const Dashboard = () => {
                           <div className="p-3 flex-1 text-center flex flex-col justify-center">
                             <p className="text-xs leading-tight">{mdo2?.name}</p>
                             <p className="text-xs leading-tight">({mdo2?.empId})</p>
-                            {mdo2?.clickable && (
+                            {mdo2?.clickable && canViewSODetails && (
                               <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                             )}
                           </div>
@@ -476,10 +719,10 @@ const Dashboard = () => {
                   return (
                     <div key={item.id} 
                       className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                        item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                        item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
                       }`}
                       onClick={() => {
-                        if (item.clickable && item.route) {
+                        if (item.clickable && item.route && canViewSODetails) {
                           navigate(item.route);
                         }
                       }}
@@ -492,7 +735,7 @@ const Dashboard = () => {
                         <hr className="my-1 border-gray-300" />
                         <p className="text-xs leading-tight">{item.name}</p>
                         <p className="text-xs leading-tight">({item.empId})</p>
-                        {item.clickable && (
+                        {item.clickable && canViewSODetails && (
                           <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                         )}
                       </div>
@@ -537,10 +780,10 @@ const Dashboard = () => {
                   {index === 6 && <div className="min-h-[250px]"></div>}
                   <div 
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route) {
+                      if (item.clickable && item.route && canViewSODetails) {
                         navigate(item.route);
                       }
                     }}
@@ -553,7 +796,7 @@ const Dashboard = () => {
                       <hr className="my-1 border-gray-300" />
                       <p className="text-xs leading-tight">{item.name}</p>
                       {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
-                      {item.clickable && (
+                      {item.clickable && canViewSODetails && (
                         <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                       )}
                     </div>
@@ -572,10 +815,10 @@ const Dashboard = () => {
                   {index === 5 && <div className="min-h-[10px]"></div>}
                   <div 
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route) {
+                      if (item.clickable && item.route && canViewSODetails) {
                         navigate(item.route);
                       }
                     }}
@@ -588,7 +831,7 @@ const Dashboard = () => {
                       <hr className="my-1 border-gray-300" />
                       <p className="text-xs leading-tight">{item.name}</p>
                       {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
-                      {item.clickable && (
+                      {item.clickable && canViewSODetails && (
                         <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
                       )}
                     </div>
@@ -600,19 +843,15 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-8 bg-gray-50 p-4 rounded-lg">
+      {/* Legend */}
+        <div className="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-400 max-w-sm">
           <h4 className="font-bold text-sm mb-2">NOTE:</h4>
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div>
-              <p><span className="font-bold">*</span> CONCURE</p>
-              <p><span className="font-bold">INC (</span> ACTING</p>
-              <p><span className="font-bold">INC )</span> INCUMBENT</p>
-            </div>
-            <div>
-              <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
-              <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
-            </div>
+          <div className="text-xs space-y-1">
+            <p><span className="font-bold">*</span> CONCURE</p>
+            <p><span className="font-bold">**</span> ACTING</p>
+            <p><span className="font-bold">(INC.)</span> INCUMBENT</p>
+            <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
+            <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
           </div>
         </div>
       </div>

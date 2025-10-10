@@ -259,8 +259,8 @@ const ManagementDevelopment = () => {
                   </div>
                   
                   {[
-                    { id: "IT1.1", name: "KARNA SATIA SALIM*", nip: "(23230114)" },
-                    { id: "IT1.2", name: "WAHYU KARTIKO ADI", nip: "(23240175)" },
+                    { id: "MDO1.0", name: "KARNA SATIA SALIM*", nip: "(23230114)" },
+                    { id: "MDO2.0", name: "WAHYU KARTIKO ADI", nip: "(23240175)" },
                   ].map((staff, i) => (
                     <div 
                       key={i} 

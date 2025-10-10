@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,6 +8,134 @@ const DashboardEditor = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [organizationData, setOrganizationData] = useState(null);
+  
+  // New states for drag & drop and drawing features
+  const [isDragMode, setIsDragMode] = useState(false);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [draggedElement, setDraggedElement] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [connectors, setConnectors] = useState([]);
+  const [isDrawingConnector, setIsDrawingConnector] = useState(false);
+  const [connectorStart, setConnectorStart] = useState(null);
+  const [tempConnector, setTempConnector] = useState(null);
+  const [newBoxes, setNewBoxes] = useState([]);
+  const [showAddBoxPanel, setShowAddBoxPanel] = useState(false);
+  
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Mouse tracking for drawing connectors
+  const handleMouseMove = useCallback((e) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setMousePosition({ x, y });
+
+      if (isDrawingConnector && connectorStart) {
+        setTempConnector({
+          start: connectorStart,
+          end: { x, y }
+        });
+      }
+    }
+  }, [isDrawingConnector, connectorStart]);
+
+  // Add new box functionality
+  const addNewBox = (boxData) => {
+    const newBox = {
+      id: `new-box-${Date.now()}`,
+      code: boxData.code || 'NEW',
+      title: boxData.title || 'New Position',
+      name: boxData.name || 'To Be Assigned',
+      empId: boxData.empId || '',
+      position: { x: 100, y: 100 },
+      isCustom: true
+    };
+    setNewBoxes(prev => [...prev, newBox]);
+    setShowAddBoxPanel(false);
+  };
+
+  // Drag and drop functionality
+  const handleElementDragStart = (e, element, category) => {
+    if (!isDragMode) return;
+    
+    setDraggedElement({ element, category });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleElementDragOver = (e) => {
+    if (!isDragMode) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleElementDrop = (e) => {
+    if (!isDragMode || !draggedElement) return;
+    
+    e.preventDefault();
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Update element position
+    setOrganizationData(prev => {
+      const newData = { ...prev };
+      const { element, category } = draggedElement;
+      
+      const item = newData.structure[category]?.find(item => item.id === element.id);
+      if (item) {
+        item.position = { x, y };
+      }
+      
+      return newData;
+    });
+    
+    setDraggedElement(null);
+  };
+
+  // Connector drawing functionality
+  const startConnector = (elementId, position) => {
+    if (!isDrawingMode) return;
+    
+    setIsDrawingConnector(true);
+    setConnectorStart({ elementId, ...position });
+  };
+
+  const finishConnector = (elementId, position) => {
+    if (!isDrawingMode || !isDrawingConnector || !connectorStart) return;
+    
+    if (connectorStart.elementId !== elementId) {
+      const newConnector = {
+        id: `connector-${Date.now()}`,
+        start: connectorStart,
+        end: { elementId, ...position },
+        style: 'solid'
+      };
+      setConnectors(prev => [...prev, newConnector]);
+    }
+    
+    setIsDrawingConnector(false);
+    setConnectorStart(null);
+    setTempConnector(null);
+  };
+
+  // Delete connector
+  const deleteConnector = (connectorId) => {
+    setConnectors(prev => prev.filter(c => c.id !== connectorId));
+  };
+
+  // Load saved layout including custom elements
+  useEffect(() => {
+    const savedLayout = localStorage.getItem('dashboard-editor-layout');
+    if (savedLayout) {
+      const layout = JSON.parse(savedLayout);
+      setConnectors(layout.connectors || []);
+      setNewBoxes(layout.newBoxes || []);
+    }
+  }, []);
 
   // Check if user has Dashboard Editor permission
   const hasAccess = React.useMemo(() => {
@@ -167,8 +295,18 @@ const DashboardEditor = () => {
         modifiedBy: user?.name || user?.username
       };
       
-      // Save to localStorage
+      // Save layout data including connectors and custom boxes
+      const layoutData = {
+        connectors,
+        newBoxes,
+        lastModified: new Date().toISOString()
+      };
+      
+      // Save organization data to localStorage
       localStorage.setItem('dashboard-organization-data', JSON.stringify(dataToSave));
+      
+      // Save layout data separately
+      localStorage.setItem('dashboard-editor-layout', JSON.stringify(layoutData));
       
       // Dispatch custom event to notify Dashboard component (same tab)
       window.dispatchEvent(new CustomEvent('dashboard-data-updated', { 
@@ -187,7 +325,7 @@ const DashboardEditor = () => {
         setShowSaveDialog(false);
       }, 3000);
       
-      console.log('✅ Data saved successfully and Dashboard notified');
+      console.log('✅ Data and layout saved successfully');
     } catch (error) {
       console.error('Error saving organization data:', error);
       alert('Failed to save changes. Please try again.');
@@ -201,12 +339,13 @@ const DashboardEditor = () => {
     }
   };
 
-  // Editable Box Component
+  // Editable Box Component with drag & drop support
   const EditableBox = ({ item, category, className = "" }) => {
     const [isEditing, setIsEditing] = useState({});
+    const boxRef = useRef(null);
 
     const startEdit = (field) => {
-      if (isEditMode) {
+      if (isEditMode && !isDragMode && !isDrawingMode) {
         setIsEditing(prev => ({ ...prev, [field]: true }));
       }
     };
@@ -214,6 +353,27 @@ const DashboardEditor = () => {
     const finishEdit = (field, value) => {
       handleEdit(category, item.id, field, value);
       setIsEditing(prev => ({ ...prev, [field]: false }));
+    };
+
+    const handleBoxClick = (e) => {
+      if (isDrawingMode) {
+        e.stopPropagation();
+        const rect = boxRef.current.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2 - containerRect.left;
+        const centerY = rect.top + rect.height / 2 - containerRect.top;
+        
+        if (isDrawingConnector) {
+          finishConnector(item.id, { x: centerX, y: centerY });
+        } else {
+          startConnector(item.id, { x: centerX, y: centerY });
+        }
+        return;
+      }
+      
+      if (item.clickable && item.route && !isEditMode && !isDragMode) {
+        navigate(item.route);
+      }
     };
 
     const renderEditableField = (field, value, placeholder = "") => {
@@ -240,23 +400,39 @@ const DashboardEditor = () => {
       return (
         <span
           onClick={() => startEdit(field)}
-          className={isEditMode ? 'cursor-pointer hover:bg-yellow-100 rounded px-1' : ''}
-          title={isEditMode ? 'Click to edit' : ''}
+          className={isEditMode && !isDragMode && !isDrawingMode ? 'cursor-pointer hover:bg-yellow-100 rounded px-1' : ''}
+          title={isEditMode && !isDragMode && !isDrawingMode ? 'Click to edit' : ''}
         >
           {value || placeholder}
         </span>
       );
     };
 
+    const getBoxStyle = () => {
+      let baseClasses = `bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className}`;
+      
+      if (isDragMode) {
+        baseClasses += ' cursor-move ring-2 ring-blue-300 hover:ring-blue-400';
+      } else if (isDrawingMode) {
+        baseClasses += ' cursor-crosshair ring-2 ring-green-300 hover:ring-green-400';
+      } else if (isEditMode) {
+        baseClasses += ' ring-2 ring-blue-200';
+      } else if (item.clickable) {
+        baseClasses += ' cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200';
+      }
+      
+      return baseClasses;
+    };
+
     return (
-      <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className} ${
-        isEditMode ? 'ring-2 ring-blue-200' : ''
-      } ${item.clickable && !isEditMode ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''}`}
-      onClick={() => {
-        if (item.clickable && item.route && !isEditMode) {
-          navigate(item.route);
-        }
-      }}>
+      <div 
+        ref={boxRef}
+        className={getBoxStyle()}
+        draggable={isDragMode}
+        onDragStart={(e) => handleElementDragStart(e, item, category)}
+        onClick={handleBoxClick}
+        data-element-id={item.id}
+      >
         <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
           <p className="text-xs font-bold">
             {renderEditableField('code', item.code, 'CODE')}
@@ -279,12 +455,269 @@ const DashboardEditor = () => {
               )}
             </>
           )}
-          {item.clickable && !isEditMode && (
+          {/* Mode indicators */}
+          {isDragMode && (
+            <p className="text-xs text-blue-600 mt-1 font-semibold">Drag to move</p>
+          )}
+          {isDrawingMode && (
+            <p className="text-xs text-green-600 mt-1 font-semibold">Click to connect</p>
+          )}
+          {item.clickable && !isEditMode && !isDragMode && !isDrawingMode && (
             <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
           )}
-          {isEditMode && (
+          {isEditMode && !isDragMode && !isDrawingMode && (
             <p className="text-xs text-gray-500 mt-1">Click fields to edit</p>
           )}
+        </div>
+      </div>
+    );
+  };
+
+  // SVG Connector Component
+  const ConnectorSVG = () => {
+    if (!containerRef.current) return null;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    
+    return (
+      <svg
+        className="absolute top-0 left-0 pointer-events-none z-10"
+        width={rect.width}
+        height={rect.height}
+        style={{ position: 'absolute', top: 0, left: 0 }}
+      >
+        {/* Existing connectors */}
+        {connectors.map((connector) => (
+          <g key={connector.id}>
+            <line
+              x1={connector.start.x}
+              y1={connector.start.y}
+              x2={connector.end.x}
+              y2={connector.end.y}
+              stroke="#3B82F6"
+              strokeWidth="2"
+              strokeDasharray={connector.style === 'dashed' ? '5,5' : '0'}
+            />
+            {/* Arrow marker */}
+            <polygon
+              points={`${connector.end.x-8},${connector.end.y-4} ${connector.end.x},${connector.end.y} ${connector.end.x-8},${connector.end.y+4}`}
+              fill="#3B82F6"
+            />
+            {/* Delete button for connector */}
+            <circle
+              cx={(connector.start.x + connector.end.x) / 2}
+              cy={(connector.start.y + connector.end.y) / 2}
+              r="8"
+              fill="red"
+              className="cursor-pointer"
+              style={{ pointerEvents: 'all' }}
+              onClick={() => deleteConnector(connector.id)}
+            />
+            <text
+              x={(connector.start.x + connector.end.x) / 2}
+              y={(connector.start.y + connector.end.y) / 2 + 3}
+              textAnchor="middle"
+              fill="white"
+              fontSize="12"
+              style={{ pointerEvents: 'none' }}
+            >
+              ×
+            </text>
+          </g>
+        ))}
+        
+        {/* Temporary connector while drawing */}
+        {tempConnector && (
+          <line
+            x1={tempConnector.start.x}
+            y1={tempConnector.start.y}
+            x2={tempConnector.end.x}
+            y2={tempConnector.end.y}
+            stroke="#10B981"
+            strokeWidth="2"
+            strokeDasharray="3,3"
+          />
+        )}
+      </svg>
+    );
+  };
+
+  // Add Box Panel Component
+  const AddBoxPanel = () => {
+    const [newBoxData, setNewBoxData] = useState({
+      code: '',
+      title: '',
+      name: '',
+      empId: ''
+    });
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      addNewBox(newBoxData);
+      setNewBoxData({ code: '', title: '', name: '', empId: '' });
+    };
+
+    if (!showAddBoxPanel) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96">
+          <h3 className="text-lg font-bold mb-4">Add New Box</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Code</label>
+              <input
+                type="text"
+                value={newBoxData.code}
+                onChange={(e) => setNewBoxData(prev => ({ ...prev, code: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. NEW1.0"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <input
+                type="text"
+                value={newBoxData.title}
+                onChange={(e) => setNewBoxData(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Position Title"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                type="text"
+                value={newBoxData.name}
+                onChange={(e) => setNewBoxData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Person Name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Employee ID</label>
+              <input
+                type="text"
+                value={newBoxData.empId}
+                onChange={(e) => setNewBoxData(prev => ({ ...prev, empId: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="23XXXXXX"
+              />
+            </div>
+            <div className="flex space-x-3">
+              <button
+                type="submit"
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+              >
+                Add Box
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddBoxPanel(false)}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // Custom Box Component for new boxes
+  const CustomBox = ({ box }) => {
+    const [position, setPosition] = useState(box.position);
+    const [isEditing, setIsEditing] = useState({});
+
+    const updateCustomBox = (field, value) => {
+      setNewBoxes(prev => prev.map(b => 
+        b.id === box.id ? { ...b, [field]: value } : b
+      ));
+      setIsEditing(prev => ({ ...prev, [field]: false }));
+    };
+
+    const deleteCustomBox = () => {
+      setNewBoxes(prev => prev.filter(b => b.id !== box.id));
+    };
+
+    const renderEditableField = (field, value, placeholder = "") => {
+      if (isEditing[field]) {
+        return (
+          <input
+            type="text"
+            defaultValue={value}
+            className="w-full px-1 py-0.5 text-xs border rounded bg-yellow-50"
+            placeholder={placeholder}
+            autoFocus
+            onBlur={(e) => updateCustomBox(field, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                updateCustomBox(field, e.target.value);
+              } else if (e.key === 'Escape') {
+                setIsEditing(prev => ({ ...prev, [field]: false }));
+              }
+            }}
+          />
+        );
+      }
+
+      return (
+        <span
+          onClick={() => setIsEditing(prev => ({ ...prev, [field]: true }))}
+          className="cursor-pointer hover:bg-yellow-100 rounded px-1"
+        >
+          {value || placeholder}
+        </span>
+      );
+    };
+
+    return (
+      <div 
+        className="absolute bg-white border-2 border-purple-400 rounded shadow-lg flex min-h-[80px] w-48 z-20"
+        style={{ 
+          left: position.x, 
+          top: position.y,
+          transform: isDragMode ? 'none' : 'translate(-50%, -50%)'
+        }}
+        draggable={isDragMode}
+        onDragEnd={(e) => {
+          const rect = containerRef.current.getBoundingClientRect();
+          const newX = e.clientX - rect.left;
+          const newY = e.clientY - rect.top;
+          setPosition({ x: newX, y: newY });
+          setNewBoxes(prev => prev.map(b => 
+            b.id === box.id ? { ...b, position: { x: newX, y: newY } } : b
+          ));
+        }}
+      >
+        <div className="bg-purple-100 p-1 text-center border-r border-purple-400 w-12 flex items-center justify-center">
+          <p className="text-xs font-bold">
+            {renderEditableField('code', box.code, 'CODE')}
+          </p>
+        </div>
+        <div className="p-2 flex-1 text-center flex flex-col justify-center relative">
+          <button
+            onClick={deleteCustomBox}
+            className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-xs w-4 h-4 flex items-center justify-center"
+          >
+            ×
+          </button>
+          <p className="text-xs font-semibold mb-1 leading-tight">
+            {renderEditableField('title', box.title, 'Title')}
+          </p>
+          <hr className="my-1 border-gray-300" />
+          <p className="text-xs leading-tight">
+            {renderEditableField('name', box.name, 'Name')}
+          </p>
+          {box.empId && (
+            <p className="text-xs leading-tight">
+              ({renderEditableField('empId', box.empId, 'ID')})
+            </p>
+          )}
+          <p className="text-xs text-purple-600 mt-1 font-semibold">Custom Box</p>
         </div>
       </div>
     );
@@ -297,16 +730,62 @@ const DashboardEditor = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-xl font-bold text-gray-800">Dashboard Editor</h1>
+            
+            {/* Mode Toggle Buttons */}
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setIsEditMode(!isEditMode)}
+                onClick={() => {
+                  setIsEditMode(!isEditMode);
+                  setIsDragMode(false);
+                  setIsDrawingMode(false);
+                }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                   isEditMode
                     ? 'bg-green-600 hover:bg-green-700 text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                {isEditMode ? 'View Mode' : 'Edit Mode'}
+                {isEditMode ? 'Edit Mode' : 'View Mode'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setIsDragMode(!isDragMode);
+                  setIsEditMode(false);
+                  setIsDrawingMode(false);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                  isDragMode
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                {isDragMode ? 'Drag Mode ON' : 'Drag Mode'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setIsDrawingMode(!isDrawingMode);
+                  setIsEditMode(false);
+                  setIsDragMode(false);
+                  setIsDrawingConnector(false);
+                  setConnectorStart(null);
+                  setTempConnector(null);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                  isDrawingMode
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                {isDrawingMode ? '🔗 Draw Mode ON' : '🔗 Connect Mode'}
+              </button>
+              
+              <button
+                onClick={() => setShowAddBoxPanel(true)}
+                className="px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Add Box
               </button>
             </div>
           </div>
@@ -328,16 +807,33 @@ const DashboardEditor = () => {
           </div>
         </div>
         
-        
-        
-        
+        {/* Mode Instructions */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-700">
+            {isEditMode && (
+              <p><strong>Edit Mode:</strong> Click on any text field in boxes to edit content directly.</p>
+            )}
+            {isDragMode && (
+              <p><strong>Drag Mode:</strong> Click and drag boxes to reposition them freely around the canvas.</p>
+            )}
+            {isDrawingMode && (
+              <p><strong>Connect Mode:</strong> Click on boxes to create connecting lines between them. Click first box to start, second box to finish.</p>
+            )}
+            {!isEditMode && !isDragMode && !isDrawingMode && (
+              <div>
+               
+              </div>
+            )}
+          </div>
+        </div>
+      
         
         {/* Save confirmation */}
         {showSaveDialog && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-800 font-semibold">✅ Changes saved successfully!</p>
             <p className="text-green-700 text-sm mt-1">
-              Main Dashboard has been automatically updated with your changes. 
+              Main Dashboard has been automatically updated with your changes including layout, connectors and custom boxes. 
               Go back to Dashboard to see the results immediately.
             </p>
           </div>
@@ -346,12 +842,29 @@ const DashboardEditor = () => {
 
 
 
-      {/* Main Content - Exact replica of Dashboard structure */}
-      <div className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
+      {/* Main Content - Enhanced with drag & drop and connector support */}
+      <div 
+        ref={containerRef}
+        className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto relative"
+        onMouseMove={handleMouseMove}
+        onDragOver={handleElementDragOver}
+        onDrop={handleElementDrop}
+        style={{ minHeight: '800px' }}
+      >
+        {/* SVG Layer for Connectors */}
+        <ConnectorSVG />
+        
+        {/* Custom Boxes */}
+        {newBoxes.map((box) => (
+          <CustomBox key={box.id} box={box} />
+        ))}
+
+        {/* Add Box Panel */}
+        <AddBoxPanel />
         {/* Header Section */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
-            <div className="w-16 h-16 flex items-center justify-center mr-4 p-2">
+            <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
               <img 
                 src="/logo/Logo DG New 2022.png" 
                 alt="Dharma Group Logo" 
@@ -399,13 +912,10 @@ const DashboardEditor = () => {
           </div>
           <div className="text-right">
             <div className="grid grid-cols-3 gap-4 border border-gray-400 p-4 bg-white">
-              {/* Prepared By */}
+                           {/* Prepared By */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">
                   {isEditMode ? (
                     <input
@@ -479,10 +989,7 @@ const DashboardEditor = () => {
                     organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'
                   )}
                 </p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">
                   {isEditMode ? (
                     <input
@@ -534,10 +1041,7 @@ const DashboardEditor = () => {
               {/* Approved By */}
               <div className="text-center">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
-                <div className="w-20 h-12 border border-gray-300 mx-auto mb-2 bg-gray-50 flex items-center justify-center">
-                  <span className="text-xs text-gray-400">Signature</span>
-                </div>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-1"></div>
+                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">
                   {isEditMode ? (
                     <input
@@ -880,36 +1384,45 @@ const DashboardEditor = () => {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-8 bg-gray-50 p-4 rounded-lg">
+         {/* Legend */}
+        <div className="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-400 max-w-sm">
           <h4 className="font-bold text-sm mb-2">NOTE:</h4>
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div>
-              <p><span className="font-bold">*</span> CONCURE</p>
-              <p><span className="font-bold">INC (</span> ACTING</p>
-              <p><span className="font-bold">INC )</span> INCUMBENT</p>
-            </div>
-            <div>
-              <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
-              <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
-            </div>
+          <div className="text-xs space-y-1">
+            <p><span className="font-bold">*</span> CONCURE</p>
+            <p><span className="font-bold">**</span> ACTING</p>
+            <p><span className="font-bold">(INC.)</span> INCUMBENT</p>
+            <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
+            <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
           </div>
+        </div>
+      <div>
           
           <div className="mt-4 bg-green-50 p-3 rounded border-l-4 border-green-400">
-            <h4 className="font-bold text-sm mb-2 text-green-800">✅ DASHBOARD EDITOR FEATURES:</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-green-700">
+            <h4 className="font-bold text-sm mb-2 text-green-800">🚀 ENHANCED DASHBOARD EDITOR FEATURES:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-green-700">
               <div>
-                <p>• <strong>Complete Organization Structure</strong> - All {organizationData.structure.sections.length + organizationData.structure.departments.length + organizationData.structure.management.length + organizationData.structure.bod.length} positions</p>
-                <p>• <strong>Click-to-edit</strong> any text field</p>
-                <p>• <strong>Real-time visual feedback</strong></p>
-                <p>• <strong>Exact same layout</strong> as main Dashboard</p>
+                <p><strong>📝 Content Editing:</strong></p>
+                <p>• Complete Organization Structure - All {organizationData.structure.sections.length + organizationData.structure.departments.length + organizationData.structure.management.length + organizationData.structure.bod.length} positions</p>
+                <p>• Click-to-edit any text field</p>
+                <p>• Header, dates & signatures editable</p>
               </div>
               <div>
-                <p>• <strong>Permission-based access</strong> control</p>
-                <p>• <strong>Safe data persistence</strong></p>
-                <p>• <strong>Navigation preservation</strong></p>
-                <p>• <strong>Header, dates & signatures editable</strong></p>
+                <p><strong>🎨 Layout Control:</strong></p>
+                <p>• Drag & drop repositioning</p>
+                <p>• Custom box creation</p>
+                <p>• Real-time visual feedback</p>
+                <p>• Permission-based access control</p>
               </div>
+              <div>
+                <p><strong>🔗 Visual Connections:</strong></p>
+                <p>• Interactive line drawing</p>
+                <p>• Connect any two elements</p>
+                <p>• Delete connectors easily</p>
+                <p>• Persistent layout saving</p>
+              </div>
+            </div>
+            <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
+              <p><strong>💡 Usage Tips:</strong> Use different modes for different tasks. Edit Mode for text, Drag Mode for positioning, Connect Mode for relationships, and Add Box for new elements.</p>
             </div>
           </div>
         </div>

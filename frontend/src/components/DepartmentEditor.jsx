@@ -106,21 +106,47 @@ const DepartmentEditor = () => {
           return {
             header: {
               title: currentDept.title,
-              effectiveDate: "08/09/2025"
+              effectiveDate: "30 September 2025"
             },
             signatures: {
-              preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
-              middleBy: { title: "Bambang Wuryanto", name: "Bambang Wuryanto", date: "08/09/2025" },
-              approvedBy: { name: "Eko Maryanto", date: "08/09/2025" }
+              preparedBy: { name: "DIKI WAHYUDI", date: "30/09/2025" },
+              middleBy: { title: "DIKI WAHYUDI", name: "DIKI WAHYUDI", date: "30/09/2025" },
+              approvedBy: { name: "EKO MARYANTO", date: "30/09/2025" }
             },
             structure: {
               departments: [
-                { id: 'prd-2-0', code: 'PRD2.0', title: 'BATTERY PRODUCTION & PME', name: 'DIONISIUS AUGUSTO**', empId: '23220105' }
+                { id: 'bod-1-0', code: 'BOD1.0', title: 'PRESIDENT DIRECTOR', name: 'EKO MARYANTO', empId: '23200235', group: 'BOARD OF DIRECTOR' },
+                { id: 'bod-1-1', code: 'BOD1.1', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038', group: 'BOARD OF DIRECTOR' },
+                { id: 'prd-2-0', code: 'PRD2.0', title: 'BATTERY PRODUCTION & PME', name: 'DIONISIUS AUGUSTO**', empId: '23220105', group: 'DEPARTMENT HEAD' }
               ],
               sections: [
-                { id: 'prd-2-1', code: 'PRD2.1', title: 'BATTERY PRODUCTION', name: 'YEREMIA SOTYA', empId: '23230135' },
-                { id: 'prd-2-2', code: 'PRD2.2', title: '', name: 'ASEP AGUNG WIGUNA', empId: '23190805' },
-                { id: 'prd-2-3', code: 'PRD2.3', title: 'BATTERY PME', name: 'DIONISIUS AUGUSTO', empId: '23220105' }
+                // ENGINEER
+                { id: 'prd-2-1', code: 'PRD2.1', title: 'BATTERY PRODUCTION', name: 'YEREMIA SOTYA', empId: '23230135', group: 'ENGINEER' },
+                { id: 'prd-2-2', code: 'PRD2.2', title: 'BATTERY PRODUCTION', name: 'ASEP AGUNG WIGUNA', empId: '23190805', group: 'ENGINEER' },
+                // SENIOR ENGINEER
+                { id: 'prd-2-3', code: 'PRD2.3', title: 'QUALITY ASSURANCE', name: 'ADHITYA SATIAWA SURYADATA', empId: '23230091', group: 'SENIOR ENGINEER' },
+                { id: 'prd-3-0', code: 'PRD3.0', title: 'BATTERY PME', name: 'TBR', empId: '', group: 'SENIOR ENGINEER' },
+                // TEAM MEMBER/TECHNICIAN - AUXILIARY BATTERY PRODUCT
+                { id: 'prd-2-1-1-1', code: 'PRD2.1.1', title: 'AUXILIARY BATTERY PRODUCT', name: 'RIZAL GUNAWAN', empId: '23230055', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-1-2', code: 'PRD2.1.1', title: 'AUXILIARY BATTERY PRODUCT', name: 'MUH. NANDER', empId: '23120193', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-1-3', code: 'PRD2.1.1', title: 'AUXILIARY BATTERY PRODUCT', name: 'GANTIANTO', empId: '23120145', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-1-4', code: 'PRD2.1.1', title: 'AUXILIARY BATTERY PRODUCT', name: 'TARMUDIN', empId: '23120184', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-1-5', code: 'PRD2.1.1', title: 'AUXILIARY BATTERY PRODUCT', name: 'DEDI SUKMA', empId: '23110110', group: 'TEAM MEMBER/TECHNICIAN' },
+                // TEAM MEMBER/TECHNICIAN - BESS PRODUCT
+                { id: 'prd-2-1-2-1', code: 'PRD2.1.2', title: 'BESS PRODUCT', name: 'EKO DAMAR WAHYUDI', empId: '23230115', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-2-2', code: 'PRD2.1.2', title: 'BESS PRODUCT', name: 'WIDODO', empId: '23120197', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-2-3', code: 'PRD2.1.2', title: 'BESS PRODUCT', name: 'SUPRIYONO', empId: '23110119', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-2-4', code: 'PRD2.1.2', title: 'BESS PRODUCT', name: 'PUTRI LESTARI', empId: '23240229', group: 'TEAM MEMBER/TECHNICIAN' },
+                // TEAM MEMBER/TECHNICIAN - BEV PRODUCT
+                { id: 'prd-2-1-3-1', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'RIZIQ RIDWAN', empId: '23210079', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-2', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'AINA WAKHORIDAH', empId: '23230053', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-3', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'DENDI SETIAWAN', empId: '23230054', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-4', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'GALIH SOMAT', empId: '23230116', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-5', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'M. YUNUS ARIFAI', empId: '23120192', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-6', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'DODIK', empId: '23120161', group: 'TEAM MEMBER/TECHNICIAN' },
+                { id: 'prd-2-1-3-7', code: 'PRD2.1.3', title: 'BEV PRODUCT', name: 'NACA RODIANA HENDRAYANA', empId: '23120199', group: 'TEAM MEMBER/TECHNICIAN' },
+                // TEAM MEMBER/TECHNICIAN - QUALITY CHECK
+                { id: 'prd-2-3-1', code: 'PRD2.3.1', title: 'QUALITY CHECK', name: 'TBR', empId: '', group: 'TEAM MEMBER/TECHNICIAN' },
               ]
             }
           };
@@ -147,6 +173,35 @@ const DepartmentEditor = () => {
             }
           };
 
+        case 'hrga-it-department':
+          return {
+            header: {
+              title: currentDept.title,
+              effectiveDate: "30 September 2025"
+            },
+            signatures: {
+              preparedBy: { name: "DIKI WAHYUDI", date: "30/09/2025" },
+              middleBy: { title: "DIKI WAHYUDI", name: "DIKI WAHYUDI", date: "30/09/2025" },
+              approvedBy: { name: "BAMBANG WURYANTO", date: "30/09/2025" }
+            },
+            structure: {
+              departments: [
+                { id: 'bod-1-0', code: 'BOD1.0', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038' },
+                { id: 'bod-1-1', code: 'BOD1.1', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038' }
+              ],
+              sections: [
+                { id: 'hrd-1-0', code: 'HRD1.0', title: 'HRDGA & IT', name: 'DIKI WAHYUDI *', empId: '23060056' },
+                { id: 'hrd-2-0', code: 'HRD2.0', title: 'VERONICA HANI M. **', name: 'VERONICA HANI M. **', empId: '23240206' },
+                { id: 'hrd-1-1', code: 'HRD1.1', title: 'HRD', name: 'THARISA ARRAHMA R.', empId: '23230072' },
+                { id: 'ga-1-1', code: 'GA1.1', title: 'GENERAL AFFAIR & IND. RELATIONS', name: 'SUPRIADI', empId: '23120131' },
+                { id: 'ga-1-2', code: 'GA1.2', title: 'GENERAL AFFAIR & IND. RELATIONS', name: 'PARTINI LUPI', empId: '23110116' },
+                { id: 'ga-1-3', code: 'GA1.3', title: 'GENERAL AFFAIR & IND. RELATIONS', name: 'MIMBARYANTO', empId: '23120158' },
+                { id: 'it-1-1', code: 'IT1.1', title: 'INFORMATION TECHNOLOGY', name: 'ROZIQIN', empId: '23070074' },
+                { id: 'it-1-2', code: 'IT1.2', title: 'INFORMATION TECHNOLOGY', name: 'FARHANSYAH A.L', empId: '23220040' }
+              ]
+            }
+          };
+
         case 'manufacturing-cable':
           return {
             header: {
@@ -165,6 +220,26 @@ const DepartmentEditor = () => {
               sections: [
                 { id: 'prd-1-1', code: 'PRD1.1', title: 'PRODUCTION LEADER', name: 'RANGGA ARIF FATAH', empId: '23190808' },
                 { id: 'prd-1-2', code: 'PRD1.2', title: 'QUALITY CONTROL', name: 'BAYU ALDI PRATAMA', empId: '23230088' }
+              ]
+            }
+          };
+
+        case 'management-development':
+          return {
+            header: {
+              title: currentDept.title,
+              effectiveDate: "30 September 2025"
+            },
+            signatures: {
+              preparedBy: { name: "", date: "30/09/2025" },
+              middleBy: { title: "DIKI WAHYUDI", name: "DIKI WAHYUDI", date: "30/09/2025" },
+              approvedBy: { name: "BAMBANG WURYANTO", date: "30/09/2025" }
+            },
+            structure: {
+              departments: [],
+              sections: [
+                { id: 'mdo-1', code: 'MDO1.0', title: 'MANAGEMENT DEVELOPEMENT/PDCA', name: 'KARNA SATIA SALIM*', empId: '23230114' },
+                { id: 'mdo-2', code: 'MDO2.0', title: 'MANAGEMENT DEVELOPEMENT/PDCA', name: 'WAHYU KARTIKO ADI', empId: '23240175' }
               ]
             }
           };

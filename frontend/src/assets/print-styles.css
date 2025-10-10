@@ -92,7 +92,7 @@
   /* A3 paper size optimization - Portrait mode */
   @page {
     size: A3 portrait;
-    margin: 8mm;
+    margin: 3mm;
   }
   
   body {
@@ -385,18 +385,34 @@
     overflow: visible !important;
   }
   
-  /* Scale adjustments for A3 Portrait - fit everything in one page */
+  /* Scale adjustments for A3 Portrait - AGGRESSIVE SINGLE PAGE FIT */
   .print-container,
   .dashboard-print,
-  .organization-chart {
-    transform: scale(0.75) !important;
+  .organization-chart,
+  .dashboard-print-container {
+    transform: scale(0.45) !important;
     transform-origin: top left !important;
-    width: 133% !important; /* Compensate for scale */
+    width: 222% !important; /* Compensate for scale */
     height: auto !important;
     page-break-inside: avoid !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
+    overflow: visible !important;
+    max-height: none !important;
   }
+  
+  /* Force everything to fit in one page */
+  * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* Compress spacing for better fit */
+  .space-y-3 > * + * { margin-top: 0.5rem !important; }
+  .space-y-4 > * + * { margin-top: 0.6rem !important; }
+  .gap-4 { gap: 0.6rem !important; }
+  .p-4 { padding: 0.6rem !important; }
+  .p-6 { padding: 0.8rem !important; }
   
   /* Ensure single page layout */
   .main-content,
