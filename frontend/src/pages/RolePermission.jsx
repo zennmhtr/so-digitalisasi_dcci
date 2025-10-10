@@ -26,7 +26,26 @@ const RolePermission = () => {
     'Dashboard Editor',
     'SO Bagian Editor',
     'Dashboard Print',
-    'View SO Details'
+    'View SO Details',
+    'Jobdesc Management',
+    'Finance',
+    'HRGA',
+    'IT',
+    'Management',
+    'Production',
+    'Manufacturing',
+    'Marketing',
+    'Sales',
+    'Engineering',
+    'Safety',
+    'Environment',
+    'Planning',
+    'Purchasing',
+    'Procurement',
+    'Quality',
+    'QA',
+    'Admin',
+    'HR Manager'
   ];
 
   // Fetch roles from API

@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Database,
   User,
-  Key
+  Key,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
@@ -91,6 +92,14 @@ const Layout = ({ children, sidebarVisible = true }) => {
   const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
   const hasDashboardEditorAccess = userPermissions?.includes('Dashboard Editor');
   const hasSoBagianEditorAccess = userPermissions?.includes('SO Bagian Editor');
+  const hasJobdescAccess = userPermissions?.includes('Jobdesc Management') || 
+                          userPermissions?.includes('Admin') || 
+                          userPermissions?.includes('HR Manager') ||
+                          userPermissions?.some(permission => 
+                            ['Finance', 'HRGA', 'IT', 'Management', 'Production', 'Manufacturing', 
+                             'Marketing', 'Sales', 'Engineering', 'Safety', 'Environment', 
+                             'Planning', 'Purchasing', 'Procurement', 'Quality', 'QA'].includes(permission)
+                          );
   
   // Debug logging
   console.log('Layout Debug:', {
@@ -111,6 +120,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
         ...(hasSoBagianEditorAccess ? [{ name: 'SO Bagian', href: '/so-bagian-editor', icon: Building2 }] : [])
       ]
     }] : []),
+    ...(hasJobdescAccess ? [{ name: 'Job Description', href: '/jobdesc-management', icon: FileText }] : []),
     { 
       name: 'Master Data', 
       icon: Database,

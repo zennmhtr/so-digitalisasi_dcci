@@ -22,6 +22,7 @@ import MarketingBatteryDepartment from './pages/MarketingBatteryDepartment';
 import DashboardEditor from './pages/DashboardEditor';
 import SoBagianEditor from './pages/SoBagianEditor';
 import DepartmentEditor from './components/DepartmentEditor';
+import JobdescManagement from './pages/JobdescManagement';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -135,6 +136,13 @@ function AppRoutes() {
       <Route path="/department-editor/:departmentId" element={
         <ProtectedRoute>
           <DepartmentEditor />
+        </ProtectedRoute>
+      } />
+      <Route path="/jobdesc-management" element={
+        <ProtectedRoute>
+          <Layout>
+            <JobdescManagement />
+          </Layout>
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
