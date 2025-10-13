@@ -2,6 +2,37 @@ import React from 'react';
 import { X, Download, Printer, Edit, Trash2 } from 'lucide-react';
 
 const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
+  // Handle case where jobdesc is null or undefined
+  if (!jobdesc) {
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">No Job Description Found</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <p className="text-gray-600 mb-4">
+            No job description found for {user?.name || 'this member'}.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('JobdescViewer - jobdesc data:', jobdesc); // Debug log
   const handlePrint = () => {
     // Hide non-printable elements and print
     const printElements = document.querySelectorAll('.print\\:hidden');
@@ -78,12 +109,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               {/* Logo Section */}
               <div className="w-32 border-r-2 border-black p-2 flex items-center justify-center">
                 <img 
-                  src="/logo/Logo DG New 2022.png" 
+                  src="/images/dcilong.png" 
                   alt="Dharma Group Logo" 
                   className="max-w-full max-h-20 object-contain"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "/logo/dharmagroup.png"; // Fallback logo
+                    e.target.src = "/images/dcilong.png"; // Fallback logo
                   }}
                 />
               </div>
@@ -95,11 +126,11 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                 <div className="flex justify-center space-x-8 text-xs">
                   <div>
                     <span className="font-medium">Tanggal: </span>
-                    <span>{jobdesc.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
+                    <span>{jobdesc?.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
                   </div>
                   <div>
                     <span className="font-medium">Revisi: </span>
-                    <span>{jobdesc.revisi || '0'}</span>
+                    <span>{jobdesc?.revisi || '0'}</span>
                   </div>
                 </div>
               </div>
@@ -109,7 +140,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                 <div className="border-b border-black p-2 text-center">
                   <p className="text-xs font-bold">Dibuat,</p>
                 </div>
-                 <div className="border-b border-black p-7 text-center">
+                <div className="border-b border-black p-7 text-center">
                   {/* Space for signature */}
                 </div>
               </div>
@@ -134,14 +165,14 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                   <div className="flex">
                     <span className="font-bold w-32">DIVISION</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc.division || 'ADMINISTRATION'}</span>
+                    <span>{jobdesc?.division || '-'}</span>
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">POSITION TITLE</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc.positionTitle || '-'}</span>
+                    <span>{jobdesc?.positionTitle || '-'}</span>
                   </div>
                 </div>
               </div>
@@ -150,14 +181,14 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                   <div className="flex">
                     <span className="font-bold w-32">DEPARTMENT</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc.department || 'PURCHASING'}</span>
+                    <span>{jobdesc?.department?.name || user?.department?.name || '-'}</span>
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">REPORTS TO</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc.reportsTo || '-'}</span>
+                    <span>{jobdesc?.reportsTo || '-'}</span>
                   </div>
                 </div>
               </div>
@@ -171,23 +202,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               <span className="text-xs ml-2">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya ; berurutan dengan jabatan yang dipegannya, bisa tugas harian atau tugas bulanan)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc.responsibilities && jobdesc.responsibilities.length > 0 ? (
+              {jobdesc?.responsibilities && jobdesc.responsibilities.length > 0 ? (
                 jobdesc.responsibilities.map((responsibility, index) => (
                   <li key={index}>{responsibility}</li>
                 ))
               ) : (
-                <>
-                  <li>Mencari dan melakasana calon supplier yang sesuai dengan kebutuhan</li>
-                  <li>Koordinasi dengan bagian terkait untuk persiapan pekerjaan di subcont</li>
-                  <li>Melakukan evaluasi terhadap hasil pekerjaan subcont supplier mengenai kelengkapan dokumen</li>
-                  <li>Berkoordinasi dengan user mengenai jadwal pengiriman barang dan jumlah yang akan diorder</li>
-                  <li>Melakukan pemilihan-seleksi sesuai dengan kriteria perusahaan</li>
-                  <li>Bekerjasama dengan Departemen terkait untuk memastikan kelancaran operasional perusahaan</li>
-                  <li>Problem solving jika terdapat delay material yang berpengaruh ke subcont</li>
-                  <li>Koordinasi dengan bagian terkait jika ditemukan barang NG Good (NG)</li>
-                  <li>Melaksanakan STO bulanan di area subcont</li>
-                  <li>Pelaporan target dan kinerja di subcont</li>
-                </>
+                <li>No responsibilities defined</li>
               )}
             </ol>
           </div>
@@ -199,16 +219,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               <span className="text-xs ml-2">(Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik ; dan berisi apa yang dibeisakan oleh jabatan pada berapa persen di target yang dicapai kepada jabatan yang lebih tinggi)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc.accountabilities && jobdesc.accountabilities.length > 0 ? (
+              {jobdesc?.accountabilities && jobdesc.accountabilities.length > 0 ? (
                 jobdesc.accountabilities.map((accountability, index) => (
                   <li key={index}>{accountability}</li>
                 ))
               ) : (
-                <>
-                  <li>Menggunakan fasilitas untuk menunjang pekerjaan</li>
-                  <li>Pengajuan Supplier</li>
-                  <li>Melakukan survey Supplier</li>
-                </>
+                <li>No accountabilities defined</li>
               )}
             </ol>
           </div>
@@ -217,18 +233,15 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">INTERACTIONS</span>
-              <span className="text-xs ml-2">(Interaksi berisi bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya , baik didalam maupun diluar perusahaan )</span>
+              <span className="text-xs ml-2">(Interaksi berisi bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya )</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc.interactions && jobdesc.interactions.length > 0 ? (
-                jobdesc.interactions.map((interaction, index) => (
+              {jobdesc?.interactions?.internal && jobdesc.interactions.internal.length > 0 ? (
+                jobdesc.interactions.internal.map((interaction, index) => (
                   <li key={index}>{interaction}</li>
                 ))
               ) : (
-                <>
-                  <li>All Departemen</li>
-                  <li>Semua Vendor</li>
-                </>
+                <li>No interactions defined</li>
               )}
             </ol>
           </div>
@@ -237,7 +250,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">COMPETENCE</span>
-              <span className="text-xs ml-2">(Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berkhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengenalan diseratasi terhadap)</span>
+              <span className="text-xs ml-2">(Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya)</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8">

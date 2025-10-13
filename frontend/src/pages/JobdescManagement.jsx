@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Users, FileText, Eye, Edit, Plus, Trash2, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { departmentsAPI, membersAPI, jobDescriptionsAPI } from '../services/api';
 import JobdescViewer from '../components/JobdescViewer';
 import JobdescForm from '../components/JobdescForm';
 
@@ -18,28 +19,6 @@ const JobdescManagement = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingJobdesc, setEditingJobdesc] = useState(null);
   const [jobDescriptions, setJobDescriptions] = useState({});
-
-  // Data members untuk setiap departemen
-  const departmentMembersData = {
-    'Purchasing': [
-      { id: 1, name: 'Diki Wahyudi', noPNK: '23060056', email: 'diki.wahyudi@company.com', position: 'Dept Head' },
-      { id: 2, name: 'Rifqi', noPNK: '23230017', email: 'rifqi@company.com', position: 'Staff' },
-      { id: 3, name: 'Syifa', noPNK: '23220060', email: 'syifa@company.com', position: 'Staff' },
-      { id: 4, name: 'Marchel', noPNK: '23250234', email: 'marchel@company.com', position: 'Staff' },
-      { id: 5, name: 'Eli Tri', noPNK: '23110112', email: 'elitri@company.com', position: 'Staff' }
-    ],
-    'Finance Department': [],
-    'HRGA & IT Department': [],
-    'Management Development': [],
-    'Management Representative': [],
-    'Manufacturing Battery': [],
-    'Manufacturing Cable': [],
-    'Marketing Battery Department': [],
-    'Marketing Engineering': [],
-    'MI & SHE': [],
-    'PPIC': [],
-    'QA Department': []
-  };
 
   console.log('JobdescManagement rendered, user:', user);
 
@@ -59,31 +38,18 @@ const JobdescManagement = () => {
     'QA Department': ['Quality', 'QA', 'Admin', 'HR Manager']
   };
 
-  // Pre-defined departments yang akan ditampilkan
-  const predefinedDepartments = [
-    { name: 'Finance Department', code: 'FIN', description: 'Finance and Accounting Department' },
-    { name: 'HRGA & IT Department', code: 'HRGA', description: 'Human Resources and IT Department' },
-    { name: 'Management Development', code: 'MD', description: 'Management Development Department' },
-    { name: 'Management Representative', code: 'MR', description: 'Management Representative Department' },
-    { name: 'Manufacturing Battery', code: 'MFB', description: 'Manufacturing Battery Department' },
-    { name: 'Manufacturing Cable', code: 'MFC', description: 'Manufacturing Cable Department' },
-    { name: 'Marketing Battery Department', code: 'MKB', description: 'Marketing Battery Department' },
-    { name: 'Marketing Engineering', code: 'MKE', description: 'Marketing Engineering Department' },
-    { name: 'MI & SHE', code: 'SHE', description: 'MI & SHE Department' },
-    { name: 'PPIC', code: 'PPIC', description: 'PPIC Department' },
-    { name: 'Purchasing', code: 'PCH', description: 'Purchasing Department' },
-    { name: 'QA Department', code: 'QA', description: 'Quality Assurance Department' }
-  ];
-
   useEffect(() => {
     console.log('useEffect triggered, user:', user);
     loadAccessibleDepartments();
   }, [user]);
 
-  const loadAccessibleDepartments = () => {
+  const loadAccessibleDepartments = async () => {
     try {
       console.log('Loading accessible departments...');
       setLoading(true);
+      
+      const response = await departmentsAPI.getAll();
+      const allDepartments = response.data.data;
       
       // Filter departments berdasarkan role permission user
       const userPermissions = user?.role?.permissions || [];
@@ -92,7 +58,7 @@ const JobdescManagement = () => {
       console.log('User permissions:', userPermissions);
       console.log('User department:', userDepartmentName);
       
-      const accessibleDepts = predefinedDepartments.filter(dept => {
+      const accessibleDepts = allDepartments.filter(dept => {
         // Admin dan HR Manager bisa akses semua departemen
         if (userPermissions.includes('Admin') || userPermissions.includes('HR Manager')) {
           return true;
@@ -119,7 +85,51 @@ const JobdescManagement = () => {
     }
   };
 
-  const toggleDepartment = (departmentName) => {
+  const loadDepartmentMembers = async (departmentId) => {
+    try {
+      setLoading(true);
+      
+      // Load members and job descriptions in parallel
+      const [membersResponse, jobdescResponse] = await Promise.all([
+        membersAPI.getByDepartment(departmentId),
+        jobDescriptionsAPI.getByDepartment(departmentId).catch(() => ({ data: { data: [] } }))
+      ]);
+      
+      const members = membersResponse.data.data;
+      const jobDescriptions = jobdescResponse.data.data || [];
+      
+      setDepartmentMembers(members);
+      
+      // Map job descriptions to members
+      const jobDescsMap = {};
+      
+      jobDescriptions.forEach(jobdesc => {
+        // Find member by user ID or by noPNK
+        const member = members.find(m => 
+          (jobdesc.user && m.id === jobdesc.user._id) || 
+          (jobdesc.memberNoPNK && m.noPNK === jobdesc.memberNoPNK)
+        );
+        
+        if (member) {
+          jobDescsMap[member.id] = jobdesc;
+          console.log(`Job description mapped for ${member.name}:`, jobdesc);
+        }
+      });
+      
+      console.log('Members loaded:', members);
+      console.log('Job descriptions loaded:', jobDescriptions);
+      console.log('Job descriptions mapped:', jobDescsMap);
+      setJobDescriptions(jobDescsMap);
+      
+    } catch (err) {
+      console.error('Error loading department members:', err);
+      setError('Failed to load department members: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleDepartment = (departmentName, departmentId) => {
     console.log('Toggling department:', departmentName);
     const newExpanded = new Set(expandedDepartments);
     
@@ -132,33 +142,41 @@ const JobdescManagement = () => {
     } else {
       newExpanded.add(departmentName);
       setSelectedDepartment(departmentName);
-      // Load members for selected department
-      const members = departmentMembersData[departmentName] || [];
-      setDepartmentMembers(members);
+      loadDepartmentMembers(departmentId);
     }
     
     setExpandedDepartments(newExpanded);
   };
 
-  const handleAddMember = (newMember) => {
-    if (selectedDepartment) {
-      const updatedMembers = [...departmentMembers, {
-        id: Date.now(),
-        name: newMember.name,
-        noPNK: newMember.noPNK,
-        email: newMember.email,
-        position: newMember.position || 'Staff'
-      }];
-      setDepartmentMembers(updatedMembers);
+  const handleAddMember = async (newMemberData) => {
+    try {
+      setLoading(true);
+      const selectedDept = departments.find(d => d.name === selectedDepartment);
       
-      // Update the departmentMembersData
-      departmentMembersData[selectedDepartment] = updatedMembers;
+      const memberData = {
+        ...newMemberData,
+        department: selectedDept._id
+      };
+      
+      const response = await membersAPI.create(memberData);
+      
+      if (response.data.success) {
+        // Reload members for current department
+        await loadDepartmentMembers(selectedDept._id);
+        setShowAddMemberModal(false);
+        alert('Member added successfully');
+      }
+    } catch (err) {
+      console.error('Error adding member:', err);
+      setError(err.response?.data?.message || 'Failed to add member');
+    } finally {
+      setLoading(false);
     }
-    setShowAddMemberModal(false);
   };
 
   const handleCreateJobdesc = (member) => {
     setSelectedMember(member);
+    setEditingJobdesc(null);
     setShowJobdescForm(true);
   };
 
@@ -173,30 +191,41 @@ const JobdescManagement = () => {
     setShowJobdescForm(true);
   };
 
-  const handleDeleteJobdesc = (member) => {
+  const handleDeleteJobdesc = async (member) => {
     if (window.confirm(`Are you sure you want to delete job description for ${member.name}?`)) {
-      const updatedJobDescs = { ...jobDescriptions };
-      delete updatedJobDescs[member.id];
-      setJobDescriptions(updatedJobDescs);
-      alert('Job description deleted successfully');
+      try {
+        const jobdesc = jobDescriptions[member.id];
+        if (jobdesc) {
+          await jobDescriptionsAPI.delete(jobdesc._id);
+          
+          // Remove from local state
+          const updatedJobDescs = { ...jobDescriptions };
+          delete updatedJobDescs[member.id];
+          setJobDescriptions(updatedJobDescs);
+          
+          alert('Job description deleted successfully');
+        }
+      } catch (err) {
+        console.error('Error deleting job description:', err);
+        setError(err.response?.data?.message || 'Failed to delete job description');
+      }
     }
   };
 
-  const handleDeleteMember = (member) => {
+  const handleDeleteMember = async (member) => {
     if (window.confirm(`Are you sure you want to delete member ${member.name}? This will also delete their job description.`)) {
-      // Remove member from the list
-      const updatedMembers = departmentMembers.filter(m => m.id !== member.id);
-      setDepartmentMembers(updatedMembers);
-      
-      // Update the departmentMembersData
-      departmentMembersData[selectedDepartment] = updatedMembers;
-      
-      // Remove job description if exists
-      const updatedJobDescs = { ...jobDescriptions };
-      delete updatedJobDescs[member.id];
-      setJobDescriptions(updatedJobDescs);
-      
-      alert('Member deleted successfully');
+      try {
+        await membersAPI.delete(member.id);
+        
+        // Reload members for current department
+        const selectedDept = departments.find(d => d.name === selectedDepartment);
+        await loadDepartmentMembers(selectedDept._id);
+        
+        alert('Member deleted successfully');
+      } catch (err) {
+        console.error('Error deleting member:', err);
+        setError(err.response?.data?.message || 'Failed to delete member');
+      }
     }
   };
 
@@ -215,15 +244,48 @@ const JobdescManagement = () => {
     }
   };
 
-  const handleJobdescSave = (jobdescData) => {
-    setJobDescriptions(prev => ({
-      ...prev,
-      [selectedMember.id]: jobdescData
-    }));
-    setShowJobdescForm(false);
-    setSelectedMember(null);
-    setEditingJobdesc(null);
-    alert('Job description saved successfully');
+  const handleJobdescSave = async (jobdescData) => {
+    try {
+      setLoading(true);
+      const selectedDept = departments.find(d => d.name === selectedDepartment);
+      
+      const payload = {
+        ...jobdescData,
+        user: selectedMember.user || null,
+        memberName: selectedMember.name,
+        memberNoPNK: selectedMember.noPNK,
+        memberEmail: selectedMember.email,
+        memberPosition: selectedMember.position,
+        department: selectedDept._id
+      };
+      
+      let response;
+      if (editingJobdesc) {
+        // Update existing job description
+        response = await jobDescriptionsAPI.update(editingJobdesc._id, payload);
+      } else {
+        // Create new job description
+        response = await jobDescriptionsAPI.create(payload);
+      }
+      
+      if (response.data.success) {
+        // Update local state
+        setJobDescriptions(prev => ({
+          ...prev,
+          [selectedMember.id]: response.data.data
+        }));
+        
+        setShowJobdescForm(false);
+        setSelectedMember(null);
+        setEditingJobdesc(null);
+        alert('Job description saved successfully');
+      }
+    } catch (err) {
+      console.error('Error saving job description:', err);
+      setError(err.response?.data?.message || 'Failed to save job description');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -264,15 +326,20 @@ const JobdescManagement = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Job Description Management</h1>
           <p className="text-gray-600">
-        
+            Manage job descriptions for all department members. All data is automatically saved to the database.
           </p>
-          
         </div>
 
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-600">{error}</p>
+            <button 
+              onClick={() => setError('')}
+              className="text-red-500 hover:text-red-700 text-sm mt-2"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -308,9 +375,9 @@ const JobdescManagement = () => {
                 ) : (
                   <div className="space-y-2">
                     {departments.map((dept) => (
-                      <div key={dept.name} className="border border-gray-200 rounded-lg">
+                      <div key={dept._id} className="border border-gray-200 rounded-lg">
                         <button
-                          onClick={() => toggleDepartment(dept.name)}
+                          onClick={() => toggleDepartment(dept.name, dept._id)}
                           className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors rounded-lg"
                         >
                           <div className="flex-1">
@@ -359,6 +426,7 @@ const JobdescManagement = () => {
                     <button
                       onClick={() => setShowAddMemberModal(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center"
+                      disabled={loading}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Member
@@ -393,7 +461,7 @@ const JobdescManagement = () => {
                   <div className="space-y-4">
                     {departmentMembers.map((member) => {
                       const hasJobdesc = jobDescriptions[member.id];
-                      const jobdescStatus = hasJobdesc ? 'approved' : 'not_started';
+                      const jobdescStatus = hasJobdesc ? hasJobdesc.status || 'approved' : 'not_started';
                       
                       return (
                         <div key={member.id} className="border border-gray-200 rounded-lg p-6 hover:border-blue-300 transition-colors">
@@ -408,7 +476,7 @@ const JobdescManagement = () => {
                                 <h3 className="font-semibold text-gray-900 text-lg mb-2">{member.name}</h3>
                                 <div className="space-y-1">
                                   <div className="flex items-center text-sm text-gray-600">
-                                    <span className="font-medium w-16">PNK:</span>
+                                    <span className="font-medium w-16">NPK:</span>
                                     <span>{member.noPNK}</span>
                                   </div>
                                   <div className="flex items-center text-sm text-gray-600">
@@ -435,6 +503,7 @@ const JobdescManagement = () => {
                                     onClick={() => handleCreateJobdesc(member)}
                                     className="bg-green-50 hover:bg-green-100 text-green-600 p-2 rounded transition-colors duration-200 border border-green-200"
                                     title="Create Job Description"
+                                    disabled={loading}
                                   >
                                     <Plus className="w-4 h-4" />
                                   </button>
@@ -464,15 +533,17 @@ const JobdescManagement = () => {
                                     >
                                       <Download className="w-4 h-4" />
                                     </button>
-                                    <button
-                                      onClick={() => handleDeleteMember(member)}
-                                      className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded transition-colors duration-200 border border-red-200"
-                                      title="Delete Member"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
                                   </>
                                 )}
+                                
+                                <button
+                                  onClick={() => handleDeleteMember(member)}
+                                  className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded transition-colors duration-200 border border-red-200"
+                                  title="Delete Member"
+                                  disabled={loading}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -493,6 +564,7 @@ const JobdescManagement = () => {
           departmentName={selectedDepartment}
           onSave={handleAddMember}
           onCancel={() => setShowAddMemberModal(false)}
+          loading={loading}
         />
       )}
 
@@ -535,7 +607,7 @@ const JobdescManagement = () => {
 };
 
 // Add Member Modal Component
-const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
+const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     noPNK: '',
@@ -569,12 +641,13 @@ const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={loading}
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              No PNK *
+              No NPK *
             </label>
             <input
               type="text"
@@ -582,6 +655,7 @@ const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
               onChange={(e) => setFormData({ ...formData, noPNK: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={loading}
             />
           </div>
           
@@ -595,6 +669,7 @@ const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={loading}
             />
           </div>
           
@@ -606,6 +681,7 @@ const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
               value={formData.position}
               onChange={(e) => setFormData({ ...formData, position: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
             >
               <option value="Staff">Staff</option>
               <option value="Senior Staff">Senior Staff</option>
@@ -621,14 +697,23 @@ const AddMemberModal = ({ departmentName, onSave, onCancel }) => {
               type="button"
               onClick={onCancel}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              Add Member
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Adding...
+                </div>
+              ) : (
+                'Add Member'
+              )}
             </button>
           </div>
         </form>

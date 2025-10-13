@@ -1,25 +1,26 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const JobDescription = require('../models/JobDescription');
+const User = require('../models/User');
+const Department = require('../models/Department');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 // @route   GET /api/jobdescriptions
-// @desc    Get all job descriptions (with filtering)
+// @desc    Get all job descriptions
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
     const skip = (page - 1) * limit;
+    const departmentId = req.query.department;
 
-    // Build filter query
     const filter = {};
-    if (req.query.department) filter.department = req.query.department;
-    if (req.query.status) filter.status = req.query.status;
-    if (req.query.user) filter.user = req.query.user;
-    if (req.query.memberNoPNK) filter.memberNoPNK = req.query.memberNoPNK;
+    if (departmentId) {
+      filter.department = departmentId;
+    }
 
     const jobDescriptions = await JobDescription.find(filter)
       .populate('user', 'name noPNK email')
@@ -56,13 +57,13 @@ router.get('/', auth, async (req, res) => {
 // @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
-    const jobDescription = await JobDescription.findById(req.params.id)
+    const jobDesc = await JobDescription.findById(req.params.id)
       .populate('user', 'name noPNK email')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name');
 
-    if (!jobDescription) {
+    if (!jobDesc) {
       return res.status(404).json({
         success: false,
         message: 'Job description not found'
@@ -71,7 +72,7 @@ router.get('/:id', auth, async (req, res) => {
 
     res.json({
       success: true,
-      data: jobDescription
+      data: jobDesc
     });
 
   } catch (error) {
@@ -83,19 +84,26 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/jobdescriptions/member/:memberNoPNK
-// @desc    Get job description by member PNK
+// @route   GET /api/jobdescriptions/member/:memberId
+// @desc    Get job description by member ID or noPNK
 // @access  Private
-router.get('/member/:memberNoPNK', auth, async (req, res) => {
+router.get('/member/:memberId', auth, async (req, res) => {
   try {
-    const jobDescription = await JobDescription.findOne({ 
-      memberNoPNK: req.params.memberNoPNK 
+    const memberId = req.params.memberId;
+    
+    // Try to find by user ID first, then by memberNoPNK
+    let jobDesc = await JobDescription.findOne({ 
+      $or: [
+        { user: memberId },
+        { memberNoPNK: memberId }
+      ]
     })
+      .populate('user', 'name noPNK email')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name');
 
-    if (!jobDescription) {
+    if (!jobDesc) {
       return res.status(404).json({
         success: false,
         message: 'Job description not found for this member'
@@ -104,11 +112,39 @@ router.get('/member/:memberNoPNK', auth, async (req, res) => {
 
     res.json({
       success: true,
-      data: jobDescription
+      data: jobDesc
     });
 
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching job description by member:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/jobdescriptions/department/:departmentId
+// @desc    Get all job descriptions by department
+// @access  Private
+router.get('/department/:departmentId', auth, async (req, res) => {
+  try {
+    const departmentId = req.params.departmentId;
+    
+    const jobDescriptions = await JobDescription.find({ department: departmentId })
+      .populate('user', 'name noPNK email')
+      .populate('department', 'name code')
+      .populate('createdBy', 'name')
+      .populate('approvedBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: jobDescriptions
+    });
+
+  } catch (error) {
+    console.error('Error fetching job descriptions by department:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -121,12 +157,12 @@ router.get('/member/:memberNoPNK', auth, async (req, res) => {
 // @access  Private
 router.post('/', [
   auth,
+  body('department').notEmpty().withMessage('Department is required'),
   body('division').notEmpty().withMessage('Division is required'),
   body('positionTitle').notEmpty().withMessage('Position title is required'),
   body('reportsTo').notEmpty().withMessage('Reports to is required'),
-  body('responsibilities').isArray({ min: 1 }).withMessage('At least one responsibility is required'),
-  body('accountabilities').isArray({ min: 1 }).withMessage('At least one accountability is required'),
-  body('department').notEmpty().withMessage('Department is required')
+  body('responsibilities').isArray().withMessage('Responsibilities must be an array'),
+  body('accountabilities').isArray().withMessage('Accountabilities must be an array')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -145,8 +181,6 @@ router.post('/', [
       memberEmail,
       memberPosition,
       department,
-      tanggal,
-      revisi,
       division,
       positionTitle,
       reportsTo,
@@ -158,42 +192,43 @@ router.post('/', [
       status
     } = req.body;
 
-    // Check if job description already exists for this user/member
-    const existingJobDesc = user 
-      ? await JobDescription.findOne({ user })
-      : await JobDescription.findOne({ memberNoPNK });
+    // Check if job description already exists
+    const existingJobDesc = await JobDescription.findOne({
+      $or: [
+        ...(user ? [{ user }] : []),
+        ...(memberNoPNK ? [{ memberNoPNK }] : [])
+      ]
+    });
 
     if (existingJobDesc) {
       return res.status(400).json({
         success: false,
-        message: 'Job description already exists for this user/member'
+        message: 'Job description already exists for this member'
       });
     }
 
-    const jobDescription = new JobDescription({
-      user,
+    const jobDesc = new JobDescription({
+      user: user || null,
       memberName,
       memberNoPNK,
       memberEmail,
       memberPosition,
       department,
-      tanggal,
-      revisi,
       division,
       positionTitle,
       reportsTo,
-      responsibilities,
-      accountabilities,
-      interactions,
-      competence,
-      jobSpecification,
+      responsibilities: responsibilities.filter(r => r.trim()),
+      accountabilities: accountabilities.filter(a => a.trim()),
+      interactions: interactions || { internal: [], external: [] },
+      competence: competence || { managerial: [], technical: [], behavioral: [], skill: [] },
+      jobSpecification: jobSpecification || {},
       status: status || 'draft',
-      createdBy: req.user._id
+      createdBy: req.user.id
     });
 
-    await jobDescription.save();
+    await jobDesc.save();
 
-    const newJobDescription = await JobDescription.findById(jobDescription._id)
+    const newJobDesc = await JobDescription.findById(jobDesc._id)
       .populate('user', 'name noPNK email')
       .populate('department', 'name code')
       .populate('createdBy', 'name');
@@ -201,7 +236,7 @@ router.post('/', [
     res.status(201).json({
       success: true,
       message: 'Job description created successfully',
-      data: newJobDescription
+      data: newJobDesc
     });
 
   } catch (error) {
@@ -220,9 +255,7 @@ router.put('/:id', [
   auth,
   body('division').optional().notEmpty().withMessage('Division cannot be empty'),
   body('positionTitle').optional().notEmpty().withMessage('Position title cannot be empty'),
-  body('reportsTo').optional().notEmpty().withMessage('Reports to cannot be empty'),
-  body('responsibilities').optional().isArray({ min: 1 }).withMessage('At least one responsibility is required'),
-  body('accountabilities').optional().isArray({ min: 1 }).withMessage('At least one accountability is required')
+  body('reportsTo').optional().notEmpty().withMessage('Reports to cannot be empty')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -234,45 +267,29 @@ router.put('/:id', [
       });
     }
 
-    const jobDescription = await JobDescription.findById(req.params.id);
+    const jobDesc = await JobDescription.findById(req.params.id);
 
-    if (!jobDescription) {
+    if (!jobDesc) {
       return res.status(404).json({
         success: false,
         message: 'Job description not found'
       });
     }
 
-    const {
-      tanggal,
-      revisi,
-      division,
-      positionTitle,
-      reportsTo,
-      responsibilities,
-      accountabilities,
-      interactions,
-      competence,
-      jobSpecification,
-      status
-    } = req.body;
+    const updateFields = [
+      'division', 'positionTitle', 'reportsTo', 'responsibilities', 
+      'accountabilities', 'interactions', 'competence', 'jobSpecification', 'status'
+    ];
 
-    // Update fields
-    if (tanggal) jobDescription.tanggal = tanggal;
-    if (revisi) jobDescription.revisi = revisi;
-    if (division) jobDescription.division = division;
-    if (positionTitle) jobDescription.positionTitle = positionTitle;
-    if (reportsTo) jobDescription.reportsTo = reportsTo;
-    if (responsibilities) jobDescription.responsibilities = responsibilities;
-    if (accountabilities) jobDescription.accountabilities = accountabilities;
-    if (interactions) jobDescription.interactions = interactions;
-    if (competence) jobDescription.competence = competence;
-    if (jobSpecification) jobDescription.jobSpecification = jobSpecification;
-    if (status) jobDescription.status = status;
+    updateFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        jobDesc[field] = req.body[field];
+      }
+    });
 
-    await jobDescription.save();
+    await jobDesc.save();
 
-    const updatedJobDescription = await JobDescription.findById(jobDescription._id)
+    const updatedJobDesc = await JobDescription.findById(jobDesc._id)
       .populate('user', 'name noPNK email')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
@@ -281,7 +298,7 @@ router.put('/:id', [
     res.json({
       success: true,
       message: 'Job description updated successfully',
-      data: updatedJobDescription
+      data: updatedJobDesc
     });
 
   } catch (error) {
@@ -298,9 +315,9 @@ router.put('/:id', [
 // @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const jobDescription = await JobDescription.findById(req.params.id);
+    const jobDesc = await JobDescription.findById(req.params.id);
 
-    if (!jobDescription) {
+    if (!jobDesc) {
       return res.status(404).json({
         success: false,
         message: 'Job description not found'
@@ -328,22 +345,22 @@ router.delete('/:id', auth, async (req, res) => {
 // @access  Private
 router.put('/:id/approve', auth, async (req, res) => {
   try {
-    const jobDescription = await JobDescription.findById(req.params.id);
+    const jobDesc = await JobDescription.findById(req.params.id);
 
-    if (!jobDescription) {
+    if (!jobDesc) {
       return res.status(404).json({
         success: false,
         message: 'Job description not found'
       });
     }
 
-    jobDescription.status = 'approved';
-    jobDescription.approvedBy = req.user._id;
-    jobDescription.approvedAt = new Date();
+    jobDesc.status = 'approved';
+    jobDesc.approvedBy = req.user.id;
+    jobDesc.approvedAt = new Date();
 
-    await jobDescription.save();
+    await jobDesc.save();
 
-    const updatedJobDescription = await JobDescription.findById(jobDescription._id)
+    const updatedJobDesc = await JobDescription.findById(jobDesc._id)
       .populate('user', 'name noPNK email')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
@@ -352,7 +369,7 @@ router.put('/:id/approve', auth, async (req, res) => {
     res.json({
       success: true,
       message: 'Job description approved successfully',
-      data: updatedJobDescription
+      data: updatedJobDesc
     });
 
   } catch (error) {

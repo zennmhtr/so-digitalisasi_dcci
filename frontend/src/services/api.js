@@ -78,10 +78,20 @@ export const jobDescriptionsAPI = {
   getAll: (params) => api.get('/jobdescriptions', { params }),
   getById: (id) => api.get(`/jobdescriptions/${id}`),
   getByMemberPNK: (memberNoPNK) => api.get(`/jobdescriptions/member/${memberNoPNK}`),
+  getByDepartment: (departmentId) => api.get(`/jobdescriptions/department/${departmentId}`),
   create: (jobdescData) => api.post('/jobdescriptions', jobdescData),
   update: (id, jobdescData) => api.put(`/jobdescriptions/${id}`, jobdescData),
   delete: (id) => api.delete(`/jobdescriptions/${id}`),
   approve: (id) => api.put(`/jobdescriptions/${id}/approve`),
+};
+
+// Members API
+export const membersAPI = {
+  getAll: (params) => api.get('/members', { params }),
+  getByDepartment: (departmentId) => api.get(`/members/department/${departmentId}`),
+  create: (memberData) => api.post('/members', memberData),
+  update: (id, memberData) => api.put(`/members/${id}`, memberData),
+  delete: (id) => api.delete(`/members/${id}`),
 };
 
 export default api;

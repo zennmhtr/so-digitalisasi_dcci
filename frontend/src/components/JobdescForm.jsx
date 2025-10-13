@@ -5,19 +5,24 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
   const [formData, setFormData] = useState({
     department: selectedDepartment || existingJobdesc?.department || '',
     division: existingJobdesc?.division || '',
-    positionTitle: existingJobdesc?.positionTitle || '',
+    positionTitle: existingJobdesc?.positionTitle || user?.position || '',
     reportsTo: existingJobdesc?.reportsTo || '',
-    tanggal: existingJobdesc?.tanggal || new Date().toISOString().split('T')[0],
+    tanggal: existingJobdesc?.tanggal ? new Date(existingJobdesc.tanggal).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     revisi: existingJobdesc?.revisi || '0',
-    responsibilities: existingJobdesc?.responsibilities || [''],
-    accountabilities: existingJobdesc?.accountabilities || [''],
-    interactions: existingJobdesc?.interactions || [''],
-    competence: existingJobdesc?.competence || { managerial: [''], skill: [''] },
-    jobSpecification: existingJobdesc?.jobSpecification || {
-      age: '',
-      education: '',
-      nonFormalEducation: '',
-      experience: ''
+    responsibilities: existingJobdesc?.responsibilities?.length > 0 ? existingJobdesc.responsibilities : [''],
+    accountabilities: existingJobdesc?.accountabilities?.length > 0 ? existingJobdesc.accountabilities : [''],
+    interactions: {
+      internal: existingJobdesc?.interactions?.internal?.length > 0 ? existingJobdesc.interactions.internal : ['']
+    },
+    competence: {
+      managerial: existingJobdesc?.competence?.managerial?.length > 0 ? existingJobdesc.competence.managerial : [''],
+      skill: existingJobdesc?.competence?.skill?.length > 0 ? existingJobdesc.competence.skill : ['']
+    },
+    jobSpecification: {
+      age: existingJobdesc?.jobSpecification?.age || '',
+      education: existingJobdesc?.jobSpecification?.education || '',
+      nonFormalEducation: existingJobdesc?.jobSpecification?.nonFormalEducation || '',
+      experience: existingJobdesc?.jobSpecification?.experience || ''
     }
   });
   
@@ -136,18 +141,26 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
         ...formData,
         responsibilities: formData.responsibilities.filter(r => r.trim()),
         accountabilities: formData.accountabilities.filter(a => a.trim()),
-        interactions: formData.interactions.filter(i => i.trim()),
+        interactions: {
+          internal: formData.interactions.internal.filter(i => i.trim()),
+          external: [] // Always empty since we removed external interactions
+        },
         competence: {
           managerial: formData.competence.managerial.filter(m => m.trim()),
+          technical: [], // Always empty since we removed technical
+          behavioral: [], // Always empty since we removed behavioral
           skill: formData.competence.skill.filter(s => s.trim())
+        },
+        jobSpecification: {
+          ...formData.jobSpecification,
+          skills: [], // Always empty since we removed skills
+          certification: [] // Always empty since we removed certification
         },
         tanggal: formData.tanggal,
         revisi: formData.revisi
       };
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Remove the timeout and directly call onSave
       onSave(cleanData);
     } catch (error) {
       console.error('Error saving jobdesc:', error);
@@ -370,35 +383,38 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
             <h4 className="text-lg font-medium text-gray-900 mb-4">Interactions</h4>
             
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <h5 className="font-medium text-gray-700">Job Interactions</h5>
-                <button
-                  type="button"
-                  onClick={() => addArrayItem('interactions')}
-                  className="text-blue-600 hover:text-blue-700 text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-              {formData.interactions.map((interaction, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={interaction}
-                    onChange={(e) => handleArrayChange('interactions', index, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    placeholder={`Interaction ${index + 1}`}
-                  />
+              {/* Internal Interactions */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h5 className="font-medium text-gray-700">Internal Interactions</h5>
                   <button
                     type="button"
-                    onClick={() => removeArrayItem('interactions', index)}
-                    className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                    disabled={formData.interactions.length === 1}
+                    onClick={() => addNestedArrayItem('interactions', 'internal')}
+                    className="text-blue-600 hover:text-blue-700 text-sm"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
-              ))}
+                {formData.interactions.internal.map((interaction, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={interaction}
+                      onChange={(e) => handleNestedArrayChange('interactions', 'internal', index, e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder={`Internal interaction ${index + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNestedArrayItem('interactions', 'internal', index)}
+                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                      disabled={formData.interactions.internal.length === 1}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
