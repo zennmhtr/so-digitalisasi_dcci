@@ -78,12 +78,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               {/* Logo Section */}
               <div className="w-32 border-r-2 border-black p-2 flex items-center justify-center">
                 <img 
-                  src="/images/dcilong.png" 
-                  alt="DCI Logo" 
+                  src="/logo/Logo DG New 2022.png" 
+                  alt="Dharma Group Logo" 
                   className="max-w-full max-h-20 object-contain"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "/images/dci.png"; // Fallback logo
+                    e.target.src = "/logo/dharmagroup.png"; // Fallback logo
                   }}
                 />
               </div>
@@ -91,50 +91,74 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               {/* Title Section */}
               <div className="flex-1 text-center p-4 border-r-2 border-black">
                 <h1 className="text-xl font-bold mb-2">JOB DESCRIPTION</h1>
-                <p className="text-sm font-semibold">PT DHARMA CONTROLCABLE IND</p>
+                <p className="text-sm font-semibold mb-3">PT DHARMA CONTROLCABLE IND</p>
+                <div className="flex justify-center space-x-8 text-xs">
+                  <div>
+                    <span className="font-medium">Tanggal: </span>
+                    <span>{jobdesc.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Revisi: </span>
+                    <span>{jobdesc.revisi || '0'}</span>
+                  </div>
+                </div>
               </div>
               
-              {/* Date Section */}
-              <div className="w-32 p-2">
-                <div className="border-b border-black pb-1 mb-2">
-                  <p className="text-xs font-bold">Dibuat:</p>
+              {/* Dibuat Section */}
+              <div className="w-32 border-r-2 border-black">
+                <div className="border-b border-black p-2 text-center">
+                  <p className="text-xs font-bold">Dibuat,</p>
                 </div>
-                <div className="border-b border-black pb-1 mb-2">
-                  <p className="text-xs font-bold">Disetujui:</p>
+                 <div className="border-b border-black p-7 text-center">
+                  {/* Space for signature */}
                 </div>
-                <div className="text-center mt-4">
-                  <p className="text-xs">Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
-                  <p className="text-xs">Revisi: 0</p>
+              </div>
+
+              {/* Disetujui Section */}
+              <div className="w-32">
+                <div className="border-b border-black p-2 text-center">
+                  <p className="text-xs font-bold">Disetujui,</p>
+                </div>
+                <div className="border-b border-black p-7 text-center">
+                  {/* Space for signature */}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Basic Information */}
-          <div className="border-b-2 border-black p-3">
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <div className="flex">
-                  <span className="font-bold w-32">DIVISION</span>
-                  <span className="mr-2">:</span>
-                  <span>{jobdesc.division || 'ADMINISTRATION'}</span>
+          <div className="border-b-2 border-black">
+            <div className="flex">
+              <div className="flex-1 border-r border-black">
+                <div className="border-b border-black p-3">
+                  <div className="flex">
+                    <span className="font-bold w-32">DIVISION</span>
+                    <span className="mr-2">:</span>
+                    <span>{jobdesc.division || 'ADMINISTRATION'}</span>
+                  </div>
                 </div>
-                <div className="flex">
-                  <span className="font-bold w-32">POSITION TITLE</span>
-                  <span className="mr-2">:</span>
-                  <span>{jobdesc.positionTitle || '-'}</span>
+                <div className="p-3">
+                  <div className="flex">
+                    <span className="font-bold w-32">POSITION TITLE</span>
+                    <span className="mr-2">:</span>
+                    <span>{jobdesc.positionTitle || '-'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex">
-                  <span className="font-bold w-32">DEPARTMENT</span>
-                  <span className="mr-2">:</span>
-                  <span>{jobdesc.department || 'PURCHASING'}</span>
+              <div className="flex-1">
+                <div className="border-b border-black p-3">
+                  <div className="flex">
+                    <span className="font-bold w-32">DEPARTMENT</span>
+                    <span className="mr-2">:</span>
+                    <span>{jobdesc.department || 'PURCHASING'}</span>
+                  </div>
                 </div>
-                <div className="flex">
-                  <span className="font-bold w-32">REPORTS TO</span>
-                  <span className="mr-2">:</span>
-                  <span>{jobdesc.reportsTo || '-'}</span>
+                <div className="p-3">
+                  <div className="flex">
+                    <span className="font-bold w-32">REPORTS TO</span>
+                    <span className="mr-2">:</span>
+                    <span>{jobdesc.reportsTo || '-'}</span>
+                  </div>
                 </div>
               </div>
             </div>

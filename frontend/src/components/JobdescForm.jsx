@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 
-const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
+const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartment }) => {
   const [formData, setFormData] = useState({
+    department: selectedDepartment || existingJobdesc?.department || '',
     division: existingJobdesc?.division || '',
     positionTitle: existingJobdesc?.positionTitle || '',
     reportsTo: existingJobdesc?.reportsTo || '',
+    tanggal: existingJobdesc?.tanggal || new Date().toISOString().split('T')[0],
+    revisi: existingJobdesc?.revisi || '0',
     responsibilities: existingJobdesc?.responsibilities || [''],
     accountabilities: existingJobdesc?.accountabilities || [''],
-    interactions: existingJobdesc?.interactions || { internal: [''], external: [''] },
-    competence: existingJobdesc?.competence || { technical: [''], behavioral: [''] },
+    interactions: existingJobdesc?.interactions || [''],
+    competence: existingJobdesc?.competence || { managerial: [''], skill: [''] },
     jobSpecification: existingJobdesc?.jobSpecification || {
+      age: '',
       education: '',
-      experience: '',
-      skills: [''],
-      certification: ['']
+      nonFormalEducation: '',
+      experience: ''
     }
   });
   
@@ -133,19 +136,13 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
         ...formData,
         responsibilities: formData.responsibilities.filter(r => r.trim()),
         accountabilities: formData.accountabilities.filter(a => a.trim()),
-        interactions: {
-          internal: formData.interactions.internal.filter(i => i.trim()),
-          external: formData.interactions.external.filter(e => e.trim())
-        },
+        interactions: formData.interactions.filter(i => i.trim()),
         competence: {
-          technical: formData.competence.technical.filter(t => t.trim()),
-          behavioral: formData.competence.behavioral.filter(b => b.trim())
+          managerial: formData.competence.managerial.filter(m => m.trim()),
+          skill: formData.competence.skill.filter(s => s.trim())
         },
-        jobSpecification: {
-          ...formData.jobSpecification,
-          skills: formData.jobSpecification.skills.filter(s => s.trim()),
-          certification: formData.jobSpecification.certification.filter(c => c.trim())
-        }
+        tanggal: formData.tanggal,
+        revisi: formData.revisi
       };
 
       // Simulate API call
@@ -186,7 +183,48 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Department <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.department}
+                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                  placeholder="Auto-detected from current department"
+                  readOnly
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.tanggal}
+                  onChange={(e) => handleInputChange('tanggal', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Revisi <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.revisi}
+                  onChange={(e) => handleInputChange('revisi', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter revision number"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Division <span className="text-red-500">*</span>
@@ -331,72 +369,36 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Interactions</h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Internal Interactions */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">Internal</h5>
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h5 className="font-medium text-gray-700">Job Interactions</h5>
+                <button
+                  type="button"
+                  onClick={() => addArrayItem('interactions')}
+                  className="text-blue-600 hover:text-blue-700 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {formData.interactions.map((interaction, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={interaction}
+                    onChange={(e) => handleArrayChange('interactions', index, e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    placeholder={`Interaction ${index + 1}`}
+                  />
                   <button
                     type="button"
-                    onClick={() => addNestedArrayItem('interactions', 'internal')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
+                    onClick={() => removeArrayItem('interactions', index)}
+                    className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                    disabled={formData.interactions.length === 1}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
-                {formData.interactions.internal.map((interaction, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={interaction}
-                      onChange={(e) => handleNestedArrayChange('interactions', 'internal', index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`Internal interaction ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeNestedArrayItem('interactions', 'internal', index)}
-                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.interactions.internal.length === 1}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* External Interactions */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">External</h5>
-                  <button
-                    type="button"
-                    onClick={() => addNestedArrayItem('interactions', 'external')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                {formData.interactions.external.map((interaction, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={interaction}
-                      onChange={(e) => handleNestedArrayChange('interactions', 'external', index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`External interaction ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeNestedArrayItem('interactions', 'external', index)}
-                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.interactions.external.length === 1}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
@@ -405,32 +407,32 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
             <h4 className="text-lg font-medium text-gray-900 mb-4">Competence</h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Technical Competence */}
+              {/* Managerial Competence */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">Technical</h5>
+                  <h5 className="font-medium text-gray-700">Managerial</h5>
                   <button
                     type="button"
-                    onClick={() => addNestedArrayItem('competence', 'technical')}
+                    onClick={() => addNestedArrayItem('competence', 'managerial')}
                     className="text-blue-600 hover:text-blue-700 text-sm"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                {formData.competence.technical.map((competence, index) => (
+                {formData.competence.managerial.map((competence, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <input
                       type="text"
                       value={competence}
-                      onChange={(e) => handleNestedArrayChange('competence', 'technical', index, e.target.value)}
+                      onChange={(e) => handleNestedArrayChange('competence', 'managerial', index, e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`Technical competence ${index + 1}`}
+                      placeholder={`Managerial competence ${index + 1}`}
                     />
                     <button
                       type="button"
-                      onClick={() => removeNestedArrayItem('competence', 'technical', index)}
+                      onClick={() => removeNestedArrayItem('competence', 'managerial', index)}
                       className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.competence.technical.length === 1}
+                      disabled={formData.competence.managerial.length === 1}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -438,32 +440,32 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
                 ))}
               </div>
 
-              {/* Behavioral Competence */}
+              {/* Skill Competence */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">Behavioral</h5>
+                  <h5 className="font-medium text-gray-700">Skill</h5>
                   <button
                     type="button"
-                    onClick={() => addNestedArrayItem('competence', 'behavioral')}
+                    onClick={() => addNestedArrayItem('competence', 'skill')}
                     className="text-blue-600 hover:text-blue-700 text-sm"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                {formData.competence.behavioral.map((competence, index) => (
+                {formData.competence.skill.map((competence, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <input
                       type="text"
                       value={competence}
-                      onChange={(e) => handleNestedArrayChange('competence', 'behavioral', index, e.target.value)}
+                      onChange={(e) => handleNestedArrayChange('competence', 'skill', index, e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`Behavioral competence ${index + 1}`}
+                      placeholder={`Skill competence ${index + 1}`}
                     />
                     <button
                       type="button"
-                      onClick={() => removeNestedArrayItem('competence', 'behavioral', index)}
+                      onClick={() => removeNestedArrayItem('competence', 'skill', index)}
                       className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.competence.behavioral.length === 1}
+                      disabled={formData.competence.skill.length === 1}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -479,7 +481,21 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Education</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Usia</label>
+                <textarea
+                  value={formData.jobSpecification.age}
+                  onChange={(e) => handleInputChange('jobSpecification', {
+                    ...formData.jobSpecification,
+                    age: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  placeholder="Rentang usia yang dibutuhkan"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pendidikan</label>
                 <textarea
                   value={formData.jobSpecification.education}
                   onChange={(e) => handleInputChange('jobSpecification', {
@@ -488,12 +504,28 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows="3"
-                  placeholder="Required education level and qualifications"
+                  placeholder="Tingkat pendidikan yang dibutuhkan"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pendidikan Non Formal</label>
+                <textarea
+                  value={formData.jobSpecification.nonFormalEducation}
+                  onChange={(e) => handleInputChange('jobSpecification', {
+                    ...formData.jobSpecification,
+                    nonFormalEducation: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  placeholder="Pelatihan atau sertifikasi yang dibutuhkan"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pengalaman Kerja</label>
                 <textarea
                   value={formData.jobSpecification.experience}
                   onChange={(e) => handleInputChange('jobSpecification', {
@@ -502,76 +534,8 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel }) => {
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows="3"
-                  placeholder="Required work experience"
+                  placeholder="Pengalaman kerja yang dibutuhkan"
                 />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* Skills */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">Skills</h5>
-                  <button
-                    type="button"
-                    onClick={() => addNestedArrayItem('jobSpecification', 'skills')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                {formData.jobSpecification.skills.map((skill, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={skill}
-                      onChange={(e) => handleNestedArrayChange('jobSpecification', 'skills', index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`Skill ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeNestedArrayItem('jobSpecification', 'skills', index)}
-                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.jobSpecification.skills.length === 1}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Certifications */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h5 className="font-medium text-gray-700">Certification</h5>
-                  <button
-                    type="button"
-                    onClick={() => addNestedArrayItem('jobSpecification', 'certification')}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                {formData.jobSpecification.certification.map((cert, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={cert}
-                      onChange={(e) => handleNestedArrayChange('jobSpecification', 'certification', index, e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={`Certification ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeNestedArrayItem('jobSpecification', 'certification', index)}
-                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                      disabled={formData.jobSpecification.certification.length === 1}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

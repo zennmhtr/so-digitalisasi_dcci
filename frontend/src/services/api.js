@@ -73,4 +73,15 @@ export const departmentsAPI = {
   delete: (id) => api.delete(`/departments/${id}`),
 };
 
+// Job Descriptions API
+export const jobDescriptionsAPI = {
+  getAll: (params) => api.get('/jobdescriptions', { params }),
+  getById: (id) => api.get(`/jobdescriptions/${id}`),
+  getByMemberPNK: (memberNoPNK) => api.get(`/jobdescriptions/member/${memberNoPNK}`),
+  create: (jobdescData) => api.post('/jobdescriptions', jobdescData),
+  update: (id, jobdescData) => api.put(`/jobdescriptions/${id}`, jobdescData),
+  delete: (id) => api.delete(`/jobdescriptions/${id}`),
+  approve: (id) => api.put(`/jobdescriptions/${id}/approve`),
+};
+
 export default api;

@@ -182,6 +182,39 @@ const JobdescManagement = () => {
     }
   };
 
+  const handleDeleteMember = (member) => {
+    if (window.confirm(`Are you sure you want to delete member ${member.name}? This will also delete their job description.`)) {
+      // Remove member from the list
+      const updatedMembers = departmentMembers.filter(m => m.id !== member.id);
+      setDepartmentMembers(updatedMembers);
+      
+      // Update the departmentMembersData
+      departmentMembersData[selectedDepartment] = updatedMembers;
+      
+      // Remove job description if exists
+      const updatedJobDescs = { ...jobDescriptions };
+      delete updatedJobDescs[member.id];
+      setJobDescriptions(updatedJobDescs);
+      
+      alert('Member deleted successfully');
+    }
+  };
+
+  const handleDownloadJobdesc = (member) => {
+    const jobdesc = jobDescriptions[member.id];
+    if (jobdesc) {
+      // Open print dialog for the job description
+      setSelectedMember(member);
+      setShowJobdescViewer(true);
+      // The print functionality will be handled in the JobdescViewer component
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    } else {
+      alert('No job description found for this member');
+    }
+  };
+
   const handleJobdescSave = (jobdescData) => {
     setJobDescriptions(prev => ({
       ...prev,
@@ -396,41 +429,50 @@ const JobdescManagement = () => {
                               </div>
                               
                               <div className="flex space-x-2">
-                                <button
-                                  onClick={() => handleCreateJobdesc(member)}
-                                  className="bg-green-50 hover:bg-green-100 text-green-600 p-2 rounded transition-colors duration-200 border border-green-200"
-                                  title="Create Job Description"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleViewJobdesc(member)}
-                                  className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded transition-colors duration-200 border border-blue-200"
-                                  title="View Job Description"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleEditJobdesc(member)}
-                                  className="bg-amber-50 hover:bg-amber-100 text-amber-600 p-2 rounded transition-colors duration-200 border border-amber-200"
-                                  title="Edit Job Description"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteJobdesc(member)}
-                                  className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded transition-colors duration-200 border border-red-200"
-                                  title="Delete Job Description"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => window.print()}
-                                  className="bg-purple-50 hover:bg-purple-100 text-purple-600 p-2 rounded transition-colors duration-200 border border-purple-200"
-                                  title="Download/Print Job Description"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </button>
+                                {/* Show Create button only if no job description exists */}
+                                {!hasJobdesc && (
+                                  <button
+                                    onClick={() => handleCreateJobdesc(member)}
+                                    className="bg-green-50 hover:bg-green-100 text-green-600 p-2 rounded transition-colors duration-200 border border-green-200"
+                                    title="Create Job Description"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                )}
+                                
+                                {/* Show other buttons only if job description exists */}
+                                {hasJobdesc && (
+                                  <>
+                                    <button
+                                      onClick={() => handleViewJobdesc(member)}
+                                      className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded transition-colors duration-200 border border-blue-200"
+                                      title="View Job Description"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleEditJobdesc(member)}
+                                      className="bg-amber-50 hover:bg-amber-100 text-amber-600 p-2 rounded transition-colors duration-200 border border-amber-200"
+                                      title="Edit Job Description"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDownloadJobdesc(member)}
+                                      className="bg-purple-50 hover:bg-purple-100 text-purple-600 p-2 rounded transition-colors duration-200 border border-purple-200"
+                                      title="Download/Print Job Description"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMember(member)}
+                                      className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded transition-colors duration-200 border border-red-200"
+                                      title="Delete Member"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -459,6 +501,7 @@ const JobdescManagement = () => {
         <JobdescForm
           user={selectedMember}
           existingJobdesc={editingJobdesc}
+          selectedDepartment={selectedDepartment}
           onSave={handleJobdescSave}
           onCancel={() => {
             setShowJobdescForm(false);
@@ -472,42 +515,7 @@ const JobdescManagement = () => {
       {showJobdescViewer && selectedMember && (
         <JobdescViewer
           user={selectedMember}
-          jobdesc={jobDescriptions[selectedMember.id] || {
-            division: 'ADMINISTRATION',
-            department: 'PURCHASING',
-            positionTitle: selectedMember.position.toUpperCase() + ' STAFF',
-            reportsTo: 'PURCHASING DEPARTMENT HEAD',
-            responsibilities: [
-              'Mencari dan melakasana calon supplier yang sesuai dengan kebutuhan',
-              'Koordinasi dengan bagian terkait untuk persiapan pekerjaan di subcont'
-            ],
-            accountabilities: [
-              'Menggunakan fasilitas untuk menunjang pekerjaan',
-              'Pengajuan Supplier'
-            ],
-            interactions: [
-              'All Departemen',
-              'Semua Vendor'
-            ],
-            competence: {
-              managerial: [
-                'Teamwork',
-                'Trouble Shooting',
-                'Customer Satisfaction'
-              ],
-              skill: [
-                'Microsoft Office',
-                'Komunikasi',
-                'Negosiasi'
-              ]
-            },
-            jobSpecification: {
-              age: 'Min. 21 Tahun',
-              education: 'Minimal D3',
-              nonFormalEducation: '-',
-              experience: 'Min. 1 Tahun'
-            }
-          }}
+          jobdesc={jobDescriptions[selectedMember.id] || null}
           onClose={() => {
             setShowJobdescViewer(false);
             setSelectedMember(null);
