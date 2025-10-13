@@ -34,16 +34,156 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
 
   console.log('JobdescViewer - jobdesc data:', jobdesc); // Debug log
   const handlePrint = () => {
-    // Hide non-printable elements and print
-    const printElements = document.querySelectorAll('.print\\:hidden');
-    printElements.forEach(el => el.style.display = 'none');
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    const jobDescContent = document.querySelector('.border-2.border-black').innerHTML;
     
-    window.print();
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Job Description</title>
+        <style>
+          @page { 
+            size: A4 portrait; 
+            margin: 5mm; 
+            border: 2px solid #000;
+          }
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 3mm; 
+            background: white; 
+            color: black;
+            width: 100%;
+            min-height: 100vh;
+            box-sizing: border-box;
+            border: 2px solid #000;
+          }
+          .border-2 { 
+            border: none; 
+            width: 100%;
+            height: auto;
+            margin: 0;
+            box-sizing: border-box;
+            page-break-inside: auto;
+          }
+          .border-black { border-color: #000; }
+          .border-b-2 { border-bottom: 2px solid #000; }
+          .border-r-2 { border-right: 2px solid #000; }
+          .border-b { border-bottom: 1px solid #000; }
+          .border-r { border-right: 1px solid #000; }
+          .flex { display: flex; }
+          .flex-1 { flex: 1; }
+          .items-center { align-items: center; }
+          .justify-center { justify-content: center; }
+          .text-center { text-align: center; }
+          .grid { display: grid; }
+          .grid-cols-2 { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1.5rem;
+          }
+          .gap-8 { gap: 1.5rem; }
+          .space-x-8 > * + * { margin-left: 1.5rem; }
+          .space-y-1 > * + * { margin-top: 0.3rem; }
+          .w-32 { width: 9rem; }
+          .p-2 { padding: 0.8rem; }
+          .p-3 { padding: 1rem; }
+          .p-4 { padding: 1.2rem; }
+          .p-7 { padding: 2rem; }
+          .mb-2 { margin-bottom: 0.8rem; }
+          .mb-3 { margin-bottom: 1rem; }
+          .ml-2 { margin-left: 0.8rem; }
+          .mr-2 { margin-right: 0.8rem; }
+          .text-xl { 
+            font-size: 1.6rem; 
+            font-weight: bold; 
+            line-height: 1.4;
+          }
+          .text-sm { 
+            font-size: 1rem; 
+            line-height: 1.4;
+          }
+          .text-xs { 
+            font-size: 0.9rem; 
+            line-height: 1.3;
+          }
+          .font-bold { font-weight: bold; }
+          .font-semibold { font-weight: 600; }
+          .list-decimal { 
+            list-style-type: decimal; 
+            padding-left: 1.2rem;
+          }
+          .list-inside { list-style-position: inside; }
+          img { 
+            max-width: 100%; 
+            max-height: 70px; 
+            object-fit: contain; 
+          }
+          /* Page break and border handling */
+          .content-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin-bottom: 1rem;
+          }
+          
+          /* Allow sections to break if too long */
+          .long-section {
+            page-break-inside: auto;
+            break-inside: auto;
+          }
+          
+          /* Optimize space usage */
+          ol, ul {
+            margin: 0.6rem 0;
+            padding-left: 1.5rem;
+          }
+          li {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+          }
+          
+          /* Header section - never break */
+          .header-section {
+            min-height: auto;
+            padding: 1rem;
+            page-break-after: avoid;
+            break-after: avoid;
+          }
+          
+          /* Each major section styling */
+          .job-section {
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          /* Ensure proper page margins are maintained */
+          html, body {
+            box-sizing: border-box;
+          }
+          /* Image sizing for larger container */
+          img {
+            max-width: 100%;
+            max-height: 90px;
+            object-fit: contain;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="border-2 border-black">
+          ${jobDescContent}
+        </div>
+      </body>
+      </html>
+    `);
     
-    // Restore elements after printing
+    printWindow.document.close();
+    printWindow.focus();
+    
     setTimeout(() => {
-      printElements.forEach(el => el.style.display = '');
-    }, 1000);
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleDownload = () => {
@@ -120,9 +260,8 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               </div>
               
               {/* Title Section */}
-              <div className="flex-1 text-center p-4 border-r-2 border-black">
+              <div className="flex-1 text-center p-2 border-r-2 border-black">
                 <h1 className="text-xl font-bold mb-2">JOB DESCRIPTION</h1>
-                <p className="text-sm font-semibold mb-3">PT DHARMA CONTROLCABLE IND</p>
                 <div className="flex justify-center space-x-8 text-xs">
                   <div>
                     <span className="font-medium">Tanggal: </span>
@@ -140,7 +279,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                 <div className="border-b border-black p-2 text-center">
                   <p className="text-xs font-bold">Dibuat,</p>
                 </div>
-                <div className="border-b border-black p-7 text-center">
+                <div className="border-b border-black p-4 text-center">
                   {/* Space for signature */}
                 </div>
               </div>
@@ -150,7 +289,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                 <div className="border-b border-black p-2 text-center">
                   <p className="text-xs font-bold">Disetujui,</p>
                 </div>
-                <div className="border-b border-black p-7 text-center">
+                <div className="border-b border-black p-4 text-center">
                   {/* Space for signature */}
                 </div>
               </div>
@@ -181,7 +320,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
                   <div className="flex">
                     <span className="font-bold w-32">DEPARTMENT</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc?.department?.name || user?.department?.name || '-'}</span>
+                    <span>{(jobdesc?.department?.name || user?.department?.name || '-').toUpperCase()}</span>
                   </div>
                 </div>
                 <div className="p-3">
@@ -199,7 +338,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">RESPONSIBILITIES</span>
-              <span className="text-xs ml-2">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya ; berurutan dengan jabatan yang dipegannya, bisa tugas harian atau tugas bulanan)</span>
+              <span className="text-xs ml-2">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.responsibilities && jobdesc.responsibilities.length > 0 ? (
@@ -216,7 +355,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">ACCOUNTABILITIES</span>
-              <span className="text-xs ml-2">(Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik ; dan berisi apa yang dibeisakan oleh jabatan pada berapa persen di target yang dicapai kepada jabatan yang lebih tinggi)</span>
+              <span className="text-xs ml-2">Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan yang lain, bisa berisi :</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.accountabilities && jobdesc.accountabilities.length > 0 ? (
@@ -233,7 +372,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">INTERACTIONS</span>
-              <span className="text-xs ml-2">(Interaksi berisi bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya )</span>
+              <span className="text-xs ml-2">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.interactions?.internal && jobdesc.interactions.internal.length > 0 ? (
@@ -250,7 +389,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">COMPETENCE</span>
-              <span className="text-xs ml-2">(Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya)</span>
+              <span className="text-xs ml-2"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8">
@@ -303,7 +442,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">JOB SPECIFICATION</span>
-              <span className="text-xs ml-2">(Berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
+              <span className="text-xs ml-2">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8 text-sm">
@@ -334,56 +473,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* Print Styles */}
+      {/* Print Styles - Simplified */}
       <style dangerouslySetInnerHTML={{
         __html: `
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          .fixed {
-            position: static !important;
-            visibility: visible !important;
-          }
-          .fixed * {
-            visibility: visible !important;
-          }
           .print\\:hidden {
             display: none !important;
-          }
-          .bg-gray-600 {
-            background: white !important;
-          }
-          .shadow-lg {
-            box-shadow: none !important;
-          }
-          .rounded-lg {
-            border-radius: 0 !important;
-          }
-          .border {
-            border: none !important;
-          }
-          .p-6 {
-            padding: 0 !important;
-          }
-          .my-8 {
-            margin: 0 !important;
-          }
-          .max-w-5xl {
-            max-width: 100% !important;
-          }
-          .mx-auto {
-            margin: 0 !important;
-          }
-          .top-4 {
-            top: 0 !important;
-          }
-          .relative {
-            position: static !important;
-          }
-          @page {
-            size: A4;
-            margin: 15mm;
           }
         }
       `}} />
