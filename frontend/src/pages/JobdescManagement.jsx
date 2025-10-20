@@ -703,11 +703,11 @@ const JobdescManagement = () => {
         )}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Department List */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
+        <div className="flex gap-6 h-[calc(100vh-240px)]">
+          {/* Department List - Scrollable */}
+          <div className="w-1/3 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-sm h-full flex flex-col">
+              <div className="p-6 border-b border-gray-200 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center">
                   <Users className="w-5 h-5 mr-2" />
                   Departments ({departments.length})
@@ -717,7 +717,7 @@ const JobdescManagement = () => {
                 </p>
               </div>
 
-              <div className="p-4">
+              <div className="p-4 flex-1 overflow-y-auto">
                 {loading && departments.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -764,10 +764,10 @@ const JobdescManagement = () => {
             </div>
           </div>
 
-          {/* Department Members */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
+          {/* Department Members - Fixed Position */}
+          <div className="flex-1">
+            <div className="bg-white rounded-lg shadow-sm h-full flex flex-col">
+              <div className="p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -794,7 +794,7 @@ const JobdescManagement = () => {
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="p-6 flex-1 overflow-y-auto">
                 {!selectedDepartment ? (
                   <div className="text-center py-12">
                     <div className="text-gray-400 text-lg mb-2">👥</div>
@@ -975,13 +975,6 @@ const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) =
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Add Member to {departmentName}
         </h3>
-        
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-700">
-            💡 <strong>Note:</strong> This will only add the member to the department. 
-            To create a login account, use the "Add User" feature in Master Data menu.
-          </p>
-        </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
