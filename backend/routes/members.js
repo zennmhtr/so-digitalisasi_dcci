@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const Member = require('../models/Member');
 const Department = require('../models/Department');
 const auth = require('../middleware/auth');
 
@@ -21,33 +22,33 @@ router.get('/', auth, async (req, res) => {
       filter.department = departmentId;
     }
 
-    // Get users from the department
-    const users = await User.find(filter)
-      .select('-password')
-      .populate('role', 'name')
+    // Get all members (with or without user accounts)
+    const members = await Member.find(filter)
+      .populate('user', 'name noPNK email username')
       .populate('department', 'name code')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // Transform users to member format
-    const members = users.map(user => ({
-      id: user._id,
-      type: 'user',
-      name: user.name,
-      noPNK: user.noPNK,
-      email: user.email,
-      position: user.role?.name || 'Staff',
-      department: user.department,
-      user: user._id,
-      createdAt: user.createdAt
+    // Transform members to consistent format
+    const transformedMembers = members.map(member => ({
+      id: member._id,
+      type: 'member',
+      name: member.name,
+      noPNK: member.noPNK || (member.user ? member.user.noPNK : null),
+      email: member.email || (member.user ? member.user.email : null),
+      position: member.position,
+      department: member.department,
+      user: member.user ? member.user._id : null,
+      hasLoginAccount: !!member.user,
+      createdAt: member.createdAt
     }));
 
-    const total = await User.countDocuments(filter);
+    const total = await Member.countDocuments(filter);
 
     res.json({
       success: true,
-      data: members,
+      data: transformedMembers,
       pagination: {
         current: page,
         pages: Math.ceil(total / limit),
@@ -71,29 +72,29 @@ router.get('/department/:departmentId', auth, async (req, res) => {
   try {
     const departmentId = req.params.departmentId;
 
-    // Get users from the department
-    const users = await User.find({ department: departmentId })
-      .select('-password')
-      .populate('role', 'name')
+    // Get all members from the department
+    const members = await Member.find({ department: departmentId })
+      .populate('user', 'name noPNK email username')
       .populate('department', 'name code')
       .sort({ createdAt: -1 });
 
-    // Transform users to member format
-    const members = users.map(user => ({
-      id: user._id,
-      type: 'user',
-      name: user.name,
-      noPNK: user.noPNK,
-      email: user.email,
-      position: user.role?.name || 'Staff',
-      department: user.department,
-      user: user._id,
-      createdAt: user.createdAt
+    // Transform members to consistent format
+    const transformedMembers = members.map(member => ({
+      id: member._id,
+      type: 'member',
+      name: member.name,
+      noPNK: member.noPNK || (member.user ? member.user.noPNK : null),
+      email: member.email || (member.user ? member.user.email : null),
+      position: member.position,
+      department: member.department,
+      user: member.user ? member.user._id : null,
+      hasLoginAccount: !!member.user,
+      createdAt: member.createdAt
     }));
 
     res.json({
       success: true,
-      data: members
+      data: transformedMembers
     });
 
   } catch (error) {
@@ -106,13 +107,11 @@ router.get('/department/:departmentId', auth, async (req, res) => {
 });
 
 // @route   POST /api/members
-// @desc    Create new member (as user)
+// @desc    Create new member (without user account)
 // @access  Private
 router.post('/', [
   auth,
-  body('noPNK').notEmpty().withMessage('No PNK is required'),
   body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
   body('position').notEmpty().withMessage('Position is required'),
   body('department').notEmpty().withMessage('Department is required')
 ], async (req, res) => {
@@ -126,74 +125,188 @@ router.post('/', [
       });
     }
 
-    const { noPNK, name, email, position, department } = req.body;
+    const { name, position, department, noPNK, email } = req.body;
+
+    // Check if member with same name already exists in the department
+    const existingMember = await Member.findOne({
+      name: name,
+      department: department
+    });
+
+    if (existingMember) {
+      return res.status(400).json({
+        success: false,
+        message: 'Member with this name already exists in the department'
+      });
+    }
+
+    // Check for NPK or email conflicts if provided
+    if (noPNK || email) {
+      const conflicts = [];
+      
+      if (noPNK) {
+        const noPNKConflict = await Member.findOne({ noPNK: noPNK }) || 
+                             await User.findOne({ noPNK: noPNK });
+        if (noPNKConflict) conflicts.push('NPK');
+      }
+      
+      if (email) {
+        const emailConflict = await Member.findOne({ email: email }) || 
+                             await User.findOne({ email: email });
+        if (emailConflict) conflicts.push('Email');
+      }
+      
+      if (conflicts.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `${conflicts.join(' and ')} already exists`
+        });
+      }
+    }
+
+    const member = new Member({
+      name,
+      position,
+      department,
+      noPNK: noPNK || null,
+      email: email || null,
+      status: 'active'
+    });
+
+    await member.save();
+
+    const newMember = await Member.findById(member._id)
+      .populate('department', 'name code');
+
+    // Transform to consistent format
+    const transformedMember = {
+      id: newMember._id,
+      type: 'member',
+      name: newMember.name,
+      noPNK: newMember.noPNK,
+      email: newMember.email,
+      position: newMember.position,
+      department: newMember.department,
+      user: null,
+      hasLoginAccount: false,
+      createdAt: newMember.createdAt
+    };
+
+    res.status(201).json({
+      success: true,
+      message: 'Member created successfully',
+      data: transformedMember
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   POST /api/members/:id/create-user
+// @desc    Create user account for existing member
+// @access  Private
+router.post('/:id/create-user', [
+  auth,
+  body('noPNK').notEmpty().withMessage('No PNK is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('username').notEmpty().withMessage('Username is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+
+    const member = await Member.findById(req.params.id);
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: 'Member not found'
+      });
+    }
+
+    if (member.user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Member already has a user account'
+      });
+    }
+
+    const { noPNK, email, username, password = 'password123' } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { noPNK }]
+      $or: [{ email }, { noPNK }, { username }]
     });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'Member with this email or No PNK already exists'
+        message: 'User with this email, NPK, or username already exists'
       });
     }
 
-    // Find or create a role for the position
+    // Find or create role for member's position
     const Role = require('../models/Role');
-    let role = await Role.findOne({ name: position });
+    let role = await Role.findOne({ name: member.position });
     
     if (!role) {
-      // Create a basic role if not exists
       role = new Role({
-        name: position,
-        description: `Role for ${position}`,
+        name: member.position,
+        description: `Role for ${member.position}`,
         permissions: ['View Dashboard'],
         active: true
       });
       await role.save();
     }
 
-    // Generate username from name (simple approach)
-    const username = name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 1000);
-    const defaultPassword = 'password123'; // Should be changed on first login
-
     const user = new User({
       noPNK,
-      name,
+      name: member.name,
       email,
       username,
-      password: defaultPassword,
+      password,
       role: role._id,
-      department,
+      department: member.department,
       status: 'active'
     });
 
     await user.save();
 
-    const newUser = await User.findById(user._id)
-      .select('-password')
-      .populate('role', 'name')
+    // Link user to member
+    member.user = user._id;
+    member.noPNK = noPNK;
+    member.email = email;
+    await member.save();
+
+    const updatedMember = await Member.findById(member._id)
+      .populate('user', 'name noPNK email username')
       .populate('department', 'name code');
 
-    // Transform to member format
-    const member = {
-      id: newUser._id,
-      type: 'user',
-      name: newUser.name,
-      noPNK: newUser.noPNK,
-      email: newUser.email,
-      position: newUser.role?.name || 'Staff',
-      department: newUser.department,
-      user: newUser._id,
-      createdAt: newUser.createdAt
-    };
-
-    res.status(201).json({
+    res.json({
       success: true,
-      message: 'Member created successfully',
-      data: member
+      message: 'User account created successfully',
+      data: {
+        id: updatedMember._id,
+        type: 'member',
+        name: updatedMember.name,
+        noPNK: updatedMember.noPNK,
+        email: updatedMember.email,
+        position: updatedMember.position,
+        department: updatedMember.department,
+        user: updatedMember.user._id,
+        hasLoginAccount: true,
+        createdAt: updatedMember.createdAt
+      }
     });
 
   } catch (error) {
@@ -210,9 +323,7 @@ router.post('/', [
 // @access  Private
 router.put('/:id', [
   auth,
-  body('noPNK').optional().notEmpty().withMessage('No PNK cannot be empty'),
   body('name').optional().notEmpty().withMessage('Name cannot be empty'),
-  body('email').optional().isEmail().withMessage('Valid email is required'),
   body('position').optional().notEmpty().withMessage('Position cannot be empty')
 ], async (req, res) => {
   try {
@@ -225,82 +336,111 @@ router.put('/:id', [
       });
     }
 
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
+    const member = await Member.findById(req.params.id);
+    if (!member) {
       return res.status(404).json({
         success: false,
         message: 'Member not found'
       });
     }
 
-    const { noPNK, name, email, position, department } = req.body;
+    const { name, position, department, noPNK, email } = req.body;
 
-    // Check for duplicates if updating unique fields
-    if (email || noPNK) {
-      const existingUser = await User.findOne({
+    // Check for conflicts
+    if (name && name !== member.name) {
+      const nameConflict = await Member.findOne({
         _id: { $ne: req.params.id },
-        $or: [
-          ...(email ? [{ email }] : []),
-          ...(noPNK ? [{ noPNK }] : [])
-        ]
+        name: name,
+        department: department || member.department
       });
-
-      if (existingUser) {
+      if (nameConflict) {
         return res.status(400).json({
           success: false,
-          message: 'Member with this email or No PNK already exists'
+          message: 'Member with this name already exists in the department'
         });
       }
     }
 
-    // Update role if position changed
-    if (position) {
-      const Role = require('../models/Role');
-      let role = await Role.findOne({ name: position });
+    // Check NPK/email conflicts if provided
+    if (noPNK || email) {
+      const conflicts = [];
       
-      if (!role) {
-        role = new Role({
-          name: position,
-          description: `Role for ${position}`,
-          permissions: ['View Dashboard'],
-          active: true
-        });
-        await role.save();
+      if (noPNK && noPNK !== member.noPNK) {
+        const noPNKConflict = await Member.findOne({ _id: { $ne: req.params.id }, noPNK: noPNK }) || 
+                             await User.findOne({ noPNK: noPNK });
+        if (noPNKConflict) conflicts.push('NPK');
       }
-      user.role = role._id;
+      
+      if (email && email !== member.email) {
+        const emailConflict = await Member.findOne({ _id: { $ne: req.params.id }, email: email }) || 
+                             await User.findOne({ email: email });
+        if (emailConflict) conflicts.push('Email');
+      }
+      
+      if (conflicts.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `${conflicts.join(' and ')} already exists`
+        });
+      }
     }
 
-    // Update fields
-    if (noPNK) user.noPNK = noPNK;
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (department) user.department = department;
+    // Update member fields
+    if (name) member.name = name;
+    if (position) member.position = position;
+    if (department) member.department = department;
+    if (noPNK !== undefined) member.noPNK = noPNK || null;
+    if (email !== undefined) member.email = email || null;
 
-    await user.save();
+    await member.save();
 
-    const updatedUser = await User.findById(user._id)
-      .select('-password')
-      .populate('role', 'name')
+    // Update linked user if exists
+    if (member.user && (name || position || department || noPNK || email)) {
+      const user = await User.findById(member.user);
+      if (user) {
+        if (name) user.name = name;
+        if (department) user.department = department;
+        if (noPNK) user.noPNK = noPNK;
+        if (email) user.email = email;
+        
+        if (position) {
+          const Role = require('../models/Role');
+          let role = await Role.findOne({ name: position });
+          if (!role) {
+            role = new Role({
+              name: position,
+              description: `Role for ${position}`,
+              permissions: ['View Dashboard'],
+              active: true
+            });
+            await role.save();
+          }
+          user.role = role._id;
+        }
+        
+        await user.save();
+      }
+    }
+
+    const updatedMember = await Member.findById(member._id)
+      .populate('user', 'name noPNK email username')
       .populate('department', 'name code');
-
-    // Transform to member format
-    const member = {
-      id: updatedUser._id,
-      type: 'user',
-      name: updatedUser.name,
-      noPNK: updatedUser.noPNK,
-      email: updatedUser.email,
-      position: updatedUser.role?.name || 'Staff',
-      department: updatedUser.department,
-      user: updatedUser._id,
-      createdAt: updatedUser.createdAt
-    };
 
     res.json({
       success: true,
       message: 'Member updated successfully',
-      data: member
+      data: {
+        id: updatedMember._id,
+        type: 'member',
+        name: updatedMember.name,
+        noPNK: updatedMember.noPNK || (updatedMember.user ? updatedMember.user.noPNK : null),
+        email: updatedMember.email || (updatedMember.user ? updatedMember.user.email : null),
+        position: updatedMember.position,
+        department: updatedMember.department,
+        user: updatedMember.user ? updatedMember.user._id : null,
+        hasLoginAccount: !!updatedMember.user,
+        createdAt: updatedMember.createdAt
+      }
     });
 
   } catch (error) {
@@ -313,24 +453,33 @@ router.put('/:id', [
 });
 
 // @route   DELETE /api/members/:id
-// @desc    Delete member
+// @desc    Delete member (and optionally linked user)
 // @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
+    const member = await Member.findById(req.params.id);
+    if (!member) {
       return res.status(404).json({
         success: false,
         message: 'Member not found'
       });
     }
 
-    // Also delete related job descriptions
+    // Delete related job descriptions
     const JobDescription = require('../models/JobDescription');
-    await JobDescription.deleteMany({ user: req.params.id });
+    await JobDescription.deleteMany({ 
+      $or: [
+        { member: req.params.id },
+        { user: member.user }
+      ]
+    });
 
-    await User.findByIdAndDelete(req.params.id);
+    // Delete linked user if exists (optional - could be made configurable)
+    if (member.user) {
+      await User.findByIdAndDelete(member.user);
+    }
+
+    await Member.findByIdAndDelete(req.params.id);
 
     res.json({
       success: true,

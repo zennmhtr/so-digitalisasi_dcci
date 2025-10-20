@@ -46,108 +46,115 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
         <style>
           @page { 
             size: A4 portrait; 
-            margin: 5mm; 
+            margin: 3mm; 
             border: 2px solid #000;
           }
           body { 
             font-family: Arial, sans-serif; 
             margin: 0; 
-            padding: 3mm; 
+            padding: 2mm; 
             background: white; 
             color: black;
             width: 100%;
             min-height: 100vh;
             box-sizing: border-box;
             border: 2px solid #000;
+            font-size: 11px;
+            line-height: 1.3;
           }
           .border-2 { 
             border: none; 
             width: 100%;
-            height: auto;
+            min-height: 100%;
             margin: 0;
             box-sizing: border-box;
-            page-break-inside: auto;
           }
-          .border-black { border-color: #000; }
-          .border-b-2 { border-bottom: 2px solid #000; }
-          .border-r-2 { border-right: 2px solid #000; }
-          .border-b { border-bottom: 1px solid #000; }
-          .border-r { border-right: 1px solid #000; }
+          .border-black { border-color: #000 !important; }
+          .border-b-2 { border-bottom: 2px solid #000 !important; }
+          .border-r-2 { border-right: 2px solid #000 !important; }
+          .border-b { border-bottom: 1px solid #000 !important; }
+          .border-r { border-right: 1px solid #000 !important; }
           .flex { display: flex; }
           .flex-1 { flex: 1; }
+          .flex-col { flex-direction: column; }
           .items-center { align-items: center; }
           .justify-center { justify-content: center; }
+          .justify-between { justify-content: space-between; }
           .text-center { text-align: center; }
           .grid { display: grid; }
           .grid-cols-2 { 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 1.5rem;
+            gap: 1.2rem;
           }
-          .gap-8 { gap: 1.5rem; }
-          .space-x-8 > * + * { margin-left: 1.5rem; }
+          .gap-8 { gap: 1.2rem; }
+          .space-x-8 > * + * { margin-left: 1.2rem; }
           .space-y-1 > * + * { margin-top: 0.3rem; }
-          .w-32 { width: 9rem; }
-          .p-2 { padding: 0.8rem; }
-          .p-3 { padding: 1rem; }
-          .p-4 { padding: 1.2rem; }
-          .p-7 { padding: 2rem; }
-          .mb-2 { margin-bottom: 0.8rem; }
-          .mb-3 { margin-bottom: 1rem; }
-          .ml-2 { margin-left: 0.8rem; }
-          .mr-2 { margin-right: 0.8rem; }
+          .w-32 { width: 7rem; }
+          .w-40 { width: 8.5rem; }
+          .w-44 { width: 10rem; }
+          .w-64 { width: 14rem; }
+          .p-1 { padding: 0.2rem; }
+          .p-2 { padding: 0.6rem; }
+          .p-3 { padding: 0.8rem; }
+          .p-4 { padding: 1.0rem; }
+          .p-6 { padding: 0.8rem; }
+          .p-7 { padding: 1.0rem; }
+          .p-8 { padding: 1.2rem; }
+          .p-12 { padding: 2.0rem; }
+          .mb-2 { margin-bottom: 0.5rem; }
+          .mb-3 { margin-bottom: 0.6rem; }
+          .ml-2 { margin-left: 0.5rem; }
+          .mr-2 { margin-right: 0.5rem; }
+          .ml-6 { margin-left: 1.0rem; }
+          .ml-8 { margin-left: 1.5rem; }
           .text-xl { 
-            font-size: 1.6rem; 
+            font-size: 16px; 
             font-weight: bold; 
-            line-height: 1.4;
+            line-height: 1.3;
           }
           .text-sm { 
-            font-size: 1rem; 
-            line-height: 1.4;
+            font-size: 12px; 
+            line-height: 1.3;
           }
           .text-xs { 
-            font-size: 0.9rem; 
-            line-height: 1.3;
+            font-size: 10px; 
+            line-height: 1.2;
           }
           .font-bold { font-weight: bold; }
           .font-semibold { font-weight: 600; }
+          .italic { font-style: italic; }
           .list-decimal { 
             list-style-type: decimal; 
             padding-left: 1.2rem;
+            margin: 0.4rem 0;
           }
           .list-inside { list-style-position: inside; }
           img { 
             max-width: 100%; 
-            max-height: 70px; 
+            max-height: 50px; 
             object-fit: contain; 
-          }
-          /* Page break and border handling */
-          .content-section {
-            page-break-inside: avoid;
-            break-inside: avoid;
-            margin-bottom: 1rem;
-          }
-          
-          /* Allow sections to break if too long */
-          .long-section {
-            page-break-inside: auto;
-            break-inside: auto;
           }
           
           /* Optimize space usage */
           ol, ul {
-            margin: 0.6rem 0;
-            padding-left: 1.5rem;
+            margin: 0.4rem 0;
+            padding-left: 1.2rem;
           }
           li {
-            margin-bottom: 0.4rem;
-            line-height: 1.4;
+            margin-bottom: 0.3rem;
+            line-height: 1.3;
           }
           
-          /* Header section - never break */
+          /* Compact sections */
+          .content-section {
+            margin-bottom: 0;
+          }
+          
+          /* Header section optimization */
           .header-section {
+            flex-shrink: 0;
             min-height: auto;
-            padding: 1rem;
-            page-break-after: avoid;
+          }
             break-after: avoid;
           }
           
@@ -167,6 +174,39 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
             max-height: 90px;
             object-fit: contain;
           }
+          
+          /* SIMPLE BORDER FIX - LANGSUNG KE INTINYA */
+          
+          /* Hilangkan semua gap dan margin */
+          * {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          /* Container utama tanpa padding sama sekali */
+          body, .border-2 {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          /* Semua elemen border langsung ke tepi */
+          .border-b, .border-b-2, .border-r, .border-r-2 {
+            position: relative !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Konten dalam elemen diberi padding terpisah */
+          .p-1 { padding: 0.2rem !important; }
+          .p-2 { padding: 0.4rem !important; }
+          .p-3 { padding: 0.5rem !important; }
+          .p-6 { padding: 0.8rem !important; }
+          .p-8 { padding: 1.0rem !important; }
+          .p-12 { padding: 1.8rem !important; }
+          
+          /* Khusus untuk margin-left spacing section titles */
+          .ml-8 { margin-left: 1.5rem !important; }
         </style>
       </head>
       <body>
@@ -246,28 +286,34 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           {/* Header Section */}
           <div className="border-b-2 border-black">
             <div className="flex">
-              {/* Logo Section */}
-              <div className="w-32 border-r-2 border-black p-2 flex items-center justify-center">
-                <img 
-                  src="/images/dcilong.png" 
-                  alt="Dharma Group Logo" 
-                  className="max-w-full max-h-20 object-contain"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/dcilong.png"; // Fallback logo
-                  }}
-                />
+              {/* Logo and Company Section */}
+              <div className="w-64 border-r-2 border-black p-2">
+                <div className="flex flex-col items-center">
+                  <img 
+                    src="/images/dcilong.png" 
+                    alt="Dharma Group Logo" 
+                    className="max-w-full max-h-26 object-contain mb-2"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/dcilong.png"; // Fallback logo
+                    }}
+                  />
+                 
+                </div>
               </div>
               
               {/* Title Section */}
-              <div className="flex-1 text-center p-2 border-r-2 border-black">
-                <h1 className="text-xl font-bold mb-2">JOB DESCRIPTION</h1>
-                <div className="flex justify-center space-x-8 text-xs">
-                  <div>
+              <div className="flex-1 border-r-2 border-black flex flex-col justify-between p-2">
+                <div></div>
+                <div className="text-center">
+                  <h1 className="text-xl font-bold italic">JOB DESCRIPTION</h1>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="text-left">
                     <span className="font-medium">Tanggal: </span>
                     <span>{jobdesc?.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
                   </div>
-                  <div>
+                  <div className="text-left">
                     <span className="font-medium">Revisi: </span>
                     <span>{jobdesc?.revisi || '0'}</span>
                   </div>
@@ -276,20 +322,20 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
               
               {/* Dibuat Section */}
               <div className="w-32 border-r-2 border-black">
-                <div className="border-b border-black p-2 text-center">
+                <div className="border-b border-black p-1 text-center">
                   <p className="text-xs font-bold">Dibuat,</p>
                 </div>
-                <div className="border-b border-black p-4 text-center">
+                <div className="border-b border-black p-12 text-center">
                   {/* Space for signature */}
                 </div>
               </div>
 
               {/* Disetujui Section */}
               <div className="w-32">
-                <div className="border-b border-black p-2 text-center">
+                <div className="border-b border-black p-1 text-center">
                   <p className="text-xs font-bold">Disetujui,</p>
                 </div>
-                <div className="border-b border-black p-4 text-center">
+                <div className="border-b border-black p-12 text-center">
                   {/* Space for signature */}
                 </div>
               </div>
@@ -338,7 +384,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">RESPONSIBILITIES</span>
-              <span className="text-xs ml-2">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
+              <span className="text-xs ml-8">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.responsibilities && jobdesc.responsibilities.length > 0 ? (
@@ -355,7 +401,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">ACCOUNTABILITIES</span>
-              <span className="text-xs ml-2">Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan yang lain, bisa berisi :</span>
+              <span className="text-xs ml-8">Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan yang lain, bisa berisi :</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.accountabilities && jobdesc.accountabilities.length > 0 ? (
@@ -372,7 +418,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">INTERACTIONS</span>
-              <span className="text-xs ml-2">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
+              <span className="text-xs ml-8">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.interactions?.internal && jobdesc.interactions.internal.length > 0 ? (
@@ -389,7 +435,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">COMPETENCE</span>
-              <span className="text-xs ml-2"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
+              <span className="text-xs ml-8"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8">
@@ -442,28 +488,28 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
           <div className="p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">JOB SPECIFICATION</span>
-              <span className="text-xs ml-2">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
+              <span className="text-xs ml-8">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
             </div>
             
             <div className="grid grid-cols-2 gap-8 text-sm">
               <div className="space-y-1">
                 <div className="flex">
-                  <span className="w-32">Usia</span>
+                  <span className="w-44">Usia</span>
                   <span className="mr-2">:</span>
                   <span>{jobdesc.jobSpecification?.age || 'Min. 21 Tahun'}</span>
                 </div>
                 <div className="flex">
-                  <span className="w-32">Pendidikan</span>
+                  <span className="w-44">Pendidikan</span>
                   <span className="mr-2">:</span>
                   <span>{jobdesc.jobSpecification?.education || 'Minimal D3'}</span>
                 </div>
                 <div className="flex">
-                  <span className="w-32">Pendidikan Non Formal</span>
+                  <span className="w-44">Pendidikan Non Formal</span>
                   <span className="mr-2">:</span>
                   <span>{jobdesc.jobSpecification?.nonFormalEducation || '-'}</span>
                 </div>
                 <div className="flex">
-                  <span className="w-32">Pengalaman Kerja</span>
+                  <span className="w-44">Pengalaman Kerja</span>
                   <span className="mr-2">:</span>
                   <span>{jobdesc.jobSpecification?.experience || 'Min. 1 Tahun'}</span>
                 </div>

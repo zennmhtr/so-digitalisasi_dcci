@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Users, FileText, Eye, Edit, Plus, Trash2, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, FileText, Eye, Edit, Plus, Trash2, Printer } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { departmentsAPI, membersAPI, jobDescriptionsAPI } from '../services/api';
 import JobdescViewer from '../components/JobdescViewer';
@@ -104,9 +104,17 @@ const JobdescManagement = () => {
       const jobDescsMap = {};
       
       jobDescriptions.forEach(jobdesc => {
-        // Find member by user ID or by noPNK
+        // Find member by multiple criteria
         const member = members.find(m => 
-          (jobdesc.user && m.id === jobdesc.user._id) || 
+          // Match by member ID (new Member model)
+          (jobdesc.member && m.id === jobdesc.member._id) ||
+          // Match by user ID (legacy User model)
+          (jobdesc.user && m.id === jobdesc.user._id) ||
+          // Match by member ID directly
+          (jobdesc.member && m.id === jobdesc.member) ||
+          // Match by user ID directly
+          (jobdesc.user && m.id === jobdesc.user) ||
+          // Match by noPNK
           (jobdesc.memberNoPNK && m.noPNK === jobdesc.memberNoPNK)
         );
         
@@ -229,62 +237,109 @@ const JobdescManagement = () => {
     }
   };
 
-  const handleDownloadJobdesc = (member) => {
+  const handlePrint = (member) => {
     const jobdesc = jobDescriptions[member.id];
-    if (jobdesc) {
-      // Create print window with job description content - same as JobdescViewer
-      const printWindow = window.open('', '_blank');
-      
-      // Generate job description HTML content
-      const jobDescHTML = `
+    if (!jobdesc) {
+      alert('No job description found for this member');
+      return;
+    }
+
+    // Create job description HTML content - same as JobdescViewer
+    const jobDescHTML = `
+      <div class="bg-white border-2 border-black">
+        <!-- Header Section -->
         <div class="border-b-2 border-black">
           <div class="flex">
-            <div class="w-32 border-r-2 border-black p-2 flex items-center justify-center">
-              <img src="/images/dcilong.png" alt="Dharma Group Logo" class="max-w-full max-h-20 object-contain" />
-            </div>
-            <div class="flex-1 text-center p-2 border-r-2 border-black">
-              <h1 class="text-xl font-bold mb-2">JOB DESCRIPTION</h1>
-              <div class="flex justify-center space-x-8 text-xs">
-                <div><span class="font-medium">Tanggal: </span><span>${jobdesc?.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span></div>
-                <div><span class="font-medium">Revisi: </span><span>${jobdesc?.revisi || '0'}</span></div>
+            <!-- Logo and Company Section -->
+            <div class="w-64 border-r-2 border-black p-2">
+              <div class="flex flex-col items-center">
+                <img src="/images/dcilong.png" alt="Dharma Group Logo" class="max-w-full max-h-26 object-contain mb-2" />
               </div>
             </div>
-            <div class="w-32 border-r-2 border-black">
-              <div class="border-b border-black p-2 text-center"><p class="text-xs font-bold">Dibuat,</p></div>
-              <div class="border-b border-black p-4 text-center"></div>
+            
+            <!-- Title Section -->
+            <div class="flex-1 border-r-2 border-black flex flex-col justify-between p-2">
+              <div></div>
+              <div class="text-center">
+                <h1 class="text-xl font-bold italic">JOB DESCRIPTION</h1>
+              </div>
+              <div class="grid grid-cols-2 gap-4 text-xs">
+                <div class="text-left">
+                  <span class="font-medium">Tanggal: </span>
+                  <span>${jobdesc?.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
+                </div>
+                <div class="text-left">
+                  <span class="font-medium">Revisi: </span>
+                  <span>${jobdesc?.revisi || '0'}</span>
+                </div>
+              </div>
             </div>
+            
+            <!-- Dibuat Section -->
+            <div class="w-32 border-r-2 border-black">
+              <div class="border-b border-black p-1 text-center">
+                <p class="text-xs font-bold">Dibuat,</p>
+              </div>
+              <div class="border-b border-black p-12 text-center">
+                <!-- Space for signature -->
+              </div>
+            </div>
+
+            <!-- Disetujui Section -->
             <div class="w-32">
-              <div class="border-b border-black p-2 text-center"><p class="text-xs font-bold">Disetujui,</p></div>
-              <div class="border-b border-black p-4 text-center"></div>
+              <div class="border-b border-black p-1 text-center">
+                <p class="text-xs font-bold">Disetujui,</p>
+              </div>
+              <div class="border-b border-black p-12 text-center">
+                <!-- Space for signature -->
+              </div>
             </div>
           </div>
         </div>
-        
+
+        <!-- Employee Info Section -->
         <div class="border-b-2 border-black">
           <div class="flex">
             <div class="flex-1 border-r border-black">
               <div class="border-b border-black p-3">
-                <div class="flex"><span class="font-bold w-32">DIVISION</span><span class="mr-2">:</span><span>${jobdesc?.division || '-'}</span></div>
+                <div class="flex">
+                  <span class="font-bold w-32">DIVISION</span>
+                  <span class="mr-2">:</span>
+                  <span>${jobdesc?.division || '-'}</span>
+                </div>
               </div>
               <div class="p-3">
-                <div class="flex"><span class="font-bold w-32">POSITION TITLE</span><span class="mr-2">:</span><span>${jobdesc?.positionTitle || '-'}</span></div>
+                <div class="flex">
+                  <span class="font-bold w-32">POSITION TITLE</span>
+                  <span class="mr-2">:</span>
+                  <span>${jobdesc?.positionTitle || '-'}</span>
+                </div>
               </div>
             </div>
             <div class="flex-1">
               <div class="border-b border-black p-3">
-                <div class="flex"><span class="font-bold w-32">DEPARTMENT</span><span class="mr-2">:</span><span>${(jobdesc?.department?.name || member?.department?.name || '-').toUpperCase()}</span></div>
+                <div class="flex">
+                  <span class="font-bold w-32">DEPARTMENT</span>
+                  <span class="mr-2">:</span>
+                  <span>${(jobdesc?.department?.name || member?.department?.name || '-').toUpperCase()}</span>
+                </div>
               </div>
               <div class="p-3">
-                <div class="flex"><span class="font-bold w-32">REPORTS TO</span><span class="mr-2">:</span><span>${jobdesc?.reportsTo || '-'}</span></div>
+                <div class="flex">
+                  <span class="font-bold w-32">REPORTS TO</span>
+                  <span class="mr-2">:</span>
+                  <span>${jobdesc?.reportsTo || '-'}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        
+
+        <!-- Responsibilities -->
         <div class="border-b border-black p-3">
           <div class="mb-2">
             <span class="font-bold text-sm">RESPONSIBILITIES</span>
-            <span class="text-xs ml-2">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
+            <span class="text-xs ml-8">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
             ${jobdesc?.responsibilities && jobdesc.responsibilities.length > 0 ? 
@@ -293,11 +348,12 @@ const JobdescManagement = () => {
             }
           </ol>
         </div>
-        
+
+        <!-- Accountabilities -->
         <div class="border-b border-black p-3">
           <div class="mb-2">
             <span class="font-bold text-sm">ACCOUNTABILITIES</span>
-            <span class="text-xs ml-2">Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan yang lain, bisa berisi :</span>
+            <span class="text-xs ml-8">(Accountabilities berisi wewenang yang diberikan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan dapat dievaluasi pencapaiannya)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
             ${jobdesc?.accountabilities && jobdesc.accountabilities.length > 0 ? 
@@ -306,11 +362,12 @@ const JobdescManagement = () => {
             }
           </ol>
         </div>
-        
+
+        <!-- Interactions -->
         <div class="border-b border-black p-3">
           <div class="mb-2">
             <span class="font-bold text-sm">INTERACTIONS</span>
-            <span class="text-xs ml-2">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
+            <span class="text-xs ml-8">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
             ${jobdesc?.interactions?.internal && jobdesc.interactions.internal.length > 0 ? 
@@ -319,19 +376,21 @@ const JobdescManagement = () => {
             }
           </ol>
         </div>
-        
+
+        <!-- Competence -->
         <div class="border-b border-black p-3">
           <div class="mb-2">
             <span class="font-bold text-sm">COMPETENCE</span>
-            <span class="text-xs ml-2"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
+            <span class="text-xs ml-8"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
           </div>
+          
           <div class="grid grid-cols-2 gap-8">
             <div>
               <p class="font-bold text-sm mb-2">A. Competence Managerial :</p>
               <ol class="list-decimal list-inside space-y-1 text-sm">
                 ${jobdesc.competence?.managerial && jobdesc.competence.managerial.length > 0 ? 
                   jobdesc.competence.managerial.map(comp => `<li>${comp}</li>`).join('') : 
-                  `<li>Teamwork</li><li>Trouble Shooting</li><li>Customer Satisfaction</li><li>Cross Functional Capability</li><li>Quality Focus</li><li>Cost Efficiency</li><li>Continuous Improvement</li><li>Planning Monitoring</li><li>Personal Integrity</li><li>Drive for Result</li>`
+                  ['Teamwork', 'Trouble Shooting', 'Customer Satisfaction', 'Cross Functional Capability', 'Quality Focus', 'Cost Efficiency', 'Continuous Improvement', 'Planning Monitoring', 'Personal Integrity', 'Drive for Result'].map(comp => `<li>${comp}</li>`).join('')
                 }
               </ol>
             </div>
@@ -339,173 +398,236 @@ const JobdescManagement = () => {
               <p class="font-bold text-sm mb-2">B. Competence Skill :</p>
               <ol class="list-decimal list-inside space-y-1 text-sm">
                 ${jobdesc.competence?.skill && jobdesc.competence.skill.length > 0 ? 
-                  jobdesc.competence.skill.map(skill => `<li>${skill}</li>`).join('') : 
-                  `<li>Microsoft Office</li><li>Komunikasi</li><li>Negosiasi</li><li>SAP</li><li>Control Plan</li>`
+                  jobdesc.competence.skill.map(comp => `<li>${comp}</li>`).join('') : 
+                  ['Microsoft Office', 'Komunikasi', 'Report', 'Administration', 'SAP', 'Oracle Plus'].map(comp => `<li>${comp}</li>`).join('')
                 }
               </ol>
             </div>
           </div>
         </div>
-        
+
+        <!-- Job Specification -->
         <div class="p-3">
           <div class="mb-2">
             <span class="font-bold text-sm">JOB SPECIFICATION</span>
-            <span class="text-xs ml-2">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
+            <span class="text-xs ml-8">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
           </div>
+          
           <div class="grid grid-cols-2 gap-8 text-sm">
             <div class="space-y-1">
-              <div class="flex"><span class="w-32">Usia</span><span class="mr-2">:</span><span>${jobdesc.jobSpecification?.age || 'Min. 21 Tahun'}</span></div>
-              <div class="flex"><span class="w-32">Pendidikan</span><span class="mr-2">:</span><span>${jobdesc.jobSpecification?.education || 'Minimal D3'}</span></div>
-              <div class="flex"><span class="w-32">Pendidikan Non Formal</span><span class="mr-2">:</span><span>${jobdesc.jobSpecification?.nonFormalEducation || '-'}</span></div>
-              <div class="flex"><span class="w-32">Pengalaman Kerja</span><span class="mr-2">:</span><span>${jobdesc.jobSpecification?.experience || 'Min. 1 Tahun'}</span></div>
+              <div class="flex">
+                <span class="w-44">Usia</span>
+                <span class="mr-2">:</span>
+                <span>${jobdesc.jobSpecification?.age || 'Min. 21 Tahun'}</span>
+              </div>
+              <div class="flex">
+                <span class="w-44">Pendidikan</span>
+                <span class="mr-2">:</span>
+                <span>${jobdesc.jobSpecification?.education || 'Minimal D3'}</span>
+              </div>
+              <div class="flex">
+                <span class="w-44">Pendidikan Non Formal</span>
+                <span class="mr-2">:</span>
+                <span>${jobdesc.jobSpecification?.nonFormalEducation || '-'}</span>
+              </div>
+              <div class="flex">
+                <span class="w-44">Pengalaman Kerja</span>
+                <span class="mr-2">:</span>
+                <span>${jobdesc.jobSpecification?.experience || 'Min. 1 Tahun'}</span>
+              </div>
             </div>
           </div>
         </div>
-      `;
-      
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Job Description - ${member.name}</title>
-          <style>
-            @page { 
-              size: A4 portrait; 
-              margin: 5mm; 
-              border: 2px solid #000;
-            }
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 0; 
-              padding: 3mm; 
-              background: white; 
-              color: black;
-              width: 100%;
-              min-height: 100vh;
-              box-sizing: border-box;
-              border: 2px solid #000;
-            }
-            .border-2 { 
-              border: none; 
-              width: 100%;
-              height: auto;
-              margin: 0;
-              box-sizing: border-box;
-              page-break-inside: auto;
-            }
-            .border-black { border-color: #000; }
-            .border-b-2 { border-bottom: 2px solid #000; }
-            .border-r-2 { border-right: 2px solid #000; }
-            .border-b { border-bottom: 1px solid #000; }
-            .border-r { border-right: 1px solid #000; }
-            .flex { display: flex; }
-            .flex-1 { flex: 1; }
-            .items-center { align-items: center; }
-            .justify-center { justify-content: center; }
-            .text-center { text-align: center; }
-            .grid { display: grid; }
-            .grid-cols-2 { 
-              grid-template-columns: repeat(2, 1fr); 
-              gap: 1.5rem;
-            }
-            .gap-8 { gap: 1.5rem; }
-            .space-x-8 > * + * { margin-left: 1.5rem; }
-            .space-y-1 > * + * { margin-top: 0.3rem; }
-            .w-32 { width: 9rem; }
-            .p-2 { padding: 0.8rem; }
-            .p-3 { padding: 1rem; }
-            .p-4 { padding: 1.2rem; }
-            .p-7 { padding: 2rem; }
-            .mb-2 { margin-bottom: 0.8rem; }
-            .mb-3 { margin-bottom: 1rem; }
-            .ml-2 { margin-left: 0.8rem; }
-            .mr-2 { margin-right: 0.8rem; }
-            .text-xl { 
-              font-size: 1.6rem; 
-              font-weight: bold; 
-              line-height: 1.4;
-            }
-            .text-sm { 
-              font-size: 1rem; 
-              line-height: 1.4;
-            }
-            .text-xs { 
-              font-size: 0.9rem; 
-              line-height: 1.3;
-            }
-            .font-bold { font-weight: bold; }
-            .font-semibold { font-weight: 600; }
-            .list-decimal { 
-              list-style-type: decimal; 
-              padding-left: 1.2rem;
-            }
-            .list-inside { list-style-position: inside; }
-            img { 
-              max-width: 100%; 
-              max-height: 90px; 
-              object-fit: contain; 
-            }
-            /* Page break and border handling */
-            .content-section {
-              page-break-inside: avoid;
-              break-inside: avoid;
-              margin-bottom: 1rem;
-            }
-            
-            /* Allow sections to break if too long */
-            .long-section {
-              page-break-inside: auto;
-              break-inside: auto;
-            }
-            
-            /* Optimize space usage */
-            ol, ul {
-              margin: 0.6rem 0;
-              padding-left: 1.5rem;
-            }
-            li {
-              margin-bottom: 0.4rem;
-              line-height: 1.4;
-            }
-            
-            /* Header section - never break */
-            .header-section {
-              min-height: auto;
-              padding: 1rem;
-              page-break-after: avoid;
-              break-after: avoid;
-            }
-            
-            /* Each major section styling */
-            .job-section {
-              padding: 0.8rem 1rem;
-              margin-bottom: 0.5rem;
-            }
-            
-            /* Ensure proper page margins are maintained */
-            html, body {
-              box-sizing: border-box;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="border-2 border-black">
-            ${jobDescHTML}
-          </div>
-        </body>
-        </html>
-      `);
-      
-      printWindow.document.close();
-      printWindow.focus();
-      
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    } else {
-      alert('No job description found for this member');
-    }
+      </div>
+    `;
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Job Description - ${member.name}</title>
+        <style>
+          @page { 
+            size: A4 portrait; 
+            margin: 3mm; 
+            border: 2px solid #000;
+          }
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 2mm; 
+            background: white; 
+            color: black;
+            width: 100%;
+            min-height: 100vh;
+            box-sizing: border-box;
+            border: 2px solid #000;
+            font-size: 11px;
+            line-height: 1.3;
+          }
+          .border-2 { 
+            border: none; 
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            box-sizing: border-box;
+          }
+          .border-black { border-color: #000 !important; }
+          .border-b-2 { border-bottom: 2px solid #000 !important; }
+          .border-r-2 { border-right: 2px solid #000 !important; }
+          .border-b { border-bottom: 1px solid #000 !important; }
+          .border-r { border-right: 1px solid #000 !important; }
+          .flex { display: flex; }
+          .flex-1 { flex: 1; }
+          .flex-col { flex-direction: column; }
+          .items-center { align-items: center; }
+          .justify-center { justify-content: center; }
+          .justify-between { justify-content: space-between; }
+          .text-center { text-align: center; }
+          .grid { display: grid; }
+          .grid-cols-2 { 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1.2rem;
+          }
+          .gap-8 { gap: 1.2rem; }
+          .space-x-8 > * + * { margin-left: 1.2rem; }
+          .space-y-1 > * + * { margin-top: 0.3rem; }
+          .w-32 { width: 7rem; }
+          .w-40 { width: 8.5rem; }
+          .w-44 { width: 10rem; }
+          .w-64 { width: 14rem; }
+          .p-1 { padding: 0.2rem; }
+          .p-2 { padding: 0.6rem; }
+          .p-3 { padding: 0.8rem; }
+          .p-4 { padding: 1.0rem; }
+          .p-6 { padding: 0.8rem; }
+          .p-7 { padding: 1.0rem; }
+          .p-8 { padding: 1.2rem; }
+          .p-12 { padding: 2.0rem; }
+          .mb-2 { margin-bottom: 0.5rem; }
+          .mb-3 { margin-bottom: 0.6rem; }
+          .ml-2 { margin-left: 0.5rem; }
+          .mr-2 { margin-right: 0.5rem; }
+          .ml-6 { margin-left: 1.0rem; }
+          .ml-8 { margin-left: 1.5rem; }
+          .text-xl { 
+            font-size: 16px; 
+            font-weight: bold; 
+            line-height: 1.3;
+          }
+          .text-sm { 
+            font-size: 12px; 
+            line-height: 1.3;
+          }
+          .text-xs { 
+            font-size: 10px; 
+            line-height: 1.2;
+          }
+          .font-bold { font-weight: bold; }
+          .font-semibold { font-weight: 600; }
+          .italic { font-style: italic; }
+          .list-decimal { 
+            list-style-type: decimal; 
+            padding-left: 1.2rem;
+            margin: 0.4rem 0;
+          }
+          .list-inside { list-style-position: inside; }
+          img { 
+            max-width: 100%; 
+            max-height: 50px; 
+            object-fit: contain; 
+          }
+          
+          /* Optimize space usage */
+          ol, ul {
+            margin: 0.4rem 0;
+            padding-left: 1.2rem;
+          }
+          li {
+            margin-bottom: 0.3rem;
+            line-height: 1.3;
+          }
+          
+          /* Compact sections */
+          .content-section {
+            margin-bottom: 0;
+          }
+          
+          /* Header section optimization */
+          .header-section {
+            flex-shrink: 0;
+            min-height: auto;
+          }
+            break-after: avoid;
+          }
+          
+          /* Each major section styling */
+          .job-section {
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          /* Ensure proper page margins are maintained */
+          html, body {
+            box-sizing: border-box;
+          }
+          /* Image sizing for larger container */
+          img {
+            max-width: 100%;
+            max-height: 90px;
+            object-fit: contain;
+          }
+          
+          /* SIMPLE BORDER FIX - LANGSUNG KE INTINYA */
+          
+          /* Hilangkan semua gap dan margin */
+          * {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          /* Container utama tanpa padding sama sekali */
+          body, .border-2 {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          /* Semua elemen border langsung ke tepi */
+          .border-b, .border-b-2, .border-r, .border-r-2 {
+            position: relative !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Konten dalam elemen diberi padding terpisah */
+          .p-1 { padding: 0.2rem !important; }
+          .p-2 { padding: 0.4rem !important; }
+          .p-3 { padding: 0.5rem !important; }
+          .p-6 { padding: 0.8rem !important; }
+          .p-8 { padding: 1.0rem !important; }
+          .p-12 { padding: 1.8rem !important; }
+          
+          /* Khusus untuk margin-left spacing section titles */
+          .ml-8 { margin-left: 1.5rem !important; }
+        </style>
+      </head>
+      <body>
+        ${jobDescHTML}
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   const handleJobdescSave = async (jobdescData) => {
@@ -515,6 +637,8 @@ const JobdescManagement = () => {
       
       const payload = {
         ...jobdescData,
+        // Support both new Member model and legacy User model
+        member: selectedMember.type === 'member' ? selectedMember.id : null,
         user: selectedMember.user || null,
         memberName: selectedMember.name,
         memberNoPNK: selectedMember.noPNK,
@@ -710,14 +834,6 @@ const JobdescManagement = () => {
                                 <h3 className="font-semibold text-gray-900 text-lg mb-2">{member.name}</h3>
                                 <div className="space-y-1">
                                   <div className="flex items-center text-sm text-gray-600">
-                                    <span className="font-medium w-16">NPK:</span>
-                                    <span>{member.noPNK}</span>
-                                  </div>
-                                  <div className="flex items-center text-sm text-gray-600">
-                                    <span className="font-medium w-16">Email:</span>
-                                    <span className="truncate">{member.email}</span>
-                                  </div>
-                                  <div className="flex items-center text-sm text-gray-600">
                                     <span className="font-medium w-16">Position:</span>
                                     <span>{member.position}</span>
                                   </div>
@@ -756,13 +872,15 @@ const JobdescManagement = () => {
                                     >
                                       <Edit className="w-4 h-4" />
                                     </button>
-                                    <button
-                                      onClick={() => handleDownloadJobdesc(member)}
-                                      className="bg-purple-50 hover:bg-purple-100 text-purple-600 p-2 rounded transition-colors duration-200 border border-purple-200"
-                                      title="Download/Print Job Description"
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </button>
+                                    {jobDescriptions[member.id] && (
+                                      <button
+                                        onClick={() => handlePrint(member)}
+                                        className="bg-purple-50 hover:bg-purple-100 text-purple-600 p-2 rounded transition-colors duration-200 border border-purple-200"
+                                        title="Print Job Description"
+                                      >
+                                        <Printer className="w-4 h-4" />
+                                      </button>
+                                    )}
                                   </>
                                 )}
                                 
@@ -840,16 +958,14 @@ const JobdescManagement = () => {
 const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) => {
   const [formData, setFormData] = useState({
     name: '',
-    noPNK: '',
-    email: '',
     position: 'Staff'
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (formData.name && formData.noPNK && formData.email) {
+    if (formData.name && formData.position) {
       onSave(formData);
-      setFormData({ name: '', noPNK: '', email: '', position: 'Staff' });
+      setFormData({ name: '', position: 'Staff' });
     }
   };
 
@@ -859,6 +975,13 @@ const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) =
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Add Member to {departmentName}
         </h3>
+        
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Note:</strong> This will only add the member to the department. 
+            To create a login account, use the "Add User" feature in Master Data menu.
+          </p>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -872,40 +995,13 @@ const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) =
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               disabled={loading}
+              placeholder="Enter member's full name"
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              No NPK *
-            </label>
-            <input
-              type="text"
-              value={formData.noPNK}
-              onChange={(e) => setFormData({ ...formData, noPNK: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={loading}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email *
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={loading}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Position
+              Position *
             </label>
             <select
               value={formData.position}
@@ -934,16 +1030,9 @@ const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) =
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              disabled={loading || !formData.name}
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
-                </div>
-              ) : (
-                'Add Member'
-              )}
+              {loading ? 'Adding...' : 'Add Member'}
             </button>
           </div>
         </form>

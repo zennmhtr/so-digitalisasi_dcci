@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const JobDescription = require('../models/JobDescription');
 const User = require('../models/User');
+const Member = require('../models/Member');
 const Department = require('../models/Department');
 const auth = require('../middleware/auth');
 
@@ -24,6 +25,7 @@ router.get('/', auth, async (req, res) => {
 
     const jobDescriptions = await JobDescription.find(filter)
       .populate('user', 'name noPNK email')
+      .populate('member', 'name noPNK email position')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name')
@@ -91,14 +93,16 @@ router.get('/member/:memberId', auth, async (req, res) => {
   try {
     const memberId = req.params.memberId;
     
-    // Try to find by user ID first, then by memberNoPNK
+    // Try to find by member ID, user ID, or memberNoPNK
     let jobDesc = await JobDescription.findOne({ 
       $or: [
+        { member: memberId },
         { user: memberId },
         { memberNoPNK: memberId }
       ]
     })
       .populate('user', 'name noPNK email')
+      .populate('member', 'name noPNK email position')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name');
@@ -133,6 +137,7 @@ router.get('/department/:departmentId', auth, async (req, res) => {
     
     const jobDescriptions = await JobDescription.find({ department: departmentId })
       .populate('user', 'name noPNK email')
+      .populate('member', 'name noPNK email position')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name')
@@ -175,6 +180,7 @@ router.post('/', [
     }
 
     const {
+      member,
       user,
       memberName,
       memberNoPNK,
@@ -192,9 +198,10 @@ router.post('/', [
       status
     } = req.body;
 
-    // Check if job description already exists
+    // Check if job description already exists for this member
     const existingJobDesc = await JobDescription.findOne({
       $or: [
+        ...(member ? [{ member }] : []),
         ...(user ? [{ user }] : []),
         ...(memberNoPNK ? [{ memberNoPNK }] : [])
       ]
@@ -208,6 +215,7 @@ router.post('/', [
     }
 
     const jobDesc = new JobDescription({
+      member: member || null,
       user: user || null,
       memberName,
       memberNoPNK,
@@ -230,6 +238,7 @@ router.post('/', [
 
     const newJobDesc = await JobDescription.findById(jobDesc._id)
       .populate('user', 'name noPNK email')
+      .populate('member', 'name noPNK email position')
       .populate('department', 'name code')
       .populate('createdBy', 'name');
 
@@ -291,6 +300,7 @@ router.put('/:id', [
 
     const updatedJobDesc = await JobDescription.findById(jobDesc._id)
       .populate('user', 'name noPNK email')
+      .populate('member', 'name noPNK email position')
       .populate('department', 'name code')
       .populate('createdBy', 'name')
       .populate('approvedBy', 'name');
