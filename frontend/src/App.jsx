@@ -20,6 +20,8 @@ import ManufacturingCable from './pages/ManufacturingCable';
 import QaDepartment from './pages/QaDepartment';
 import MarketingBatteryDepartment from './pages/MarketingBatteryDepartment';
 import DashboardEditor from './pages/DashboardEditor';
+import DashboardEditorAdvanced from './pages/DashboardEditorAdvanced';
+import OrganizationDemo from './pages/OrganizationDemo';
 import SoBagianEditor from './pages/SoBagianEditor';
 import DepartmentEditor from './components/DepartmentEditor';
 import JobdescManagement from './pages/JobdescManagement';
@@ -127,6 +129,14 @@ function AppRoutes() {
         <ProtectedRoute>
           <DashboardEditor />
         </ProtectedRoute>
+      } />
+      <Route path="/dashboard-editor-advanced" element={
+        <ProtectedRoute>
+          <DashboardEditorAdvanced />
+        </ProtectedRoute>
+      } />
+      <Route path="/organization-demo" element={
+        <OrganizationDemo />
       } />
       <Route path="/so-bagian-editor" element={
         <ProtectedRoute>

@@ -9,11 +9,9 @@ const DashboardEditor = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [organizationData, setOrganizationData] = useState(null);
   
-  // New states for drag & drop and drawing features
-  const [isDragMode, setIsDragMode] = useState(false);
+  // New states for drawing features
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [selectedElement, setSelectedElement] = useState(null);
-  const [draggedElement, setDraggedElement] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [connectors, setConnectors] = useState([]);
   const [isDrawingConnector, setIsDrawingConnector] = useState(false);
@@ -55,45 +53,6 @@ const DashboardEditor = () => {
     };
     setNewBoxes(prev => [...prev, newBox]);
     setShowAddBoxPanel(false);
-  };
-
-  // Drag and drop functionality
-  const handleElementDragStart = (e, element, category) => {
-    if (!isDragMode) return;
-    
-    setDraggedElement({ element, category });
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleElementDragOver = (e) => {
-    if (!isDragMode) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleElementDrop = (e) => {
-    if (!isDragMode || !draggedElement) return;
-    
-    e.preventDefault();
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Update element position
-    setOrganizationData(prev => {
-      const newData = { ...prev };
-      const { element, category } = draggedElement;
-      
-      const item = newData.structure[category]?.find(item => item.id === element.id);
-      if (item) {
-        item.position = { x, y };
-      }
-      
-      return newData;
-    });
-    
-    setDraggedElement(null);
   };
 
   // Connector drawing functionality
@@ -339,13 +298,13 @@ const DashboardEditor = () => {
     }
   };
 
-  // Editable Box Component with drag & drop support
-  const EditableBox = ({ item, category, className = "" }) => {
+  // Editable Box Component with drag & drop support - Enhanced
+  const EditableBox = ({ item, category, className = "", style = {} }) => {
     const [isEditing, setIsEditing] = useState({});
     const boxRef = useRef(null);
 
     const startEdit = (field) => {
-      if (isEditMode && !isDragMode && !isDrawingMode) {
+      if (isEditMode && !isDrawingMode) {
         setIsEditing(prev => ({ ...prev, [field]: true }));
       }
     };
@@ -371,7 +330,7 @@ const DashboardEditor = () => {
         return;
       }
       
-      if (item.clickable && item.route && !isEditMode && !isDragMode) {
+      if (item.clickable && item.route && !isEditMode) {
         navigate(item.route);
       }
     };
@@ -400,8 +359,8 @@ const DashboardEditor = () => {
       return (
         <span
           onClick={() => startEdit(field)}
-          className={isEditMode && !isDragMode && !isDrawingMode ? 'cursor-pointer hover:bg-yellow-100 rounded px-1' : ''}
-          title={isEditMode && !isDragMode && !isDrawingMode ? 'Click to edit' : ''}
+          className={isEditMode && !isDrawingMode ? 'cursor-pointer hover:bg-yellow-100 rounded px-1' : ''}
+          title={isEditMode && !isDrawingMode ? 'Click to edit' : ''}
         >
           {value || placeholder}
         </span>
@@ -411,9 +370,7 @@ const DashboardEditor = () => {
     const getBoxStyle = () => {
       let baseClasses = `bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className}`;
       
-      if (isDragMode) {
-        baseClasses += ' cursor-move ring-2 ring-blue-300 hover:ring-blue-400';
-      } else if (isDrawingMode) {
+      if (isDrawingMode) {
         baseClasses += ' cursor-crosshair ring-2 ring-green-300 hover:ring-green-400';
       } else if (isEditMode) {
         baseClasses += ' ring-2 ring-blue-200';
@@ -424,12 +381,16 @@ const DashboardEditor = () => {
       return baseClasses;
     };
 
+    // Calculate final style combining position and custom styles
+    const finalStyle = {
+      ...style,
+    };
+
     return (
       <div 
         ref={boxRef}
         className={getBoxStyle()}
-        draggable={isDragMode}
-        onDragStart={(e) => handleElementDragStart(e, item, category)}
+        style={finalStyle}
         onClick={handleBoxClick}
         data-element-id={item.id}
       >
@@ -456,16 +417,13 @@ const DashboardEditor = () => {
             </>
           )}
           {/* Mode indicators */}
-          {isDragMode && (
-            <p className="text-xs text-blue-600 mt-1 font-semibold">Drag to move</p>
-          )}
           {isDrawingMode && (
-            <p className="text-xs text-green-600 mt-1 font-semibold">Click to connect</p>
+            <p className="text-xs text-green-600 mt-1 font-semibold">🔗 Click to connect</p>
           )}
-          {item.clickable && !isEditMode && !isDragMode && !isDrawingMode && (
+          {item.clickable && !isEditMode && !isDrawingMode && (
             <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
           )}
-          {isEditMode && !isDragMode && !isDrawingMode && (
+          {isEditMode && !isDrawingMode && (
             <p className="text-xs text-gray-500 mt-1">Click fields to edit</p>
           )}
         </div>
@@ -607,12 +565,7 @@ const DashboardEditor = () => {
               />
             </div>
             <div className="flex space-x-3">
-              <button
-                type="submit"
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-              >
-                Add Box
-              </button>
+             
               <button
                 type="button"
                 onClick={() => setShowAddBoxPanel(false)}
@@ -680,9 +633,8 @@ const DashboardEditor = () => {
         style={{ 
           left: position.x, 
           top: position.y,
-          transform: isDragMode ? 'none' : 'translate(-50%, -50%)'
+          transform: 'translate(-50%, -50%)'
         }}
-        draggable={isDragMode}
         onDragEnd={(e) => {
           const rect = containerRef.current.getBoundingClientRect();
           const newX = e.clientX - rect.left;
@@ -736,7 +688,6 @@ const DashboardEditor = () => {
               <button
                 onClick={() => {
                   setIsEditMode(!isEditMode);
-                  setIsDragMode(false);
                   setIsDrawingMode(false);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
@@ -747,46 +698,6 @@ const DashboardEditor = () => {
               >
                 {isEditMode ? 'Edit Mode' : 'View Mode'}
               </button>
-              
-              <button
-                onClick={() => {
-                  setIsDragMode(!isDragMode);
-                  setIsEditMode(false);
-                  setIsDrawingMode(false);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  isDragMode
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                }`}
-              >
-                {isDragMode ? 'Drag Mode ON' : 'Drag Mode'}
-              </button>
-              
-              <button
-                onClick={() => {
-                  setIsDrawingMode(!isDrawingMode);
-                  setIsEditMode(false);
-                  setIsDragMode(false);
-                  setIsDrawingConnector(false);
-                  setConnectorStart(null);
-                  setTempConnector(null);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  isDrawingMode
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                }`}
-              >
-                {isDrawingMode ? '🔗 Draw Mode ON' : '🔗 Connect Mode'}
-              </button>
-              
-              <button
-                onClick={() => setShowAddBoxPanel(true)}
-                className="px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-orange-600 hover:bg-orange-700 text-white"
-              >
-                Add Box
-              </button>
             </div>
           </div>
           
@@ -796,6 +707,13 @@ const DashboardEditor = () => {
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
             >
               Save Changes
+            </button>
+            
+            <button
+              onClick={() => navigate('/dashboard-editor-advanced')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+            >
+              Layout
             </button>
            
             <button
@@ -813,16 +731,17 @@ const DashboardEditor = () => {
             {isEditMode && (
               <p><strong>Edit Mode:</strong> Click on any text field in boxes to edit content directly.</p>
             )}
-            {isDragMode && (
-              <p><strong>Drag Mode:</strong> Click and drag boxes to reposition them freely around the canvas.</p>
-            )}
             {isDrawingMode && (
               <p><strong>Connect Mode:</strong> Click on boxes to create connecting lines between them. Click first box to start, second box to finish.</p>
             )}
-            {!isEditMode && !isDragMode && !isDrawingMode && (
-              <div>
-               
-              </div>
+            {!isEditMode && !isDrawingMode && (
+              
+                  <button
+                    onClick={() => navigate('/dashboard-editor-advanced')}
+                    className="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                  >
+                    🚀 Try Advanced Editor Now
+                  </button>
             )}
           </div>
         </div>
@@ -847,8 +766,6 @@ const DashboardEditor = () => {
         ref={containerRef}
         className="bg-white rounded-lg shadow-sm p-6 overflow-x-auto relative"
         onMouseMove={handleMouseMove}
-        onDragOver={handleElementDragOver}
-        onDrop={handleElementDrop}
         style={{ minHeight: '800px' }}
       >
         {/* SVG Layer for Connectors */}
@@ -861,6 +778,7 @@ const DashboardEditor = () => {
 
         {/* Add Box Panel */}
         <AddBoxPanel />
+        
         {/* Header Section */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center">
@@ -1382,6 +1300,7 @@ const DashboardEditor = () => {
             </div>
 
           </div>
+          
         </div>
 
          {/* Legend */}
@@ -1397,34 +1316,8 @@ const DashboardEditor = () => {
         </div>
       <div>
           
-          <div className="mt-4 bg-green-50 p-3 rounded border-l-4 border-green-400">
-            <h4 className="font-bold text-sm mb-2 text-green-800">🚀 ENHANCED DASHBOARD EDITOR FEATURES:</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-green-700">
-              <div>
-                <p><strong>📝 Content Editing:</strong></p>
-                <p>• Complete Organization Structure - All {organizationData.structure.sections.length + organizationData.structure.departments.length + organizationData.structure.management.length + organizationData.structure.bod.length} positions</p>
-                <p>• Click-to-edit any text field</p>
-                <p>• Header, dates & signatures editable</p>
-              </div>
-              <div>
-                <p><strong>🎨 Layout Control:</strong></p>
-                <p>• Drag & drop repositioning</p>
-                <p>• Custom box creation</p>
-                <p>• Real-time visual feedback</p>
-                <p>• Permission-based access control</p>
-              </div>
-              <div>
-                <p><strong>🔗 Visual Connections:</strong></p>
-                <p>• Interactive line drawing</p>
-                <p>• Connect any two elements</p>
-                <p>• Delete connectors easily</p>
-                <p>• Persistent layout saving</p>
-              </div>
-            </div>
-            <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
-              <p><strong>💡 Usage Tips:</strong> Use different modes for different tasks. Edit Mode for text, Drag Mode for positioning, Connect Mode for relationships, and Add Box for new elements.</p>
-            </div>
-          </div>
+         
+         
         </div>
       </div>
     </div>
