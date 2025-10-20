@@ -96,17 +96,17 @@ const DashboardEditor = () => {
     }
   }, []);
 
-  // Check if user has Dashboard Editor permission
+  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
-    console.log('Dashboard Editor Debug:', {
+    console.log('SO DCI Editor Debug:', {
       user: user?.name,
       userRole: userRole?.name,
       userPermissions,
-      hasAccess: userPermissions?.includes('Dashboard Editor')
+      hasAccess: userPermissions?.includes('SO DCI Editor')
     });
-    return user && userPermissions?.includes('Dashboard Editor');
+    return user && userPermissions?.includes('SO DCI Editor');
   }, [user]);
 
   // Initialize organization data - COMPLETE data from Dashboard
@@ -198,7 +198,7 @@ const DashboardEditor = () => {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h2>
-          <p className="text-gray-600 mb-6">You don't have permission to access the Dashboard Editor.</p>
+          <p className="text-gray-600 mb-6">You don't have permission to access the SO DCI Editor.</p>
           <button
             onClick={() => navigate('/')}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -681,7 +681,7 @@ const DashboardEditor = () => {
       <div className="bg-white shadow-sm border rounded-lg p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold text-gray-800">Dashboard Editor</h1>
+            <h1 className="text-xl font-bold text-gray-800">SO DCI Editor</h1>
             
             {/* Mode Toggle Buttons */}
             <div className="flex items-center space-x-2">

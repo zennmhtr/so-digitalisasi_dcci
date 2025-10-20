@@ -24,18 +24,18 @@ const JobdescManagement = () => {
 
   // Mapping department dengan permission yang diperlukan
   const departmentPermissions = {
-    'Finance Department': ['Finance', 'Admin', 'HR Manager'],
-    'HRGA & IT Department': ['HRGA', 'IT', 'Admin', 'HR Manager'],
-    'Management Development': ['Management', 'Admin', 'HR Manager'],
-    'Management Representative': ['Management', 'Admin', 'HR Manager'],
-    'Manufacturing Battery': ['Production', 'Manufacturing', 'Admin', 'HR Manager'],
-    'Manufacturing Cable': ['Production', 'Manufacturing', 'Admin', 'HR Manager'],
-    'Marketing Battery Department': ['Marketing', 'Sales', 'Admin', 'HR Manager'],
-    'Marketing Engineering': ['Marketing', 'Engineering', 'Admin', 'HR Manager'],
-    'MI & SHE': ['Safety', 'Environment', 'Admin', 'HR Manager'],
-    'PPIC': ['Production', 'Planning', 'Admin', 'HR Manager'],
-    'Purchasing': ['Purchasing', 'Procurement', 'Admin', 'HR Manager'],
-    'QA Department': ['Quality', 'QA', 'Admin', 'HR Manager']
+    'Finance Department': ['Finance Department', 'Manage Users'],
+    'HRGA & IT Department': ['HRGA & IT Department', 'Manage Users'],
+    'Management Development': ['Management Development', 'Manage Users'],
+    'Management Representative': ['Management Representative', 'Manage Users'],
+    'Manufacturing Battery': ['Manufacturing Battery', 'Manage Users'],
+    'Manufacturing Cable': ['Manufacturing Cable', 'Manage Users'],
+    'Marketing Battery Department': ['Marketing Battery Department', 'Manage Users'],
+    'Marketing Engineering': ['Marketing Engineering', 'Manage Users'],
+    'MI & SHE': ['MI & SHE', 'Manage Users'],
+    'PPIC': ['PPIC', 'Manage Users'],
+    'Purchasing': ['Purchasing', 'Manage Users'],
+    'QA Department': ['QA Department', 'Manage Users']
   };
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const JobdescManagement = () => {
       
       const accessibleDepts = allDepartments.filter(dept => {
         // Admin dan HR Manager bisa akses semua departemen
-        if (userPermissions.includes('Admin') || userPermissions.includes('HR Manager')) {
+        if (userPermissions.includes('Manage Users')) {
           return true;
         }
         

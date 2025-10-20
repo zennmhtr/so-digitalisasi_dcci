@@ -10,11 +10,11 @@ const DepartmentEditor = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [departmentData, setDepartmentData] = useState(null);
 
-  // Check if user has Dashboard Editor permission
+  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
-    return user && userPermissions?.includes('Dashboard Editor');
+    return user && userPermissions?.includes('SO DCI Editor');
   }, [user]);
 
   // Department configurations

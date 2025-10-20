@@ -11,11 +11,11 @@ const DashboardEditorAdvanced = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check if user has Dashboard Editor permission
+  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
-    return user && userPermissions?.includes('Dashboard Editor');
+    return user && userPermissions?.includes('SO DCI Editor');
   }, [user]);
 
   // Load organization data from localStorage
@@ -126,7 +126,7 @@ const DashboardEditorAdvanced = () => {
         <div className="max-w-md mx-auto text-center">
           <h3 className="mt-2 text-sm font-medium text-gray-900">Access Denied</h3>
           <p className="mt-1 text-sm text-gray-500">
-            You don't have permission to access the Dashboard Editor.
+            You don't have permission to access the SO DCI Editor.
           </p>
           <div className="mt-6">
             <button

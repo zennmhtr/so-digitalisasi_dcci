@@ -16,36 +16,32 @@ const RolePermission = () => {
   });
 
   const availablePermissions = [
+    // System Core Permissions - Basic system access
     'View Dashboard',
     'Manage Users',
     'Manage Roles',
     'Manage Departments',
-    'View Reports',
-    'System Settings',
-    'Export Data',
-    'Dashboard Editor',
+    
+    // Dashboard & Editor Permissions - Organization structure access
+    'SO DCI Editor',
     'SO Bagian Editor',
-    'Dashboard Print',
+    'Print SO',
     'View SO Details',
     'Jobdesc Management',
-    'Finance',
-    'HRGA',
-    'IT',
-    'Management',
-    'Production',
-    'Manufacturing',
-    'Marketing',
-    'Sales',
-    'Engineering',
-    'Safety',
-    'Environment',
-    'Planning',
-    'Purchasing',
-    'Procurement',
-    'Quality',
-    'QA',
-    'Admin',
-    'HR Manager'
+    
+    // Department Access Permissions - Based on actual 12 departments
+    'Finance Department',         // Finance Department
+    'HRGA & IT Department',      // HRGA & IT Department  
+    'Management Development',     // Management Development
+    'Management Representative',  // Management Representative
+    'Manufacturing Battery',     // Manufacturing Battery
+    'Manufacturing Cable',       // Manufacturing Cable
+    'Marketing Battery Department', // Marketing Battery Department
+    'Marketing Engineering',     // Marketing Engineering
+    'MI & SHE',                 // MI & SHE
+    'PPIC',                     // PPIC
+    'Purchasing',               // Purchasing Department
+    'QA Department'             // QA Department
   ];
 
   // Fetch roles from API
@@ -340,23 +336,63 @@ const RolePermission = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Permissions
                   </label>
-                  <div className="border border-gray-300 rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {availablePermissions.map((permission) => (
-                        <label key={permission} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.permissions.includes(permission)}
-                            onChange={() => handlePermissionChange(permission)}
-                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-3 text-sm text-gray-700">{permission}</span>
-                        </label>
-                      ))}
+                  <div className="border border-gray-300 rounded-lg p-4 space-y-6">
+                    {/* System Core Permissions */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">System Core Permissions</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.slice(0, 4).map((permission) => (
+                          <label key={permission} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.permissions.includes(permission)}
+                              onChange={() => handlePermissionChange(permission)}
+                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Dashboard & Editor Permissions */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Dashboard & Editor Access</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.slice(4, 9).map((permission) => (
+                          <label key={permission} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.permissions.includes(permission)}
+                              onChange={() => handlePermissionChange(permission)}
+                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Department Access Permissions */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Department Access Permissions</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.slice(9).map((permission) => (
+                          <label key={permission} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.permissions.includes(permission)}
+                              onChange={() => handlePermissionChange(permission)}
+                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Select the permissions this role should have access to.
+                    Select the permissions this role should have access to. Permissions are based on actual system features and department structure.
                   </p>
                 </div>
               </div>

@@ -90,16 +90,21 @@ const Layout = ({ children, sidebarVisible = true }) => {
   // Check if user has specific permissions
   const userRole = user?.role;
   const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
-  const hasDashboardEditorAccess = userPermissions?.includes('Dashboard Editor');
+  const hasDashboardEditorAccess = userPermissions?.includes('SO DCI Editor');
   const hasSoBagianEditorAccess = userPermissions?.includes('SO Bagian Editor');
   const hasJobdescAccess = userPermissions?.includes('Jobdesc Management') || 
-                          userPermissions?.includes('Admin') || 
-                          userPermissions?.includes('HR Manager') ||
+                          userPermissions?.includes('Manage Users') ||
                           userPermissions?.some(permission => 
-                            ['Finance', 'HRGA', 'IT', 'Management', 'Production', 'Manufacturing', 
-                             'Marketing', 'Sales', 'Engineering', 'Safety', 'Environment', 
-                             'Planning', 'Purchasing', 'Procurement', 'Quality', 'QA'].includes(permission)
+                            ['Finance Department', 'HRGA & IT Department', 'Management Development', 
+                             'Management Representative', 'Manufacturing Battery', 'Manufacturing Cable',
+                             'Marketing Battery Department', 'Marketing Engineering', 'MI & SHE', 
+                             'PPIC', 'Purchasing', 'QA Department'].includes(permission)
                           );
+  
+  // Check Master Data access
+  const hasMasterDataAccess = userPermissions?.includes('Manage Users') ||
+                             userPermissions?.includes('Manage Roles') ||
+                             userPermissions?.includes('Manage Departments');
   
   // Debug logging
   console.log('Layout Debug:', {
@@ -121,7 +126,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
       ]
     }] : []),
     ...(hasJobdescAccess ? [{ name: 'Job Description', href: '/jobdesc-management', icon: FileText }] : []),
-    { 
+    ...(hasMasterDataAccess ? [{ 
       name: 'Master Data', 
       icon: Database,
       hasChildren: true,
@@ -130,7 +135,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
         { name: 'Role & Permission', href: '/roles', icon: Shield },
         { name: 'Department', href: '/departments', icon: Building2 },
       ]
-    },
+    }] : []),
   ];
 
   return (
@@ -167,11 +172,19 @@ const Layout = ({ children, sidebarVisible = true }) => {
                           setOrganizationStructureOpen(!organizationStructureOpen);
                         }
                       }}
-                      className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-left"
                     >
-                      <div className="flex items-center">
-                        <item.icon className="w-5 h-5 mr-3" />
-                        {item.name}
+                      <div className="flex items-start flex-1 min-w-0">
+                        <item.icon className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+                        <span className="leading-tight text-left">
+                          {item.name === 'Organization Structure DCI' ? (
+                            <>
+                              Organization Structure<br />DCI
+                            </>
+                          ) : (
+                            item.name
+                          )}
+                        </span>
                       </div>
                       {(item.name === 'Master Data' && masterDataOpen) || (item.name === 'Organization Structure DCI' && organizationStructureOpen) ? (
                         <ChevronDown className="w-4 h-4" />
@@ -180,7 +193,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
                       )}
                     </button>
                     {((item.name === 'Master Data' && masterDataOpen) || (item.name === 'Organization Structure DCI' && organizationStructureOpen)) && (
-                      <div className="ml-6 mt-2 space-y-1">
+                      <div className="ml-4 mt-2 space-y-1">
                         {item.children.map((child) => (
                           <NavLink
                             key={child.name}

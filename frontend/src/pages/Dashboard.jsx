@@ -10,8 +10,8 @@ const Dashboard = () => {
   const [customLayout, setCustomLayout] = useState({ connectors: [], newBoxes: [] });
   const containerRef = useRef(null);
 
-  // Check if user has Dashboard Print permission
-  const canPrint = user?.role?.permissions?.includes('Dashboard Print') || false;
+  // Check if user has Print SO permission
+  const canPrint = user?.role?.permissions?.includes('Print SO') || false;
   
   // Check if user has View SO Details permission
   const canViewSODetails = user?.role?.permissions?.includes('View SO Details') || false;
