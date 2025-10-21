@@ -685,7 +685,7 @@ const JobdescManagement = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Job Description Management</h1>
           <p className="text-gray-600">
-            Manage job descriptions for all department members. All data is automatically saved to the database.
+            Manage job descriptions for all department members.
           </p>
         </div>
 
