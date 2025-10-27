@@ -812,7 +812,7 @@ const Dashboard = () => {
                 <React.Fragment key={item.id}>
                   {index === 3 && <div className="min-h-[435px]"></div>}
                   {index === 4 && <div className="min-h-[10px]"></div>}
-                  {index === 5 && <div className="min-h-[10px]"></div>}
+                  {index === 5 && <div className="min-h-[10px]"></div>}  
                   <div 
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
                       item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
