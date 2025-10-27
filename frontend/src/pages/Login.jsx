@@ -61,7 +61,7 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center p-12">
         <div className="max-w-md">
           <img 
-            src="/dcilogin.png" 
+            src="/so.png"
             alt="Login Illustration" 
             className="w-full h-auto"
           />
