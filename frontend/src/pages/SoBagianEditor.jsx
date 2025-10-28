@@ -1811,6 +1811,217 @@ const SoBagianEditor = () => {
       );
     }
 
+    // MI & SHE Layout
+    if (selectedDepartment.id === 'mi-she'){
+      return(
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1000px] relative p-4">
+
+            {/* Header Section with borders */}
+            <div className="mb-4 border-2 border-black p-3">
+              <div className="flex items-start gap-2">
+                <div className="w-32 flex items-center justify-center p-4 border-2 border-black" style={{ height: '160px' }}>
+                  <img 
+                    src="/logo/dcci.png"
+                    alt="Dharma Group Logo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="border-2 border-black p-4 text-center flex items-center flex-1 mr-1" style={{ height: '160px' }}>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                    <h3 className="text-lg font-semibold text-gray-600 mb-1">({dept.header.title})</h3>
+                    <p className="text-md text-gray-500">Effective Date : 30 September 2025</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex space-x-1">
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16"></div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-black underline leading-tight">{dept.header.head}</p>
+                            <p className="text-sm text-black leading-tight">DEPT. HEAD</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Checked by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16"></div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                            <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Approved by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16">
+                            <div className="text-center">
+                              <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                              <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Header Rows */}
+            <div className="mb-6 relative" style={{ zIndex: 2 }}>
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
+                </div>
+                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
+                </div>
+                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
+                </div>
+                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">STAFF LEVEL</h3>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid grid-cols-4 gap-4 relative org-grid" style={{ zIndex: 2 }}>
+
+              {/* Kolom 1 - Board of Director */}
+              <div className="space-y-4 flex flex-col items-center">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                    <p className="text-sm font-bold">BOD1.0</p>
+                  </div>
+                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-sm font-semibold mb-2 leading-tight">PRESIDENT DIRECTOR</p>
+                    <hr className="my-2 border-gray-300" />
+                    <p className="text-sm leading-tight">EKO MARYANTO</p>
+                    <p className="text-sm leading-tight">(23200235)</p>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                    <p className="text-sm font-bold">BOD1.1</p>
+                  </div>
+                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-sm font-semibold mb-2 leading-tight">DIRECTOR</p>
+                    <hr className="my-2 border-gray-300" />
+                    <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
+                    <p className="text-sm leading-tight">(23200038)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kolom 2 - Department Head - Empty */}
+              <div className="space-y-4">
+                <div className="min-h-[20px]"></div>
+              </div>
+
+              {/* Kolom 3 - Section Head*/}
+              <div className="space-y-4 flex flex-col items-center">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                    <p className="text-sm font-bold">{dept.header.code}</p>
+                  </div>
+                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-sm font-semibold mb-2 leading-tight">MI & SHE</p>
+                    <hr className="my-2 border-gray-300" />
+                    <EditableField
+                      value={dept.header.head}
+                      onSave={(value) => handleEdit(selectedDepartment.id, 'header', null, 'head, value')}
+                      className="text-sm leading-tight"
+                    />
+                    <EditableField
+                     value={`(${dept.header.empId})`} 
+                     onSave={(value) => handleEdit(selectedDepartment.id, 'header', null, 'empId', value.replace(/[()]/g, ''))}
+                     className="text-sm leading-tight"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Kolom 4 - Staff Level */}
+              <div className="space-y-4 flex flex-col items-center">
+                {dept.positions.map((staff, i) => (
+                  <div key={i} className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <p className="text-sm font-bold">{staff.code}</p>
+                    </div>
+                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-sm font-semibold mb-2 leading-tight">{staff.title}</p>
+                      <hr className="my-2 border-gray-300" />
+                      <EditableField
+                        value={staff.name}
+                        onSave={(value) => handleEdit(selectedDepartment.id, 'positions', staff.id, 'name', value)}
+                        className="text-sm leading-tight"
+                      />
+                      <EditableField
+                        value={`(${staff.empId})`}
+                        onSave={(value) => handleEdit(selectedDepartment.id, 'positions', staff.id, 'empId', value.replace(/[()]/g, ''))}
+                        className="text-sm leading-tight"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            <div className="mt-8 border-2 border-black p-3 inline-block">
+              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">( )</span>
+                  <span>: CONCURRE</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">**</span>
+                  <span>: ACTING</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">( INC )</span>
+                  <span>: INCUMBENT</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">TBR</span>
+                  <span>: TO BE RECRUIT</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">TBD</span>
+                  <span>: TO BE DEVELOP</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">COORD</span>
+                  <span>: COORDINATOR</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Layout untuk departemen lain yang belum memiliki layout khusus
     // Menggunakan layout generic yang tetap editable
     return (
