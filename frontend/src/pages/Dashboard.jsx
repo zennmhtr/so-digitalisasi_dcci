@@ -1,20 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import '../assets/print-styles.css';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import "../assets/print-styles.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [organizationData, setOrganizationData] = useState(null);
-  const [customLayout, setCustomLayout] = useState({ connectors: [], newBoxes: [] });
+  const [customLayout, setCustomLayout] = useState({
+    connectors: [],
+    newBoxes: [],
+  });
   const containerRef = useRef(null);
 
+  // ===========================
+  // ✅ STATE & FUNGSI JOBDESC 
+  // ===========================
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+
+  const onCodeClick = (item) => {
+    setSelectedJob(item);
+    setShowJobModal(true);
+  };
+
   // Check if user has Print SO permission
-  const canPrint = user?.role?.permissions?.includes('Print SO') || false;
-  
+  const canPrint = user?.role?.permissions?.includes("Print SO") || false;
+
   // Check if user has View SO Details permission
-  const canViewSODetails = user?.role?.permissions?.includes('View SO Details') || false;
+  const canViewSODetails =
+    user?.role?.permissions?.includes("View SO Details") || false;
 
   // Initialize organization data - same as DashboardEditor
   useEffect(() => {
@@ -25,94 +40,308 @@ const Dashboard = () => {
         effectiveDate: "08/09/2025",
         regNo: "08/10/2025",
         preparedDate: "08/09/2025",
-        approvedDate: "08/09/2025"
+        approvedDate: "08/09/2025",
       },
       signatures: {
         preparedBy: {
           name: "Diki Wahyudi",
-          date: "08/09/2025"
+          date: "08/09/2025",
         },
         middleBy: {
           title: "Bambang Wuryanto",
           name: "Bambang Wuryanto",
-          date: "08/09/2025"
+          date: "08/09/2025",
         },
         approvedBy: {
           name: "Eko Maryanto",
-          date: "08/09/2025"
-        }
+          date: "08/09/2025",
+        },
       },
       commissioners: {
         president: {
           title: "PRESIDENT COMMISIONER",
-          name: "IRIANTO SANTOSO"
+          name: "IRIANTO SANTOSO",
         },
-        commissioners: [
-          "SUBAGIO",
-          "HONG KUO MING", 
-          "LIAO CHIN HSIEN"
-        ]
+        commissioners: ["SUBAGIO", "HONG KUO MING", "LIAO CHIN HSIEN"],
       },
       structure: {
         // Board of Directors - Column 1
         bod: [
-          { id: 'bod-1', code: 'BOD1.0', title: 'PRESIDENT DIRECTOR', name: 'EKO MARYANTO', empId: '23100235' },
-          { id: 'bod-2', code: 'BOD1.1', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038' }
+          {
+            id: "bod-1",
+            code: "BOD1.0",
+            title: "PRESIDENT DIRECTOR",
+            name: "EKO MARYANTO",
+            empId: "23100235",
+          },
+          {
+            id: "bod-2",
+            code: "BOD1.1",
+            title: "DIRECTOR",
+            name: "BAMBANG WURYANTO",
+            empId: "23200038",
+          },
         ],
         // Management Functions - Column 2
         management: [
-          { id: 'mio-1', code: 'MIO1.0', title: 'MI & SHE (5R-SMK3-ISO 14001)', name: 'ELIATA DUMAR GINTING', empId: '23190806', clickable: true, route: '/mi-she' },
-          { id: 'mdo-1', code: 'MDO1.0', title: 'MANAGEMENT DEVELOPMENT/PDCA', name: 'KARINA SATIA SALIM*', empId: '23230114', type: 'combined', part: 1 },
-          { id: 'mdo-2', code: 'MDO2.0', title: 'MANAGEMENT DEVELOPMENT/PDCA', name: 'WAHYU KARTIKO ADI', empId: '23240005', type: 'combined', part: 2, clickable: true, route: '/management-development' },
-          { id: 'mro-1', code: 'MRO1.0', title: 'MANAGEMENT REPRESENTATIVE', name: 'SUGIYARTO*', empId: '23600041', clickable: true, route: '/management-representative' },
-          { id: 'cro-1', code: 'CRO1.0', title: 'CUSTOMER REPRESENTATIVE 2 WHEEL', name: 'SUMIYARTO*', empId: '23030015' },
-          { id: 'co2-1', code: 'CO2.0', title: 'CUSTOMER REPRESENTATIVE 4 WHEEL', name: 'DWI PURWANTO*', empId: '23030023' }
+          {
+            id: "mio-1",
+            code: "MIO1.0",
+            title: "MI & SHE (5R-SMK3-ISO 14001)",
+            name: "ELIATA DUMAR GINTING",
+            empId: "23190806",
+            clickable: true,
+            route: "/mi-she",
+          },
+          {
+            id: "mdo-1",
+            code: "MDO1.0",
+            title: "MANAGEMENT DEVELOPMENT/PDCA",
+            name: "KARINA SATIA SALIM*",
+            empId: "23230114",
+            type: "combined",
+            part: 1,
+          },
+          {
+            id: "mdo-2",
+            code: "MDO2.0",
+            title: "MANAGEMENT DEVELOPMENT/PDCA",
+            name: "WAHYU KARTIKO ADI",
+            empId: "23240005",
+            type: "combined",
+            part: 2,
+            clickable: true,
+            route: "/management-development",
+          },
+          {
+            id: "mro-1",
+            code: "MRO1.0",
+            title: "MANAGEMENT REPRESENTATIVE",
+            name: "SUGIYARTO*",
+            empId: "23600041",
+            clickable: true,
+            route: "/management-representative",
+          },
+          {
+            id: "cro-1",
+            code: "CRO1.0",
+            title: "CUSTOMER REPRESENTATIVE 2 WHEEL",
+            name: "SUMIYARTO*",
+            empId: "23030015",
+          },
+          {
+            id: "co2-1",
+            code: "CO2.0",
+            title: "CUSTOMER REPRESENTATIVE 4 WHEEL",
+            name: "DWI PURWANTO*",
+            empId: "23030023",
+          },
         ],
         // Division Labels - Column 3
         divisions: [
-          { id: 'div-1', label: 'CONTROLCABLE BUSINESS', type: 'business-label' },
-          { id: 'div-2', label: 'BATTERY BUSINESS', type: 'business-label' },
-          { id: 'div-3', label: 'AFTERMARKET BUSINESS', type: 'business-label' }
+          {
+            id: "div-1",
+            label: "CONTROLCABLE BUSINESS",
+            type: "business-label",
+          },
+          { id: "div-2", label: "BATTERY BUSINESS", type: "business-label" },
+          {
+            id: "div-3",
+            label: "AFTERMARKET BUSINESS",
+            type: "business-label",
+          },
         ],
         // Department Head - Column 4
         departments: [
-          { id: 'qa-1', code: 'QAC1.0', title: 'QA', name: 'M BAGUS SANTOSO', empId: '23220025', clickable: true, route: '/qa-department' },
-          { id: 'ppic-1', code: 'PPIC1.0', title: 'PPC & WAREHOUSE', name: 'DIKI WAHYUDI', empId: '23060056', clickable: true, route: '/ppic' },
-          { id: 'mkt-eng', code: 'MKT1.0', title: 'MI & SHE (5R-SMK3-ISO 14001)', name: 'ANDREAS AGUNG S.', empId: '23040119', clickable: true, route: '/marketing-engineering' },
-          { id: 'mkt-2', code: 'MKT2.0', title: 'MARKETING', name: 'RENDRA PRAMONO', empId: '23200067', clickable: true, route: '/marketing-battery-department' },
-          { id: 'rnd-1', code: 'RND1.0', title: 'RND', name: 'RENDRA PRAMONO', empId: '23200067' },
-          { id: 'qac-2', code: 'QAC2.0', title: 'QA/QC/DOC', name: 'RENDRA PRAMONO', empId: '23200067' },
-          { id: 'mkt-3', code: 'MKT3.0', title: 'MARKETING', name: 'TBR', empId: '' }
+          {
+            id: "qa-1",
+            code: "QAC1.0",
+            title: "QA",
+            name: "M BAGUS SANTOSO",
+            empId: "23220025",
+            clickable: true,
+            route: "/qa-department",
+          },
+          {
+            id: "ppic-1",
+            code: "PPIC1.0",
+            title: "PPC & WAREHOUSE",
+            name: "DIKI WAHYUDI",
+            empId: "23060056",
+            clickable: true,
+            route: "/ppic",
+          },
+          {
+            id: "mkt-eng",
+            code: "MKT1.0",
+            title: "MI & SHE (5R-SMK3-ISO 14001)",
+            name: "ANDREAS AGUNG S.",
+            empId: "23040119",
+            clickable: true,
+            route: "/marketing-engineering",
+          },
+          {
+            id: "mkt-2",
+            code: "MKT2.0",
+            title: "MARKETING",
+            name: "RENDRA PRAMONO",
+            empId: "23200067",
+            clickable: true,
+            route: "/marketing-battery-department",
+          },
+          {
+            id: "rnd-1",
+            code: "RND1.0",
+            title: "RND",
+            name: "RENDRA PRAMONO",
+            empId: "23200067",
+          },
+          {
+            id: "qac-2",
+            code: "QAC2.0",
+            title: "QA/QC/DOC",
+            name: "RENDRA PRAMONO",
+            empId: "23200067",
+          },
+          {
+            id: "mkt-3",
+            code: "MKT3.0",
+            title: "MARKETING",
+            name: "TBR",
+            empId: "",
+          },
         ],
         // Section Head / Engineering Product Leader - Column 5
         sections: [
-          { id: 'prd-1', code: 'PRD1.0', title: 'CONTROLCABLE MANUFACTURE', name: 'KARNA SATIA SALIM*', empId: '23230114', clickable: true, route: '/manufacturing-cable' },
-          { id: 'prd-2', code: 'PRD2.0', title: 'BATTERY PRODUCTION', name: 'DIONISIUS AUGUSTO**', empId: '23220105', clickable: true, route: '/manufactur-battery' },
-          { id: 'prd-3', code: 'PRD3.0', title: 'BATTERY PME', name: 'DIONISIUS AUGUSTO**', empId: '23220105', clickable: true, route: '/manufactur-battery' },
-          { id: 'mkt-1-1', code: 'MKT1.1', title: 'MARKETING', name: 'SAVITRI OCTAVIANI', empId: '23130254' },
-          { id: 'eng-1', code: 'ENG1.0', title: 'ENGINEERING', name: 'SUGIYARTO', empId: '2360041' },
-          { id: 'mkt-2-1', code: 'MKT2.1', title: 'AUX & POWER BATTERY MARKETING', name: 'CHRYSNA YULIAWAN**', empId: '23240177' },
-          { id: 'mkt-2-2', code: 'MKT2.2', title: 'ESS MARKETING', name: 'FERDINAND STEVANUS A**', empId: '23220049' },
-          { id: 'rnd-1-0', code: 'RND1.0', title: 'AUX & POWER BATTERY ENGINEERING PRODUCT LEADER', name: 'BRIAN BUDI SANTOSO**', empId: '23210077' },
-          { id: 'rnd-2-0', code: 'RND2.0', title: 'ESS ENGINEERING PRODUCT LEADER', name: 'RAIHAN RAMADHAN**', empId: '23220104' },
-          { id: 'rnd-3-0', code: 'RND3.0', title: 'MICRO CONTROLLER ENGINEERING PRODUCT LEADER', name: 'ELISABETH GUSTI**', empId: '23230087' },
-          { id: 'qac-2-1', code: 'QAC2.1', title: 'BATTERY QA', name: 'BELLA TIURMA PRATIWI**', empId: '23230092' },
-          { id: 'mkt-3-1', code: 'MKT3.1', title: 'MARKETING', name: 'TBR', empId: '' },
-          { id: 'hrd-1', code: 'HRD1.0', title: 'HRDGA & IT', name: 'DIKI WAHYUDI*', empId: '23060056', clickable: true, route: '/hrga-it-department' },
-          { id: 'pch-1', code: 'PCH1.0', title: 'PURCHASING', name: 'DIKI WAHYUDI*', empId: '23060056', clickable: true, route: '/purchasing' },
-          { id: 'fin-1', code: 'FIN1.0', title: 'FINANCE & ACCOUNTING', name: 'YULIUS PERMATA', empId: '23220017', clickable: true, route: '/finance-department' }
-        ]
-      }
+          {
+            id: "prd-1",
+            code: "PRD1.0",
+            title: "CONTROLCABLE MANUFACTURE",
+            name: "KARNA SATIA SALIM*",
+            empId: "23230114",
+            clickable: true,
+            route: "/manufacturing-cable",
+          },
+          {
+            id: "prd-2",
+            code: "PRD2.0",
+            title: "BATTERY PRODUCTION",
+            name: "DIONISIUS AUGUSTO**",
+            empId: "23220105",
+            clickable: true,
+            route: "/manufactur-battery",
+          },
+          {
+            id: "prd-3",
+            code: "PRD3.0",
+            title: "BATTERY PME",
+            name: "DIONISIUS AUGUSTO**",
+            empId: "23220105",
+            clickable: true,
+            route: "/manufactur-battery",
+          },
+          {
+            id: "mkt-1-1",
+            code: "MKT1.1",
+            title: "MARKETING",
+            name: "SAVITRI OCTAVIANI",
+            empId: "23130254",
+          },
+          {
+            id: "eng-1",
+            code: "ENG1.0",
+            title: "ENGINEERING",
+            name: "SUGIYARTO",
+            empId: "2360041",
+          },
+          {
+            id: "mkt-2-1",
+            code: "MKT2.1",
+            title: "AUX & POWER BATTERY MARKETING",
+            name: "CHRYSNA YULIAWAN**",
+            empId: "23240177",
+          },
+          {
+            id: "mkt-2-2",
+            code: "MKT2.2",
+            title: "ESS MARKETING",
+            name: "FERDINAND STEVANUS A**",
+            empId: "23220049",
+          },
+          {
+            id: "rnd-1-0",
+            code: "RND1.0",
+            title: "AUX & POWER BATTERY ENGINEERING PRODUCT LEADER",
+            name: "BRIAN BUDI SANTOSO**",
+            empId: "23210077",
+          },
+          {
+            id: "rnd-2-0",
+            code: "RND2.0",
+            title: "ESS ENGINEERING PRODUCT LEADER",
+            name: "RAIHAN RAMADHAN**",
+            empId: "23220104",
+          },
+          {
+            id: "rnd-3-0",
+            code: "RND3.0",
+            title: "MICRO CONTROLLER ENGINEERING PRODUCT LEADER",
+            name: "ELISABETH GUSTI**",
+            empId: "23230087",
+          },
+          {
+            id: "qac-2-1",
+            code: "QAC2.1",
+            title: "BATTERY QA",
+            name: "BELLA TIURMA PRATIWI**",
+            empId: "23230092",
+          },
+          {
+            id: "mkt-3-1",
+            code: "MKT3.1",
+            title: "MARKETING",
+            name: "TBR",
+            empId: "",
+          },
+          {
+            id: "hrd-1",
+            code: "HRD1.0",
+            title: "HRDGA & IT",
+            name: "DIKI WAHYUDI*",
+            empId: "23060056",
+            clickable: true,
+            route: "/hrga-it-department",
+          },
+          {
+            id: "pch-1",
+            code: "PCH1.0",
+            title: "PURCHASING",
+            name: "DIKI WAHYUDI*",
+            empId: "23060056",
+            clickable: true,
+            route: "/purchasing",
+          },
+          {
+            id: "fin-1",
+            code: "FIN1.0",
+            title: "FINANCE & ACCOUNTING",
+            name: "YULIUS PERMATA",
+            empId: "23220017",
+            clickable: true,
+            route: "/finance-department",
+          },
+        ],
+      },
     };
-    
+
     // Load from localStorage if exists, otherwise use initial data
-    const savedData = localStorage.getItem('dashboard-organization-data');
+    const savedData = localStorage.getItem("dashboard-organization-data");
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
         setOrganizationData(parsedData);
       } catch (error) {
-        console.error('Error parsing saved data:', error);
+        console.error("Error parsing saved data:", error);
         setOrganizationData(initialData);
       }
     } else {
@@ -120,65 +349,67 @@ const Dashboard = () => {
     }
 
     // Load custom layout (connectors and custom boxes)
-    const savedLayout = localStorage.getItem('dashboard-editor-layout');
+    const savedLayout = localStorage.getItem("dashboard-editor-layout");
     if (savedLayout) {
       try {
         setCustomLayout(JSON.parse(savedLayout));
       } catch (error) {
-        console.error('Error parsing layout data:', error);
+        console.error("Error parsing layout data:", error);
       }
     }
 
     // Listen for localStorage changes (when DashboardEditor saves)
     const handleStorageChange = (e) => {
-      if (e.key === 'dashboard-organization-data' && e.newValue) {
+      if (e.key === "dashboard-organization-data" && e.newValue) {
         try {
           const updatedData = JSON.parse(e.newValue);
           setOrganizationData(updatedData);
         } catch (error) {
-          console.error('Error parsing updated data:', error);
+          console.error("Error parsing updated data:", error);
         }
       }
-      if (e.key === 'dashboard-editor-layout' && e.newValue) {
+      if (e.key === "dashboard-editor-layout" && e.newValue) {
         try {
           setCustomLayout(JSON.parse(e.newValue));
         } catch (error) {
-          console.error('Error parsing layout data:', error);
+          console.error("Error parsing layout data:", error);
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    
+    window.addEventListener("storage", handleStorageChange);
+
     // Also listen for custom event for same-tab updates
     const handleCustomUpdate = (e) => {
       setOrganizationData(e.detail);
     };
 
-    window.addEventListener('dashboard-data-updated', handleCustomUpdate);
+    window.addEventListener("dashboard-data-updated", handleCustomUpdate);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('dashboard-data-updated', handleCustomUpdate);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("dashboard-data-updated", handleCustomUpdate);
     };
   }, []);
 
   // Handle print/download
   const handlePrint = () => {
     // Set data attributes for CSS targeting - A3 Portrait
-    const printContainer = document.querySelector('.dashboard-print-container');
+    const printContainer = document.querySelector(".dashboard-print-container");
     if (printContainer) {
-      printContainer.setAttribute('data-paper', 'A3');
-      printContainer.setAttribute('data-orientation', 'portrait');
+      printContainer.setAttribute("data-paper", "A3");
+      printContainer.setAttribute("data-orientation", "portrait");
     }
-    
+
     // Set data attributes on document root for @page rules
-    document.documentElement.setAttribute('data-paper', 'A3');
-    document.documentElement.setAttribute('data-orientation', 'portrait');
-    
+    document.documentElement.setAttribute("data-paper", "A3");
+    document.documentElement.setAttribute("data-orientation", "portrait");
+
     // Create dynamic @page rule for A3 Portrait
-    const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
-    printStyle.id = 'dynamic-print-style';
+    const printStyle =
+      document.getElementById("dynamic-print-style") ||
+      document.createElement("style");
+    printStyle.id = "dynamic-print-style";
     printStyle.innerHTML = `
       @media print {
         @page {
@@ -463,39 +694,45 @@ const Dashboard = () => {
         }
       }
     `;
-    
+
     document.head.appendChild(printStyle);
-    
+
     // AGGRESSIVE sizing to force single page
     setTimeout(() => {
-      const container = document.querySelector('.dashboard-print-container');
+      const container = document.querySelector(".dashboard-print-container");
       if (container) {
         const containerHeight = container.offsetHeight;
         const windowHeight = window.innerHeight;
-        
+
         // FORCE fit in single page with aggressive scaling
         if (containerHeight > windowHeight * 0.9) {
           // Scale down aggressively to fit everything
-          const aggressiveScale = Math.max((windowHeight * 0.88) / containerHeight, 0.4);
+          const aggressiveScale = Math.max(
+            (windowHeight * 0.88) / containerHeight,
+            0.4
+          );
           const scaleWidth = 100 / aggressiveScale;
           container.style.transform = `translateX(-50%) scale(${aggressiveScale})`;
-          container.style.left = '50%';
+          container.style.left = "50%";
           container.style.width = `${scaleWidth}%`;
         } else {
           // Use default aggressive scale
-          container.style.transform = 'translateX(-50%) scale(0.48)';
-          container.style.left = '50%';
-          container.style.width = '208%';
+          container.style.transform = "translateX(-50%) scale(0.48)";
+          container.style.left = "50%";
+          container.style.width = "208%";
         }
-        
+
         // TRIPLE check - absolute guarantee notes are visible
         setTimeout(() => {
-          const notesSection = container.querySelector('.mt-8');
+          const notesSection = container.querySelector(".mt-8");
           if (notesSection) {
             const notesRect = notesSection.getBoundingClientRect();
             if (notesRect.bottom > windowHeight * 0.95) {
               // NUCLEAR option - scale down to absolute minimum
-              const nuclearScale = Math.max((windowHeight * 0.85) / containerHeight, 0.35);
+              const nuclearScale = Math.max(
+                (windowHeight * 0.85) / containerHeight,
+                0.35
+              );
               const nuclearWidth = 100 / nuclearScale;
               container.style.transform = `translateX(-50%) scale(${nuclearScale})`;
               container.style.width = `${nuclearWidth}%`;
@@ -503,7 +740,7 @@ const Dashboard = () => {
           }
         }, 50);
       }
-      
+
       window.print();
     }, 300);
   };
@@ -522,52 +759,131 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
+      {/* ===========================
+          ✅ MODAL JOB DESC
+      ============================ */}
+      {showJobModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-lg mb-1">Job Description</h3>
+                <p className="text-sm font-semibold">{selectedJob?.name}</p>
+                <p className="text-xs text-gray-600 mb-3">{selectedJob?.title}</p>
+              </div>
+              <div>
+                <button
+                  onClick={() => setShowJobModal(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  aria-label="Close jobdesc"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 mt-3 pt-3 text-sm leading-tight">
+              {/* Jika kamu punya field jobdesc di data, tampilkan */}
+              {selectedJob?.jobdesc ? (
+                <div>{selectedJob.jobdesc}</div>
+              ) : (
+                <div className="text-gray-600">
+                  Job description belum tersedia untuk {selectedJob?.name}.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-4 gap-2">
+              <button
+                onClick={() => setShowJobModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
-              <img 
-                src="/logo/Logo DG New 2022.png" 
-                alt="Dharma Group Logo" 
+              <img
+                src="/logo/Logo DG New 2022.png"
+                alt="Dharma Group Logo"
                 className="w-full h-full object-contain"
               />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800 mb-1">{organizationData.header.title}</h1>
-              <h2 className="text-lg font-semibold text-gray-700">{organizationData.header.company}</h2>
-              <p className="text-sm text-gray-500">Effective Date: {organizationData.header.effectiveDate}</p>
+              <h1 className="text-xl font-bold text-gray-800 mb-1">
+                {organizationData.header.title}
+              </h1>
+              <h2 className="text-lg font-semibold text-gray-700">
+                {organizationData.header.company}
+              </h2>
+              <p className="text-sm text-gray-500">
+                Effective Date: {organizationData.header.effectiveDate}
+              </p>
             </div>
           </div>
           <div className="text-right">
             <div className="grid grid-cols-3 gap-4 border border-gray-400 p-4 bg-white">
               {/* Prepared By */}
               <div className="text-center border-r border-gray-400 pr-4">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
+                  Prepared By :
+                </p>
                 <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}</p>
-                <p className="text-xs text-gray-500">Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}</p>
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.preparedBy?.name ||
+                    "Diki Wahyudi"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Prep Date :{" "}
+                  {organizationData.signatures?.preparedBy?.date ||
+                    "08/09/2025"}
+                </p>
               </div>
 
               {/* Middle - Bambang Wuryanto */}
               <div className="text-center border-r border-gray-400 pr-4">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">{organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}</p>
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
+                  {organizationData.signatures?.middleBy?.title ||
+                    "Bambang Wuryanto"}
+                </p>
                 <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}</p>
-                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}</p>
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.middleBy?.name ||
+                    "Bambang Wuryanto"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Prepared Date :{" "}
+                  {organizationData.signatures?.middleBy?.date || "08/09/2025"}
+                </p>
               </div>
 
               {/* Approved By */}
               <div className="text-center">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
+                  Approved By :
+                </p>
                 <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}</p>
-                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}</p>
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.approvedBy?.name ||
+                    "Eko Maryanto"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Prepared Date :{" "}
+                  {organizationData.signatures?.approvedBy?.date ||
+                    "08/09/2025"}
+                </p>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Print Button - Only show if user has permission */}
         {canPrint && (
           <div className="mt-4 flex justify-end">
@@ -575,8 +891,18 @@ const Dashboard = () => {
               onClick={handlePrint}
               className="no-print bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
               </svg>
               Print A3
             </button>
@@ -585,30 +911,43 @@ const Dashboard = () => {
       </div>
 
       {/* Organization Chart */}
-      <div className="dashboard-print-container bg-white rounded-lg shadow-sm p-6 overflow-x-auto">
+      <div
+        className="dashboard-print-container bg-white rounded-lg shadow-sm p-6 overflow-x-auto"
+        ref={containerRef}
+      >
         {/* Board of Commissioners */}
         <div className="mb-8">
           <div className="bg-blue-300 p-4 rounded text-center max-w-md mx-auto mb-6">
-            <h3 className="font-bold text-sm text-white">BOARD OF COMMISSIONERS</h3>
+            <h3 className="font-bold text-sm text-white">
+              BOARD OF COMMISSIONERS
+            </h3>
           </div>
-          
+
           <div className="flex justify-center gap-6 mb-6">
             <div className="bg-white border border-gray-400 rounded shadow-sm w-48 text-center min-h-[100px]">
               <div className="p-2 bg-gray-100 border-b border-gray-300">
-                <p className="text-sm font-semibold">{organizationData.commissioners?.president?.title || 'PRESIDENT COMMISIONER'}</p>
+                <p className="text-sm font-semibold">
+                  {organizationData.commissioners?.president?.title ||
+                    "PRESIDENT COMMISIONER"}
+                </p>
               </div>
               <div className="p-4 flex items-center justify-center h-16">
-                <p className="text-xs font-medium">{organizationData.commissioners?.president?.name || 'IRIANTO SANTOSO'}</p>
+                <p className="text-xs font-medium">
+                  {organizationData.commissioners?.president?.name ||
+                    "IRIANTO SANTOSO"}
+                </p>
               </div>
             </div>
             <div className="bg-white border border-gray-400 p-4 rounded shadow-sm w-48 text-center min-h-[100px] flex flex-col justify-center">
               <p className="text-sm font-semibold mb-3">COMMISSIONERS</p>
-              {organizationData.commissioners?.commissioners?.map((name, index) => (
-                <React.Fragment key={index}>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs mb-1">{name}</p>
-                </React.Fragment>
-              ))}
+              {organizationData.commissioners?.commissioners?.map(
+                (name, index) => (
+                  <React.Fragment key={index}>
+                    <hr className="my-1 border-gray-300" />
+                    <p className="text-xs mb-1">{name}</p>
+                  </React.Fragment>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -617,7 +956,9 @@ const Dashboard = () => {
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-4">
             <div className="bg-blue-300 p-3 rounded text-center">
-              <h3 className="font-bold text-xs text-white">BOARD OF DIRECTOR</h3>
+              <h3 className="font-bold text-xs text-white">
+                BOARD OF DIRECTOR
+              </h3>
             </div>
             <div className="p-3 rounded text-center">
               <h3 className="font-bold text-xs text-transparent">&nbsp;</h3>
@@ -629,7 +970,9 @@ const Dashboard = () => {
               <h3 className="font-bold text-xs text-white">DEPARTMENT HEAD</h3>
             </div>
             <div className="bg-blue-300 p-3 rounded text-center">
-              <h3 className="font-bold text-xs text-white leading-tight">SECTION HEAD / ENGINEERING PRODUCT LEADER</h3>
+              <h3 className="font-bold text-xs text-white leading-tight">
+                SECTION HEAD / ENGINEERING PRODUCT LEADER
+              </h3>
             </div>
           </div>
         </div>
@@ -637,16 +980,21 @@ const Dashboard = () => {
         {/* Main Content Grid - 5 Columns - COMPLETE DYNAMIC STRUCTURE */}
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-4">
-            
             {/* Column 1 - Board of Directors */}
             <div className="space-y-3">
               {organizationData.structure?.bod?.map((item) => (
-                <div key={item.id} className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]">
+                <div
+                  key={item.id}
+                  className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]"
+                >
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                    {/* BOD biasanya tidak clickable - tampil sebagai teks */}
                     <p className="text-xs font-bold">{item.code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight">
+                      {item.title}
+                    </p>
                     <hr className="my-1 border-gray-300" />
                     <p className="text-xs leading-tight">{item.name}</p>
                     <p className="text-xs leading-tight">({item.empId})</p>
@@ -659,19 +1007,28 @@ const Dashboard = () => {
             <div className="space-y-4">
               {/* Empty space to align with President Director */}
               <div className="min-h-[180px]"></div>
-              
+
               {/* Management items with special handling for combined MDO */}
               {organizationData.structure?.management?.map((item) => {
-                if (item.code === 'MDO1.0') {
+                if (item.code === "MDO1.0") {
                   // Combined MDO box
-                  const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
+                  const mdo2 = organizationData.structure.management.find(
+                    (m) => m.code === "MDO2.0"
+                  );
                   return (
-                    <div key="mdo-combined" 
+                    <div
+                      key="mdo-combined"
                       className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                        mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                        mdo2?.clickable && canViewSODetails
+                          ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                          : ""
                       }`}
                       onClick={() => {
-                        if (mdo2?.clickable && mdo2?.route && canViewSODetails) {
+                        if (
+                          mdo2?.clickable &&
+                          mdo2?.route &&
+                          canViewSODetails
+                        ) {
                           navigate(mdo2.route);
                         }
                       }}
@@ -680,46 +1037,85 @@ const Dashboard = () => {
                         {/* Header row */}
                         <div className="flex border-b border-gray-300">
                           <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-xs font-semibold leading-tight">{item.title}</p>
+                            <p className="text-xs font-semibold leading-tight">
+                              {item.title}
+                            </p>
                           </div>
                         </div>
-                        
+
                         {/* First content row (MDO1.0) */}
                         <div className="flex border-b border-gray-300 flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                            <p className="text-xs font-bold">{item.code}</p>
+                            {/* MDO1.0 - if clickable show button */}
+                            {item.clickable && canViewSODetails ? (
+                              <button
+                                className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCodeClick(item);
+                                }}
+                              >
+                                {item.code}
+                              </button>
+                            ) : (
+                              <p className="text-xs font-bold">{item.code}</p>
+                            )}
                           </div>
                           <div className="p-3 flex-1 text-center flex flex-col justify-center">
                             <p className="text-xs leading-tight">{item.name}</p>
-                            <p className="text-xs leading-tight">({item.empId})</p>
+                            <p className="text-xs leading-tight">
+                              ({item.empId})
+                            </p>
                           </div>
                         </div>
-                        
+
                         {/* Second content row (MDO2.0) */}
                         <div className="flex flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                            <p className="text-xs font-bold">{mdo2?.code}</p>
+                            {/* mdo2 code button conditional */}
+                            {mdo2?.clickable && canViewSODetails ? (
+                              <button
+                                className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCodeClick(mdo2);
+                                }}
+                              >
+                                {mdo2?.code}
+                              </button>
+                            ) : (
+                              <p className="text-xs font-bold">{mdo2?.code}</p>
+                            )}
                           </div>
                           <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                            <p className="text-xs leading-tight">{mdo2?.name}</p>
-                            <p className="text-xs leading-tight">({mdo2?.empId})</p>
+                            <p className="text-xs leading-tight">
+                              {mdo2?.name}
+                            </p>
+                            <p className="text-xs leading-tight">
+                              ({mdo2?.empId})
+                            </p>
                             {mdo2?.clickable && canViewSODetails && (
-                              <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                              <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
+                                Click to view details →
+                              </p>
                             )}
                           </div>
                         </div>
                       </div>
                     </div>
                   );
-                } else if (item.code === 'MDO2.0') {
+                } else if (item.code === "MDO2.0") {
                   // Skip MDO2.0 as it's handled in the combined box
                   return null;
                 } else {
                   // Regular management item
                   return (
-                    <div key={item.id} 
+                    <div
+                      key={item.id}
                       className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                        item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                        item.clickable && canViewSODetails
+                          ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                          : ""
                       }`}
                       onClick={() => {
                         if (item.clickable && item.route && canViewSODetails) {
@@ -728,15 +1124,31 @@ const Dashboard = () => {
                       }}
                     >
                       <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                        <p className="text-xs font-bold">{item.code}</p>
+                        {item.clickable && canViewSODetails ? (
+                          <button
+                            className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCodeClick(item);
+                            }}
+                          >
+                            {item.code}
+                          </button>
+                        ) : (
+                          <p className="text-xs font-bold">{item.code}</p>
+                        )}
                       </div>
                       <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                        <p className="text-xs font-semibold mb-1 leading-tight">
+                          {item.title}
+                        </p>
                         <hr className="my-1 border-gray-300" />
                         <p className="text-xs leading-tight">{item.name}</p>
                         <p className="text-xs leading-tight">({item.empId})</p>
                         {item.clickable && canViewSODetails && (
-                          <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                          <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
+                            Click to view details →
+                          </p>
                         )}
                       </div>
                     </div>
@@ -753,11 +1165,21 @@ const Dashboard = () => {
               <div className="min-h-[200px]"></div>
               <div className="min-h-[120px]"></div>
               <div className="min-h-[130px]"></div>
-              
+
               {organizationData.structure?.divisions?.map((div, index) => (
                 <React.Fragment key={div.id}>
-                  {index > 0 && <div className={index === 1 ? "min-h-[100px]" : "min-h-[570px]"}></div>}
-                  <div className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${index === 0 ? '[100px]' : '[80px]'} flex items-center justify-center`}>
+                  {index > 0 && (
+                    <div
+                      className={
+                        index === 1 ? "min-h-[100px]" : "min-h-[570px]"
+                      }
+                    ></div>
+                  )}
+                  <div
+                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${
+                      index === 0 ? "[100px]" : "[80px]"
+                    } flex items-center justify-center`}
+                  >
                     <span className="leading-tight">{div.label}</span>
                   </div>
                 </React.Fragment>
@@ -770,7 +1192,7 @@ const Dashboard = () => {
               <div className="min-h-[110px]"></div>
               <div className="min-h-[150px]"></div>
               <div className="min-h-[190px]"></div>
-              
+
               {organizationData.structure?.departments?.map((item, index) => (
                 <React.Fragment key={item.id}>
                   {index === 1 && <div className="min-h-[10px]"></div>}
@@ -778,9 +1200,11 @@ const Dashboard = () => {
                   {index === 4 && <div className="min-h-[105px]"></div>}
                   {index === 5 && <div className="min-h-[110px]"></div>}
                   {index === 6 && <div className="min-h-[250px]"></div>}
-                  <div 
+                  <div
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      item.clickable && canViewSODetails
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
                     }`}
                     onClick={() => {
                       if (item.clickable && item.route && canViewSODetails) {
@@ -789,15 +1213,33 @@ const Dashboard = () => {
                     }}
                   >
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      <p className="text-xs font-bold">{item.code}</p>
+                      {item.clickable && canViewSODetails ? (
+                        <button
+                          className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCodeClick(item);
+                          }}
+                        >
+                          {item.code}
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold">{item.code}</p>
+                      )}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                      <p className="text-xs font-semibold mb-1 leading-tight">
+                        {item.title}
+                      </p>
                       <hr className="my-1 border-gray-300" />
                       <p className="text-xs leading-tight">{item.name}</p>
-                      {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
+                      {item.empId && (
+                        <p className="text-xs leading-tight">({item.empId})</p>
+                      )}
                       {item.clickable && canViewSODetails && (
-                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
+                          Click to view details →
+                        </p>
                       )}
                     </div>
                   </div>
@@ -812,10 +1254,13 @@ const Dashboard = () => {
                 <React.Fragment key={item.id}>
                   {index === 3 && <div className="min-h-[435px]"></div>}
                   {index === 4 && <div className="min-h-[10px]"></div>}
-                  {index === 5 && <div className="min-h-[10px]"></div>}  
-                  <div 
+                  {index === 5 && <div className="min-h-[10px]"></div>}
+
+                  <div
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                      item.clickable && canViewSODetails
+                        ? "hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 cursor-pointer"
+                        : ""
                     }`}
                     onClick={() => {
                       if (item.clickable && item.route && canViewSODetails) {
@@ -823,35 +1268,64 @@ const Dashboard = () => {
                       }
                     }}
                   >
+                    {/* CODE BUTTON CONDITIONAL */}
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      <p className="text-xs font-bold">{item.code}</p>
+                      {item.clickable && canViewSODetails ? (
+                        <button
+                          className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCodeClick(item);
+                          }}
+                        >
+                          {item.code}
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold">{item.code}</p>
+                      )}
                     </div>
+
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs font-semibold mb-1 leading-tight">{item.title}</p>
+                      <p className="text-xs font-semibold mb-1 leading-tight">
+                        {item.title}
+                      </p>
                       <hr className="my-1 border-gray-300" />
                       <p className="text-xs leading-tight">{item.name}</p>
-                      {item.empId && <p className="text-xs leading-tight">({item.empId})</p>}
+                      {item.empId && (
+                        <p className="text-xs leading-tight">({item.empId})</p>
+                      )}
                       {item.clickable && canViewSODetails && (
-                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
+                        <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
+                          Click to view details →
+                        </p>
                       )}
                     </div>
                   </div>
                 </React.Fragment>
               ))}
             </div>
-
           </div>
         </div>
 
-      {/* Legend */}
+        {/* Legend */}
         <div className="mt-8 bg-gray-50 p-4 rounded-lg border border-gray-400 max-w-sm">
           <h4 className="font-bold text-sm mb-2">NOTE:</h4>
           <div className="text-xs space-y-1">
-            <p><span className="font-bold">*</span> CONCURE</p>
-            <p><span className="font-bold">**</span> ACTING</p>
-            <p><span className="font-bold">(INC.)</span> INCUMBENT</p>
-            <p><span className="font-bold">TBR</span> TO BE RECRUIT</p>
-            <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
+            <p>
+              <span className="font-bold">*</span> CONCURE
+            </p>
+            <p>
+              <span className="font-bold">**</span> ACTING
+            </p>
+            <p>
+              <span className="font-bold">(INC.)</span> INCUMBENT
+            </p>
+            <p>
+              <span className="font-bold">TBR</span> TO BE RECRUIT
+            </p>
+            <p>
+              <span className="font-bold">TBD</span> TO BE DEVELOP
+            </p>
           </div>
         </div>
       </div>
