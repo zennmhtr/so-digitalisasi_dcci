@@ -13,7 +13,7 @@ import ManagementDevelopment from './pages/ManagementDevelopment';
 import MiShe from './pages/MiShe';
 import MarketingEngineering from './pages/MarketingEngineering';
 import ManagementRepresentative from './pages/ManagementRepresentative';
-import Purchasing from './pages/Purchasing';
+import Purchasing from './pages/purchasing';
 import Ppic from './pages/Ppic';
 import ManufacturBattery from './pages/ManufacturBattery';
 import ManufacturingCable from './pages/ManufacturingCable';

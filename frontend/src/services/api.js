@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// Read API base URL from Vite environment variable when available so production build
-// can point to the real domain. Fallback to localhost for local development.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
