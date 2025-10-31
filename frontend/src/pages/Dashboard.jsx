@@ -15,7 +15,7 @@ const Dashboard = () => {
   const containerRef = useRef(null);
 
   // ===========================
-  // ✅ STATE & FUNGSI JOBDESC 
+  // ✅ STATE & FUNGSI JOBDESC
   // ===========================
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
@@ -29,85 +29,102 @@ const Dashboard = () => {
     setJobdescData(null);
 
     try {
-      console.log('🔍 Searching job description for:', { name: item.name, empId: item.empId, title: item.title });
-      
-      // Try to fetch job description from backend by employee ID or name
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      console.log("🔍 Searching job description for:", {
+        name: item.name,
+        empId: item.empId,
+        title: item.title,
       });
-      
+
+      // Try to fetch job description from backend by employee ID or name
+      const response = await fetch(
+        `http://localhost:3001/api/jobdescriptions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
       if (response.ok) {
         const result = await response.json();
-        console.log('📦 API Response structure:', { 
-          hasData: !!result.data, 
+        console.log("📦 API Response structure:", {
+          hasData: !!result.data,
           isArray: Array.isArray(result.data),
-          dataLength: result.data?.length 
+          dataLength: result.data?.length,
         });
-        
+
         // Extract data array from response
         const allJobdescs = result.data || result;
-        console.log('📋 Total Job Descriptions:', allJobdescs.length);
-        console.log('📋 All Job Descriptions:', allJobdescs.map(jd => ({ 
-          memberName: jd.memberName, 
-          memberNoPNK: jd.memberNoPNK,
-          positionTitle: jd.positionTitle
-        })));
-        
+        console.log("📋 Total Job Descriptions:", allJobdescs.length);
+        console.log(
+          "📋 All Job Descriptions:",
+          allJobdescs.map((jd) => ({
+            memberName: jd.memberName,
+            memberNoPNK: jd.memberNoPNK,
+            positionTitle: jd.positionTitle,
+          }))
+        );
+
         // Find job description by empId or name (case-insensitive and trimmed)
-        const foundJobdesc = allJobdescs.find(jd => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
-          const itemEmpId = (item.empId || '').trim();
-          
-          console.log('🔄 Comparing:', {
+        const foundJobdesc = allJobdescs.find((jd) => {
+          const jdName = (jd.memberName || "").trim().toUpperCase();
+          const jdNoPNK = (jd.memberNoPNK || "").trim();
+          const itemName = (item.name || "").trim().toUpperCase();
+          const itemEmpId = (item.empId || "").trim();
+
+          console.log("🔄 Comparing:", {
             jdName,
             jdNoPNK,
             itemName,
             itemEmpId,
             nameMatch: jdName === itemName,
-            empIdMatch: jdNoPNK === itemEmpId
+            empIdMatch: jdNoPNK === itemEmpId,
           });
-          
+
           // Priority 1: Check by empId (most reliable)
           if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) {
-            console.log('✅ MATCH by empId!', jdNoPNK);
+            console.log("✅ MATCH by empId!", jdNoPNK);
             return true;
           }
-          
+
           // Priority 2: Check by exact name match (case-insensitive)
           if (jdName && itemName && jdName === itemName) {
-            console.log('✅ MATCH by exact name!', jdName);
+            console.log("✅ MATCH by exact name!", jdName);
             return true;
           }
-          
+
           // Priority 3: Check if name contains each other (partial match)
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) {
-            console.log('⚠️ PARTIAL MATCH by name!', { jdName, itemName });
+          if (
+            jdName &&
+            itemName &&
+            (jdName.includes(itemName) || itemName.includes(jdName))
+          ) {
+            console.log("⚠️ PARTIAL MATCH by name!", { jdName, itemName });
             return true;
           }
-          
+
           return false;
         });
-        
+
         if (foundJobdesc) {
-          console.log('✅ Job description found:', {
+          console.log("✅ Job description found:", {
             memberName: foundJobdesc.memberName,
             memberNoPNK: foundJobdesc.memberNoPNK,
-            positionTitle: foundJobdesc.positionTitle
+            positionTitle: foundJobdesc.positionTitle,
           });
           setJobdescData(foundJobdesc);
         } else {
-          console.log('❌ No job description found for:', item.name);
-          console.log('💡 Available job descriptions:', allJobdescs.map(jd => `${jd.memberName} (${jd.memberNoPNK})`));
+          console.log("❌ No job description found for:", item.name);
+          console.log(
+            "💡 Available job descriptions:",
+            allJobdescs.map((jd) => `${jd.memberName} (${jd.memberNoPNK})`)
+          );
         }
       } else {
-        console.error('❌ API response not ok:', response.status);
+        console.error("❌ API response not ok:", response.status);
       }
     } catch (error) {
-      console.error('❌ Error fetching job description:', error);
+      console.error("❌ Error fetching job description:", error);
     } finally {
       setLoadingJobdesc(false);
     }
@@ -118,37 +135,37 @@ const Dashboard = () => {
 
   // Permission mapping untuk View SO Details - setiap route ke permission spesifik
   const routePermissionMap = {
-    '/mi-she': 'View MI & SHE SO',
-    '/management-development': 'View Management Dev SO',
-    '/management-representative': 'View Management Rep SO',
-    '/qa-department': 'View QA SO',
-    '/ppic': 'View PPIC SO',
-    '/marketing-engineering': 'View Marketing Engineering SO',
-    '/marketing-battery-department': 'View Marketing Battery SO',
-    '/manufacturing-cable': 'View Manufacturing Cable SO',
-    '/manufactur-battery': 'View Manufacturing Battery SO',
-    '/hrga-it-department': 'View HRGA & IT SO',
-    '/purchasing': 'View Purchasing SO',
-    '/finance-department': 'View Finance SO'
+    "/mi-she": "View MI & SHE SO",
+    "/management-development": "View Management Dev SO",
+    "/management-representative": "View Management Rep SO",
+    "/qa-department": "View QA SO",
+    "/ppic": "View PPIC SO",
+    "/marketing-engineering": "View Marketing Engineering SO",
+    "/marketing-battery-department": "View Marketing Battery SO",
+    "/manufacturing-cable": "View Manufacturing Cable SO",
+    "/manufactur-battery": "View Manufacturing Battery SO",
+    "/hrga-it-department": "View HRGA & IT SO",
+    "/purchasing": "View Purchasing SO",
+    "/finance-department": "View Finance SO",
   };
 
   // Function to check if user can view specific department SO
   const canViewDepartmentSO = (route) => {
     if (!route) return false;
-    
+
     const userPermissions = user?.role?.permissions || [];
-    
+
     // Admin dengan "View All SO Details" bisa akses semua
-    if (userPermissions.includes('View All SO Details')) {
+    if (userPermissions.includes("View All SO Details")) {
       return true;
     }
-    
+
     // Cek permission spesifik untuk View SO Details departemen
     const requiredPermission = routePermissionMap[route];
     if (requiredPermission && userPermissions.includes(requiredPermission)) {
       return true;
     }
-    
+
     return false;
   };
 
@@ -515,354 +532,95 @@ const Dashboard = () => {
 
   // Handle print/download
   const handlePrint = () => {
-    // Set data attributes for CSS targeting - A3 Portrait
     const printContainer = document.querySelector(".dashboard-print-container");
-    if (printContainer) {
-      printContainer.setAttribute("data-paper", "A3");
-      printContainer.setAttribute("data-orientation", "portrait");
-    }
+    if (!printContainer) return;
 
-    // Set data attributes on document root for @page rules
-    document.documentElement.setAttribute("data-paper", "A3");
-    document.documentElement.setAttribute("data-orientation", "portrait");
+    // Hapus style print lama jika ada
+    const oldStyle = document.getElementById("dynamic-print-style");
+    if (oldStyle) oldStyle.remove();
 
-    // Create dynamic @page rule for A3 Portrait
-    const printStyle =
-      document.getElementById("dynamic-print-style") ||
-      document.createElement("style");
+    // Style khusus print (A3 Portrait)
+    const printStyle = document.createElement("style");
     printStyle.id = "dynamic-print-style";
     printStyle.innerHTML = `
-      @media print {
-        @page {
-          size: A3 portrait;
-          margin: 2mm;
-        }
-        
-        /* Hide all web interface elements */
-        .no-print, .click-button, nav, .sidebar, .navigation, .menu,
-        button, .btn, .toolbar, .header-actions, .actions, .controls,
-        .scrollbar, ::-webkit-scrollbar, .paste-image, .upload-image,
-        .image-paste, .drag-drop, input[type="file"], .file-upload,
-        .image-upload, .paste-area, .drop-zone {
-          display: none !important;
-          visibility: hidden !important;
-        }
-        
-        /* Hide scrollbars completely */
-        * {
-          overflow: visible !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-        
-        *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-        }
-        
-        html, body {
-          overflow: visible !important;
-          height: auto !important;
-          background: white !important;
-        }
-        
-        body {
-          margin: 0;
-          padding: 0;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-        
-        /* Scale for A3 Portrait - FORCE SINGLE PAGE */
-        .dashboard-print-container,
-        .organization-chart {
-          transform: scale(0.48) !important;
-          transform-origin: center top !important;
-          width: 208% !important;
-          height: auto !important;
-          page-break-inside: avoid !important;
-          page-break-after: avoid !important;
-          page-break-before: avoid !important;
-          margin: 0 auto !important;
-          padding: 0.2rem !important;
-          max-height: 90vh !important;
-          overflow: hidden !important;
-          position: relative !important;
-          left: 50% !important;
-          transform: translateX(-50%) scale(0.48) !important;
-        }
-        
-        /* Force single page - ABSOLUTE SINGLE PAGE */
-        body, html {
-          height: 100vh !important;
-          max-height: 100vh !important;
-          font-size: 12px !important;
-          overflow: hidden !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          display: flex !important;
-          justify-content: center !important;
-          align-items: flex-start !important;
-        }
-        
-        /* FORCE EVERYTHING INTO SINGLE PAGE */
-        * {
-          page-break-inside: avoid !important;
-          page-break-after: avoid !important;
-          page-break-before: avoid !important;
-          break-inside: avoid !important;
-          break-after: avoid !important;
-          break-before: avoid !important;
-        }
-        
-        /* MAXIMUM COMPRESSION to fit all content */
-        .space-y-3 > * + * { margin-top: 0.2rem !important; }
-        .space-y-4 > * + * { margin-top: 0.25rem !important; }
-        .space-y-6 > * + * { margin-top: 0.3rem !important; }
-        .space-y-8 > * + * { margin-top: 0.35rem !important; }
-        .mb-4 { margin-bottom: 0.25rem !important; }
-        .mb-6 { margin-bottom: 0.3rem !important; }
-        .mb-8 { margin-bottom: 0.35rem !important; }
-        .p-4 { padding: 0.25rem !important; }
-        .p-6 { padding: 0.3rem !important; }
-        
-        /* Minimal page margins for maximum content */
-        @page {
-          margin: 2mm !important;
-        }
-        
-        /* COMPRESSED card heights for single page */
-        .min-h-\\[80px\\] { min-height: 45px !important; }
-        .min-h-\\[100px\\] { min-height: 55px !important; }
-        .min-h-\\[110px\\] { min-height: 60px !important; }
-        .min-h-\\[120px\\] { min-height: 65px !important; }
-        .min-h-\\[150px\\] { min-height: 75px !important; }
-        .min-h-\\[170px\\] { min-height: 85px !important; }
-        .min-h-\\[180px\\] { min-height: 90px !important; }
-        .min-h-\\[190px\\] { min-height: 95px !important; }
-        .min-h-\\[200px\\] { min-height: 100px !important; }
-        
-        /* MAXIMUM COMPRESSED spacer heights */
-        .min-h-\\[1px\\] { min-height: 1px !important; }
-        .min-h-\\[10px\\] { min-height: 5px !important; }
-        .min-h-\\[100px\\] { min-height: 45px !important; }
-        .min-h-\\[105px\\] { min-height: 50px !important; }
-        .min-h-\\[110px\\] { min-height: 55px !important; }
-        .min-h-\\[250px\\] { min-height: 110px !important; }
-        .min-h-\\[435px\\] { min-height: 180px !important; }
-        .min-h-\\[570px\\] { min-height: 230px !important; }
-        
-        /* Maintain exact dashboard layout */
-        .grid {
-          display: grid !important;
-        }
-        
-        .grid-cols-4 {
-          grid-template-columns: repeat(4, 1fr) !important;
-        }
-        
-        .grid-cols-6 {
-          grid-template-columns: repeat(6, 1fr) !important;
-        }
-        
-        /* Keep spacing and positioning exact */
-        .space-y-4 > * + * { margin-top: 1rem !important; }
-        .space-y-3 > * + * { margin-top: 0.75rem !important; }
-        .gap-4 { gap: 1rem !important; }
-        
-        /* Preserve colors and borders */
-        .bg-blue-300 { background-color: #93c5fd !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        .border-black { border-color: #000000 !important; }
-        .text-black { color: #000000 !important; }
-        
-        /* Remove interfering effects */
-        * {
-          box-shadow: none !important;
-          transition: none !important;
-          animation: none !important;
-        }
-        
-        /* Keep essential card shadows */
-        .bg-white.border.border-gray-400 {
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        /* Maximum compression of signature section */
-        .mb-16 { margin-bottom: 1rem !important; }
-        
-        /* Minimize header section */
-        .w-24.h-24 { 
-          width: 4rem !important; 
-          height: 4rem !important; 
-        }
-        
-        /* MAXIMUM header compression */
-        .bg-white.rounded-lg.shadow-sm.p-4.mb-4 {
-          padding: 0.2rem !important;
-          margin-bottom: 0.2rem !important;
-        }
-        
-        /* MAXIMUM commissioners compression */
-        .mb-8 { margin-bottom: 0.3rem !important; }
-        
-        /* MAXIMUM commissioners compression */
-        .w-48 { width: 10rem !important; }
-        .min-h-\\[100px\\] { min-height: 55px !important; }
-        
-        /* Tightest possible grid spacing while maintaining structure */
-        .grid-cols-3 { 
-          grid-template-columns: repeat(3, 1fr) !important;
-          gap: 0.25rem !important;
-        }
-        
-        .grid-cols-5 { 
-          grid-template-columns: repeat(5, 1fr) !important;
-          gap: 0.3rem !important;
-        }
-        
-        /* COMPRESSED text sizes for single page */
-        .text-xs { font-size: 0.65rem !important; line-height: 1.1 !important; }
-        .text-sm { font-size: 0.75rem !important; line-height: 1.2 !important; }
-        .text-lg { font-size: 0.9rem !important; line-height: 1.2 !important; }
-        .text-xl { font-size: 1rem !important; line-height: 1.2 !important; }
-        
-        /* Force all content to stay in viewport */
-        * {
-          max-width: 100% !important;
-          box-sizing: border-box !important;
-        }
-        
-        /* Ensure no content overflows */
-        .dashboard-print-container * {
-          overflow: visible !important;
-          word-wrap: break-word !important;
-        }
-        
-        /* MAXIMUM notes compression */
-        .mt-8 {
-          margin-top: 0.2rem !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        
-        /* MAXIMUM notes compression */
-        .bg-gray-50.p-4.rounded-lg.border.border-gray-400.max-w-sm {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          page-break-before: avoid !important;
-          break-before: avoid !important;
-          margin-top: 0.1rem !important;
-          padding: 0.3rem !important;
-          margin-bottom: 0 !important;
-          max-width: 18rem !important;
-        }
-        
-        /* Ensure entire dashboard content stays together */
-        .dashboard-print-container {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        
-        /* ABSOLUTE SINGLE PAGE ENFORCEMENT */
-        .dashboard-print-container > * {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        
-        /* FORCE FIT - NUCLEAR OPTION */
-        body {
-          zoom: 1 !important;
-          transform: none !important;
-        }
-        
-        html {
-          overflow: hidden !important;
-        }
-        
-        /* MAXIMUM grid compression */
-        .gap-4 { gap: 0.2rem !important; }
-        .gap-6 { gap: 0.25rem !important; }
-        
-        /* MAXIMUM text compression but still readable */
-        h1, h2, h3, h4, h5, h6 {
-          line-height: 1.1 !important;
-          margin: 0 !important;
-        }
-        
-        /* FORCE SINGLE PAGE CONSTRAINT */
-        .dashboard-print-container {
-          max-height: 90vh !important;
-          height: auto !important;
-          box-sizing: border-box !important;
-          display: block !important;
-          position: relative !important;
-        }
-        
-        /* AGGRESSIVE emergency scaling */
-        @media print and (max-height: 420mm) {
-          .dashboard-print-container {
-            transform: translateX(-50%) scale(0.45) !important;
-            left: 50% !important;
-            width: 222% !important;
-          }
-        }
-        
-        /* ENSURE everything centers properly */
-        body > div {
-          margin: 0 auto !important;
-          display: block !important;
-        }
+    @media print {
+      @page {
+        size: A3 portrait;
+        margin: 0;
       }
-    `;
 
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body::before, body::after {
+        display: none !important;
+        content: none !important;
+      }
+
+      .no-print, nav, .menu, .sidebar, button, header, footer {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      *::-webkit-scrollbar { display: none !important; }
+      * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+
+      .dashboard-print-container {
+        overflow: visible !important;
+        max-width: none !important;
+        width: auto !important;
+        transform-origin: top center !important;
+        margin: 0 auto !important;
+        background: white !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        page-break-inside: avoid !important;
+      }
+
+      .dashboard-print-container * {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: visible !important;
+      }
+    }
+  `;
     document.head.appendChild(printStyle);
 
-    // AGGRESSIVE sizing to force single page
+    // Hitung scaling otomatis agar lebar penuh tapi tidak terpotong
     setTimeout(() => {
-      const container = document.querySelector(".dashboard-print-container");
-      if (container) {
-        const containerHeight = container.offsetHeight;
-        const windowHeight = window.innerHeight;
+      const pageHeight = 1122; // tinggi A3 portrait @96dpi
+      const pageWidth = 793; // lebar A3 portrait @96dpi
+      const containerHeight = printContainer.scrollHeight;
+      const containerWidth = printContainer.scrollWidth;
 
-        // FORCE fit in single page with aggressive scaling
-        if (containerHeight > windowHeight * 0.9) {
-          // Scale down aggressively to fit everything
-          const aggressiveScale = Math.max(
-            (windowHeight * 0.88) / containerHeight,
-            0.4
-          );
-          const scaleWidth = 100 / aggressiveScale;
-          container.style.transform = `translateX(-50%) scale(${aggressiveScale})`;
-          container.style.left = "50%";
-          container.style.width = `${scaleWidth}%`;
-        } else {
-          // Use default aggressive scale
-          container.style.transform = "translateX(-50%) scale(0.48)";
-          container.style.left = "50%";
-          container.style.width = "208%";
-        }
+      // Rasio skala berdasarkan tinggi & lebar
+      const scaleH = (pageHeight * 0.93) / containerHeight; // sedikit dikurangi biar tidak terpotong
+      const scaleW = (pageWidth * 1.1) / containerWidth; // dilebarkan 10%
+      const scale = Math.min(scaleH, scaleW) * 1.22; // perbesar hasil akhir 22%
 
-        // TRIPLE check - absolute guarantee notes are visible
+      // Terapkan scaling yang lebih lebar tapi tetap center
+      printContainer.style.transform = `scale(${scale})`;
+      printContainer.style.transformOrigin = "top center";
+      printContainer.style.margin = "0 auto";
+
+      // Print setelah layout stabil
+      setTimeout(() => {
+        window.print();
+
+        // Reset setelah print selesai
         setTimeout(() => {
-          const notesSection = container.querySelector(".mt-8");
-          if (notesSection) {
-            const notesRect = notesSection.getBoundingClientRect();
-            if (notesRect.bottom > windowHeight * 0.95) {
-              // NUCLEAR option - scale down to absolute minimum
-              const nuclearScale = Math.max(
-                (windowHeight * 0.85) / containerHeight,
-                0.35
-              );
-              const nuclearWidth = 100 / nuclearScale;
-              container.style.transform = `translateX(-50%) scale(${nuclearScale})`;
-              container.style.width = `${nuclearWidth}%`;
-            }
-          }
-        }, 50);
-      }
-
-      window.print();
+          printContainer.style.transform = "";
+          printContainer.style.margin = "";
+        }, 500);
+      }, 400);
     }, 300);
   };
 
@@ -890,7 +648,9 @@ const Dashboard = () => {
               <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  <span className="ml-3 text-gray-600">Loading job description...</span>
+                  <span className="ml-3 text-gray-600">
+                    Loading job description...
+                  </span>
                 </div>
               </div>
             </div>
@@ -899,7 +659,7 @@ const Dashboard = () => {
               user={{
                 name: selectedJob.name,
                 noPNK: selectedJob.empId,
-                department: { name: jobdescData.division || 'N/A' }
+                department: { name: jobdescData.division || "N/A" },
               }}
               jobdesc={jobdescData}
               viewOnly={true}
@@ -918,7 +678,9 @@ const Dashboard = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-1">Job Description</h3>
                     <p className="text-sm font-semibold">{selectedJob?.name}</p>
-                    <p className="text-xs text-gray-600 mb-3">{selectedJob?.title}</p>
+                    <p className="text-xs text-gray-600 mb-3">
+                      {selectedJob?.title}
+                    </p>
                   </div>
                   <button
                     onClick={() => {
@@ -934,13 +696,25 @@ const Dashboard = () => {
 
                 <div className="border-t border-gray-200 mt-3 pt-3 text-sm leading-tight">
                   <div className="flex items-start gap-3 text-orange-600 bg-orange-50 p-4 rounded-lg">
-                    <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <svg
+                      className="w-5 h-5 mt-0.5 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <div>
-                      <p className="font-semibold mb-1">Job description belum tersedia</p>
+                      <p className="font-semibold mb-1">
+                        Job description belum tersedia
+                      </p>
                       <p className="text-sm text-gray-700">
-                        Job description untuk <strong>{selectedJob?.name}</strong> belum dibuat di sistem.
+                        Job description untuk{" "}
+                        <strong>{selectedJob?.name}</strong> belum dibuat di
+                        sistem.
                       </p>
                     </div>
                   </div>
@@ -1205,7 +979,8 @@ const Dashboard = () => {
                         <div className="flex border-b border-gray-300 flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             {/* MDO1.0 - if clickable show button */}
-                            {item.clickable && canViewDepartmentSO(item.route) ? (
+                            {item.clickable &&
+                            canViewDepartmentSO(item.route) ? (
                               <button
                                 className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                                 onClick={(e) => {
@@ -1231,7 +1006,8 @@ const Dashboard = () => {
                         <div className="flex flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             {/* mdo2 code button conditional */}
-                            {mdo2?.clickable && canViewDepartmentSO(mdo2?.route) ? (
+                            {mdo2?.clickable &&
+                            canViewDepartmentSO(mdo2?.route) ? (
                               <button
                                 className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                                 onClick={(e) => {
@@ -1252,11 +1028,12 @@ const Dashboard = () => {
                             <p className="text-xs leading-tight">
                               ({mdo2?.empId})
                             </p>
-                            {mdo2?.clickable && canViewDepartmentSO(mdo2?.route) && (
-                              <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
-                                Click to view details →
-                              </p>
-                            )}
+                            {mdo2?.clickable &&
+                              canViewDepartmentSO(mdo2?.route) && (
+                                <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
+                                  Click to view details →
+                                </p>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1276,7 +1053,11 @@ const Dashboard = () => {
                           : ""
                       }`}
                       onClick={() => {
-                        if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
+                        if (
+                          item.clickable &&
+                          item.route &&
+                          canViewDepartmentSO(item.route)
+                        ) {
                           navigate(item.route);
                         }
                       }}
@@ -1365,7 +1146,11 @@ const Dashboard = () => {
                         : ""
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
+                      if (
+                        item.clickable &&
+                        item.route &&
+                        canViewDepartmentSO(item.route)
+                      ) {
                         navigate(item.route);
                       }
                     }}
@@ -1421,7 +1206,11 @@ const Dashboard = () => {
                         : ""
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
+                      if (
+                        item.clickable &&
+                        item.route &&
+                        canViewDepartmentSO(item.route)
+                      ) {
                         navigate(item.route);
                       }
                     }}
