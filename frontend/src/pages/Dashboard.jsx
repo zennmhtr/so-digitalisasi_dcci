@@ -116,9 +116,41 @@ const Dashboard = () => {
   // Check if user has Print SO permission
   const canPrint = user?.role?.permissions?.includes("Print SO") || false;
 
-  // Check if user has View SO Details permission
-  const canViewSODetails =
-    user?.role?.permissions?.includes("View SO Details") || false;
+  // Permission mapping untuk View SO Details - setiap route ke permission spesifik
+  const routePermissionMap = {
+    '/mi-she': 'View MI & SHE SO',
+    '/management-development': 'View Management Dev SO',
+    '/management-representative': 'View Management Rep SO',
+    '/qa-department': 'View QA SO',
+    '/ppic': 'View PPIC SO',
+    '/marketing-engineering': 'View Marketing Engineering SO',
+    '/marketing-battery-department': 'View Marketing Battery SO',
+    '/manufacturing-cable': 'View Manufacturing Cable SO',
+    '/manufactur-battery': 'View Manufacturing Battery SO',
+    '/hrga-it-department': 'View HRGA & IT SO',
+    '/purchasing': 'View Purchasing SO',
+    '/finance-department': 'View Finance SO'
+  };
+
+  // Function to check if user can view specific department SO
+  const canViewDepartmentSO = (route) => {
+    if (!route) return false;
+    
+    const userPermissions = user?.role?.permissions || [];
+    
+    // Admin dengan "View All SO Details" bisa akses semua
+    if (userPermissions.includes('View All SO Details')) {
+      return true;
+    }
+    
+    // Cek permission spesifik untuk View SO Details departemen
+    const requiredPermission = routePermissionMap[route];
+    if (requiredPermission && userPermissions.includes(requiredPermission)) {
+      return true;
+    }
+    
+    return false;
+  };
 
   // Initialize organization data - same as DashboardEditor
   useEffect(() => {
@@ -1145,7 +1177,7 @@ const Dashboard = () => {
                     <div
                       key="mdo-combined"
                       className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                        mdo2?.clickable && canViewSODetails
+                        mdo2?.clickable && canViewDepartmentSO(mdo2?.route)
                           ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
                           : ""
                       }`}
@@ -1153,7 +1185,7 @@ const Dashboard = () => {
                         if (
                           mdo2?.clickable &&
                           mdo2?.route &&
-                          canViewSODetails
+                          canViewDepartmentSO(mdo2?.route)
                         ) {
                           navigate(mdo2.route);
                         }
@@ -1173,7 +1205,7 @@ const Dashboard = () => {
                         <div className="flex border-b border-gray-300 flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             {/* MDO1.0 - if clickable show button */}
-                            {item.clickable && canViewSODetails ? (
+                            {item.clickable && canViewDepartmentSO(item.route) ? (
                               <button
                                 className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                                 onClick={(e) => {
@@ -1199,7 +1231,7 @@ const Dashboard = () => {
                         <div className="flex flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             {/* mdo2 code button conditional */}
-                            {mdo2?.clickable && canViewSODetails ? (
+                            {mdo2?.clickable && canViewDepartmentSO(mdo2?.route) ? (
                               <button
                                 className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                                 onClick={(e) => {
@@ -1220,7 +1252,7 @@ const Dashboard = () => {
                             <p className="text-xs leading-tight">
                               ({mdo2?.empId})
                             </p>
-                            {mdo2?.clickable && canViewSODetails && (
+                            {mdo2?.clickable && canViewDepartmentSO(mdo2?.route) && (
                               <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
                                 Click to view details →
                               </p>
@@ -1239,18 +1271,18 @@ const Dashboard = () => {
                     <div
                       key={item.id}
                       className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                        item.clickable && canViewSODetails
+                        item.clickable && canViewDepartmentSO(item.route)
                           ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
                           : ""
                       }`}
                       onClick={() => {
-                        if (item.clickable && item.route && canViewSODetails) {
+                        if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
                           navigate(item.route);
                         }
                       }}
                     >
                       <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                        {item.clickable && canViewSODetails ? (
+                        {item.clickable && canViewDepartmentSO(item.route) ? (
                           <button
                             className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                             onClick={(e) => {
@@ -1271,7 +1303,7 @@ const Dashboard = () => {
                         <hr className="my-1 border-gray-300" />
                         <p className="text-xs leading-tight">{item.name}</p>
                         <p className="text-xs leading-tight">({item.empId})</p>
-                        {item.clickable && canViewSODetails && (
+                        {item.clickable && canViewDepartmentSO(item.route) && (
                           <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
                             Click to view details →
                           </p>
@@ -1328,18 +1360,18 @@ const Dashboard = () => {
                   {index === 6 && <div className="min-h-[250px]"></div>}
                   <div
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewSODetails
+                      item.clickable && canViewDepartmentSO(item.route)
                         ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
                         : ""
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route && canViewSODetails) {
+                      if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
                         navigate(item.route);
                       }
                     }}
                   >
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      {item.clickable && canViewSODetails ? (
+                      {item.clickable && canViewDepartmentSO(item.route) ? (
                         <button
                           className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                           onClick={(e) => {
@@ -1362,7 +1394,7 @@ const Dashboard = () => {
                       {item.empId && (
                         <p className="text-xs leading-tight">({item.empId})</p>
                       )}
-                      {item.clickable && canViewSODetails && (
+                      {item.clickable && canViewDepartmentSO(item.route) && (
                         <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
                           Click to view details →
                         </p>
@@ -1384,19 +1416,19 @@ const Dashboard = () => {
 
                   <div
                     className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewSODetails
+                      item.clickable && canViewDepartmentSO(item.route)
                         ? "hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 cursor-pointer"
                         : ""
                     }`}
                     onClick={() => {
-                      if (item.clickable && item.route && canViewSODetails) {
+                      if (item.clickable && item.route && canViewDepartmentSO(item.route)) {
                         navigate(item.route);
                       }
                     }}
                   >
                     {/* CODE BUTTON CONDITIONAL */}
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      {item.clickable && canViewSODetails ? (
+                      {item.clickable && canViewDepartmentSO(item.route) ? (
                         <button
                           className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
                           onClick={(e) => {
@@ -1420,7 +1452,7 @@ const Dashboard = () => {
                       {item.empId && (
                         <p className="text-xs leading-tight">({item.empId})</p>
                       )}
-                      {item.clickable && canViewSODetails && (
+                      {item.clickable && canViewDepartmentSO(item.route) && (
                         <p className="click-button no-print text-xs text-blue-600 mt-1 font-semibold">
                           Click to view details →
                         </p>

@@ -26,22 +26,36 @@ const RolePermission = () => {
     'SO DCI Editor',
     'SO Bagian Editor',
     'Print SO',
-    'View SO Details',
+    'View All SO Details',        // Admin only - can view all departments SO
     'Jobdesc Management',
     
-    // Department Access Permissions - Based on actual 12 departments
-    'Finance Department',         // Finance Department
-    'HRGA & IT Department',      // HRGA & IT Department  
-    'Management Development',     // Management Development
-    'Management Representative',  // Management Representative
-    'Manufacturing Battery',     // Manufacturing Battery
-    'Manufacturing Cable',       // Manufacturing Cable
-    'Marketing Battery Department', // Marketing Battery Department
-    'Marketing Engineering',     // Marketing Engineering
-    'MI & SHE',                 // MI & SHE
-    'PPIC',                     // PPIC
-    'Purchasing',               // Purchasing Department
-    'QA Department'             // QA Department
+    // Department Job Description Access - For Job Description Management per department
+    'Finance Department',         // Finance Department Job Description
+    'HRGA & IT Department',      // HRGA & IT Department Job Description
+    'Management Development',     // Management Development Job Description
+    'Management Representative',  // Management Representative Job Description
+    'Manufacturing Battery',     // Manufacturing Battery Job Description
+    'Manufacturing Cable',       // Manufacturing Cable Job Description
+    'Marketing Battery Department', // Marketing Battery Department Job Description
+    'Marketing Engineering',     // Marketing Engineering Job Description
+    'MI & SHE',                 // MI & SHE Job Description
+    'PPIC',                     // PPIC Job Description
+    'Purchasing',               // Purchasing Department Job Description
+    'QA Department',            // QA Department Job Description
+    
+    // SO Details View Access - For viewing SO Turunan per department
+    'View Finance SO',           // View Finance Department SO Details
+    'View HRGA & IT SO',        // View HRGA & IT Department SO Details
+    'View Management Dev SO',    // View Management Development SO Details
+    'View Management Rep SO',    // View Management Representative SO Details
+    'View Manufacturing Battery SO', // View Manufacturing Battery SO Details
+    'View Manufacturing Cable SO',   // View Manufacturing Cable SO Details
+    'View Marketing Battery SO', // View Marketing Battery SO Details
+    'View Marketing Engineering SO', // View Marketing Engineering SO Details
+    'View MI & SHE SO',         // View MI & SHE SO Details
+    'View PPIC SO',             // View PPIC SO Details
+    'View Purchasing SO',       // View Purchasing SO Details
+    'View QA SO'                // View QA Department SO Details
   ];
 
   // Fetch roles from API
@@ -373,11 +387,31 @@ const RolePermission = () => {
                       </div>
                     </div>
 
-                    {/* Department Access Permissions */}
+                    {/* Job Description Department Access */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Department Access Permissions</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Job Description Department Access</h4>
+                      <p className="text-xs text-gray-600 mb-3">Access to manage job descriptions for specific departments</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(9).map((permission) => (
+                        {availablePermissions.slice(9, 21).map((permission) => (
+                          <label key={permission} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.permissions.includes(permission)}
+                              onChange={() => handlePermissionChange(permission)}
+                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SO Details View Access per Department */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">SO Details View Access (per Department)</h4>
+                      <p className="text-xs text-gray-600 mb-3">View SO Turunan (organizational structure details) for specific departments</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.slice(21).map((permission) => (
                           <label key={permission} className="flex items-center">
                             <input
                               type="checkbox"
