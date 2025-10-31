@@ -13,7 +13,8 @@ import {
   Database,
   User,
   Key,
-  FileText
+  FileText,
+  GitPullRequest
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
@@ -101,17 +102,33 @@ const Layout = ({ children, sidebarVisible = true }) => {
                              'PPIC', 'Purchasing', 'QA Department'].includes(permission)
                           );
   
+  // Check SO Change Requests access - Only "Approve SO Changes" permission
+  const hasSOChangeRequestsAccess = userPermissions?.includes('Approve SO Changes');
+  
+  console.log('🔐 Layout SO Change Requests Check:', {
+    userName: user?.name,
+    hasSOChangeRequestsAccess: hasSOChangeRequestsAccess,
+    userPermissions: userPermissions
+  });
+  
   // Check Master Data access
   const hasMasterDataAccess = userPermissions?.includes('Manage Users') ||
                              userPermissions?.includes('Manage Roles') ||
                              userPermissions?.includes('Manage Departments');
   
   // Debug logging
-  console.log('Layout Debug:', {
+  console.log('🔍 Layout Debug - Permission Check:', {
     userName: user?.name,
     userRole: userRole?.name,
+    userRoleObject: userRole,
     userPermissions: userPermissions,
-    hasDashboardEditorAccess: hasDashboardEditorAccess
+    permissionsIsArray: Array.isArray(userPermissions),
+    permissionsLength: userPermissions?.length,
+    hasDashboardEditorAccess: hasDashboardEditorAccess,
+    hasSOChangeRequestsAccess: hasSOChangeRequestsAccess,
+    hasSubmitPermission: userPermissions?.includes('Submit SO Changes'),
+    hasApprovePermission: userPermissions?.includes('Approve SO Changes'),
+    rawUserObject: user
   });
 
   const navigation = [
@@ -126,6 +143,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
       ]
     }] : []),
     ...(hasJobdescAccess ? [{ name: 'Job Description', href: '/jobdesc-management', icon: FileText }] : []),
+    ...(hasSOChangeRequestsAccess ? [{ name: 'SO Change Requests', href: '/so-change-requests', icon: GitPullRequest }] : []),
     ...(hasMasterDataAccess ? [{ 
       name: 'Master Data', 
       icon: Database,

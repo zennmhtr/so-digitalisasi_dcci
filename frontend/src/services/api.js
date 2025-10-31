@@ -94,4 +94,15 @@ export const membersAPI = {
   delete: (id) => api.delete(`/members/${id}`),
 };
 
+// SO Change Requests API
+export const soChangeRequestsAPI = {
+  getAll: (params) => api.get('/so-change-requests', { params }),
+  getById: (id) => api.get(`/so-change-requests/${id}`),
+  create: (requestData) => api.post('/so-change-requests', requestData),
+  approve: (id, reviewComments) => api.put(`/so-change-requests/${id}/approve`, { reviewComments }),
+  reject: (id, reviewComments) => api.put(`/so-change-requests/${id}/reject`, { reviewComments }),
+  cancel: (id) => api.put(`/so-change-requests/${id}/cancel`),
+  delete: (id) => api.delete(`/so-change-requests/${id}`),
+};
+
 export default api;

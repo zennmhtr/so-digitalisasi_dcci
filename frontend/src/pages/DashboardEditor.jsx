@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { soChangeRequestsAPI } from '../services/api';
 
 const DashboardEditor = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [organizationData, setOrganizationData] = useState(null);
+  const [submitForm, setSubmitForm] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    affectedSection: 'departments'
+  });
   
   // New states for drawing features
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -246,9 +254,31 @@ const DashboardEditor = () => {
     });
   };
 
-  const saveLayout = async () => {
+  // Open submit modal
+  const openSubmitModal = () => {
+    setShowSubmitModal(true);
+    setSubmitForm({
+      title: '',
+      description: '',
+      priority: 'medium',
+      affectedSection: 'departments'
+    });
+  };
+
+  // Submit for approval
+  const submitForApproval = async () => {
+    if (!submitForm.title.trim()) {
+      alert('Please enter a title for this change request');
+      return;
+    }
+
+    if (!submitForm.description.trim()) {
+      alert('Please enter a description for this change request');
+      return;
+    }
+
     try {
-      const dataToSave = {
+      const dataToSubmit = {
         ...organizationData,
         lastModified: new Date().toISOString(),
         modifiedBy: user?.name || user?.username
@@ -260,34 +290,43 @@ const DashboardEditor = () => {
         newBoxes,
         lastModified: new Date().toISOString()
       };
-      
-      // Save organization data to localStorage
-      localStorage.setItem('dashboard-organization-data', JSON.stringify(dataToSave));
-      
-      // Save layout data separately
-      localStorage.setItem('dashboard-editor-layout', JSON.stringify(layoutData));
-      
-      // Dispatch custom event to notify Dashboard component (same tab)
-      window.dispatchEvent(new CustomEvent('dashboard-data-updated', { 
-        detail: dataToSave 
-      }));
-      
-      // Also trigger storage event manually for same-tab updates
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'dashboard-organization-data',
-        newValue: JSON.stringify(dataToSave),
-        storageArea: localStorage
-      }));
-      
-      setShowSaveDialog(true);
-      setTimeout(() => {
-        setShowSaveDialog(false);
-      }, 3000);
-      
-      console.log('✅ Data and layout saved successfully');
+
+      // Get current data from localStorage for comparison
+      const currentDataStr = localStorage.getItem('dashboard-organization-data');
+      const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
+
+      // Create change request
+      const requestData = {
+        title: submitForm.title,
+        description: submitForm.description,
+        changeType: 'update',
+        affectedSection: submitForm.affectedSection,
+        priority: submitForm.priority,
+        proposedData: {
+          organizationData: dataToSubmit,
+          layoutData: layoutData
+        },
+        currentData: currentData
+      };
+
+      const response = await soChangeRequestsAPI.create(requestData);
+
+      if (response.data.success) {
+        alert('✅ Change request submitted successfully! Your changes will appear in the dashboard after approval.');
+        setShowSubmitModal(false);
+        setSubmitForm({
+          title: '',
+          description: '',
+          priority: 'medium',
+          affectedSection: 'departments'
+        });
+        
+        // Redirect to SO Change Requests page
+        navigate('/so-change-requests');
+      }
     } catch (error) {
-      console.error('Error saving organization data:', error);
-      alert('Failed to save changes. Please try again.');
+      console.error('Error submitting change request:', error);
+      alert(error.response?.data?.message || 'Failed to submit change request. Please try again.');
     }
   };
 
@@ -703,17 +742,20 @@ const DashboardEditor = () => {
           
           <div className="flex items-center space-x-2">
             <button
-              onClick={saveLayout}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              onClick={openSubmitModal}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              Save Changes
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Submit for Approval
             </button>
             
             <button
-              onClick={() => navigate('/dashboard-editor-advanced')}
+              onClick={() => navigate('/so-change-requests')}
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
             >
-              Layout
+              View Requests
             </button>
            
             <button
@@ -1314,12 +1356,125 @@ const DashboardEditor = () => {
             <p><span className="font-bold">TBD</span> TO BE DEVELOP</p>
           </div>
         </div>
-      <div>
-          
-         
-         
-        </div>
       </div>
+
+      {/* Submit for Approval Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Submit SO Changes for Approval</h2>
+              <button
+                onClick={() => setShowSubmitModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={submitForm.title}
+                  onChange={(e) => setSubmitForm({ ...submitForm, title: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Update Finance Department Structure"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={submitForm.description}
+                  onChange={(e) => setSubmitForm({ ...submitForm, description: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="4"
+                  placeholder="Describe the changes you made..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Affected Section
+                  </label>
+                  <select
+                    value={submitForm.affectedSection}
+                    onChange={(e) => setSubmitForm({ ...submitForm, affectedSection: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="departments">Departments</option>
+                    <option value="sections">Sections</option>
+                    <option value="divisions">Divisions</option>
+                    <option value="management">Management</option>
+                    <option value="bod">Board of Directors</option>
+                    <option value="commissioners">Commissioners</option>
+                    <option value="header">Header Info</option>
+                    <option value="signatures">Signatures</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Priority
+                  </label>
+                  <select
+                    value={submitForm.priority}
+                    onChange={(e) => setSubmitForm({ ...submitForm, priority: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Important:</strong> Your changes will not appear in the dashboard until approved by a manager.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowSubmitModal(false)}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitForApproval}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Submit Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

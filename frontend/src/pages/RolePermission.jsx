@@ -27,6 +27,7 @@ const RolePermission = () => {
     'SO Bagian Editor',
     'Print SO',
     'View All SO Details',        // Admin only - can view all departments SO
+    'Approve SO Changes',         // Can view, approve/reject SO change requests (Manager/Atasan only)
     'Jobdesc Management',
     
     // Department Job Description Access - For Job Description Management per department
@@ -373,7 +374,7 @@ const RolePermission = () => {
                     <div>
                       <h4 className="text-sm font-semibold text-gray-800 mb-2">Dashboard & Editor Access</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(4, 9).map((permission) => (
+                        {availablePermissions.slice(4, 10).map((permission) => (
                           <label key={permission} className="flex items-center">
                             <input
                               type="checkbox"
@@ -392,7 +393,7 @@ const RolePermission = () => {
                       <h4 className="text-sm font-semibold text-gray-800 mb-2">Job Description Department Access</h4>
                       <p className="text-xs text-gray-600 mb-3">Access to manage job descriptions for specific departments</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(9, 21).map((permission) => (
+                        {availablePermissions.slice(10, 22).map((permission) => (
                           <label key={permission} className="flex items-center">
                             <input
                               type="checkbox"
@@ -411,7 +412,7 @@ const RolePermission = () => {
                       <h4 className="text-sm font-semibold text-gray-800 mb-2">SO Details View Access (per Department)</h4>
                       <p className="text-xs text-gray-600 mb-3">View SO Turunan (organizational structure details) for specific departments</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(21).map((permission) => (
+                        {availablePermissions.slice(22).map((permission) => (
                           <label key={permission} className="flex items-center">
                             <input
                               type="checkbox"

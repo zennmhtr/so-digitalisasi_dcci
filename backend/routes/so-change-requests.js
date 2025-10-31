@@ -1,0 +1,377 @@
+const express = require('express');
+const { body, validationResult } = require('express-validator');
+const SOChangeRequest = require('../models/SOChangeRequest');
+const User = require('../models/User');
+const auth = require('../middleware/auth');
+
+const router = express.Router();
+
+// @route   GET /api/so-change-requests
+// @desc    Get all SO change requests (with filters)
+// @access  Private
+router.get('/', auth, async (req, res) => {
+  try {
+    const { status, affectedSection } = req.query;
+    const userPermissions = req.user.role?.permissions || [];
+    
+    // Build filter
+    const filter = {};
+    if (status) filter.status = status;
+    if (affectedSection) filter.affectedSection = affectedSection;
+    
+    // If user doesn't have "Approve SO Changes" permission, only show their own requests
+    if (!userPermissions.includes('Approve SO Changes')) {
+      filter.requestedBy = req.user.id;
+    }
+    
+    const requests = await SOChangeRequest.find(filter)
+      .populate('requestedBy', 'name email department')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests
+    });
+  } catch (error) {
+    console.error('Error fetching SO change requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/so-change-requests/:id
+// @desc    Get single SO change request
+// @access  Private
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const request = await SOChangeRequest.findById(req.params.id)
+      .populate('requestedBy', 'name email department')
+      .populate('reviewedBy', 'name email');
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'SO change request not found'
+      });
+    }
+    
+    // Check permission - user can view their own requests or if they have approve permission
+    const userPermissions = req.user.role?.permissions || [];
+    if (request.requestedBy._id.toString() !== req.user.id && 
+        !userPermissions.includes('Approve SO Changes')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request
+    });
+  } catch (error) {
+    console.error('Error fetching SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   POST /api/so-change-requests
+// @desc    Create new SO change request
+// @access  Private (requires "Submit SO Changes" permission)
+router.post('/', [
+  auth,
+  body('title').notEmpty().withMessage('Title is required'),
+  body('description').notEmpty().withMessage('Description is required'),
+  body('changeType').isIn(['update', 'add', 'delete']).withMessage('Invalid change type'),
+  body('affectedSection').notEmpty().withMessage('Affected section is required'),
+  body('proposedData').notEmpty().withMessage('Proposed data is required')
+], async (req, res) => {
+  try {
+    // Check permission
+    const userPermissions = req.user.role?.permissions || [];
+    if (!userPermissions.includes('Submit SO Changes')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to submit SO changes'
+      });
+    }
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+    
+    const {
+      title,
+      description,
+      changeType,
+      affectedSection,
+      proposedData,
+      currentData,
+      priority
+    } = req.body;
+    
+    const changeRequest = new SOChangeRequest({
+      title,
+      description,
+      changeType,
+      affectedSection,
+      proposedData,
+      currentData: currentData || null,
+      priority: priority || 'medium',
+      requestedBy: req.user.id
+    });
+    
+    await changeRequest.save();
+    
+    const populatedRequest = await SOChangeRequest.findById(changeRequest._id)
+      .populate('requestedBy', 'name email department');
+    
+    res.status(201).json({
+      success: true,
+      message: 'SO change request submitted successfully',
+      data: populatedRequest
+    });
+  } catch (error) {
+    console.error('Error creating SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   PUT /api/so-change-requests/:id/approve
+// @desc    Approve SO change request
+// @access  Private (requires "Approve SO Changes" permission)
+router.put('/:id/approve', [
+  auth,
+  body('reviewComments').optional()
+], async (req, res) => {
+  try {
+    // Check permission
+    const userPermissions = req.user.role?.permissions || [];
+    if (!userPermissions.includes('Approve SO Changes')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to approve SO changes'
+      });
+    }
+    
+    const request = await SOChangeRequest.findById(req.params.id);
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'SO change request not found'
+      });
+    }
+    
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot approve request with status: ${request.status}`
+      });
+    }
+    
+    // Cannot approve your own request
+    if (request.requestedBy.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot approve your own request'
+      });
+    }
+    
+    request.status = 'approved';
+    request.reviewedBy = req.user.id;
+    request.reviewedAt = new Date();
+    request.reviewComments = req.body.reviewComments || '';
+    
+    await request.save();
+    
+    const populatedRequest = await SOChangeRequest.findById(request._id)
+      .populate('requestedBy', 'name email department')
+      .populate('reviewedBy', 'name email');
+    
+    res.json({
+      success: true,
+      message: 'SO change request approved successfully',
+      data: populatedRequest
+    });
+  } catch (error) {
+    console.error('Error approving SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   PUT /api/so-change-requests/:id/reject
+// @desc    Reject SO change request
+// @access  Private (requires "Approve SO Changes" permission)
+router.put('/:id/reject', [
+  auth,
+  body('reviewComments').notEmpty().withMessage('Review comments are required for rejection')
+], async (req, res) => {
+  try {
+    // Check permission
+    const userPermissions = req.user.role?.permissions || [];
+    if (!userPermissions.includes('Approve SO Changes')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to reject SO changes'
+      });
+    }
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+    
+    const request = await SOChangeRequest.findById(req.params.id);
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'SO change request not found'
+      });
+    }
+    
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reject request with status: ${request.status}`
+      });
+    }
+    
+    request.status = 'rejected';
+    request.reviewedBy = req.user.id;
+    request.reviewedAt = new Date();
+    request.reviewComments = req.body.reviewComments;
+    
+    await request.save();
+    
+    const populatedRequest = await SOChangeRequest.findById(request._id)
+      .populate('requestedBy', 'name email department')
+      .populate('reviewedBy', 'name email');
+    
+    res.json({
+      success: true,
+      message: 'SO change request rejected',
+      data: populatedRequest
+    });
+  } catch (error) {
+    console.error('Error rejecting SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   PUT /api/so-change-requests/:id/cancel
+// @desc    Cancel SO change request (by requester)
+// @access  Private
+router.put('/:id/cancel', auth, async (req, res) => {
+  try {
+    const request = await SOChangeRequest.findById(req.params.id);
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'SO change request not found'
+      });
+    }
+    
+    // Only requester can cancel
+    if (request.requestedBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only cancel your own requests'
+      });
+    }
+    
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot cancel request with status: ${request.status}`
+      });
+    }
+    
+    request.status = 'cancelled';
+    await request.save();
+    
+    const populatedRequest = await SOChangeRequest.findById(request._id)
+      .populate('requestedBy', 'name email department')
+      .populate('reviewedBy', 'name email');
+    
+    res.json({
+      success: true,
+      message: 'SO change request cancelled',
+      data: populatedRequest
+    });
+  } catch (error) {
+    console.error('Error cancelling SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   DELETE /api/so-change-requests/:id
+// @desc    Delete SO change request
+// @access  Private (only requester or admin)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const request = await SOChangeRequest.findById(req.params.id);
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'SO change request not found'
+      });
+    }
+    
+    const userPermissions = req.user.role?.permissions || [];
+    
+    // Only requester or admin can delete
+    if (request.requestedBy.toString() !== req.user.id && 
+        !userPermissions.includes('Manage Users')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+    
+    await SOChangeRequest.findByIdAndDelete(req.params.id);
+    
+    res.json({
+      success: true,
+      message: 'SO change request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting SO change request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+module.exports = router;
