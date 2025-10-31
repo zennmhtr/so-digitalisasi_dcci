@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Download, Printer, Edit, Trash2 } from 'lucide-react';
 
-const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
+const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = false }) => {
   // Handle case where jobdesc is null or undefined
   if (!jobdesc) {
     return (
@@ -242,22 +242,26 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete }) => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={onEdit}
-              className="flex items-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Edit Job Description"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </button>
-            <button
-              onClick={onDelete}
-              className="flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Delete Job Description"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Delete
-            </button>
+            {!viewOnly && (
+              <>
+                <button
+                  onClick={onEdit}
+                  className="flex items-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Edit Job Description"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete Job Description"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </button>
+              </>
+            )}
             <button
               onClick={handlePrint}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"

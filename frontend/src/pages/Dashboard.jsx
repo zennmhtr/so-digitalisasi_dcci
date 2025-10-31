@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import JobdescViewer from "../components/JobdescViewer";
 import "../assets/print-styles.css";
 
 const Dashboard = () => {
@@ -18,10 +19,98 @@ const Dashboard = () => {
   // ===========================
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
+  const [jobdescData, setJobdescData] = useState(null);
+  const [loadingJobdesc, setLoadingJobdesc] = useState(false);
 
-  const onCodeClick = (item) => {
+  const onCodeClick = async (item) => {
     setSelectedJob(item);
     setShowJobModal(true);
+    setLoadingJobdesc(true);
+    setJobdescData(null);
+
+    try {
+      console.log('🔍 Searching job description for:', { name: item.name, empId: item.empId, title: item.title });
+      
+      // Try to fetch job description from backend by employee ID or name
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📦 API Response structure:', { 
+          hasData: !!result.data, 
+          isArray: Array.isArray(result.data),
+          dataLength: result.data?.length 
+        });
+        
+        // Extract data array from response
+        const allJobdescs = result.data || result;
+        console.log('📋 Total Job Descriptions:', allJobdescs.length);
+        console.log('📋 All Job Descriptions:', allJobdescs.map(jd => ({ 
+          memberName: jd.memberName, 
+          memberNoPNK: jd.memberNoPNK,
+          positionTitle: jd.positionTitle
+        })));
+        
+        // Find job description by empId or name (case-insensitive and trimmed)
+        const foundJobdesc = allJobdescs.find(jd => {
+          const jdName = (jd.memberName || '').trim().toUpperCase();
+          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const itemName = (item.name || '').trim().toUpperCase();
+          const itemEmpId = (item.empId || '').trim();
+          
+          console.log('🔄 Comparing:', {
+            jdName,
+            jdNoPNK,
+            itemName,
+            itemEmpId,
+            nameMatch: jdName === itemName,
+            empIdMatch: jdNoPNK === itemEmpId
+          });
+          
+          // Priority 1: Check by empId (most reliable)
+          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) {
+            console.log('✅ MATCH by empId!', jdNoPNK);
+            return true;
+          }
+          
+          // Priority 2: Check by exact name match (case-insensitive)
+          if (jdName && itemName && jdName === itemName) {
+            console.log('✅ MATCH by exact name!', jdName);
+            return true;
+          }
+          
+          // Priority 3: Check if name contains each other (partial match)
+          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) {
+            console.log('⚠️ PARTIAL MATCH by name!', { jdName, itemName });
+            return true;
+          }
+          
+          return false;
+        });
+        
+        if (foundJobdesc) {
+          console.log('✅ Job description found:', {
+            memberName: foundJobdesc.memberName,
+            memberNoPNK: foundJobdesc.memberNoPNK,
+            positionTitle: foundJobdesc.positionTitle
+          });
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log('❌ No job description found for:', item.name);
+          console.log('💡 Available job descriptions:', allJobdescs.map(jd => `${jd.memberName} (${jd.memberNoPNK})`));
+        }
+      } else {
+        console.error('❌ API response not ok:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching job description:', error);
+    } finally {
+      setLoadingJobdesc(false);
+    }
   };
 
   // Check if user has Print SO permission
@@ -763,46 +852,83 @@ const Dashboard = () => {
           ✅ MODAL JOB DESC
       ============================ */}
       {showJobModal && selectedJob && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-bold text-lg mb-1">Job Description</h3>
-                <p className="text-sm font-semibold">{selectedJob?.name}</p>
-                <p className="text-xs text-gray-600 mb-3">{selectedJob?.title}</p>
-              </div>
-              <div>
-                <button
-                  onClick={() => setShowJobModal(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                  aria-label="Close jobdesc"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 mt-3 pt-3 text-sm leading-tight">
-              {/* Jika kamu punya field jobdesc di data, tampilkan */}
-              {selectedJob?.jobdesc ? (
-                <div>{selectedJob.jobdesc}</div>
-              ) : (
-                <div className="text-gray-600">
-                  Job description belum tersedia untuk {selectedJob?.name}.
+        <>
+          {loadingJobdesc ? (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading job description...</span>
                 </div>
-              )}
+              </div>
             </div>
+          ) : jobdescData ? (
+            <JobdescViewer
+              user={{
+                name: selectedJob.name,
+                noPNK: selectedJob.empId,
+                department: { name: jobdescData.division || 'N/A' }
+              }}
+              jobdesc={jobdescData}
+              viewOnly={true}
+              onClose={() => {
+                setShowJobModal(false);
+                setJobdescData(null);
+                setSelectedJob(null);
+              }}
+              onEdit={() => {}}
+              onDelete={() => {}}
+            />
+          ) : (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-bold text-lg mb-1">Job Description</h3>
+                    <p className="text-sm font-semibold">{selectedJob?.name}</p>
+                    <p className="text-xs text-gray-600 mb-3">{selectedJob?.title}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowJobModal(false);
+                      setSelectedJob(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 p-1"
+                    aria-label="Close jobdesc"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-            <div className="flex justify-end mt-4 gap-2">
-              <button
-                onClick={() => setShowJobModal(false)}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-              >
-                Close
-              </button>
+                <div className="border-t border-gray-200 mt-3 pt-3 text-sm leading-tight">
+                  <div className="flex items-start gap-3 text-orange-600 bg-orange-50 p-4 rounded-lg">
+                    <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold mb-1">Job description belum tersedia</p>
+                      <p className="text-sm text-gray-700">
+                        Job description untuk <strong>{selectedJob?.name}</strong> belum dibuat di sistem.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4 gap-2">
+                  <button
+                    onClick={() => {
+                      setShowJobModal(false);
+                      setSelectedJob(null);
+                    }}
+                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Header */}
