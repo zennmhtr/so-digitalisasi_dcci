@@ -12,6 +12,7 @@ const SOChangeRequests = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [reviewComments, setReviewComments] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
 
   // Check permissions - Only "Approve SO Changes" can access this page
   const canApprove = user?.role?.permissions?.includes('Approve SO Changes');
@@ -100,10 +101,21 @@ const SOChangeRequests = () => {
       return;
     }
 
-    if (!reviewComments.trim()) {
-      alert('Please provide a reason for rejection');
+    // Validate review comments - MUST have reason for rejection
+    const trimmedComments = reviewComments.trim();
+    if (!trimmedComments || trimmedComments.length === 0) {
+      setShowValidationError(true);
+      alert('⚠️ Please provide a reason for rejection in the Review Comments field.');
+      
+      // Auto hide error after 5 seconds
+      setTimeout(() => {
+        setShowValidationError(false);
+      }, 5000);
+      
       return;
     }
+
+    setShowValidationError(false);
 
     if (!confirm('Are you sure you want to reject this request?')) {
       return;
@@ -111,7 +123,7 @@ const SOChangeRequests = () => {
 
     try {
       setActionLoading(true);
-      const response = await soChangeRequestsAPI.reject(requestId, reviewComments);
+      const response = await soChangeRequestsAPI.reject(requestId, trimmedComments);
       
       if (response.data.success) {
         alert('❌ Request rejected');
@@ -220,6 +232,7 @@ const SOChangeRequests = () => {
   const viewDetail = (request) => {
     setSelectedRequest(request);
     setReviewComments('');
+    setShowValidationError(false); // Reset validation error
     setShowDetailModal(true);
   };
 
@@ -453,26 +466,8 @@ const SOChangeRequests = () => {
                 </div>
               </div>
 
-              {/* Changes Preview */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Proposed Changes:</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
-                    {JSON.stringify(selectedRequest.proposedData, null, 2)}
-                  </pre>
-                </div>
-              </div>
-
-              {selectedRequest.currentData && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Current Data:</h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
-                      {JSON.stringify(selectedRequest.currentData, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )}
+              {/* Changes Preview - Hidden for better UX */}
+              {/* Data changes are already applied when approved, no need to show technical JSON */}
 
               {/* Review Comments (if reviewed) */}
               {selectedRequest.reviewComments && (
@@ -492,15 +487,30 @@ const SOChangeRequests = () => {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">
                     <MessageSquare className="inline w-5 h-5 mr-2" />
-                    Review Comments (Optional for Approval, Required for Rejection):
+                    Review Comments:
                   </h4>
+                  <p className="text-sm text-gray-600 mb-2">
+                    ✅ Optional for approval | ⚠️ <span className="font-semibold text-red-600">Required for rejection</span>
+                  </p>
                   <textarea
                     value={reviewComments}
-                    onChange={(e) => setReviewComments(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setReviewComments(e.target.value);
+                      setShowValidationError(false); // Clear error when typing
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                      showValidationError 
+                        ? 'border-red-500 focus:ring-red-500 bg-red-50' 
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     rows="4"
-                    placeholder="Add your comments here..."
+                    placeholder="Add your comments here... (Required if rejecting)"
                   />
+                  {showValidationError && (
+                    <p className="text-red-600 text-sm mt-2 font-semibold">
+                      ⚠️ Rejection reason is required!
+                    </p>
+                  )}
                 </div>
               )}
             </div>
