@@ -83,7 +83,7 @@ router.get('/:id', auth, async (req, res) => {
 
 // @route   POST /api/so-change-requests
 // @desc    Create new SO change request
-// @access  Private (requires "Submit SO Changes" permission)
+// @access  Private (requires "SO DCI Editor" permission)
 router.post('/', [
   auth,
   body('title').notEmpty().withMessage('Title is required'),
@@ -95,7 +95,7 @@ router.post('/', [
   try {
     // Check permission
     const userPermissions = req.user.role?.permissions || [];
-    if (!userPermissions.includes('Submit SO Changes')) {
+    if (!userPermissions.includes('SO DCI Editor')) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to submit SO changes'
