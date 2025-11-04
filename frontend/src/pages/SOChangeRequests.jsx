@@ -387,14 +387,6 @@ const SOChangeRequests = () => {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => viewDetail(request)}
-                      className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View Details
-                    </button>
-
                     {canApprove && request.status === 'pending' && (
                       <button
                         onClick={() => viewDetail(request)}
