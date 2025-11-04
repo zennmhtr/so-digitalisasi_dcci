@@ -46,7 +46,7 @@ const soChangeRequestSchema = new mongoose.Schema({
   // Status
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'cancelled'],
+    enum: ['pending', 'approved', 'rejected', 'cancelled','revisi'],
     default: 'pending'
   },
   

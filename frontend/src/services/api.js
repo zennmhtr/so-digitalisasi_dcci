@@ -100,6 +100,7 @@ export const soChangeRequestsAPI = {
   getById: (id) => api.get(`/so-change-requests/${id}`),
   create: (requestData) => api.post('/so-change-requests', requestData),
   approve: (id, reviewComments) => api.put(`/so-change-requests/${id}/approve`, { reviewComments }),
+  revisi: (id, reviewComments) => api.put(`/so-change-requests/${id}/revisi`, { reviewComments }),
   reject: (id, reviewComments) => api.put(`/so-change-requests/${id}/reject`, { reviewComments }),
   cancel: (id) => api.put(`/so-change-requests/${id}/cancel`),
   delete: (id) => api.delete(`/so-change-requests/${id}`),

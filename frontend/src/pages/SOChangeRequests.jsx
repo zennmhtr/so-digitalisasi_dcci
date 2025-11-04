@@ -93,6 +93,39 @@ const SOChangeRequests = () => {
       setActionLoading(false);
     }
   };
+  // Handle Revisi
+  const handleRevisi = async (requestId) => {
+  if (!canApprove) {
+    alert('You do not have permission to revisi requests');
+    return;
+  }
+
+  const trimmedComments = reviewComments.trim();
+  if (!trimmedComments) {
+    alert('⚠️ Please provide comments for revision.');
+    return;
+  }
+
+  if (!confirm('Are you sure you want to send this request for revision?')) return;
+
+  try {
+    setActionLoading(true);
+    const response = await soChangeRequestsAPI.revisi(requestId, trimmedComments);
+
+    if (response.data.success) {
+      alert('Request sent for revision');
+      setShowDetailModal(false);
+      setReviewComments('');
+      loadRequests();
+    }
+  } catch (error) {
+    console.error('Error revising request:', error);
+    alert(error.response?.data?.message || 'Failed to send request for revision');
+  } finally {
+    setActionLoading(false);
+  }
+};
+
 
   // Handle reject
   const handleReject = async (requestId) => {
@@ -239,11 +272,13 @@ const SOChangeRequests = () => {
   // Get status badge
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: 'Pending' },
-      approved: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Approved' },
-      rejected: { color: 'bg-red-100 text-red-800', icon: XCircle, text: 'Rejected' },
-      cancelled: { color: 'bg-gray-100 text-gray-800', icon: AlertCircle, text: 'Cancelled' }
-    };
+  pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, text: 'Pending' },
+  approved: { color: 'bg-green-100 text-green-800', icon: CheckCircle, text: 'Approved' },
+  rejected: { color: 'bg-red-100 text-red-800', icon: XCircle, text: 'Rejected' },
+  cancelled: { color: 'bg-gray-100 text-gray-800', icon: AlertCircle, text: 'Cancelled' },
+  revisi: { color: 'bg-orange-100 text-orange-800', icon: MessageSquare, text: 'Revisi' } // <—
+};
+
 
     const config = statusConfig[status] || statusConfig.pending;
     const Icon = config.icon;
@@ -320,7 +355,8 @@ const SOChangeRequests = () => {
                 { id: 'all', label: 'All Requests' },
                 { id: 'pending', label: 'Pending' },
                 { id: 'approved', label: 'Approved' },
-                { id: 'rejected', label: 'Rejected' }
+                { id: 'rejected', label: 'Rejected' },
+                { id: 'revisi', label: 'Revisi'}
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -387,16 +423,28 @@ const SOChangeRequests = () => {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    {canApprove && request.status === 'pending' && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Review & Approve
-                      </button>
-                    )}
-                  </div>
+  {canApprove && request.status === 'pending' && (
+    <button
+      onClick={() => viewDetail(request)}
+      className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
+    >
+      <CheckCircle className="w-4 h-4" />
+      Review & Approve
+    </button>
+  )}
+
+  {/* Tombol untuk Revisi */}
+  {request.status === 'revisi' && (
+    <button
+      onClick={() => viewDetail(request)}
+      className="flex items-center gap-1 px-3 py-2 text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
+    >
+      <MessageSquare className="w-4 h-4" />
+      View Revisi
+    </button>
+  )}
+</div>
+
                 </div>
               </div>
             ))
@@ -409,7 +457,9 @@ const SOChangeRequests = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+<div className={`sticky top-0 border-b border-gray-200 px-6 py-4 flex justify-between items-center ${
+  selectedRequest.status === 'revisi' ? 'bg-orange-50' : 'bg-white'
+}`}>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
                   Request Detail
@@ -536,6 +586,25 @@ const SOChangeRequests = () => {
                       </>
                     )}
                   </button>
+
+                  <button
+  onClick={() => handleRevisi(selectedRequest._id)}
+  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+  disabled={actionLoading}
+>
+  {actionLoading ? (
+    <>
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+      Processing...
+    </>
+  ) : (
+    <>
+      <AlertCircle className="w-4 h-4" />
+      Send for Revision
+    </>
+  )}
+</button>
+
 
                   <button
                     onClick={() => handleApprove(selectedRequest._id)}
