@@ -1,64 +1,64 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
-import { rolesAPI } from '../services/api';
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Search, X } from "lucide-react";
+import { rolesAPI } from "../services/api";
 
 const RolePermission = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     permissions: [],
-    active: true
+    active: true,
   });
 
-  const availablePermissions = [
-    // System Core Permissions - Basic system access
-    'View Dashboard',
-    'Manage Users',
-    'Manage Roles',
-    'Manage Departments',
-    
-    // Dashboard & Editor Permissions - Organization structure access
-    'SO DCI Editor',
-    'SO Bagian Editor',
-    'Print SO',
-    'View All SO Details',        // Admin only - can view all departments SO
-    'Approve SO Changes',         // Can view, approve/reject SO change requests (Manager/Atasan only)
-    'Jobdesc Management',
-    'View Own SO Change Requests',
-    
-    // Department Job Description Access - For Job Description Management per department
-    'Finance Department',         // Finance Department Job Description
-    'HRGA & IT Department',      // HRGA & IT Department Job Description
-    'Management Development',     // Management Development Job Description
-    'Management Representative',  // Management Representative Job Description
-    'Manufacturing Battery',     // Manufacturing Battery Job Description
-    'Manufacturing Cable',       // Manufacturing Cable Job Description
-    'Marketing Battery Department', // Marketing Battery Department Job Description
-    'Marketing Engineering',     // Marketing Engineering Job Description
-    'MI & SHE',                 // MI & SHE Job Description
-    'PPIC',                     // PPIC Job Description
-    'Purchasing',               // Purchasing Department Job Description
-    'QA Department',            // QA Department Job Description
-    
-    // SO Details View Access - For viewing SO Turunan per department
-    'View Finance SO',           // View Finance Department SO Details
-    'View HRGA & IT SO',        // View HRGA & IT Department SO Details
-    'View Management Dev SO',    // View Management Development SO Details
-    'View Management Rep SO',    // View Management Representative SO Details
-    'View Manufacturing Battery SO', // View Manufacturing Battery SO Details
-    'View Manufacturing Cable SO',   // View Manufacturing Cable SO Details
-    'View Marketing Battery SO', // View Marketing Battery SO Details
-    'View Marketing Engineering SO', // View Marketing Engineering SO Details
-    'View MI & SHE SO',         // View MI & SHE SO Details
-    'View PPIC SO',             // View PPIC SO Details
-    'View Purchasing SO',       // View Purchasing SO Details
-    'View QA SO'                // View QA Department SO Details
-  ];
+  const availablePermissions = {
+    systemCore: [
+      "View Dashboard",
+      "Manage Users",
+      "Manage Roles",
+      "Manage Departments",
+    ],
+    dashboardEditor: [
+      "SO DCI Editor",
+      "SO Bagian Editor",
+      "Print SO",
+      "View All SO Details",
+      "Jobdesc Management",
+    ],
+    soChangeRequests: ["Approve SO Changes", "View Own SO Change Requests"],
+    jobdescDepartments: [
+      "Finance Department",
+      "HRGA & IT Department",
+      "Management Development",
+      "Management Representative",
+      "Manufacturing Battery",
+      "Manufacturing Cable",
+      "Marketing Battery Department",
+      "Marketing Engineering",
+      "MI & SHE",
+      "PPIC",
+      "Purchasing",
+      "QA Department",
+    ],
+    soDetailsView: [
+      "View Finance SO",
+      "View HRGA & IT SO",
+      "View Management Dev SO",
+      "View Management Rep SO",
+      "View Manufacturing Battery SO",
+      "View Manufacturing Cable SO",
+      "View Marketing Battery SO",
+      "View Marketing Engineering SO",
+      "View MI & SHE SO",
+      "View PPIC SO",
+      "View Purchasing SO",
+      "View QA SO",
+    ],
+  };
 
   // Fetch roles from API
   const fetchRoles = async () => {
@@ -69,8 +69,8 @@ const RolePermission = () => {
         setRoles(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching roles:', error);
-      alert('Error loading roles. Please check if you are logged in.');
+      console.error("Error fetching roles:", error);
+      alert("Error loading roles. Please check if you are logged in.");
     } finally {
       setLoading(false);
     }
@@ -80,18 +80,19 @@ const RolePermission = () => {
     fetchRoles();
   }, []);
 
-  const filteredRoles = roles.filter(role =>
-    role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRoles = roles.filter(
+    (role) =>
+      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = () => {
     setEditingRole(null);
     setFormData({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       permissions: [],
-      active: true
+      active: true,
     });
     setIsModalOpen(true);
   };
@@ -102,44 +103,44 @@ const RolePermission = () => {
       name: role.name,
       description: role.description,
       permissions: role.permissions,
-      active: role.active
+      active: role.active,
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (roleId) => {
-    if (window.confirm('Are you sure you want to delete this role?')) {
+    if (window.confirm("Are you sure you want to delete this role?")) {
       try {
         await rolesAPI.delete(roleId);
         fetchRoles();
       } catch (error) {
-        console.error('Error deleting role:', error);
-        alert('Error deleting role. Please try again.');
+        console.error("Error deleting role:", error);
+        alert("Error deleting role. Please try again.");
       }
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (editingRole) {
         await rolesAPI.update(editingRole._id, formData);
       } else {
         await rolesAPI.create(formData);
       }
-      
+
       fetchRoles();
       setIsModalOpen(false);
       setFormData({
-        name: '',
-        description: '',
+        name: "",
+        description: "",
         permissions: [],
-        active: true
+        active: true,
       });
     } catch (error) {
-      console.error('Error saving role:', error);
-      alert('Error saving role. Please try again.');
+      console.error("Error saving role:", error);
+      alert("Error saving role. Please try again.");
     }
   };
 
@@ -147,18 +148,18 @@ const RolePermission = () => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     });
   };
 
   const handlePermissionChange = (permission) => {
     const updatedPermissions = formData.permissions.includes(permission)
-      ? formData.permissions.filter(p => p !== permission)
+      ? formData.permissions.filter((p) => p !== permission)
       : [...formData.permissions, permission];
-    
+
     setFormData({
       ...formData,
-      permissions: updatedPermissions
+      permissions: updatedPermissions,
     });
   };
 
@@ -181,7 +182,7 @@ const RolePermission = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button 
+        <button
           onClick={handleAdd}
           className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
@@ -216,13 +217,19 @@ const RolePermission = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan="5"
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     Loading...
                   </td>
                 </tr>
               ) : filteredRoles.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan="5"
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     No roles found
                   </td>
                 </tr>
@@ -248,12 +255,14 @@ const RolePermission = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        role.active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {role.active ? 'Active' : 'Inactive'}
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          role.active
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {role.active ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -286,7 +295,7 @@ const RolePermission = () => {
           <div className="relative top-8 mx-auto p-8 border w-full max-w-3xl shadow-lg rounded-lg bg-white my-8">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-900">
-                {editingRole ? 'Edit Role' : 'Add New Role'}
+                {editingRole ? "Edit Role" : "Add New Role"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -300,7 +309,10 @@ const RolePermission = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-3">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700 mb-3"
+                    >
                       Role Name
                     </label>
                     <input
@@ -316,14 +328,22 @@ const RolePermission = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="active" className="block text-sm font-medium text-gray-700 mb-3">
+                    <label
+                      htmlFor="active"
+                      className="block text-sm font-medium text-gray-700 mb-3"
+                    >
                       Status
                     </label>
                     <select
                       id="active"
                       name="active"
                       value={formData.active}
-                      onChange={(e) => setFormData({...formData, active: e.target.value === 'true'})}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          active: e.target.value === "true",
+                        })
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     >
                       <option value="true">Active</option>
@@ -333,7 +353,10 @@ const RolePermission = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-3">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-3"
+                  >
                     Description
                   </label>
                   <textarea
@@ -353,82 +376,173 @@ const RolePermission = () => {
                     Permissions
                   </label>
                   <div className="border border-gray-300 rounded-lg p-4 space-y-6">
-                    {/* System Core Permissions */}
+                    {/* SYSTEM CORE PERMISSIONS */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">System Core Permissions</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                        System Core Permissions
+                      </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(0, 4).map((permission) => (
+                        {availablePermissions.systemCore.map((permission) => (
                           <label key={permission} className="flex items-center">
                             <input
                               type="checkbox"
-                              checked={formData.permissions.includes(permission)}
-                              onChange={() => handlePermissionChange(permission)}
+                              checked={formData.permissions.includes(
+                                permission
+                              )}
+                              onChange={() =>
+                                handlePermissionChange(permission)
+                              }
                               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                             />
-                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
+                            <span className="ml-3 text-sm text-gray-700">
+                              {permission}
+                            </span>
                           </label>
                         ))}
                       </div>
                     </div>
 
-                    {/* Dashboard & Editor Permissions */}
+                    {/* DASHBOARD & EDITOR ACCESS */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Dashboard & Editor Access</h4>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
+                        Dashboard & Editor Access
+                      </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(4, 10).map((permission) => (
-                          <label key={permission} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={formData.permissions.includes(permission)}
-                              onChange={() => handlePermissionChange(permission)}
-                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
-                          </label>
-                        ))}
+                        {availablePermissions.dashboardEditor.map(
+                          (permission) => (
+                            <label
+                              key={permission}
+                              className="flex items-center"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.permissions.includes(
+                                  permission
+                                )}
+                                onChange={() =>
+                                  handlePermissionChange(permission)
+                                }
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-3 text-sm text-gray-700">
+                                {permission}
+                              </span>
+                            </label>
+                          )
+                        )}
                       </div>
                     </div>
 
-                    {/* Job Description Department Access */}
+                    {/* 🧩 SO CHANGE REQUESTS ACCESS */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">Job Description Department Access</h4>
-                      <p className="text-xs text-gray-600 mb-3">Access to manage job descriptions for specific departments</p>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
+                        SO Change Requests Access
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-3">
+                        Access for submitting, viewing, approving or revising SO
+                        change requests.
+                      </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(10, 22).map((permission) => (
-                          <label key={permission} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={formData.permissions.includes(permission)}
-                              onChange={() => handlePermissionChange(permission)}
-                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
-                          </label>
-                        ))}
+                        {availablePermissions.soChangeRequests.map(
+                          (permission) => (
+                            <label
+                              key={permission}
+                              className="flex items-center"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.permissions.includes(
+                                  permission
+                                )}
+                                onChange={() =>
+                                  handlePermissionChange(permission)
+                                }
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-3 text-sm text-gray-700">
+                                {permission}
+                              </span>
+                            </label>
+                          )
+                        )}
                       </div>
                     </div>
 
-                    {/* SO Details View Access per Department */}
+                    {/* JOB DESCRIPTION ACCESS */}
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2">SO Details View Access (per Department)</h4>
-                      <p className="text-xs text-gray-600 mb-3">View SO Turunan (organizational structure details) for specific departments</p>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
+                        Job Description Department Access
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-3">
+                        Access to manage job descriptions for specific
+                        departments
+                      </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {availablePermissions.slice(22).map((permission) => (
-                          <label key={permission} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={formData.permissions.includes(permission)}
-                              onChange={() => handlePermissionChange(permission)}
-                              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-3 text-sm text-gray-700">{permission}</span>
-                          </label>
-                        ))}
+                        {availablePermissions.jobdescDepartments.map(
+                          (permission) => (
+                            <label
+                              key={permission}
+                              className="flex items-center"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.permissions.includes(
+                                  permission
+                                )}
+                                onChange={() =>
+                                  handlePermissionChange(permission)
+                                }
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-3 text-sm text-gray-700">
+                                {permission}
+                              </span>
+                            </label>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SO DETAILS VIEW */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
+                        SO Details View Access (per Department)
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-3">
+                        View organizational structure details (SO turunan) per
+                        department.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.soDetailsView.map(
+                          (permission) => (
+                            <label
+                              key={permission}
+                              className="flex items-center"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.permissions.includes(
+                                  permission
+                                )}
+                                onChange={() =>
+                                  handlePermissionChange(permission)
+                                }
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-3 text-sm text-gray-700">
+                                {permission}
+                              </span>
+                            </label>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
+
                   <p className="text-xs text-gray-500 mt-2">
-                    Select the permissions this role should have access to. Permissions are based on actual system features and department structure.
+                    Select the permissions this role should have access to.
+                    Permissions are based on actual system features and
+                    department structure.
                   </p>
                 </div>
               </div>
@@ -445,7 +559,7 @@ const RolePermission = () => {
                   type="submit"
                   className="px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
                 >
-                  {editingRole ? 'Update' : 'Add'} Role
+                  {editingRole ? "Update" : "Add"} Role
                 </button>
               </div>
             </form>
