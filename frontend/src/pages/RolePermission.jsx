@@ -29,6 +29,7 @@ const RolePermission = () => {
     'View All SO Details',        // Admin only - can view all departments SO
     'Approve SO Changes',         // Can view, approve/reject SO change requests (Manager/Atasan only)
     'Jobdesc Management',
+    'View Own SO Change Requests',
     
     // Department Job Description Access - For Job Description Management per department
     'Finance Department',         // Finance Department Job Description
