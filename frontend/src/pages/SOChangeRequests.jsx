@@ -88,14 +88,27 @@ const SOChangeRequests = () => {
       );
 
       if (response.data.success) {
-        console.log("✅ Request approved on backend:", response.data.data);
+        const updatedRequest = response.data.data;
+        console.log("✅ Approve response:", updatedRequest);
 
-        // Apply changes to dashboard (will redirect to dashboard)
-        const approvedRequest = response.data.data;
-        const applied = applyChangesToDashboard(approvedRequest);
-
-        // If apply failed or didn't redirect, close modal manually
-        if (!applied) {
+        // If backend returned fully approved (second approver done) -> apply changes & redirect
+        if (updatedRequest.status === "approved") {
+          const applied = applyChangesToDashboard(updatedRequest);
+          if (!applied) {
+            // If apply failed, close modal and refresh list
+            setShowDetailModal(false);
+            setReviewComments("");
+            loadRequests();
+          }
+          // applyChangesToDashboard will redirect to "/" if successful
+        } else if (updatedRequest.status === "waiting_second_approval") {
+          // First approver accepted: show message and refresh list (DO NOT apply changes)
+          alert("First approval recorded. Waiting for second approver.");
+          setShowDetailModal(false);
+          setReviewComments("");
+          loadRequests();
+        } else {
+          // Fallback: just refresh
           setShowDetailModal(false);
           setReviewComments("");
           loadRequests();
@@ -105,8 +118,11 @@ const SOChangeRequests = () => {
       console.error("❌ Error approving request:", error);
       alert(error.response?.data?.message || "Failed to approve request");
       setActionLoading(false);
+    } finally {
+      setActionLoading(false);
     }
   };
+
   // Handle Revisi
   const handleRevisi = async (requestId) => {
     if (!canApprove) {

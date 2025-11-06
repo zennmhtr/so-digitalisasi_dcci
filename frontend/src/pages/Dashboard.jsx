@@ -782,8 +782,7 @@ const Dashboard = () => {
               {/* Middle - Bambang Wuryanto */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                  {organizationData.signatures?.middleBy?.title ||
-                    "Bambang Wuryanto"}
+                  Approved By:
                 </p>
                 <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">
