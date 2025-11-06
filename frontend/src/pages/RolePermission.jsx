@@ -29,7 +29,11 @@ const RolePermission = () => {
       "View All SO Details",
       "Jobdesc Management",
     ],
-    soChangeRequests: ["Approve SO Changes", "View Own SO Change Requests"],
+    soChangeRequests: [
+      "Approve SO Changes", 
+      "View Own SO Change Requests"
+    ],
+
     jobdescDepartments: [
       "Finance Department",
       "HRGA & IT Department",
