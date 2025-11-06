@@ -347,6 +347,11 @@ const SOChangeRequests = () => {
         icon: AlertCircle,
         text: "Cancelled",
       },
+      waiting_second_approval: {
+        color: "bg-blue-100 text-blue-800",
+        icon: Clock,
+        text: "Waiting Second Approval",
+      },
       revisi: {
         color: "bg-orange-100 text-orange-800",
         icon: MessageSquare,
@@ -440,7 +445,7 @@ const SOChangeRequests = () => {
                 { id: "pending", label: "Pending" },
                 { id: "approved", label: "Approved" },
                 { id: "rejected", label: "Rejected" },
-                { id: "cancelled", label: "Cancel"},
+                { id: "cancelled", label: "Cancel" },
                 { id: "revisi", label: "Revisi" },
               ].map((tab) => (
                 <button
@@ -504,6 +509,34 @@ const SOChangeRequests = () => {
                       </span>
                     </div>
 
+                    {(request.firstApprovedBy || request.secondApprovedBy) && (
+                      <div className="mt-2 text-sm text-gray-500">
+                        <strong>Approval Stage:</strong>{" "}
+                        {request.firstApprovedBy && (
+                          <span>
+                            ✅ First Approver: {request.firstApprovedBy?.name}{" "}
+                            {request.firstApprovedAt
+                              ? `(${formatDate(request.firstApprovedAt)})`
+                              : ""}
+                          </span>
+                        )}
+                        {request.secondApprovedBy ? (
+                          <span>
+                            {" | ✅ Second Approver: "}
+                            {request.secondApprovedBy?.name}{" "}
+                            {request.secondApprovedAt
+                              ? `(${formatDate(request.secondApprovedAt)})`
+                              : ""}
+                          </span>
+                        ) : request.status === "waiting_second_approval" ? (
+                          <span className="text-blue-600">
+                            {" "}
+                            | 🕒 Waiting for Second Approval
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+
                     {request.reviewedBy && (
                       <div className="mt-2 text-sm text-gray-500">
                         <strong>Reviewed by:</strong> {request.reviewedBy.name}{" "}
@@ -513,18 +546,25 @@ const SOChangeRequests = () => {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    {/* Hanya atasan (canApprove) yang bisa review */}
-                    {canApprove && request.status === "pending" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Review & Approve
-                      </button>
-                    )}
+                    {canApprove &&
+                      ["pending", "waiting_second_approval"].includes(
+                        request.status
+                      ) && (
+                        <button
+                          onClick={() => viewDetail(request)}
+                          className={`flex items-center gap-1 px-3 py-2 text-sm rounded transition-colors ${
+                            request.status === "waiting_second_approval"
+                              ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                              : "bg-green-50 text-green-600 hover:bg-green-100"
+                          }`}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          {request.status === "waiting_second_approval"
+                            ? "Review & Final Approve"
+                            : "Review & Approve"}
+                        </button>
+                      )}
 
-                    {/* Tombol View Revisi untuk semua */}
                     {request.status === "revisi" && (
                       <button
                         onClick={() => viewDetail(request)}
@@ -535,7 +575,6 @@ const SOChangeRequests = () => {
                       </button>
                     )}
 
-                    {/* ✅ Tombol Cancel Request - hanya untuk pengaju & status pending */}
                     {canViewOwn &&
                       !canApprove &&
                       request.status === "pending" &&
@@ -697,63 +736,72 @@ const SOChangeRequests = () => {
                 Close
               </button>
 
-              {canApprove && selectedRequest.status === "pending" && (
-                <>
-                  <button
-                    onClick={() => handleReject(selectedRequest._id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4" />
-                        Reject
-                      </>
-                    )}
-                  </button>
+              {canApprove &&
+                ["pending", "waiting_second_approval"].includes(
+                  selectedRequest.status
+                ) && (
+                  <>
+                    <button
+                      onClick={() => handleReject(selectedRequest._id)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </>
+                      )}
+                    </button>
 
-                  <button
-                    onClick={() => handleRevisi(selectedRequest._id)}
-                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-4 h-4" />
-                        Send for Revision
-                      </>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => handleRevisi(selectedRequest._id)}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-4 h-4" />
+                          Send for Revision
+                        </>
+                      )}
+                    </button>
 
-                  <button
-                    onClick={() => handleApprove(selectedRequest._id)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    disabled={actionLoading}
-                  >
-                    {actionLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Approve & Apply Changes
-                      </>
-                    )}
-                  </button>
-                </>
-              )}
+                    <button
+                      onClick={() => handleApprove(selectedRequest._id)}
+                      className={`px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                        selectedRequest.status === "waiting_second_approval"
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          {selectedRequest.status === "waiting_second_approval"
+                            ? "Final Approve"
+                            : "Approve & Apply Changes"}
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
               {canViewOwn && !canApprove && (
                 <span className="text-gray-500 text-sm mr-auto">
                   👀 You can only view your own requests.

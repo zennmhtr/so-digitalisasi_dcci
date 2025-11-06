@@ -27,6 +27,8 @@ router.get("/", auth, async (req, res) => {
     const requests = await SOChangeRequest.find(filter)
       .populate("requestedBy", "name email department")
       .populate("reviewedBy", "name email")
+      .populate("firstApprovedBy", "name email")
+      .populate("secondApprovedBy", "name email")
       .sort({ createdAt: -1 });
 
     res.json({
@@ -49,7 +51,9 @@ router.get("/:id", auth, async (req, res) => {
   try {
     const request = await SOChangeRequest.findById(req.params.id)
       .populate("requestedBy", "name email department")
-      .populate("reviewedBy", "name email");
+      .populate("reviewedBy", "name email")
+      .populate("firstApprovedBy", "name email")
+      .populate("secondApprovedBy", "name email");
 
     if (!request) {
       return res.status(404).json({
@@ -165,12 +169,17 @@ router.post(
 // @route   PUT /api/so-change-requests/:id/approve
 // @desc    Approve SO change request
 // @access  Private (requires "Approve SO Changes" permission)
+// @route   PUT /api/so-change-requests/:id/approve
+// @desc    Multi-step approval (2 levels)
+// @access  Private (requires "Approve SO Changes" permission)
+// @route   PUT /api/so-change-requests/:id/approve
+// @desc    Multi-step approval (2 levels)
+// @access  Private (requires "Approve SO Changes" permission)
 router.put(
   "/:id/approve",
   [auth, body("reviewComments").optional()],
   async (req, res) => {
     try {
-      // Check permission
       const userPermissions = req.user.role?.permissions || [];
       if (!userPermissions.includes("Approve SO Changes")) {
         return res.status(403).json({
@@ -188,14 +197,15 @@ router.put(
         });
       }
 
-      if (request.status !== "pending") {
+      // ✅ hanya bisa approve kalau status pending atau waiting_second_approval
+      if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
           message: `Cannot approve request with status: ${request.status}`,
         });
       }
 
-      // Cannot approve your own request
+      // ❌ tidak boleh approve request sendiri
       if (request.requestedBy.toString() === req.user.id) {
         return res.status(400).json({
           success: false,
@@ -203,27 +213,61 @@ router.put(
         });
       }
 
-      request.status = "approved";
-      request.reviewedBy = req.user.id;
-      request.reviewedAt = new Date();
-      request.reviewComments = req.body.reviewComments || "";
+      // === ✅ TAHAP 1 APPROVAL ===
+      if (request.status === "pending") {
+        // simpan approver pertama
+        request.firstApprovedBy = req.user.id;
+        request.firstApprovedAt = new Date();
+        request.reviewComments = req.body.reviewComments || "";
+        request.status = "waiting_second_approval";
 
-      await request.save();
+        await request.save();
 
-      const populatedRequest = await SOChangeRequest.findById(request._id)
-        .populate("requestedBy", "name email department")
-        .populate("reviewedBy", "name email");
+        const populated = await SOChangeRequest.findById(request._id)
+          .populate("requestedBy", "name email department")
+          .populate("firstApprovedBy", "name email");
 
-      res.json({
-        success: true,
-        message: "SO change request approved successfully",
-        data: populatedRequest,
-      });
+        return res.json({
+          success: true,
+          message: "Approved by first approver — waiting for second approval",
+          data: populated,
+        });
+      }
+
+      // === ✅ TAHAP 2 APPROVAL ===
+      if (request.status === "waiting_second_approval") {
+        // Cegah orang yang sama approve dua kali
+        if (request.firstApprovedBy?.toString() === req.user.id) {
+          return res.status(400).json({
+            success: false,
+            message: "You already approved this as first approver",
+          });
+        }
+
+        request.secondApprovedBy = req.user.id;
+        request.secondApprovedAt = new Date();
+        request.reviewComments +=
+          "\nSecond approval: " + (req.body.reviewComments || "");
+        request.status = "approved";
+
+        await request.save();
+
+        const populated = await SOChangeRequest.findById(request._id)
+          .populate("requestedBy", "name email department")
+          .populate("firstApprovedBy", "name email")
+          .populate("secondApprovedBy", "name email");
+
+        return res.json({
+          success: true,
+          message: "Fully approved — both approvers have confirmed",
+          data: populated,
+        });
+      }
     } catch (error) {
       console.error("Error approving SO change request:", error);
       res.status(500).json({
         success: false,
-        message: "Server error",
+        message: "Server error during approval process",
       });
     }
   }
