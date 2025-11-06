@@ -440,6 +440,7 @@ const SOChangeRequests = () => {
                 { id: "pending", label: "Pending" },
                 { id: "approved", label: "Approved" },
                 { id: "rejected", label: "Rejected" },
+                { id: "cancelled", label: "Cancel"},
                 { id: "revisi", label: "Revisi" },
               ].map((tab) => (
                 <button
@@ -523,7 +524,7 @@ const SOChangeRequests = () => {
                       </button>
                     )}
 
-                    {/* Tombol View Revisi untuk semua, tapi tanpa action */}
+                    {/* Tombol View Revisi untuk semua */}
                     {request.status === "revisi" && (
                       <button
                         onClick={() => viewDetail(request)}
@@ -533,6 +534,20 @@ const SOChangeRequests = () => {
                         View Revisi
                       </button>
                     )}
+
+                    {/* ✅ Tombol Cancel Request - hanya untuk pengaju & status pending */}
+                    {canViewOwn &&
+                      !canApprove &&
+                      request.status === "pending" &&
+                      request.requestedBy?._id === user?.id && (
+                        <button
+                          onClick={() => handleCancel(request._id)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Cancel Request
+                        </button>
+                      )}
                   </div>
                 </div>
               </div>
