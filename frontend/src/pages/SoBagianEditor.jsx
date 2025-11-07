@@ -299,6 +299,42 @@ const SoBagianEditor = () => {
     }
   ];
 
+    // --- A) Mapping permission untuk tiap department (sama seperti JobdescManagement) ---
+  const departmentPermissions = {
+    'Finance Department': ['Finance Department', 'Manage Users'],
+    'HRGA & IT Department': ['HRGA & IT Department', 'Manage Users'],
+    'Management Development': ['Management Development', 'Manage Users'],
+    'Management Representative': ['Management Representative', 'Manage Users'],
+    'Manufacturing Battery': ['Manufacturing Battery', 'Manage Users'],
+    'Manufacturing Cable': ['Manufacturing Cable', 'Manage Users'],
+    'Marketing Battery Department': ['Marketing Battery Department', 'Manage Users'],
+    'Marketing Engineering': ['Marketing Engineering', 'Manage Users'],
+    'MI & SHE': ['MI & SHE', 'Manage Users'],
+    'PPIC': ['PPIC', 'Manage Users'],
+    'Purchasing': ['Purchasing', 'Manage Users'],
+    'QA Department': ['QA Department', 'Manage Users']
+  };
+
+  // --- B) Hitung departments yang boleh dilihat user (filter hasil) ---
+  const visibleDepartments = React.useMemo(() => {
+    const userPermissions = user?.role?.permissions || [];
+    const userDepartmentName = user?.department?.name;
+
+    // Jika punya hak Manage Users -> akses semua departemen
+    if (userPermissions.includes('Manage Users')) {
+      return departments;
+    }
+
+    return departments.filter((d) => {
+      // boleh lihat departemen sendiri
+      if (userDepartmentName === d.name) return true;
+
+      // cek permission khusus departemen (mis. "Finance Department")
+      const required = departmentPermissions[d.name] || [];
+      return required.some((perm) => userPermissions.includes(perm));
+    });
+  }, [user, departments]);
+
   // Initialize department data
   useEffect(() => {
     const initialData = {};
@@ -2277,7 +2313,7 @@ const SoBagianEditor = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {departments.map((dept) => (
+            {visibleDepartments.map((dept) => (
               <button
                 key={dept.id}
                 onClick={() => {
