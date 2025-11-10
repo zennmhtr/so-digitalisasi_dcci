@@ -9,7 +9,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    username: '',
+    noPNK: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +28,7 @@ const Login = () => {
     
     try {
       const response = await authAPI.login({
-        username: formData.username,
+        noPNK: formData.noPNK,
         password: formData.password
       });
 
@@ -80,17 +80,17 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username atau Email
+              <label htmlFor="noPNK" className="block text-sm font-medium text-gray-700 mb-2">
+                NO PNK
               </label>
               <input
-                id="username"
-                name="username"
+                id="noPNK"
+                name="noPNK"
                 type="text"
                 required
-                value={formData.username}
+                value={formData.noPNK}
                 onChange={handleChange}
-                placeholder="Masukkan username atau email"
+                placeholder="Masukkan no PNK"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
               />
             </div>

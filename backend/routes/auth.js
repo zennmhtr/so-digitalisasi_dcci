@@ -12,7 +12,7 @@ const router = express.Router();
 // @desc    Login user
 // @access  Public
 router.post('/login', [
-  body('username').notEmpty().withMessage('Username is required'),
+  body('noPNK').notEmpty().withMessage('noPNK is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ], async (req, res) => {
   try {
@@ -25,11 +25,11 @@ router.post('/login', [
       });
     }
 
-    const { username, password } = req.body;
+    const { noPNK, password } = req.body;
 
-    // Check if user exists by username or email
+    // Check if user exists by noPNK
     const user = await User.findOne({ 
-      $or: [{ username }, { email: username }] 
+      $or: [{ noPNK }] 
     })
       .populate('role', 'name permissions')
       .populate('department', 'name code');
