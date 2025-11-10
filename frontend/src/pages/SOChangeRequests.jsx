@@ -22,10 +22,8 @@ const SOChangeRequests = () => {
   const [showValidationError, setShowValidationError] = useState(false);
 
   // Define permissions
-  const canApprove = user?.role?.permissions?.includes("Approve SO Changes"); // untuk atasan
-  const canViewOwn = user?.role?.permissions?.includes(
-    "View Own SO Change Requests"
-  ); // untuk karyawan
+  const canApprove = user?.role?.permissions?.includes("Approve SO Changes");
+  const canViewOwn = user?.role?.permissions?.includes("View Own SO Change Requests");
 
   console.log("🔐 SO Change Requests Permission Check:", {
     user: user?.name,
