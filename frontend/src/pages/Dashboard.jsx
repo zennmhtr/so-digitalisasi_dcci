@@ -756,7 +756,10 @@ const Dashboard = () => {
                 {organizationData.header.company}
               </h2>
               <p className="text-sm text-gray-500">
-                Effective Date: {organizationData.header.effectiveDate}
+                Effective Date:{" "}
+                {organizationData?.signatures?.approvedBy?.date ||
+                  organizationData?.header?.effectiveDate ||
+                  "Waiting Final Approval"}
               </p>
             </div>
           </div>

@@ -307,6 +307,15 @@ router.put(
           request.proposedData.organizationData.signatures.approvedBy._ts =
             isoTs.toISOString();
 
+          // ✅ NEW — Set Effective Date sesuai tanggal Final Approve (Eko)
+          if (!request.proposedData.organizationData.header) {
+            request.proposedData.organizationData.header = {};
+          }
+          request.proposedData.organizationData.header.effectiveDate =
+            humanDate;
+          request.proposedData.organizationData.header._effectiveDateTs =
+            isoTs.toISOString();
+
           // ensure preparedBy exists (fallback)
           if (
             !request.proposedData.organizationData.signatures.preparedBy ||

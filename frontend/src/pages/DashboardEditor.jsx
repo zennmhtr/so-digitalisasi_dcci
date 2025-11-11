@@ -1157,23 +1157,9 @@ const DashboardEditor = () => {
               </h2>
               <p className="text-sm text-gray-500">
                 Effective Date:{" "}
-                {isEditMode ? (
-                  <input
-                    type="text"
-                    value={organizationData.header.effectiveDate}
-                    onChange={(e) =>
-                      handleEdit(
-                        "header",
-                        null,
-                        "effectiveDate",
-                        e.target.value
-                      )
-                    }
-                    className="bg-yellow-50 border rounded px-2 py-1 ml-1"
-                  />
-                ) : (
-                  organizationData.header.effectiveDate
-                )}
+                {organizationData?.signatures?.approvedBy?.date ||
+                  organizationData?.header?.effectiveDate ||
+                  "Waiting Final Approval"}
               </p>
             </div>
           </div>
