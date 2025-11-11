@@ -23,6 +23,12 @@ const SOChangeRequests = () => {
 
   // Define permissions
   const canApprove = user?.role?.permissions?.includes("Approve SO Changes"); // untuk atasan
+  const isFirstApprover = user?.role?.permissions?.includes(
+    "SO Changes First Approval"
+  );
+  const isFinalApprover = user?.role?.permissions?.includes(
+    "SO Changes Final Approval"
+  );
   const canViewOwn = user?.role?.permissions?.includes(
     "View Own SO Change Requests"
   ); // untuk karyawan
@@ -560,24 +566,26 @@ const SOChangeRequests = () => {
                       </div>
                     )}
                   </div>
-
                   <div className="flex gap-2 ml-4">
                     {canApprove &&
-                      ["pending", "waiting_second_approval"].includes(
-                        request.status
-                      ) && (
+                      request.status === "pending" &&
+                      isFirstApprover && (
                         <button
                           onClick={() => viewDetail(request)}
-                          className={`flex items-center gap-1 px-3 py-2 text-sm rounded transition-colors ${
-                            request.status === "waiting_second_approval"
-                              ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                              : "bg-green-50 text-green-600 hover:bg-green-100"
-                          }`}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
                         >
-                          <CheckCircle className="w-4 h-4" />
-                          {request.status === "waiting_second_approval"
-                            ? "Review & Final Approve"
-                            : "Review & Approve"}
+                          Review & Approve
+                        </button>
+                      )}
+
+                    {canApprove &&
+                      request.status === "waiting_second_approval" &&
+                      isFinalApprover && (
+                        <button
+                          onClick={() => viewDetail(request)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
+                        >
+                          Review & Final Approve
                         </button>
                       )}
 

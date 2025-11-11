@@ -500,9 +500,28 @@ const DashboardEditor = () => {
     }
 
     try {
+      // set prepared date to today (DD/MM/YYYY)
+      const now = new Date();
+      const humanDate = now.toLocaleDateString("en-GB"); // DD/MM/YYYY
+
       const dataToSubmit = {
         ...organizationData,
-        lastModified: new Date().toISOString(),
+        signatures: {
+          ...organizationData.signatures,
+          preparedBy: {
+            ...(organizationData.signatures?.preparedBy || {}),
+            date: humanDate,
+            _ts: now.toISOString(), // optional machine-readable timestamp
+          },
+          // keep other signature objects intact
+          middleBy: {
+            ...(organizationData.signatures?.middleBy || {}),
+          },
+          approvedBy: {
+            ...(organizationData.signatures?.approvedBy || {}),
+          },
+        },
+        lastModified: now.toISOString(),
         modifiedBy: user?.name || user?.username,
       };
 

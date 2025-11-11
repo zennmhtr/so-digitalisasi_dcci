@@ -166,25 +166,25 @@ router.post(
   }
 );
 
-// @route   PUT /api/so-change-requests/:id/approve
-// @desc    Approve SO change request
-// @access  Private (requires "Approve SO Changes" permission)
-// @route   PUT /api/so-change-requests/:id/approve
-// @desc    Multi-step approval (2 levels)
-// @access  Private (requires "Approve SO Changes" permission)
-// @route   PUT /api/so-change-requests/:id/approve
-// @desc    Multi-step approval (2 levels)
-// @access  Private (requires "Approve SO Changes" permission)
+// REPLACE the approve handler in so-change-requests.js with this code
 router.put(
   "/:id/approve",
   [auth, body("reviewComments").optional()],
   async (req, res) => {
     try {
       const userPermissions = req.user.role?.permissions || [];
-      if (!userPermissions.includes("Approve SO Changes")) {
+      const isFirstApprover = userPermissions.includes(
+        "SO Changes First Approval"
+      );
+      const isFinalApprover = userPermissions.includes(
+        "SO Changes Final Approval"
+      );
+
+      if (!isFirstApprover && !isFinalApprover) {
         return res.status(403).json({
           success: false,
-          message: "You do not have permission to approve SO changes",
+          message:
+            "You do not have permission to approve SO changes for any level",
         });
       }
 
@@ -197,7 +197,6 @@ router.put(
         });
       }
 
-      // ✅ hanya bisa approve kalau status pending atau waiting_second_approval
       if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
@@ -205,7 +204,7 @@ router.put(
         });
       }
 
-      // ❌ tidak boleh approve request sendiri
+      // prevent approving own request
       if (request.requestedBy.toString() === req.user.id) {
         return res.status(400).json({
           success: false,
@@ -213,13 +212,48 @@ router.put(
         });
       }
 
-      // === ✅ TAHAP 1 APPROVAL ===
+      const now = new Date();
+      const isoTs = now;
+      const humanDate = now.toLocaleDateString("en-GB"); // DD/MM/YYYY
+
+      // ensure proposedData exists
+      if (!request.proposedData) request.proposedData = {};
+      if (!request.proposedData.organizationData)
+        request.proposedData.organizationData =
+          request.proposedData.organizationData || {};
+
+      // FIRST APPROVAL
       if (request.status === "pending") {
-        // simpan approver pertama
+        if (!isFirstApprover) {
+          return res.status(403).json({
+            success: false,
+            message: "Only first approver (Director) can approve this stage",
+          });
+        }
+
         request.firstApprovedBy = req.user.id;
-        request.firstApprovedAt = new Date();
+        request.firstApprovedAt = isoTs;
         request.reviewComments = req.body.reviewComments || "";
         request.status = "waiting_second_approval";
+
+        // inject middleBy.date into proposedData.organizationData.signatures
+        try {
+          if (!request.proposedData.organizationData.signatures) {
+            request.proposedData.organizationData.signatures = {};
+          }
+          if (!request.proposedData.organizationData.signatures.middleBy) {
+            request.proposedData.organizationData.signatures.middleBy = {};
+          }
+          request.proposedData.organizationData.signatures.middleBy.date =
+            humanDate;
+          request.proposedData.organizationData.signatures.middleBy._ts =
+            isoTs.toISOString();
+        } catch (err) {
+          console.error(
+            "Warning: failed to inject middleBy.date into proposedData:",
+            err
+          );
+        }
 
         await request.save();
 
@@ -234,9 +268,17 @@ router.put(
         });
       }
 
-      // === ✅ TAHAP 2 APPROVAL ===
+      // SECOND (FINAL) APPROVAL
       if (request.status === "waiting_second_approval") {
-        // Cegah orang yang sama approve dua kali
+        if (!isFinalApprover) {
+          return res.status(403).json({
+            success: false,
+            message:
+              "Only final approver (President Director) can approve this stage",
+          });
+        }
+
+        // prevent same user approving twice
         if (request.firstApprovedBy?.toString() === req.user.id) {
           return res.status(400).json({
             success: false,
@@ -245,10 +287,46 @@ router.put(
         }
 
         request.secondApprovedBy = req.user.id;
-        request.secondApprovedAt = new Date();
-        request.reviewComments +=
-          "\nSecond approval: " + (req.body.reviewComments || "");
+        request.secondApprovedAt = isoTs;
+        request.reviewComments =
+          (request.reviewComments ? request.reviewComments + "\n" : "") +
+          "Final approval: " +
+          (req.body.reviewComments || "");
         request.status = "approved";
+
+        // inject approvedBy.date into proposedData
+        try {
+          if (!request.proposedData.organizationData.signatures) {
+            request.proposedData.organizationData.signatures = {};
+          }
+          if (!request.proposedData.organizationData.signatures.approvedBy) {
+            request.proposedData.organizationData.signatures.approvedBy = {};
+          }
+          request.proposedData.organizationData.signatures.approvedBy.date =
+            humanDate;
+          request.proposedData.organizationData.signatures.approvedBy._ts =
+            isoTs.toISOString();
+
+          // ensure preparedBy exists (fallback)
+          if (
+            !request.proposedData.organizationData.signatures.preparedBy ||
+            !request.proposedData.organizationData.signatures.preparedBy.date
+          ) {
+            request.proposedData.organizationData.signatures.preparedBy = {
+              date: request.submittedAt
+                ? new Date(request.submittedAt).toLocaleDateString("en-GB")
+                : humanDate,
+              _ts: request.submittedAt
+                ? new Date(request.submittedAt).toISOString()
+                : isoTs.toISOString(),
+            };
+          }
+        } catch (err) {
+          console.error(
+            "Warning: failed to inject approvedBy.date into proposedData:",
+            err
+          );
+        }
 
         await request.save();
 
