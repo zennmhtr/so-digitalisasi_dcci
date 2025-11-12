@@ -373,7 +373,6 @@ router.put(
   ],
   async (req, res) => {
     try {
-      // Check permission
       const userPermissions = req.user.role?.permissions || [];
       if (!userPermissions.includes("Approve SO Changes")) {
         return res.status(403).json({
@@ -400,27 +399,42 @@ router.put(
         });
       }
 
-      if (request.status !== "pending") {
+      // Terima reject baik di tahap pertama (pending) maupun saat menunggu final approval
+      if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
           message: `Cannot reject request with status: ${request.status}`,
         });
       }
 
+      // Catat siapa yang menolak berdasarkan current status
+      const now = new Date();
+      if (request.status === "pending") {
+        // Jika ditolak saat pending, catat sebagai first approver rejection
+        request.firstApprovedBy = req.user.id;
+        request.firstApprovedAt = now;
+      } else if (request.status === "waiting_second_approval") {
+        // Jika ditolak saat menunggu second approval, catat sebagai second approver rejection
+        request.secondApprovedBy = req.user.id;
+        request.secondApprovedAt = now;
+      }
+
       request.status = "rejected";
       request.reviewedBy = req.user.id;
-      request.reviewedAt = new Date();
+      request.reviewedAt = now;
       request.reviewComments = req.body.reviewComments;
 
       await request.save();
 
       const populatedRequest = await SOChangeRequest.findById(request._id)
         .populate("requestedBy", "name email department")
-        .populate("reviewedBy", "name email");
+        .populate("reviewedBy", "name email")
+        .populate("firstApprovedBy", "name email")
+        .populate("secondApprovedBy", "name email");
 
       res.json({
         success: true,
-        message: "SO change request rejected",
+        message: "SO change request rejected successfully",
         data: populatedRequest,
       });
     } catch (error) {
@@ -436,6 +450,9 @@ router.put(
 // @route   PUT /api/so-change-requests/:id/revisi
 // @desc    Mark SO change request as "revisi" (request revision by approver)
 // @access  Private (requires "Approve SO Changes" permission)
+// @route   PUT /api/so-change-requests/:id/revisi
+// @desc    Mark SO change request as "revisi" (request revision by approver)
+// @access  Private (requires "Approve SO Changes" permission)
 router.put(
   "/:id/revisi",
   [
@@ -447,6 +464,8 @@ router.put(
   async (req, res) => {
     try {
       const userPermissions = req.user.role?.permissions || [];
+
+      // Cukup butuh permission umum Approve SO Changes untuk bisa revisi
       if (!userPermissions.includes("Approve SO Changes")) {
         return res.status(403).json({
           success: false,
@@ -464,7 +483,6 @@ router.put(
       }
 
       const request = await SOChangeRequest.findById(req.params.id);
-
       if (!request) {
         return res.status(404).json({
           success: false,
@@ -472,27 +490,62 @@ router.put(
         });
       }
 
-      if (request.status !== "pending") {
+      // Hanya boleh revisi kalau masih dalam proses approval (pending atau waiting_second_approval)
+      if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
           message: `Cannot revisi request with status: ${request.status}`,
         });
       }
 
-      request.status = "revisi";
-      request.reviewedBy = req.user.id;
-      request.reviewedAt = new Date();
-      request.reviewComments = req.body.reviewComments;
+      const now = new Date();
+
+      // Jika masih pending -> this is a FIRST-approver action (catat sebagai firstApprovedBy)
+      if (request.status === "pending") {
+        // Jika peminta revisi adalah pemohon sendiri, tolak (opsional)
+        if (request.requestedBy.toString() === req.user.id) {
+          return res.status(400).json({
+            success: false,
+            message: "You cannot revisi your own request",
+          });
+        }
+
+        request.firstApprovedBy = req.user.id;
+        request.firstApprovedAt = now;
+        request.status = "revisi";
+        request.reviewedBy = req.user.id;
+        request.reviewedAt = now;
+        request.reviewComments = req.body.reviewComments;
+      } else if (request.status === "waiting_second_approval") {
+        // Jika menunggu second approval -> this is SECOND-approver action
+        if (request.requestedBy.toString() === req.user.id) {
+          return res.status(400).json({
+            success: false,
+            message: "You cannot revisi your own request",
+          });
+        }
+
+        // prevent if already revised earlier (status would not be waiting_second_approval then),
+        // but double-check: if first approver already set revisi earlier, status wouldn't be waiting_second_approval.
+        request.secondApprovedBy = req.user.id;
+        request.secondApprovedAt = now;
+        request.status = "revisi";
+        request.reviewedBy = req.user.id;
+        request.reviewedAt = now;
+        request.reviewComments = req.body.reviewComments;
+      }
 
       await request.save();
 
       const populatedRequest = await SOChangeRequest.findById(request._id)
         .populate("requestedBy", "name email department")
-        .populate("reviewedBy", "name email");
+        .populate("reviewedBy", "name email")
+        .populate("firstApprovedBy", "name email")
+        .populate("secondApprovedBy", "name email");
 
       res.json({
         success: true,
-        message: 'SO change request marked as "revisi"',
+        message: "SO change request marked as revisi",
         data: populatedRequest,
       });
     } catch (error) {

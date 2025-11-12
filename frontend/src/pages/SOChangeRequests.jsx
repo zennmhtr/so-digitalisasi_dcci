@@ -715,39 +715,42 @@ const SOChangeRequests = () => {
               )}
 
               {/* Review Section (for managers on pending requests) */}
-              {canApprove && selectedRequest.status === "pending" && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">
-                    <MessageSquare className="inline w-5 h-5 mr-2" />
-                    Review Comments:
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-2">
-                    ✅ Optional for approval | ⚠️{" "}
-                    <span className="font-semibold text-red-600">
-                      Required for rejection
-                    </span>
-                  </p>
-                  <textarea
-                    value={reviewComments}
-                    onChange={(e) => {
-                      setReviewComments(e.target.value);
-                      setShowValidationError(false); // Clear error when typing
-                    }}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                      showValidationError
-                        ? "border-red-500 focus:ring-red-500 bg-red-50"
-                        : "border-gray-300 focus:ring-blue-500"
-                    }`}
-                    rows="4"
-                    placeholder="Add your comments here... (Required if rejecting)"
-                  />
-                  {showValidationError && (
-                    <p className="text-red-600 text-sm mt-2 font-semibold">
-                      ⚠️ Rejection reason is required!
+              {canApprove &&
+                ["pending", "waiting_second_approval"].includes(
+                  selectedRequest.status
+                ) && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      <MessageSquare className="inline w-5 h-5 mr-2" />
+                      Review Comments:
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-2">
+                      ✅ Optional for approval | ⚠️{" "}
+                      <span className="font-semibold text-red-600">
+                        Required for rejection
+                      </span>
                     </p>
-                  )}
-                </div>
-              )}
+                    <textarea
+                      value={reviewComments}
+                      onChange={(e) => {
+                        setReviewComments(e.target.value);
+                        setShowValidationError(false); // Clear error when typing
+                      }}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                        showValidationError
+                          ? "border-red-500 focus:ring-red-500 bg-red-50"
+                          : "border-gray-300 focus:ring-blue-500"
+                      }`}
+                      rows="4"
+                      placeholder="Add your comments here... (Required if rejecting)"
+                    />
+                    {showValidationError && (
+                      <p className="text-red-600 text-sm mt-2 font-semibold">
+                        ⚠️ Rejection reason is required!
+                      </p>
+                    )}
+                  </div>
+                )}
             </div>
 
             {/* Modal Footer */}
@@ -760,76 +763,80 @@ const SOChangeRequests = () => {
                 Close
               </button>
 
-              {canApprove &&
-                ["pending", "waiting_second_approval"].includes(
-                  selectedRequest.status
-                ) && (
-                  <>
-                    <button
-                      onClick={() => handleReject(selectedRequest._id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
+              {canApprove && (
+                <>
+                  {selectedRequest.status === "pending" && isFirstApprover && (
+                    <>
+                      <button
+                        onClick={() => handleReject(selectedRequest._id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleRevisi(selectedRequest._id)}
+                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={actionLoading}
+                      >
+                        <AlertCircle className="w-4 h-4" />
+                        Send for Revision
+                      </button>
+
+                      <button
+                        onClick={() => handleApprove(selectedRequest._id)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={actionLoading}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Approve
+                      </button>
+                    </>
+                  )}
+
+                  {selectedRequest.status === "waiting_second_approval" &&
+                    isFinalApprover && (
+                      <>
+                        <button
+                          onClick={() => handleReject(selectedRequest._id)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          disabled={actionLoading}
+                        >
                           <XCircle className="w-4 h-4" />
                           Reject
-                        </>
-                      )}
-                    </button>
+                        </button>
 
-                    <button
-                      onClick={() => handleRevisi(selectedRequest._id)}
-                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
+                        <button
+                          onClick={() => handleRevisi(selectedRequest._id)}
+                          className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          disabled={actionLoading}
+                        >
                           <AlertCircle className="w-4 h-4" />
                           Send for Revision
-                        </>
-                      )}
-                    </button>
+                        </button>
 
-                    <button
-                      onClick={() => handleApprove(selectedRequest._id)}
-                      className={`px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-                        selectedRequest.status === "waiting_second_approval"
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }`}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
+                        <button
+                          onClick={() => handleApprove(selectedRequest._id)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          disabled={actionLoading}
+                        >
                           <CheckCircle className="w-4 h-4" />
-                          {selectedRequest.status === "waiting_second_approval"
-                            ? "Final Approve"
-                            : "Approve & Apply Changes"}
-                        </>
-                      )}
-                    </button>
-                  </>
-                )}
-              {canViewOwn && !canApprove && (
-                <span className="text-gray-500 text-sm mr-auto">
-                  👀 You can only view your own requests.
-                </span>
+                          Final Approve
+                        </button>
+                      </>
+                    )}
+                </>
               )}
             </div>
           </div>
