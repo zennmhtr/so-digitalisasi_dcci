@@ -120,7 +120,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
 
   // Check SO Change Requests access - Only "Approve SO Changes" permission
   const hasSOChangeRequestsAccess =
-    userPermissions?.includes("Approve SO Changes") ||
+    userPermissions?.includes("SO Changes First Approval") ||
+    userPermissions?.includes("SO Changes Final Approval") ||
     userPermissions?.includes("View Own SO Change Requests");
 
   console.log("🔐 Layout SO Change Requests Check:", {
@@ -146,7 +147,9 @@ const Layout = ({ children, sidebarVisible = true }) => {
     hasDashboardEditorAccess: hasDashboardEditorAccess,
     hasSOChangeRequestsAccess: hasSOChangeRequestsAccess,
     hasSubmitPermission: userPermissions?.includes("Submit SO Changes"),
-    hasApprovePermission: userPermissions?.includes("Approve SO Changes"),
+    hasApprovePermission:
+    userPermissions?.includes("SO Changes First Approval") ||
+    userPermissions?.includes("SO Changes Final Approval"),
     rawUserObject: user,
   });
 

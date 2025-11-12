@@ -29,8 +29,7 @@ const RolePermission = () => {
       "View All SO Details",
       "Jobdesc Management",
     ],
-    soChangeRequests: [
-      "Approve SO Changes", 
+    soChangeRequests: [ 
       "View Own SO Change Requests",
       "SO Changes First Approval", // Director
       "SO Changes Final Approval" // President Director

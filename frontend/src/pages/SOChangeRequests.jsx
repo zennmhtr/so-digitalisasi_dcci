@@ -22,7 +22,6 @@ const SOChangeRequests = () => {
   const [showValidationError, setShowValidationError] = useState(false);
 
   // Define permissions
-  const canApprove = user?.role?.permissions?.includes("Approve SO Changes"); // untuk atasan
   const isFirstApprover = user?.role?.permissions?.includes(
     "SO Changes First Approval"
   );
@@ -33,6 +32,8 @@ const SOChangeRequests = () => {
     "View Own SO Change Requests"
   ); // untuk karyawan
 
+  const canApprove = isFirstApprover || isFinalApprover;
+
   console.log("🔐 SO Change Requests Permission Check:", {
     user: user?.name,
     permissions: user?.role?.permissions,
@@ -41,14 +42,21 @@ const SOChangeRequests = () => {
 
   // Debug logging
   useEffect(() => {
+    const isFirstApprover = user?.role?.permissions?.includes(
+      "SO Changes First Approval"
+    );
+    const isFinalApprover = user?.role?.permissions?.includes(
+      "SO Changes Final Approval"
+    );
+
     console.log("🔍 SO Change Requests - Permission Debug:", {
       user: user?.name,
       userId: user?.id,
       role: user?.role?.name,
       permissions: user?.role?.permissions,
+      isFirstApprover,
+      isFinalApprover,
       canApprove,
-      hasApprovePermission:
-        user?.role?.permissions?.includes("Approve SO Changes"),
       allPermissions: user?.role?.permissions,
     });
   }, [user, canApprove]);
@@ -692,9 +700,6 @@ const SOChangeRequests = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Changes Preview - Hidden for better UX */}
-              {/* Data changes are already applied when approved, no need to show technical JSON */}
 
               {/* Review Comments (if reviewed) */}
               {selectedRequest.reviewComments && (

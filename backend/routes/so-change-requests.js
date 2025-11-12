@@ -19,8 +19,12 @@ router.get("/", auth, async (req, res) => {
     if (status) filter.status = status;
     if (affectedSection) filter.affectedSection = affectedSection;
 
-    // If user doesn't have "Approve SO Changes" permission, only show their own requests
-    if (!userPermissions.includes("Approve SO Changes")) {
+    // If user doesn't have first or final approval permission, only show their own requests
+    const canSeeAllRequests =
+      userPermissions.includes("SO Changes First Approval") ||
+      userPermissions.includes("SO Changes Final Approval");
+
+    if (!canSeeAllRequests) {
       filter.requestedBy = req.user.id;
     }
 
@@ -62,11 +66,15 @@ router.get("/:id", auth, async (req, res) => {
       });
     }
 
-    // Check permission - user can view their own requests or if they have approve permission
+    // Check permission - user can view their own requests or if they have approval permission
     const userPermissions = req.user.role?.permissions || [];
+    const canViewAllRequests =
+      userPermissions.includes("SO Changes First Approval") ||
+      userPermissions.includes("SO Changes Final Approval");
+
     if (
       request.requestedBy._id.toString() !== req.user.id &&
-      !userPermissions.includes("Approve SO Changes")
+      !canViewAllRequests
     ) {
       return res.status(403).json({
         success: false,
@@ -362,7 +370,7 @@ router.put(
 
 // @route   PUT /api/so-change-requests/:id/reject
 // @desc    Reject SO change request
-// @access  Private (requires "Approve SO Changes" permission)
+// @access  Private (requires "SO Changes First Approval" or "SO Changes Final Approval")
 router.put(
   "/:id/reject",
   [
@@ -374,7 +382,14 @@ router.put(
   async (req, res) => {
     try {
       const userPermissions = req.user.role?.permissions || [];
-      if (!userPermissions.includes("Approve SO Changes")) {
+      const isFirstApprover = userPermissions.includes(
+        "SO Changes First Approval"
+      );
+      const isFinalApprover = userPermissions.includes(
+        "SO Changes Final Approval"
+      );
+
+      if (!isFirstApprover && !isFinalApprover) {
         return res.status(403).json({
           success: false,
           message: "You do not have permission to reject SO changes",
@@ -391,7 +406,6 @@ router.put(
       }
 
       const request = await SOChangeRequest.findById(req.params.id);
-
       if (!request) {
         return res.status(404).json({
           success: false,
@@ -399,7 +413,7 @@ router.put(
         });
       }
 
-      // Terima reject baik di tahap pertama (pending) maupun saat menunggu final approval
+      // ✅ hanya boleh reject di pending (first) atau waiting_second_approval (final)
       if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
@@ -407,16 +421,22 @@ router.put(
         });
       }
 
-      // Catat siapa yang menolak berdasarkan current status
       const now = new Date();
-      if (request.status === "pending") {
-        // Jika ditolak saat pending, catat sebagai first approver rejection
+
+      if (request.status === "pending" && isFirstApprover) {
         request.firstApprovedBy = req.user.id;
         request.firstApprovedAt = now;
-      } else if (request.status === "waiting_second_approval") {
-        // Jika ditolak saat menunggu second approval, catat sebagai second approver rejection
+      } else if (
+        request.status === "waiting_second_approval" &&
+        isFinalApprover
+      ) {
         request.secondApprovedBy = req.user.id;
         request.secondApprovedAt = now;
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorized to reject this stage",
+        });
       }
 
       request.status = "rejected";
@@ -449,10 +469,7 @@ router.put(
 
 // @route   PUT /api/so-change-requests/:id/revisi
 // @desc    Mark SO change request as "revisi" (request revision by approver)
-// @access  Private (requires "Approve SO Changes" permission)
-// @route   PUT /api/so-change-requests/:id/revisi
-// @desc    Mark SO change request as "revisi" (request revision by approver)
-// @access  Private (requires "Approve SO Changes" permission)
+// @access  Private (requires "SO Changes First Approval" or "SO Changes Final Approval")
 router.put(
   "/:id/revisi",
   [
@@ -464,9 +481,14 @@ router.put(
   async (req, res) => {
     try {
       const userPermissions = req.user.role?.permissions || [];
+      const isFirstApprover = userPermissions.includes(
+        "SO Changes First Approval"
+      );
+      const isFinalApprover = userPermissions.includes(
+        "SO Changes Final Approval"
+      );
 
-      // Cukup butuh permission umum Approve SO Changes untuk bisa revisi
-      if (!userPermissions.includes("Approve SO Changes")) {
+      if (!isFirstApprover && !isFinalApprover) {
         return res.status(403).json({
           success: false,
           message: "You do not have permission to revisi SO changes",
@@ -490,7 +512,6 @@ router.put(
         });
       }
 
-      // Hanya boleh revisi kalau masih dalam proses approval (pending atau waiting_second_approval)
       if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
@@ -500,40 +521,26 @@ router.put(
 
       const now = new Date();
 
-      // Jika masih pending -> this is a FIRST-approver action (catat sebagai firstApprovedBy)
-      if (request.status === "pending") {
-        // Jika peminta revisi adalah pemohon sendiri, tolak (opsional)
-        if (request.requestedBy.toString() === req.user.id) {
-          return res.status(400).json({
-            success: false,
-            message: "You cannot revisi your own request",
-          });
-        }
-
+      if (request.status === "pending" && isFirstApprover) {
         request.firstApprovedBy = req.user.id;
         request.firstApprovedAt = now;
-        request.status = "revisi";
-        request.reviewedBy = req.user.id;
-        request.reviewedAt = now;
-        request.reviewComments = req.body.reviewComments;
-      } else if (request.status === "waiting_second_approval") {
-        // Jika menunggu second approval -> this is SECOND-approver action
-        if (request.requestedBy.toString() === req.user.id) {
-          return res.status(400).json({
-            success: false,
-            message: "You cannot revisi your own request",
-          });
-        }
-
-        // prevent if already revised earlier (status would not be waiting_second_approval then),
-        // but double-check: if first approver already set revisi earlier, status wouldn't be waiting_second_approval.
+      } else if (
+        request.status === "waiting_second_approval" &&
+        isFinalApprover
+      ) {
         request.secondApprovedBy = req.user.id;
         request.secondApprovedAt = now;
-        request.status = "revisi";
-        request.reviewedBy = req.user.id;
-        request.reviewedAt = now;
-        request.reviewComments = req.body.reviewComments;
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorized to revisi this stage",
+        });
       }
+
+      request.status = "revisi";
+      request.reviewedBy = req.user.id;
+      request.reviewedAt = now;
+      request.reviewComments = req.body.reviewComments;
 
       await request.save();
 
