@@ -35,6 +35,11 @@ const RolePermission = () => {
       "SO Changes Final Approval" // President Director
     ],
 
+    soBagianChangeRequests: [
+      "SO Bagian Approval",
+      "SO Bagian Request"
+    ],
+
     jobdescDepartments: [
       "Finance Department",
       "HRGA & IT Department",
@@ -449,6 +454,41 @@ const RolePermission = () => {
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {availablePermissions.soChangeRequests.map(
+                          (permission) => (
+                            <label
+                              key={permission}
+                              className="flex items-center"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.permissions.includes(
+                                  permission
+                                )}
+                                onChange={() =>
+                                  handlePermissionChange(permission)
+                                }
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                              />
+                              <span className="ml-3 text-sm text-gray-700">
+                                {permission}
+                              </span>
+                            </label>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 🧩 SO BAGIAN CHANGE REQUESTS ACCESS */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
+                        SO Bagian Change Requests Access
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-3">
+                        Access for submitting, viewing, approving or revising SO
+                        change requests.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {availablePermissions.soBagianChangeRequests.map(
                           (permission) => (
                             <label
                               key={permission}

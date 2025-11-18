@@ -37,28 +37,11 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
     },
 
-    // Affected Section
-    affectedSection: {
-      type: String,
-      enum: [
-        "bod",
-        "management",
-        "divisions",
-        "departments",
-        "sections",
-        "header",
-        "signatures",
-        "commissioners",
-      ],
-      required: true,
-    },
-
     // Status
     status: {
       type: String,
       enum: [
         "pending",
-        "waiting_second_approval",
         "approved",
         "rejected",
         "cancelled",
@@ -79,11 +62,11 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       type: String,
     },
 
-    firstApprovedBy: {
+    approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    firstApprovedAt: {
+    approvedAt: {
       type: Date,
     },
 
@@ -108,6 +91,5 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
 // Indexes for faster queries
 soBagianChangeRequestSchema.index({ requestedBy: 1, status: 1 });
 soBagianChangeRequestSchema.index({ status: 1, createdAt: -1 });
-soBagianChangeRequestSchema.index({ affectedSection: 1 });
 
 module.exports = mongoose.model("soBagianChangeRequest", soBagianChangeRequestSchema);

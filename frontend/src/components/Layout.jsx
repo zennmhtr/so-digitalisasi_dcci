@@ -130,6 +130,16 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userPermissions: userPermissions,
   });
 
+  const hasSOBagianChangeRequestsAccess = 
+    userPermissions?.includes("SO Bagian Approval") ||
+    userPermissions?.includes("SO Bagian Request");
+  
+  console.log("🔐 Layout SO Bagian Change Requests Check:", {
+    userName: user?.name,
+    hasSOBagianChangeRequestsAccess: hasSOBagianChangeRequestsAccess,
+    userPermissions: userPermissions,
+  });
+
   // Check Master Data access
   const hasMasterDataAccess =
     userPermissions?.includes("Manage Users") ||
@@ -146,10 +156,12 @@ const Layout = ({ children, sidebarVisible = true }) => {
     permissionsLength: userPermissions?.length,
     hasDashboardEditorAccess: hasDashboardEditorAccess,
     hasSOChangeRequestsAccess: hasSOChangeRequestsAccess,
+    hasSOBagianChangeRequestsAccess: hasSOBagianChangeRequestsAccess,
     hasSubmitPermission: userPermissions?.includes("Submit SO Changes"),
     hasApprovePermission:
     userPermissions?.includes("SO Changes First Approval") ||
-    userPermissions?.includes("SO Changes Final Approval"),
+    userPermissions?.includes("SO Changes Final Approval") ||
+    userPermissions?.includes("SO Bagian Approval"),
     rawUserObject: user,
   });
 
@@ -198,6 +210,15 @@ const Layout = ({ children, sidebarVisible = true }) => {
           {
             name: "SO Change Requests",
             href: "/so-change-requests",
+            icon: GitPullRequest,
+          },
+        ]
+      : []),
+    ...(hasSOBagianChangeRequestsAccess
+      ? [
+          {
+            name: "SO Bagian Change Requests",
+            href: "/so-bagian-change-requests",
             icon: GitPullRequest,
           },
         ]

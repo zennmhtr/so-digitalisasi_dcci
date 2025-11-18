@@ -26,6 +26,7 @@ import SoBagianEditor from './pages/SoBagianEditor';
 import DepartmentEditor from './components/DepartmentEditor';
 import JobdescManagement from './pages/JobdescManagement';
 import SOChangeRequests from './pages/SOChangeRequests';
+import SOBagianChangeRequests from './pages/SOBagianChangeRequests';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -160,6 +161,13 @@ function AppRoutes() {
         <ProtectedRoute>
           <Layout>
             <SOChangeRequests />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/so-bagian-change-requests" element={
+        <ProtectedRoute>
+          <Layout>
+            <SOBagianChangeRequests />
           </Layout>
         </ProtectedRoute>
       } />

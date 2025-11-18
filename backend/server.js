@@ -33,6 +33,7 @@ app.use('/api/departments', require('./routes/departments'));
 app.use('/api/jobdescriptions', require('./routes/jobdescriptions'));
 app.use('/api/members', require('./routes/members'));
 app.use('/api/so-change-requests', require('./routes/so-change-requests'));
+app.use('/api/so-bagian-change-requests', require('./routes/so-bagian-change-requests'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

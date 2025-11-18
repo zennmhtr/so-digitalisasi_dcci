@@ -106,4 +106,15 @@ export const soChangeRequestsAPI = {
   delete: (id) => api.delete(`/so-change-requests/${id}`),
 };
 
+export const soBagianChangeRequestsAPI = {
+  getAll: (params) => api.get('/so-bagian-change-requests', { params }),
+  getById: (id) => api.get(`/so-bagian-change-requests/${id}`),
+  create: (requestData) => api.post('/so-bagian-change-requests', requestData),
+  approve: (id, reviewComments) => api.put(`/so-bagian-change-requests/${id}/approve`, { reviewComments }),
+  revisi: (id, reviewComments) => api.put(`/so-bagian-change-requests/${id}/revisi`, { reviewComments }),
+  reject: (id, reviewComments) => api.put(`/so-bagian-change-requests/${id}/reject`, { reviewComments }),
+  cancel: (id) => api.put(`/so-bagian-change-requests/${id}/cancel`),
+  delete: (id) => api.delete(`/so-bagian-change-requests/${id}`),
+};
+
 export default api;
