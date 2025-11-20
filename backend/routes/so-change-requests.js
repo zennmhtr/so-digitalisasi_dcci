@@ -174,7 +174,7 @@ router.post(
   }
 );
 
-// REPLACE the approve handler in so-change-requests.js with this code
+// PUT /api/so-change-requests/:id/approve
 router.put(
   "/:id/approve",
   [auth, body("reviewComments").optional()],
@@ -212,7 +212,6 @@ router.put(
         });
       }
 
-      // prevent approving own request
       if (request.requestedBy.toString() === req.user.id) {
         return res.status(400).json({
           success: false,
@@ -221,16 +220,45 @@ router.put(
       }
 
       const now = new Date();
-      const isoTs = now;
       const humanDate = now.toLocaleDateString("en-GB"); // DD/MM/YYYY
 
-      // ensure proposedData exists
-      if (!request.proposedData) request.proposedData = {};
-      if (!request.proposedData.organizationData)
-        request.proposedData.organizationData =
-          request.proposedData.organizationData || {};
+      console.log("🔥 APPROVAL DEBUG:", {
+        status: request.status,
+        humanDate,
+        isFirstApprover,
+        isFinalApprover,
+      });
 
-      // FIRST APPROVAL
+      // ✅ ENSURE STRUCTURE EXISTS
+      if (!request.proposedData) request.proposedData = {};
+      if (!request.proposedData.organizationData) {
+        request.proposedData.organizationData = {};
+      }
+      if (!request.proposedData.organizationData.signatures) {
+        request.proposedData.organizationData.signatures = {};
+      }
+      if (!request.proposedData.organizationData.header) {
+        request.proposedData.organizationData.header = {};
+      }
+
+      // ✅ ENSURE preparedBy date exists
+      if (
+        !request.proposedData.organizationData.signatures.preparedBy ||
+        !request.proposedData.organizationData.signatures.preparedBy.date
+      ) {
+        const prepDate = request.createdAt || now;
+        request.proposedData.organizationData.signatures.preparedBy = {
+          name: "Diki Wahyudi",
+          date: new Date(prepDate).toLocaleDateString("en-GB"),
+          _ts: new Date(prepDate).toISOString(),
+        };
+        console.log(
+          "✅ Set preparedBy.date:",
+          request.proposedData.organizationData.signatures.preparedBy.date
+        );
+      }
+
+      // FIRST APPROVAL LOGIC
       if (request.status === "pending") {
         if (!isFirstApprover) {
           return res.status(403).json({
@@ -240,43 +268,41 @@ router.put(
         }
 
         request.firstApprovedBy = req.user.id;
-        request.firstApprovedAt = isoTs;
+        request.firstApprovedAt = now;
         request.reviewComments = req.body.reviewComments || "";
         request.status = "waiting_second_approval";
 
-        // inject middleBy.date into proposedData.organizationData.signatures
-        try {
-          if (!request.proposedData.organizationData.signatures) {
-            request.proposedData.organizationData.signatures = {};
-          }
-          if (!request.proposedData.organizationData.signatures.middleBy) {
-            request.proposedData.organizationData.signatures.middleBy = {};
-          }
-          request.proposedData.organizationData.signatures.middleBy.date =
-            humanDate;
-          request.proposedData.organizationData.signatures.middleBy._ts =
-            isoTs.toISOString();
-        } catch (err) {
-          console.error(
-            "Warning: failed to inject middleBy.date into proposedData:",
-            err
-          );
-        }
+        // ✅ SET middleBy date (Bambang Wuryanto)
+        request.proposedData.organizationData.signatures.middleBy = {
+          title: "Director",
+          name: "Bambang Wuryanto",
+          date: humanDate,
+          _ts: now.toISOString(),
+        };
 
+        console.log("✅ SET middleBy.date:", humanDate);
+
+        // Mark as modified to ensure MongoDB saves nested object
+        request.markModified("proposedData");
         await request.save();
 
         const populated = await SOChangeRequest.findById(request._id)
           .populate("requestedBy", "name email department")
           .populate("firstApprovedBy", "name email");
 
+        console.log(
+          "✅ SAVED - middleBy:",
+          populated.proposedData?.organizationData?.signatures?.middleBy
+        );
+
         return res.json({
           success: true,
-          message: "Approved by first approver — waiting for second approval",
+          message: "Approved by first approver – waiting for second approval",
           data: populated,
         });
       }
 
-      // SECOND (FINAL) APPROVAL
+      // FINAL APPROVAL LOGIC
       if (request.status === "waiting_second_approval") {
         if (!isFinalApprover) {
           return res.status(403).json({
@@ -286,7 +312,6 @@ router.put(
           });
         }
 
-        // prevent same user approving twice
         if (request.firstApprovedBy?.toString() === req.user.id) {
           return res.status(400).json({
             success: false,
@@ -295,56 +320,30 @@ router.put(
         }
 
         request.secondApprovedBy = req.user.id;
-        request.secondApprovedAt = isoTs;
+        request.secondApprovedAt = now;
         request.reviewComments =
           (request.reviewComments ? request.reviewComments + "\n" : "") +
           "Final approval: " +
           (req.body.reviewComments || "");
         request.status = "approved";
 
-        // inject approvedBy.date into proposedData
-        try {
-          if (!request.proposedData.organizationData.signatures) {
-            request.proposedData.organizationData.signatures = {};
-          }
-          if (!request.proposedData.organizationData.signatures.approvedBy) {
-            request.proposedData.organizationData.signatures.approvedBy = {};
-          }
-          request.proposedData.organizationData.signatures.approvedBy.date =
-            humanDate;
-          request.proposedData.organizationData.signatures.approvedBy._ts =
-            isoTs.toISOString();
+        // ✅ SET approvedBy date (Eko Maryanto)
+        request.proposedData.organizationData.signatures.approvedBy = {
+          name: "Eko Maryanto",
+          date: humanDate,
+          _ts: now.toISOString(),
+        };
 
-          // ✅ NEW — Set Effective Date sesuai tanggal Final Approve (Eko)
-          if (!request.proposedData.organizationData.header) {
-            request.proposedData.organizationData.header = {};
-          }
-          request.proposedData.organizationData.header.effectiveDate =
-            humanDate;
-          request.proposedData.organizationData.header._effectiveDateTs =
-            isoTs.toISOString();
+        // ✅ SET Effective Date = Final Approval Date
+        request.proposedData.organizationData.header.effectiveDate = humanDate;
+        request.proposedData.organizationData.header._effectiveDateTs =
+          now.toISOString();
 
-          // ensure preparedBy exists (fallback)
-          if (
-            !request.proposedData.organizationData.signatures.preparedBy ||
-            !request.proposedData.organizationData.signatures.preparedBy.date
-          ) {
-            request.proposedData.organizationData.signatures.preparedBy = {
-              date: request.submittedAt
-                ? new Date(request.submittedAt).toLocaleDateString("en-GB")
-                : humanDate,
-              _ts: request.submittedAt
-                ? new Date(request.submittedAt).toISOString()
-                : isoTs.toISOString(),
-            };
-          }
-        } catch (err) {
-          console.error(
-            "Warning: failed to inject approvedBy.date into proposedData:",
-            err
-          );
-        }
+        console.log("✅ SET approvedBy.date:", humanDate);
+        console.log("✅ SET effectiveDate:", humanDate);
 
+        // Mark as modified
+        request.markModified("proposedData");
         await request.save();
 
         const populated = await SOChangeRequest.findById(request._id)
@@ -352,14 +351,23 @@ router.put(
           .populate("firstApprovedBy", "name email")
           .populate("secondApprovedBy", "name email");
 
+        console.log(
+          "✅ SAVED - approvedBy:",
+          populated.proposedData?.organizationData?.signatures?.approvedBy
+        );
+        console.log(
+          "✅ SAVED - effectiveDate:",
+          populated.proposedData?.organizationData?.header?.effectiveDate
+        );
+
         return res.json({
           success: true,
-          message: "Fully approved — both approvers have confirmed",
+          message: "Fully approved – both approvers have confirmed",
           data: populated,
         });
       }
     } catch (error) {
-      console.error("Error approving SO change request:", error);
+      console.error("❌ Error approving SO change request:", error);
       res.status(500).json({
         success: false,
         message: "Server error during approval process",

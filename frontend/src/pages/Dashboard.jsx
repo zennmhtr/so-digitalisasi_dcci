@@ -757,8 +757,7 @@ const Dashboard = () => {
               </h2>
               <p className="text-sm text-gray-500">
                 Effective Date:{" "}
-                {organizationData?.signatures?.approvedBy?.date ||
-                  organizationData?.header?.effectiveDate ||
+                {organizationData?.header?.effectiveDate ||
                   "Waiting Final Approval"}
               </p>
             </div>
@@ -776,9 +775,8 @@ const Dashboard = () => {
                     "Diki Wahyudi"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Prep Date :{" "}
-                  {organizationData.signatures?.preparedBy?.date ||
-                    "08/09/2025"}
+                  Prep Date:{" "}
+                  {organizationData?.signatures?.preparedBy?.date || "Pending"}
                 </p>
               </div>
 
@@ -793,8 +791,8 @@ const Dashboard = () => {
                     "Bambang Wuryanto"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Prepared Date :{" "}
-                  {organizationData.signatures?.middleBy?.date || "08/09/2025"}
+                  Prepared Date:{" "}
+                  {organizationData?.signatures?.middleBy?.date || "Pending"}
                 </p>
               </div>
 
@@ -809,9 +807,8 @@ const Dashboard = () => {
                     "Eko Maryanto"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Prepared Date :{" "}
-                  {organizationData.signatures?.approvedBy?.date ||
-                    "08/09/2025"}
+                  Prepared Date:{" "}
+                  {organizationData?.signatures?.approvedBy?.date || "Pending"}
                 </p>
               </div>
             </div>

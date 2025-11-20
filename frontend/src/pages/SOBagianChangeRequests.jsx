@@ -89,19 +89,13 @@ const SOBagianChangeRequests = () => {
       if (response.data.success) {
         const updatedRequest = response.data.data;
         console.log("✅ Approve response:", updatedRequest);
-
-        // ✅ Terapkan perubahan (ini akan handle redirect)
         applyChangesToSOBagian(updatedRequest);
-
-        // ⚠️ JANGAN tutup modal atau load requests di sini
-        // Biarkan applyChangesToSOBagian yang handle
       }
     } catch (error) {
       console.error("❌ Error approving request:", error);
       alert(error.response?.data?.message || "Failed to approve request");
       setActionLoading(false); // Set loading false hanya jika error
     }
-    // ⚠️ JANGAN set actionLoading false di sini, biar user tau lagi proses redirect
   };
 
   // Handle Revisi
