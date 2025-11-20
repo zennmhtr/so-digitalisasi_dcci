@@ -1020,8 +1020,9 @@ const DashboardEditor = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <button
-              onClick={openSubmitModal}
+            {isEditMode && (
+              <button
+              onClick={() => openSubmitModal()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
               <svg
@@ -1039,6 +1040,7 @@ const DashboardEditor = () => {
               </svg>
               Submit for Approval
             </button>
+            )}
 
             <button
               onClick={() => navigate("/so-change-requests")}
@@ -1906,7 +1908,7 @@ const DashboardEditor = () => {
                   <div className="ml-3">
                     <p className="text-sm text-yellow-700">
                       <strong>Important:</strong> Your changes will not appear
-                      in the dashboard until approved by a manager.
+                      in the dashboard until approved by a Director & President Director.
                     </p>
                   </div>
                 </div>
@@ -1937,7 +1939,7 @@ const DashboardEditor = () => {
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                Submit Request
+                Submit
               </button>
             </div>
           </div>

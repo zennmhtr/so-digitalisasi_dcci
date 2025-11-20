@@ -19,6 +19,12 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Department ID
+    department: {
+      type: String,
+      required: true,
+    },
+
     // SO Data Changes
     changeType: {
       type: String,
@@ -91,5 +97,6 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
 // Indexes for faster queries
 soBagianChangeRequestSchema.index({ requestedBy: 1, status: 1 });
 soBagianChangeRequestSchema.index({ status: 1, createdAt: -1 });
+soBagianChangeRequestSchema.index(({department: 1, status: 1}));
 
 module.exports = mongoose.model("soBagianChangeRequest", soBagianChangeRequestSchema);

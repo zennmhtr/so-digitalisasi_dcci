@@ -20,29 +20,48 @@ const SOBagianChangeRequests = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
 
-  const canApproveBagian =
-    user?.role?.permissions?.includes("SO Bagian Approval");
+  const getDepartmentApprovalPermission = (departmentName) => {
+    const mapping = {
+      "Finance Department": "SO Bagian Finance Approval",
+      "HRGA & IT Department": "SO Bagian HRGA & IT Approval",
+      "Management Development": "SO Bagian Management Development Approval",
+      "Management Representative": "SO Bagian Management Representative Approval",
+      "Manufacturing Battery": "SO Bagian Manufacturing Battery Approval",
+      "Manufacturing Cable": "SO Bagian Manufacturing Cable Approval",
+      "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
+      "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
+      "MI & SHE": "SO Bagian MI & SHE Approval",
+      "PPIC": "SO Bagian PPIC Approval",
+      "Purchasing": "SO Bagian Purchasing Approval",
+      "QA Department": "SO Bagian QA Approval",
+    };
+    return mapping[departmentName] || null;
+  };
+
+  const canApproveRequest = (request) => {
+    const userPermissions = user?.role?.permissions || [];
+    if (userPermissions.includes("Manage Users")) return true;
+
+    const requiredPermission = getDepartmentApprovalPermission(request.department);
+    return requiredPermission && userPermissions.includes(requiredPermission);
+  };
+
+  const hasAnyApprovalPermission = () => {
+    const userPermissions = user?.role?.permissions || [];
+    if (userPermissions.includes("Manage Users")) return true;
+
+    return userPermissions.some(perm =>
+      perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    );
+  };
+
   const canViewBagian = user?.role?.permissions?.includes("SO Bagian Request");
 
   console.log("🔐 SO Bagian Change Requests Permission Check:", {
     user: user?.name,
     permissions: user?.role?.permissions,
-    canApproveBagian: canApproveBagian,
+    hasAnyApprovalPermission: hasAnyApprovalPermission(),
   });
-
-  useEffect(() => {
-    const canApproveBagian =
-      user?.role?.permissions?.includes("SO Bagian Approval");
-
-    console.log("🔍 SO Bagian Change Requests - Permission Debug:", {
-      user: user?.name,
-      userId: user?.id,
-      role: user?.role?.name,
-      permissions: user?.role?.permissions,
-      canApproveBagian,
-      allPermissions: user?.role?.permissions,
-    });
-  }, [user, canApproveBagian]);
 
   useEffect(() => {
     if (user) {
@@ -70,7 +89,7 @@ const SOBagianChangeRequests = () => {
 
   // Handle Approve
   const handleApprove = async (requestId) => {
-    if (!canApproveBagian) {
+    if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to approve requests");
       return;
     }
@@ -100,7 +119,7 @@ const SOBagianChangeRequests = () => {
 
   // Handle Revisi
   const handleRevisi = async (requestId) => {
-    if (!canApproveBagian) {
+    if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to revisi requests");
       return;
     }
@@ -139,7 +158,7 @@ const SOBagianChangeRequests = () => {
 
   // Handle Reject
   const handleReject = async (requestId) => {
-    if (!canApproveBagian) {
+    if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to reject requests");
       return;
     }
@@ -261,19 +280,14 @@ const SOBagianChangeRequests = () => {
 
         console.log("✅ Changes applied successfully");
 
-        // ✅ TUTUP MODAL DULU
         setShowDetailModal(false);
         setReviewComments("");
-
-        // ✅ RELOAD REQUEST LIST
         loadRequests();
 
-        // ✅ TAMPILKAN ALERT
         alert(
           "✅ Request approved successfully! Redirecting to SO Bagian Editor..."
         );
 
-        // ✅ REDIRECT KE SO BAGIAN EDITOR dengan departmentId
         setTimeout(() => {
           window.location.href = `/so-bagian-editor?dept=${departmentId}`;
         }, 1500);
@@ -378,7 +392,7 @@ const SOBagianChangeRequests = () => {
 
   const filteredRequests = requests;
 
-  if (!canApproveBagian && !canViewBagian) {
+  if (!hasAnyApprovalPermission() && !canViewBagian) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -461,6 +475,9 @@ const SOBagianChangeRequests = () => {
                       </h3>
                       {getStatusBadge(request.status)}
                       {getPriorityBadge(request.priority)}
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                        {request.department}
+                      </span>
                     </div>
                     <p className="text-gray-600 text-sm mb-3">
                       {request.description}
@@ -506,9 +523,8 @@ const SOBagianChangeRequests = () => {
                     )}
                   </div>
                   <div className="flex gap-2 ml-4">
-                    {canApproveBagian &&
-                      request.status === "pending" &&
-                      canApproveBagian && (
+                    {canApproveRequest(request) &&
+                      request.status === "pending" && (
                         <button
                           onClick={() => viewDetail(request)}
                           className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
@@ -538,7 +554,7 @@ const SOBagianChangeRequests = () => {
                     )}
 
                     {canViewBagian &&
-                      !canApproveBagian &&
+                      !canApproveRequest(request) &&
                       request.status === "pending" &&
                       request.requestedBy?._id === user?.id && (
                         <button
@@ -578,6 +594,9 @@ const SOBagianChangeRequests = () => {
                 <div className="flex items-center gap-2 mt-1">
                   {getStatusBadge(selectedRequest.status)}
                   {getPriorityBadge(selectedRequest.priority)}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                    {selectedRequest.department}
+                  </span>
                 </div>
               </div>
               <button
@@ -622,6 +641,14 @@ const SOBagianChangeRequests = () => {
                       {selectedRequest.changeType}
                     </p>
                   </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Department:
+                    </span>
+                    <p className="text-gray-600">
+                      {selectedRequest.department}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -651,7 +678,7 @@ const SOBagianChangeRequests = () => {
                 </div>
               )}
 
-              {canApproveBagian &&
+              {canApproveRequest(selectedRequest) &&
                 ["pending"].includes(selectedRequest.status) && (
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-3">
@@ -697,9 +724,9 @@ const SOBagianChangeRequests = () => {
                 Close
               </button>
 
-              {canApproveBagian && (
+              {canApproveRequest(selectedRequest) && (
                 <>
-                  {selectedRequest.status === "pending" && canApproveBagian && (
+                  {selectedRequest.status === "pending" && (
                     <>
                       <button
                         onClick={() => handleReject(selectedRequest._id)}
@@ -713,7 +740,7 @@ const SOBagianChangeRequests = () => {
                           </>
                         ) : (
                           <>
-                            <xCircle classname="w-4 h-4" />
+                            <XCircle className="w-4 h-4" />
                             Reject
                           </>
                         )}

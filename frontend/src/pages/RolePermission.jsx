@@ -29,15 +29,26 @@ const RolePermission = () => {
       "View All SO Details",
       "Jobdesc Management",
     ],
-    soChangeRequests: [ 
+    soChangeRequests: [
       "View Own SO Change Requests",
       "SO Changes First Approval", // Director
-      "SO Changes Final Approval" // President Director
+      "SO Changes Final Approval", // President Director
     ],
 
     soBagianChangeRequests: [
-      "SO Bagian Approval",
-      "SO Bagian Request"
+      "SO Bagian Request",
+      "SO Bagian Finance Approval",
+      "SO Bagian HRGA & IT Approval",
+      "SO Bagian Management Development Approval",
+      "SO Bagian Management Representative Approval",
+      "SO Bagian Manufacturing Battery Approval",
+      "SO Bagian Manufacturing Cable Approval",
+      "SO Bagian Marketing Battery Approval",
+      "SO Bagian Marketing Engineering Approval",
+      "SO Bagian MI & SHE Approval",
+      "SO Bagian PPIC Approval",
+      "SO Bagian Purchasing Approval",
+      "SO Bagian QA Approval",
     ],
 
     jobdescDepartments: [
@@ -485,7 +496,7 @@ const RolePermission = () => {
                       </h4>
                       <p className="text-xs text-gray-600 mb-3">
                         Access for submitting, viewing, approving or revising SO
-                        change requests.
+                        change requests for spesific deprtments.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {availablePermissions.soBagianChangeRequests.map(
