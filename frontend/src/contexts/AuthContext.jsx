@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Refresh user data from backend
   const refreshUser = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -41,14 +40,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check if user is already logged in
     const authStatus = localStorage.getItem('isAuthenticated');
     const userData = localStorage.getItem('user');
     
     if (authStatus === 'true' && userData) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
-      // Refresh user data to get latest permissions
       refreshUser();
     }
     setLoading(false);

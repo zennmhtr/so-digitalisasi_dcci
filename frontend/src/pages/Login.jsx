@@ -35,13 +35,10 @@ const Login = () => {
       const data = response.data;
 
       if (data.success) {
-        // Store token
         localStorage.setItem('token', data.token);
         
-        // Login user
         login(data.user);
         
-        // Redirect to the page they tried to visit or dashboard
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
       } else {

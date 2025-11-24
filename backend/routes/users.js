@@ -5,13 +5,10 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/users
-// @desc    Get all users
-// @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50; // Increased limit
+    const limit = parseInt(req.query.limit) || 50;
     const skip = (page - 1) * limit;
 
     const users = await User.find()
@@ -43,9 +40,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/:id
-// @desc    Get user by ID
-// @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
@@ -74,9 +68,6 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/users
-// @desc    Create new user
-// @access  Private
 router.post('/', [
   auth,
   body('noPNK').notEmpty().withMessage('No PNK is required'),
@@ -99,7 +90,6 @@ router.post('/', [
 
     const { noPNK, name, email, username, password, role, department, status } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }, { noPNK }]
     });
@@ -144,9 +134,6 @@ router.post('/', [
   }
 });
 
-// @route   PUT /api/users/:id
-// @desc    Update user
-// @access  Private
 router.put('/:id', [
   auth,
   body('noPNK').optional().notEmpty().withMessage('No PNK cannot be empty'),
@@ -176,7 +163,6 @@ router.put('/:id', [
 
     const { noPNK, name, email, username, password, role, department, status } = req.body;
 
-    // Check for duplicates if updating unique fields
     if (email || username || noPNK) {
       const existingUser = await User.findOne({
         _id: { $ne: req.params.id },
@@ -195,7 +181,6 @@ router.put('/:id', [
       }
     }
 
-    // Update fields
     if (noPNK) user.noPNK = noPNK;
     if (name) user.name = name;
     if (email) user.email = email;
@@ -227,9 +212,6 @@ router.put('/:id', [
   }
 });
 
-// @route   DELETE /api/users/:id
-// @desc    Delete user
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

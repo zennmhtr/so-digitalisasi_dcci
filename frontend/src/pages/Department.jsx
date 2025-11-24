@@ -14,7 +14,6 @@ const Department = () => {
     description: ''
   });
 
-  // Fetch departments from API
   const fetchDepartments = async () => {
     try {
       setLoading(true);
@@ -24,7 +23,6 @@ const Department = () => {
       }
     } catch (error) {
       console.error('Error fetching departments:', error);
-      // Show error message to user
       alert('Error loading departments. Please check if you are logged in.');
     } finally {
       setLoading(false);
@@ -61,7 +59,6 @@ const Department = () => {
     if (window.confirm('Are you sure you want to delete this department?')) {
       try {
         await departmentsAPI.delete(deptId);
-        // Refresh the list after successful deletion
         fetchDepartments();
       } catch (error) {
         console.error('Error deleting department:', error);
@@ -75,14 +72,11 @@ const Department = () => {
     
     try {
       if (editingDept) {
-        // Update existing department
         await departmentsAPI.update(editingDept._id, formData);
       } else {
-        // Add new department
         await departmentsAPI.create(formData);
       }
       
-      // Refresh the list after successful operation
       fetchDepartments();
       setIsModalOpen(false);
       setFormData({ code: '', name: '', description: '' });

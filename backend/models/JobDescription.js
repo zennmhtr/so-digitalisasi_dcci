@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const jobDescriptionSchema = new mongoose.Schema({
-  // Reference to Member (preferred) or User (for backward compatibility)
   member: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Member',
@@ -12,7 +11,6 @@ const jobDescriptionSchema = new mongoose.Schema({
     ref: 'User',
     required: function() { return !this.member; }
   },
-  // Legacy member information (kept for backward compatibility)
   memberName: {
     type: String,
     required: function() { return !this.user && !this.member; }
@@ -42,7 +40,6 @@ const jobDescriptionSchema = new mongoose.Schema({
     type: String,
     default: '0'
   },
-  // Job Description Content
   division: {
     type: String,
     required: true
@@ -100,7 +97,6 @@ const jobDescriptionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
 jobDescriptionSchema.index({ user: 1 });
 jobDescriptionSchema.index({ member: 1 });
 jobDescriptionSchema.index({ memberNoPNK: 1 });

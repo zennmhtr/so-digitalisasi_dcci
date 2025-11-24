@@ -10,20 +10,16 @@ const ManufacturingCable = () => {
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
 
-  // Function to handle print/download
   const handlePrint = () => {
-    // Set data attributes on the print container for CSS targeting
     const printContainer = document.querySelector('.print-container');
     if (printContainer) {
       printContainer.setAttribute('data-paper', printSettings.paperSize);
       printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
     
-    // Set data attributes on document root for @page rules
     document.documentElement.setAttribute('data-paper', printSettings.paperSize);
     document.documentElement.setAttribute('data-orientation', printSettings.orientation);
     
-    // Create dynamic @page rule
     const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
     printStyle.id = 'dynamic-print-style';
     
@@ -546,8 +542,6 @@ const ManufacturingCable = () => {
                   </div>
                 </div>
               </div>
-
-
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[160px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <div className="flex flex-col">
@@ -603,7 +597,6 @@ const ManufacturingCable = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

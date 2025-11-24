@@ -22,7 +22,6 @@ const JobdescManagement = () => {
 
   console.log('JobdescManagement rendered, user:', user);
 
-  // Mapping department dengan permission yang diperlukan
   const departmentPermissions = {
     'Finance Department': ['Finance Department', 'Manage Users'],
     'HRGA & IT Department': ['HRGA & IT Department', 'Manage Users'],
@@ -51,7 +50,6 @@ const JobdescManagement = () => {
       const response = await departmentsAPI.getAll();
       const allDepartments = response.data.data;
       
-      // Filter departments berdasarkan role permission user
       const userPermissions = user?.role?.permissions || [];
       const userDepartmentName = user?.department?.name;
       
@@ -59,17 +57,14 @@ const JobdescManagement = () => {
       console.log('User department:', userDepartmentName);
       
       const accessibleDepts = allDepartments.filter(dept => {
-        // Admin dan HR Manager bisa akses semua departemen
         if (userPermissions.includes('Manage Users')) {
           return true;
         }
         
-        // User bisa akses departemen sendiri
         if (userDepartmentName === dept.name) {
           return true;
         }
         
-        // Cek permission khusus departemen
         const requiredPermissions = departmentPermissions[dept.name] || [];
         return requiredPermissions.some(permission => userPermissions.includes(permission));
       });
@@ -89,7 +84,6 @@ const JobdescManagement = () => {
     try {
       setLoading(true);
       
-      // Load members and job descriptions in parallel
       const [membersResponse, jobdescResponse] = await Promise.all([
         membersAPI.getByDepartment(departmentId),
         jobDescriptionsAPI.getByDepartment(departmentId).catch(() => ({ data: { data: [] } }))
@@ -100,21 +94,14 @@ const JobdescManagement = () => {
       
       setDepartmentMembers(members);
       
-      // Map job descriptions to members
       const jobDescsMap = {};
       
       jobDescriptions.forEach(jobdesc => {
-        // Find member by multiple criteria
         const member = members.find(m => 
-          // Match by member ID (new Member model)
           (jobdesc.member && m.id === jobdesc.member._id) ||
-          // Match by user ID (legacy User model)
           (jobdesc.user && m.id === jobdesc.user._id) ||
-          // Match by member ID directly
           (jobdesc.member && m.id === jobdesc.member) ||
-          // Match by user ID directly
           (jobdesc.user && m.id === jobdesc.user) ||
-          // Match by noPNK
           (jobdesc.memberNoPNK && m.noPNK === jobdesc.memberNoPNK)
         );
         
@@ -169,7 +156,6 @@ const JobdescManagement = () => {
       const response = await membersAPI.create(memberData);
       
       if (response.data.success) {
-        // Reload members for current department
         await loadDepartmentMembers(selectedDept._id);
         setShowAddMemberModal(false);
         alert('Member added successfully');
@@ -206,7 +192,6 @@ const JobdescManagement = () => {
         if (jobdesc) {
           await jobDescriptionsAPI.delete(jobdesc._id);
           
-          // Remove from local state
           const updatedJobDescs = { ...jobDescriptions };
           delete updatedJobDescs[member.id];
           setJobDescriptions(updatedJobDescs);
@@ -225,7 +210,6 @@ const JobdescManagement = () => {
       try {
         await membersAPI.delete(member.id);
         
-        // Reload members for current department
         const selectedDept = departments.find(d => d.name === selectedDepartment);
         await loadDepartmentMembers(selectedDept._id);
         
@@ -244,7 +228,6 @@ const JobdescManagement = () => {
       return;
     }
 
-    // Create job description HTML content - same as JobdescViewer
     const jobDescHTML = `
       <div class="bg-white border-2 border-black">
         <!-- Header Section -->
@@ -441,7 +424,6 @@ const JobdescManagement = () => {
       </div>
     `;
 
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     
     printWindow.document.write(`
@@ -637,7 +619,6 @@ const JobdescManagement = () => {
       
       const payload = {
         ...jobdescData,
-        // Support both new Member model and legacy User model
         member: selectedMember.type === 'member' ? selectedMember.id : null,
         user: selectedMember.user || null,
         memberName: selectedMember.name,
@@ -649,15 +630,12 @@ const JobdescManagement = () => {
       
       let response;
       if (editingJobdesc) {
-        // Update existing job description
         response = await jobDescriptionsAPI.update(editingJobdesc._id, payload);
       } else {
-        // Create new job description
         response = await jobDescriptionsAPI.create(payload);
       }
       
       if (response.data.success) {
-        // Update local state
         setJobDescriptions(prev => ({
           ...prev,
           [selectedMember.id]: response.data.data
@@ -954,7 +932,6 @@ const JobdescManagement = () => {
   );
 };
 
-// Add Member Modal Component
 const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -1034,7 +1011,6 @@ const AddMemberModal = ({ departmentName, onSave, onCancel, loading = false }) =
   );
 };
 
-// Job Description Form Component
 const JobDescriptionForm = ({ member, departmentName, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     division: '',
@@ -1078,7 +1054,6 @@ const JobDescriptionForm = ({ member, departmentName, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically save to backend
     alert(`Job Description created for ${member.name}`);
     onSave();
   };

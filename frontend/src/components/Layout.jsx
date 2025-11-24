@@ -35,7 +35,6 @@ const Layout = ({ children, sidebarVisible = true }) => {
   const { user, logout } = useAuth();
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -49,7 +48,6 @@ const Layout = ({ children, sidebarVisible = true }) => {
     };
   }, []);
 
-  // Handle password form change
   const handlePasswordFormChange = (e) => {
     setPasswordForm({
       ...passwordForm,
@@ -57,7 +55,6 @@ const Layout = ({ children, sidebarVisible = true }) => {
     });
   };
 
-  // Handle change password submission
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
@@ -92,7 +89,6 @@ const Layout = ({ children, sidebarVisible = true }) => {
     }
   };
 
-  // Check if user has specific permissions
   const userRole = user?.role;
   const userPermissions =
     typeof userRole === "object" ? userRole?.permissions : [];
@@ -118,7 +114,6 @@ const Layout = ({ children, sidebarVisible = true }) => {
       ].includes(permission)
     );
 
-  // Check SO Change Requests access - Only "Approve SO Changes" permission
   const hasSOChangeRequestsAccess =
     userPermissions?.includes("SO Changes First Approval") ||
     userPermissions?.includes("SO Changes Final Approval") ||
@@ -140,13 +135,11 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userPermissions: userPermissions,
   });
 
-  // Check Master Data access
   const hasMasterDataAccess =
     userPermissions?.includes("Manage Users") ||
     userPermissions?.includes("Manage Roles") ||
     userPermissions?.includes("Manage Departments");
 
-  // Debug logging
   console.log("🔍 Layout Debug - Permission Check:", {
     userName: user?.name,
     userRole: userRole?.name,

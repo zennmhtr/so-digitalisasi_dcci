@@ -15,7 +15,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { useNavigate } from 'react-router-dom';
 
-// Custom Node Component untuk Organization Box
 const OrganizationNode = ({ data, id }) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState({});
@@ -26,10 +25,8 @@ const OrganizationNode = ({ data, id }) => {
   };
 
   const handleBoxClick = (e) => {
-    // Prevent navigation when in edit mode
     if (data.isEditMode) return;
     
-    // Navigate if clickable
     if (data.clickable && data.route) {
       navigate(data.route);
     }
@@ -167,7 +164,6 @@ const OrganizationNode = ({ data, id }) => {
   );
 };
 
-// Traditional Dashboard View Component (similar to DashboardEditor)
 const TraditionalDashboardView = ({ 
   organizationData, 
   isEditMode, 
@@ -181,7 +177,6 @@ const TraditionalDashboardView = ({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newBoxes, setNewBoxes] = useState(customNodes);
 
-  // Editable Box Component - identical to DashboardEditor
   const EditableBox = ({ item, category, className = "", style = {} }) => {
     const [isEditing, setIsEditing] = useState({});
 
@@ -531,7 +526,6 @@ const TraditionalDashboardView = ({
   );
 };
 
-// Advanced Flow Chart Component
 const FlowChartView = ({ 
   organizationData, 
   isEditMode, 
@@ -541,7 +535,6 @@ const FlowChartView = ({
   onCustomNodeAdd,
   onCustomNodeDelete 
 }) => {
-  // Convert organization data to React Flow format
   const initialNodes = useMemo(() => {
     const nodes = [];
     let yOffset = 100;
@@ -632,7 +625,6 @@ const FlowChartView = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Custom Edge Component for curved lines
   const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd }) => {
     const [edgePath] = getBezierPath({
       sourceX,
@@ -657,7 +649,6 @@ const FlowChartView = ({
     );
   };
 
-  // Handle new connections
   const onConnect = useCallback(
     (params) => {
       const newEdge = {
@@ -680,7 +671,6 @@ const FlowChartView = ({
     [setEdges]
   );
 
-  // Custom node and edge types
   const nodeTypes = useMemo(
     () => ({
       organizationNode: OrganizationNode,
@@ -695,7 +685,6 @@ const FlowChartView = ({
     []
   );
 
-  // Handle adding new node at clicked position
   const onPaneClick = useCallback(
     (event) => {
       if (!isEditMode) return;
@@ -728,7 +717,6 @@ const FlowChartView = ({
     [isEditMode, onNodeEdit, onCustomNodeDelete, onCustomNodeAdd, setNodes]
   );
 
-  // Save layout function
   const handleSave = () => {
     const layoutData = {
       nodes: nodes.map(node => ({
@@ -806,7 +794,6 @@ const FlowChartView = ({
   );
 };
 
-// Main Organization Chart Component
 const OrganizationChart = ({ 
   organizationData, 
   isEditMode = false, 
@@ -815,7 +802,7 @@ const OrganizationChart = ({
   customNodes = [],
   onCustomNodeAdd,
   onCustomNodeDelete,
-  viewMode = 'traditional' // 'traditional' or 'flowchart'
+  viewMode = 'traditional'
 }) => {
   const [currentViewMode, setCurrentViewMode] = useState(viewMode);
 

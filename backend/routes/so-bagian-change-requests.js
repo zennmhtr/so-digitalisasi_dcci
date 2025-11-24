@@ -288,7 +288,6 @@ router.put(
           };
         }
 
-        // Set Effective Date sesuai tanggal approve
         if (!request.proposedData.organizationData.header) {
           request.proposedData.organizationData.header = {};
         }

@@ -7,7 +7,6 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
 app.use(helmet());
 app.use(morgan('combined'));
 app.use(cors({
@@ -17,7 +16,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -25,7 +23,6 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('MongoDB connected to hr-digital database'))
 .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/roles', require('./routes/roles'));
@@ -35,7 +32,6 @@ app.use('/api/members', require('./routes/members'));
 app.use('/api/so-change-requests', require('./routes/so-change-requests'));
 app.use('/api/so-bagian-change-requests', require('./routes/so-bagian-change-requests'));
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -45,7 +41,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,

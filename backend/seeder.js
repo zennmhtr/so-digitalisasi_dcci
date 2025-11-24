@@ -8,7 +8,6 @@ const Department = require("./models/Department");
 
 const seedData = async () => {
   try {
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -16,14 +15,12 @@ const seedData = async () => {
 
     console.log("Connected to MongoDB");
 
-    // Clear existing data
     await User.deleteMany({});
     await Role.deleteMany({});
     await Department.deleteMany({});
 
     console.log("Cleared existing data");
 
-    // Create departments
     const departments = await Department.insertMany([
       {
         code: "IT",
@@ -51,7 +48,6 @@ const seedData = async () => {
 
     console.log("Created departments");
 
-    // Create roles
     const roles = await Role.insertMany([
       {
         name: "Super Admin",
@@ -115,7 +111,6 @@ const seedData = async () => {
 
     console.log("Created roles");
 
-    // Create users with hashed passwords
     const salt = await bcrypt.genSalt(10);
     const users = [
       {
@@ -124,8 +119,8 @@ const seedData = async () => {
         email: "admin@hr-digital.com",
         username: "admin",
         password: await bcrypt.hash("admin123", salt),
-        role: roles[0]._id, // Super Admin
-        department: departments[0]._id, // IT
+        role: roles[0]._id, 
+        department: departments[0]._id, 
         status: "active",
       },
       {
@@ -134,8 +129,8 @@ const seedData = async () => {
         email: "hr.manager@hr-digital.com",
         username: "hrmanager",
         password: await bcrypt.hash("hrmanager123", salt),
-        role: roles[0]._id, // Super Admin
-        department: departments[1]._id, // HR
+        role: roles[0]._id, 
+        department: departments[1]._id, 
         status: "active",
       },
       {
@@ -144,8 +139,8 @@ const seedData = async () => {
         email: "it.manager@hr-digital.com",
         username: "itmanager",
         password: await bcrypt.hash("itmanager123", salt),
-        role: roles[2]._id, // Department Manager
-        department: departments[0]._id, // IT
+        role: roles[2]._id, 
+        department: departments[0]._id, 
         status: "active",
       },
       {
@@ -154,8 +149,8 @@ const seedData = async () => {
         email: "finance.manager@hr-digital.com",
         username: "finmanager",
         password: await bcrypt.hash("finmanager123", salt),
-        role: roles[2]._id, // Department Manager
-        department: departments[2]._id, // Finance
+        role: roles[2]._id,
+        department: departments[2]._id, 
         status: "active",
       },
       {
@@ -164,8 +159,8 @@ const seedData = async () => {
         email: "john.doe@hr-digital.com",
         username: "johndoe",
         password: await bcrypt.hash("employee123", salt),
-        role: roles[3]._id, // Employee
-        department: departments[3]._id, // Operations
+        role: roles[3]._id,
+        department: departments[3]._id, 
         status: "active",
       },
     ];

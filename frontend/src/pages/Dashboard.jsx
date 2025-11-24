@@ -14,9 +14,6 @@ const Dashboard = () => {
   });
   const containerRef = useRef(null);
 
-  // ===========================
-  // ✅ STATE & FUNGSI JOBDESC
-  // ===========================
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobdescData, setJobdescData] = useState(null);
@@ -35,7 +32,6 @@ const Dashboard = () => {
         title: item.title,
       });
 
-      // Try to fetch job description from backend by employee ID or name
       const response = await fetch(
         `http://localhost:3001/api/jobdescriptions`,
         {
@@ -53,7 +49,6 @@ const Dashboard = () => {
           dataLength: result.data?.length,
         });
 
-        // Extract data array from response
         const allJobdescs = result.data || result;
         console.log("📋 Total Job Descriptions:", allJobdescs.length);
         console.log(
@@ -65,7 +60,6 @@ const Dashboard = () => {
           }))
         );
 
-        // Find job description by empId or name (case-insensitive and trimmed)
         const foundJobdesc = allJobdescs.find((jd) => {
           const jdName = (jd.memberName || "").trim().toUpperCase();
           const jdNoPNK = (jd.memberNoPNK || "").trim();
@@ -81,19 +75,16 @@ const Dashboard = () => {
             empIdMatch: jdNoPNK === itemEmpId,
           });
 
-          // Priority 1: Check by empId (most reliable)
           if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) {
             console.log("✅ MATCH by empId!", jdNoPNK);
             return true;
           }
 
-          // Priority 2: Check by exact name match (case-insensitive)
           if (jdName && itemName && jdName === itemName) {
             console.log("✅ MATCH by exact name!", jdName);
             return true;
           }
 
-          // Priority 3: Check if name contains each other (partial match)
           if (
             jdName &&
             itemName &&
@@ -130,10 +121,8 @@ const Dashboard = () => {
     }
   };
 
-  // Check if user has Print SO permission
   const canPrint = user?.role?.permissions?.includes("Print SO") || false;
 
-  // Permission mapping untuk View SO Details - setiap route ke permission spesifik
   const routePermissionMap = {
     "/mi-she": "View MI & SHE SO",
     "/management-development": "View Management Dev SO",
@@ -149,18 +138,15 @@ const Dashboard = () => {
     "/finance-department": "View Finance SO",
   };
 
-  // Function to check if user can view specific department SO
   const canViewDepartmentSO = (route) => {
     if (!route) return false;
 
     const userPermissions = user?.role?.permissions || [];
 
-    // Admin dengan "View All SO Details" bisa akses semua
     if (userPermissions.includes("View All SO Details")) {
       return true;
     }
 
-    // Cek permission spesifik untuk View SO Details departemen
     const requiredPermission = routePermissionMap[route];
     if (requiredPermission && userPermissions.includes(requiredPermission)) {
       return true;
@@ -169,7 +155,6 @@ const Dashboard = () => {
     return false;
   };
 
-  // Initialize organization data - same as DashboardEditor
   useEffect(() => {
     const initialData = {
       header: {
@@ -472,7 +457,6 @@ const Dashboard = () => {
       },
     };
 
-    // Load from localStorage if exists, otherwise use initial data
     const savedData = localStorage.getItem("dashboard-organization-data");
     if (savedData) {
       try {
@@ -486,7 +470,6 @@ const Dashboard = () => {
       setOrganizationData(initialData);
     }
 
-    // Load custom layout (connectors and custom boxes)
     const savedLayout = localStorage.getItem("dashboard-editor-layout");
     if (savedLayout) {
       try {
@@ -496,7 +479,6 @@ const Dashboard = () => {
       }
     }
 
-    // Listen for localStorage changes (when DashboardEditor saves)
     const handleStorageChange = (e) => {
       if (e.key === "dashboard-organization-data" && e.newValue) {
         try {
@@ -517,7 +499,6 @@ const Dashboard = () => {
 
     window.addEventListener("storage", handleStorageChange);
 
-    // Also listen for custom event for same-tab updates
     const handleCustomUpdate = (e) => {
       setOrganizationData(e.detail);
     };
@@ -535,11 +516,9 @@ const Dashboard = () => {
     const printContainer = document.querySelector(".dashboard-print-container");
     if (!printContainer) return;
 
-    // Hapus style print lama jika ada
     const oldStyle = document.getElementById("dynamic-print-style");
     if (oldStyle) oldStyle.remove();
 
-    // Style khusus print (A3 Portrait)
     const printStyle = document.createElement("style");
     printStyle.id = "dynamic-print-style";
     printStyle.innerHTML = `
@@ -564,7 +543,7 @@ const Dashboard = () => {
         content: none !important;
       }
 
-      .no-print, nav, .menu, .sidebar, button, header, footer {
+      .no-print, nav, .menu, .sidebar, button, header, footer, .click-button {
         display: none !important;
         visibility: hidden !important;
       }
@@ -575,13 +554,14 @@ const Dashboard = () => {
       .dashboard-print-container {
         overflow: visible !important;
         max-width: none !important;
-        width: auto !important;
+        width: 100% !important;
+        transform: scale(0.70) !important;
         transform-origin: top center !important;
-        margin: 0 auto !important;
+        margin: 25mm auto 0 auto !important;
         background: white !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        padding: 0 !important;
+        padding: 5px !important;
         page-break-inside: avoid !important;
       }
 
@@ -590,37 +570,131 @@ const Dashboard = () => {
         break-inside: avoid !important;
         overflow: visible !important;
       }
+
+      /* Optimasi ukuran font untuk print */
+      .dashboard-print-container .text-xs {
+        font-size: 8px !important;
+        line-height: 1.2 !important;
+      }
+
+      .dashboard-print-container .text-sm {
+        font-size: 9px !important;
+        line-height: 1.2 !important;
+      }
+
+      .dashboard-print-container .text-lg {
+        font-size: 11.5px !important;
+        line-height: 1.25 !important;
+      }
+
+      .dashboard-print-container .text-xl {
+        font-size: 13.5px !important;
+        line-height: 1.25 !important;
+      }
+
+      /* Kurangi spacing untuk hemat ruang */
+      .dashboard-print-container .space-y-3 > * + * {
+        margin-top: 0.3rem !important;
+      }
+
+      .dashboard-print-container .space-y-4 > * + * {
+        margin-top: 0.45rem !important;
+      }
+
+      .dashboard-print-container .gap-4 {
+        gap: 0.45rem !important;
+      }
+
+      .dashboard-print-container .gap-6 {
+        gap: 0.65rem !important;
+      }
+
+      .dashboard-print-container .mb-4 {
+        margin-bottom: 0.55rem !important;
+      }
+
+      .dashboard-print-container .mb-6 {
+        margin-bottom: 0.75rem !important;
+      }
+
+      .dashboard-print-container .mb-8 {
+        margin-bottom: 0.95rem !important;
+      }
+
+      .dashboard-print-container .p-2 {
+        padding: 0.3rem !important;
+      }
+
+      .dashboard-print-container .p-3 {
+        padding: 0.4rem !important;
+      }
+
+      .dashboard-print-container .p-4 {
+        padding: 0.5rem !important;
+      }
+
+      .dashboard-print-container .p-6 {
+        padding: 0.65rem !important;
+      }
+
+      /* Kurangi min-height untuk compact layout */
+      .dashboard-print-container .min-h-\\[80px\\] {
+        min-height: 58px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[100px\\] {
+        min-height: 72px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[110px\\] {
+        min-height: 78px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[120px\\] {
+        min-height: 86px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[130px\\] {
+        min-height: 95px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[150px\\] {
+        min-height: 110px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[170px\\] {
+        min-height: 125px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[180px\\] {
+        min-height: 135px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[190px\\] {
+        min-height: 140px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[200px\\] {
+        min-height: 145px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[250px\\] {
+        min-height: 185px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[435px\\] {
+        min-height: 320px !important;
+      }
+
+      .dashboard-print-container .min-h-\\[570px\\] {
+        min-height: 420px !important;
+      }
     }
   `;
     document.head.appendChild(printStyle);
 
-    // Hitung scaling otomatis agar lebar penuh tapi tidak terpotong
     setTimeout(() => {
-      const pageHeight = 1122; // tinggi A3 portrait @96dpi
-      const pageWidth = 793; // lebar A3 portrait @96dpi
-      const containerHeight = printContainer.scrollHeight;
-      const containerWidth = printContainer.scrollWidth;
-
-      // Rasio skala berdasarkan tinggi & lebar
-      const scaleH = (pageHeight * 0.93) / containerHeight; // sedikit dikurangi biar tidak terpotong
-      const scaleW = (pageWidth * 1.1) / containerWidth; // dilebarkan 10%
-      const scale = Math.min(scaleH, scaleW) * 1.22; // perbesar hasil akhir 22%
-
-      // Terapkan scaling yang lebih lebar tapi tetap center
-      printContainer.style.transform = `scale(${scale})`;
-      printContainer.style.transformOrigin = "top center";
-      printContainer.style.margin = "0 auto";
-
-      // Print setelah layout stabil
-      setTimeout(() => {
-        window.print();
-
-        // Reset setelah print selesai
-        setTimeout(() => {
-          printContainer.style.transform = "";
-          printContainer.style.margin = "";
-        }, 500);
-      }, 400);
+      window.print();
     }, 300);
   };
 
@@ -638,9 +712,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      {/* ===========================
-          ✅ MODAL JOB DESC
-      ============================ */}
       {showJobModal && selectedJob && (
         <>
           {loadingJobdesc ? (
@@ -919,7 +990,6 @@ const Dashboard = () => {
                   className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px]"
                 >
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                    {/* BOD biasanya tidak clickable - tampil sebagai teks */}
                     <p className="text-xs font-bold">{item.code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
@@ -936,7 +1006,6 @@ const Dashboard = () => {
 
             {/* Column 2 - Management Functions */}
             <div className="space-y-4">
-              {/* Empty space to align with President Director */}
               <div className="min-h-[180px]"></div>
 
               {/* Management items with special handling for combined MDO */}
@@ -1039,10 +1108,8 @@ const Dashboard = () => {
                     </div>
                   );
                 } else if (item.code === "MDO2.0") {
-                  // Skip MDO2.0 as it's handled in the combined box
                   return null;
                 } else {
-                  // Regular management item
                   return (
                     <div
                       key={item.id}

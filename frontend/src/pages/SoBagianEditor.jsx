@@ -27,7 +27,6 @@ const SoBagianEditor = () => {
     });
   };
 
-  // Check if user has SO Bagian Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions =
@@ -41,7 +40,6 @@ const SoBagianEditor = () => {
     return user && userPermissions?.includes("SO Bagian Editor");
   }, [user]);
 
-  // Department list with their REAL data structures from actual pages
   const departments = [
     {
       id: "finance",
@@ -729,7 +727,6 @@ const SoBagianEditor = () => {
     },
   ];
 
-  // --- A) Mapping permission untuk tiap department (sama seperti JobdescManagement) ---
   const departmentPermissions = {
     "Finance Department": ["Finance Department", "Manage Users"],
     "HRGA & IT Department": ["HRGA & IT Department", "Manage Users"],
@@ -748,27 +745,22 @@ const SoBagianEditor = () => {
     "QA Department": ["QA Department", "Manage Users"],
   };
 
-  // --- B) Hitung departments yang boleh dilihat user (filter hasil) ---
   const visibleDepartments = React.useMemo(() => {
     const userPermissions = user?.role?.permissions || [];
     const userDepartmentName = user?.department?.name;
 
-    // Jika punya hak Manage Users -> akses semua departemen
     if (userPermissions.includes("Manage Users")) {
       return departments;
     }
 
     return departments.filter((d) => {
-      // boleh lihat departemen sendiri
       if (userDepartmentName === d.name) return true;
 
-      // cek permission khusus departemen (mis. "Finance Department")
       const required = departmentPermissions[d.name] || [];
       return required.some((perm) => userPermissions.includes(perm));
     });
   }, [user, departments]);
 
-  // Initialize department data
   useEffect(() => {
     const initialData = {};
     departments.forEach((dept) => {
@@ -787,7 +779,6 @@ const SoBagianEditor = () => {
     setDepartmentData(initialData);
   }, []);
 
-  // Tambahkan useEffect untuk listen event update dari approval
   useEffect(() => {
     if (!selectedDepartment) return;
 
@@ -795,7 +786,6 @@ const SoBagianEditor = () => {
       console.log("🔔 Received update event for:", selectedDepartment.id);
       console.log("📦 New data:", event.detail);
 
-      // Update departmentData dengan data baru
       setDepartmentData((prev) => ({
         ...prev,
         [selectedDepartment.id]: event.detail,
@@ -804,7 +794,6 @@ const SoBagianEditor = () => {
       alert("✅ SO Bagian has been updated with approved changes!");
     };
 
-    // Listen untuk event update department yang sedang dipilih
     window.addEventListener(
       `so-bagian-${selectedDepartment.id}-updated`,
       handleUpdate
@@ -829,13 +818,11 @@ const SoBagianEditor = () => {
         setSelectedDepartment(dept);
         setSidebarVisible(false);
 
-        // Clear URL parameter setelah select
         window.history.replaceState({}, "", "/so-bagian-editor");
       }
     }
   }, [departments]);
 
-  // If no access, show access denied
   if (!hasAccess) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -882,7 +869,6 @@ const SoBagianEditor = () => {
 
       localStorage.setItem(`so-bagian-${deptId}`, JSON.stringify(dataToSave));
 
-      // Dispatch event to notify respective department page
       window.dispatchEvent(
         new CustomEvent(`so-bagian-${deptId}-updated`, {
           detail: dataToSave,
@@ -920,9 +906,8 @@ const SoBagianEditor = () => {
       console.log("📤 Selected department:", selectedDepartment);
       const humanDate = now.toLocaleDateString("en-GB");
 
-      // ✅ Pastikan departmentId disertakan
       const dataToSubmit = {
-        departmentId: selectedDepartment.id, // ✅ PENTING!
+        departmentId: selectedDepartment.id,
         structure: currentStructure,
         lastModified: now.toISOString(),
         modifiedBy: user?.name || user?.username,
@@ -935,7 +920,7 @@ const SoBagianEditor = () => {
         changeType: "update",
         department: selectedDepartment.name,
         proposedData: {
-          organizationData: dataToSubmit, // ✅ Struktur yang benar
+          organizationData: dataToSubmit,
         },
         currentData: null,
       };
@@ -1011,20 +996,18 @@ const SoBagianEditor = () => {
     );
   };
 
-  // Function to render department-specific layout matching original departmental pages
   const renderDepartmentSpecificLayout = () => {
     if (!selectedDepartment || !departmentData[selectedDepartment.id])
       return null;
 
     const dept = departmentData[selectedDepartment.id];
 
-    // Management Representative Layout - match ManagementRepresentative.jsx
     if (selectedDepartment.id === "management-rep") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
-          <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
+        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1000px] relative p-4">
             {/* Header Section with borders */}
-            <div className="mb-4 border-2 border-black p-3 print:mb-3 print:p-3 print:border-2">
+            <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
                   className="w-32 flex items-center justify-center p-4 border-2 border-black"
@@ -1682,7 +1665,6 @@ const SoBagianEditor = () => {
                         </p>
                       </div>
                     </div>
-
                     {dept.positions?.slice(5, 7).map((staff, i) => (
                       <div
                         key={i}
@@ -1765,7 +1747,6 @@ const SoBagianEditor = () => {
       );
     }
 
-    // Management Development Layout
     if (selectedDepartment.id === "management-development") {
       return (
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
@@ -2032,11 +2013,10 @@ const SoBagianEditor = () => {
       );
     }
 
-    // Manufacturing Battery Layout
     if (selectedDepartment.id === "manufactur-battery") {
       return (
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+          <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -2062,11 +2042,10 @@ const SoBagianEditor = () => {
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
                     <h3 className="text-lg font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (MANUFACTURING BATTERY DEPARTMENT)
                     </h3>
                     <p className="text-md text-gray-500">
-                      Effective Date :{" "}
-                      {dept.header.effectiveDate || "30 September 2025"}
+                      Effective Date : 30 September 2025
                     </p>
                   </div>
                 </div>
@@ -2083,398 +2062,51 @@ const SoBagianEditor = () => {
                           <div className="h-16"></div>
                           <div className="text-center">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              DIONISIUS AUGUSTO
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              SENIOR ENGINEER
                             </p>
                           </div>
                         </div>
                       </div>
-                      // Layout identik dengan ManufacturBattery.jsx (5 kolom,
-                      urutan dan mapping group sama) return (
-                      <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
-                        <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
-                          {/* Header Section with borders */}
-                          <div className="mb-4 border-2 border-black p-3 print:mb-3 print:p-3 print:border-2">
-                            <div className="flex items-start gap-2">
-                              <div
-                                className="w-32 flex items-center justify-center p-4 border-2 border-black"
-                                style={{ height: "160px" }}
-                              >
-                                <img
-                                  src="/logo/dcci.png"
-                                  alt="Dharma Group Logo"
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                              <div
-                                className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
-                                style={{ height: "160px" }}
-                              >
-                                <div>
-                                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                                    STRUKTUR ORGANISASI
-                                  </h1>
-                                  <h2 className="text-xl font-semibold text-gray-700 mb-1">
-                                    PT DHARMA CONTROLCABLE INDONESIA
-                                  </h2>
-                                  <h3 className="text-lg font-semibold text-gray-600 mb-1">
-                                    (MANUFACTURING BATTERY DEPARTMENT)
-                                  </h3>
-                                  <p className="text-md text-gray-500">
-                                    Effective Date : 30 September 2025
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="flex space-x-1">
-                                  <div className="text-center">
-                                    <div className="w-60 h-40 border border-black bg-white">
-                                      <div className="p-2 border-b border-black bg-white">
-                                        <p className="text-sm font-bold text-black">
-                                          Prepared by :
-                                        </p>
-                                      </div>
-                                      <div className="p-3 flex flex-col justify-end h-32">
-                                        <div className="h-16"></div>
-                                        <div className="text-center">
-                                          <p className="text-sm font-bold text-black underline leading-tight">
-                                            DIKI WAHYUDI
-                                          </p>
-                                          <p className="text-sm text-black leading-tight">
-                                            DEPARTMENT HEAD
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="w-60 h-40 border border-black bg-white">
-                                      <div className="p-2 border-b border-black bg-white">
-                                        <p className="text-sm font-bold text-black">
-                                          Checked by :
-                                        </p>
-                                      </div>
-                                      <div className="p-3 flex flex-col justify-end h-32">
-                                        <div className="h-16"></div>
-                                        <div className="text-center">
-                                          <p className="text-sm font-bold text-black underline leading-tight">
-                                            DIKI WAHYUDI
-                                          </p>
-                                          <p className="text-sm text-black leading-tight">
-                                            HRGAIT DEPT. HEAD
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="w-60 h-40 border border-black bg-white">
-                                      <div className="p-2 border-b border-black bg-white">
-                                        <p className="text-sm font-bold text-black">
-                                          Approved by :
-                                        </p>
-                                      </div>
-                                      <div className="p-3 flex flex-col justify-end h-32">
-                                        <div className="h-16"></div>
-                                        <div className="text-center">
-                                          <p className="text-sm font-bold text-black underline leading-tight">
-                                            EKO MARYANTO
-                                          </p>
-                                          <p className="text-sm text-black leading-tight">
-                                            PRESIDENT DIRECTOR
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">
+                            Checked by :
+                          </p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16"></div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              DIKI WAHYUDI
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              HRGAIT DEPT. HEAD
+                            </p>
                           </div>
-
-                          {/* Header Rows */}
-                          <div className="mb-6 relative" style={{ zIndex: 2 }}>
-                            <div className="grid grid-cols-5 gap-2 mb-4">
-                              <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                                <h3 className="font-bold text-xs text-black">
-                                  BOARD OF DIRECTOR
-                                </h3>
-                              </div>
-                              <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                                <h3 className="font-bold text-xs text-black">
-                                  DEPARTMENT HEAD
-                                </h3>
-                              </div>
-                              <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                                <h3 className="font-bold text-xs text-black">
-                                  SENIOR ENGINEER
-                                </h3>
-                              </div>
-                              <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                                <h3 className="font-bold text-xs text-black">
-                                  ENGINEER
-                                </h3>
-                              </div>
-                              <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                                <h3 className="font-bold text-xs text-black">
-                                  TEAM MEMBER/TECHNICIAN
-                                </h3>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Content Grid */}
-                          <div
-                            className="grid grid-cols-5 gap-2 relative org-grid"
-                            style={{ zIndex: 2 }}
-                          >
-                            {/* Kolom 1 - Board of Director */}
-                            <div className="space-y-4 flex flex-col items-center">
-                              {dept.positions
-                                .filter((p) => p.group === "BOARD OF DIRECTOR")
-                                .map((person, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]"
-                                  >
-                                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                                      <p className="text-xs font-bold uppercase">
-                                        {person.code}
-                                      </p>
-                                    </div>
-                                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                                      <p className="text-xs font-semibold mb-1 leading-tight uppercase">
-                                        {person.title}
-                                      </p>
-                                      <hr className="my-1 border-gray-300" />
-                                      <EditableField
-                                        value={person.name}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "name",
-                                            value
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                      <EditableField
-                                        value={`(${person.empId})`}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "empId",
-                                            value.replace(/[()]/g, "")
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
-                            {/* Kolom 2 - Department Head (Empty) */}
-                            <div className="space-y-4 flex flex-col items-center">
-                              {/* Kosong, sesuai layout utama */}
-                            </div>
-
-                            {/* Kolom 3 - Senior Engineer */}
-                            <div className="space-y-4 flex flex-col items-center">
-                              {dept.positions
-                                .filter((p) => p.group === "SENIOR ENGINEER")
-                                .map((person, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]"
-                                  >
-                                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                                      <p className="text-xs font-bold uppercase">
-                                        {person.code}
-                                      </p>
-                                    </div>
-                                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                                      <p className="text-xs font-semibold mb-1 leading-tight uppercase">
-                                        {person.title}
-                                      </p>
-                                      <hr className="my-1 border-gray-300" />
-                                      <EditableField
-                                        value={person.name}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "name",
-                                            value
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                      <EditableField
-                                        value={`(${person.empId})`}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "empId",
-                                            value.replace(/[()]/g, "")
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
-                            {/* Kolom 4 - Engineer */}
-                            <div className="space-y-4 flex flex-col items-center">
-                              {dept.positions
-                                .filter((p) => p.group === "ENGINEER")
-                                .map((person, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white border border-gray-400 rounded shadow-sm w-[240px]"
-                                  >
-                                    <div className="flex">
-                                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                                        <p className="text-xs font-bold uppercase">
-                                          {person.code}
-                                        </p>
-                                      </div>
-                                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                                        <p className="text-xs font-semibold mb-1 leading-tight uppercase">
-                                          {person.title}
-                                        </p>
-                                        <hr className="my-1 border-gray-300" />
-                                        <EditableField
-                                          value={person.name}
-                                          onSave={(value) =>
-                                            handleEdit(
-                                              selectedDepartment.id,
-                                              "positions",
-                                              person.id,
-                                              "name",
-                                              value
-                                            )
-                                          }
-                                          className="text-xs leading-tight uppercase"
-                                        />
-                                        <EditableField
-                                          value={`(${person.empId})`}
-                                          onSave={(value) =>
-                                            handleEdit(
-                                              selectedDepartment.id,
-                                              "positions",
-                                              person.id,
-                                              "empId",
-                                              value.replace(/[()]/g, "")
-                                            )
-                                          }
-                                          className="text-xs leading-tight uppercase"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
-                            {/* Kolom 5 - Team Member/Technician */}
-                            <div className="space-y-4 flex flex-col items-center">
-                              {dept.positions
-                                .filter(
-                                  (p) => p.group === "TEAM MEMBER/TECHNICIAN"
-                                )
-                                .map((person, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[240px]"
-                                  >
-                                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                                      <p className="text-xs font-bold uppercase">
-                                        {person.code}
-                                      </p>
-                                    </div>
-                                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                                      <p className="text-xs font-semibold mb-1 leading-tight uppercase">
-                                        {person.title}
-                                      </p>
-                                      <hr className="my-1 border-gray-300" />
-                                      <EditableField
-                                        value={person.name}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "name",
-                                            value
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                      <EditableField
-                                        value={`(${person.empId})`}
-                                        onSave={(value) =>
-                                          handleEdit(
-                                            selectedDepartment.id,
-                                            "positions",
-                                            person.id,
-                                            "empId",
-                                            value.replace(/[()]/g, "")
-                                          )
-                                        }
-                                        className="text-xs leading-tight uppercase"
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-
-                          {/* Notes Section */}
-                          <div className="mt-8 border-2 border-black p-3 inline-block">
-                            <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
-                              NOTE :
-                            </h3>
-                            <div className="space-y-1 text-xs">
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">( )</span>
-                                <span>: CONCURRE</span>
-                              </div>
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">**</span>
-                                <span>: ACTING</span>
-                              </div>
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">
-                                  ( INC )
-                                </span>
-                                <span>: INCUMBENT</span>
-                              </div>
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">TBR</span>
-                                <span>: TO BE RECRUIT</span>
-                              </div>
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">TBD</span>
-                                <span>: TO BE DEVELOP</span>
-                              </div>
-                              <div className="flex items-start">
-                                <span className="w-12 font-semibold">
-                                  COORD
-                                </span>
-                                <span>: COORDINATOR</span>
-                              </div>
-                            </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">
+                            Approved by :
+                          </p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16"></div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              EKO MARYANTO
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              PRESIDENT DIRECTOR
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -2484,229 +2116,245 @@ const SoBagianEditor = () => {
               </div>
             </div>
 
-            {/* Header Rows - 6 kolom seperti PPIC asli */}
+            {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-6 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+              <div className="grid grid-cols-5 gap-2 mb-4">
+                <div className="bg-blue-300 p-2 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">
                     BOARD OF DIRECTOR
                   </h3>
                 </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                <div className="bg-blue-300 p-2 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">
                     DEPARTMENT HEAD
                   </h3>
                 </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
+                <div className="bg-blue-300 p-2 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">
-                    UNIT HEAD/STAFF
+                    SENIOR ENGINEER
                   </h3>
                 </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
+                <div className="bg-blue-300 p-2 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">ENGINEER</h3>
                 </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">MEMBER</h3>
+                <div className="bg-blue-300 p-2 rounded text-center border border-black">
+                  <h3 className="font-bold text-xs text-black">
+                    TEAM MEMBER/TECHNICIAN
+                  </h3>
                 </div>
               </div>
             </div>
 
-            {/* Content Grid - 6 kolom sesuai PPIC asli */}
+            {/* Content Grid */}
             <div
-              className="grid grid-cols-6 gap-4 relative org-grid"
+              className="grid grid-cols-5 gap-2 relative org-grid"
               style={{ zIndex: 2 }}
             >
-              {/* Kolom 1 - Board of Director - Empty */}
-              <div className="space-y-3 flex flex-col items-center">
-                <div className="min-h-[20px]"></div>
+              {/* Kolom 1 - Board of Director */}
+              <div className="space-y-4 flex flex-col items-center">
+                {dept.positions
+                  .filter((p) => p.group === "BOARD OF DIRECTOR")
+                  .map((person, i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]"
+                    >
+                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        <p className="text-xs font-bold uppercase">
+                          {person.code}
+                        </p>
+                      </div>
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-xs font-semibold mb-1 leading-tight uppercase">
+                          {person.title}
+                        </p>
+                        <hr className="my-1 border-gray-300" />
+                        <EditableField
+                          value={person.name}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "name",
+                              value
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                        <EditableField
+                          value={`(${person.empId})`}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "empId",
+                              value.replace(/[()]/g, "")
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                      </div>
+                    </div>
+                  ))}
               </div>
 
-              {/* Kolom 2 - Department Head */}
-              <div className="space-y-3 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
-                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold">{dept.header.code}</p>
-                  </div>
-                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight">
-                      PPC
-                    </p>
-                    <hr className="my-1 border-gray-300" />
-                    <EditableField
-                      value={dept.header.head}
-                      onSave={(value) =>
-                        handleEdit(
-                          selectedDepartment.id,
-                          "header",
-                          null,
-                          "head",
-                          value
-                        )
-                      }
-                      className="text-xs leading-tight"
-                    />
-                    <EditableField
-                      value={`(${dept.header.empId})`}
-                      onSave={(value) =>
-                        handleEdit(
-                          selectedDepartment.id,
-                          "header",
-                          null,
-                          "empId",
-                          value.replace(/[()]/g, "")
-                        )
-                      }
-                      className="text-xs leading-tight"
-                    />
-                  </div>
-                </div>
+              {/* Kolom 2 - Department Head (Empty) */}
+              <div className="space-y-4 flex flex-col items-center">
+                {/* Kosong sesuai layout */}
               </div>
 
-              {/* Kolom 3 - Section Head - Empty */}
-              <div className="space-y-3 flex flex-col items-center">
-                <div className="min-h-[20px]"></div>
+              {/* Kolom 3 - Senior Engineer */}
+              <div className="space-y-4 flex flex-col items-center">
+                {dept.positions
+                  .filter((p) => p.group === "SENIOR ENGINEER")
+                  .map((person, i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]"
+                    >
+                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        <p className="text-xs font-bold uppercase">
+                          {person.code}
+                        </p>
+                      </div>
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-xs font-semibold mb-1 leading-tight uppercase">
+                          {person.title}
+                        </p>
+                        <hr className="my-1 border-gray-300" />
+                        <EditableField
+                          value={person.name}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "name",
+                              value
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                        <EditableField
+                          value={`(${person.empId})`}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "empId",
+                              value.replace(/[()]/g, "")
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                      </div>
+                    </div>
+                  ))}
               </div>
 
-              {/* Kolom 4 - Unit Head/Staff */}
-              <div className="space-y-3 flex flex-col items-center">
-                {dept.positions.slice(0, 3).map((staff, i) => (
-                  <div
-                    key={i}
-                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]"
-                  >
-                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{staff.code}</p>
+              {/* Kolom 4 - Engineer */}
+              <div className="space-y-4 flex flex-col items-center">
+                {dept.positions
+                  .filter((p) => p.group === "ENGINEER")
+                  .map((person, i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-gray-400 rounded shadow-sm w-[240px]"
+                    >
+                      <div className="flex">
+                        <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                          <p className="text-xs font-bold uppercase">
+                            {person.code}
+                          </p>
+                        </div>
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                          <p className="text-xs font-semibold mb-1 leading-tight uppercase">
+                            {person.title}
+                          </p>
+                          <hr className="my-1 border-gray-300" />
+                          <EditableField
+                            value={person.name}
+                            onSave={(value) =>
+                              handleEdit(
+                                selectedDepartment.id,
+                                "positions",
+                                person.id,
+                                "name",
+                                value
+                              )
+                            }
+                            className="text-xs leading-tight uppercase"
+                          />
+                          <EditableField
+                            value={`(${person.empId})`}
+                            onSave={(value) =>
+                              handleEdit(
+                                selectedDepartment.id,
+                                "positions",
+                                person.id,
+                                "empId",
+                                value.replace(/[()]/g, "")
+                              )
+                            }
+                            className="text-xs leading-tight uppercase"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs font-semibold mb-1 leading-tight">
-                        {staff.title}
-                      </p>
-                      <hr className="my-1 border-gray-300" />
-                      <EditableField
-                        value={staff.name}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "name",
-                            value
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                      <EditableField
-                        value={`(${staff.empId})`}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "empId",
-                            value.replace(/[()]/g, "")
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
-              {/* Kolom 5 - Group Head */}
-              <div className="space-y-3 flex flex-col items-center">
-                {dept.positions.slice(3, 4).map((staff, i) => (
-                  <div
-                    key={i}
-                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]"
-                    style={{ marginTop: "475px" }}
-                  >
-                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{staff.code}</p>
+              {/* Kolom 5 - Team Member/Technician */}
+              <div className="space-y-4 flex flex-col items-center">
+                {dept.positions
+                  .filter((p) => p.group === "TEAM MEMBER/TECHNICIAN")
+                  .map((person, i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[240px]"
+                    >
+                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        <p className="text-xs font-bold uppercase">
+                          {person.code}
+                        </p>
+                      </div>
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-xs font-semibold mb-1 leading-tight uppercase">
+                          {person.title}
+                        </p>
+                        <hr className="my-1 border-gray-300" />
+                        <EditableField
+                          value={person.name}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "name",
+                              value
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                        <EditableField
+                          value={`(${person.empId})`}
+                          onSave={(value) =>
+                            handleEdit(
+                              selectedDepartment.id,
+                              "positions",
+                              person.id,
+                              "empId",
+                              value.replace(/[()]/g, "")
+                            )
+                          }
+                          className="text-xs leading-tight uppercase"
+                        />
+                      </div>
                     </div>
-                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs font-semibold mb-1 leading-tight">
-                        {staff.title}
-                      </p>
-                      <hr className="my-1 border-gray-300" />
-                      <EditableField
-                        value={staff.name}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "name",
-                            value
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                      <EditableField
-                        value={`(${staff.empId})`}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "empId",
-                            value.replace(/[()]/g, "")
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Kolom 6 - Member */}
-              <div className="space-y-3 flex flex-col items-center">
-                {dept.positions.slice(4).map((staff, i) => (
-                  <div
-                    key={i}
-                    className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]"
-                  >
-                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{staff.code}</p>
-                    </div>
-                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-xs font-semibold mb-1 leading-tight">
-                        {staff.title}
-                      </p>
-                      <hr className="my-1 border-gray-300" />
-                      <EditableField
-                        value={staff.name}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "name",
-                            value
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                      <EditableField
-                        value={`(${staff.empId})`}
-                        onSave={(value) =>
-                          handleEdit(
-                            selectedDepartment.id,
-                            "positions",
-                            staff.id,
-                            "empId",
-                            value.replace(/[()]/g, "")
-                          )
-                        }
-                        className="text-xs leading-tight"
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
 
@@ -2747,7 +2395,6 @@ const SoBagianEditor = () => {
       );
     }
 
-    // Purchasing Layout
     if (selectedDepartment.id === "purchasing") {
       return (
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
@@ -3040,7 +2687,6 @@ const SoBagianEditor = () => {
       );
     }
 
-    // MI & SHE Layout
     if (selectedDepartment.id === "mi-she") {
       return (
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
@@ -3332,8 +2978,6 @@ const SoBagianEditor = () => {
       );
     }
 
-    // Layout untuk departemen lain yang belum memiliki layout khusus
-    // Menggunakan layout generic yang tetap editable
     return (
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
         <div className="min-w-[1000px] relative p-4">

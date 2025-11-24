@@ -6,20 +6,15 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-// @route   GET /api/so-change-requests
-// @desc    Get all SO change requests (with filters)
-// @access  Private
 router.get("/", auth, async (req, res) => {
   try {
     const { status, affectedSection } = req.query;
     const userPermissions = req.user.role?.permissions || [];
 
-    // Build filter
     const filter = {};
     if (status) filter.status = status;
     if (affectedSection) filter.affectedSection = affectedSection;
 
-    // If user doesn't have first or final approval permission, only show their own requests
     const canSeeAllRequests =
       userPermissions.includes("SO Changes First Approval") ||
       userPermissions.includes("SO Changes Final Approval");
@@ -48,9 +43,6 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/so-change-requests/:id
-// @desc    Get single SO change request
-// @access  Private
 router.get("/:id", auth, async (req, res) => {
   try {
     const request = await SOChangeRequest.findById(req.params.id)
@@ -66,7 +58,6 @@ router.get("/:id", auth, async (req, res) => {
       });
     }
 
-    // Check permission - user can view their own requests or if they have approval permission
     const userPermissions = req.user.role?.permissions || [];
     const canViewAllRequests =
       userPermissions.includes("SO Changes First Approval") ||
@@ -95,9 +86,6 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/so-change-requests
-// @desc    Create new SO change request
-// @access  Private (requires "SO DCI Editor" permission)
 router.post(
   "/",
   [
@@ -114,7 +102,6 @@ router.post(
   ],
   async (req, res) => {
     try {
-      // Check permission
       const userPermissions = req.user.role?.permissions || [];
       if (!userPermissions.includes("SO DCI Editor")) {
         return res.status(403).json({
@@ -174,7 +161,6 @@ router.post(
   }
 );
 
-// PUT /api/so-change-requests/:id/approve
 router.put(
   "/:id/approve",
   [auth, body("reviewComments").optional()],
@@ -220,7 +206,7 @@ router.put(
       }
 
       const now = new Date();
-      const humanDate = now.toLocaleDateString("en-GB"); // DD/MM/YYYY
+      const humanDate = now.toLocaleDateString("en-GB");
 
       console.log("🔥 APPROVAL DEBUG:", {
         status: request.status,
@@ -229,7 +215,6 @@ router.put(
         isFinalApprover,
       });
 
-      // ✅ ENSURE STRUCTURE EXISTS
       if (!request.proposedData) request.proposedData = {};
       if (!request.proposedData.organizationData) {
         request.proposedData.organizationData = {};
@@ -241,7 +226,6 @@ router.put(
         request.proposedData.organizationData.header = {};
       }
 
-      // ✅ ENSURE preparedBy date exists
       if (
         !request.proposedData.organizationData.signatures.preparedBy ||
         !request.proposedData.organizationData.signatures.preparedBy.date
@@ -258,7 +242,6 @@ router.put(
         );
       }
 
-      // FIRST APPROVAL LOGIC
       if (request.status === "pending") {
         if (!isFirstApprover) {
           return res.status(403).json({
@@ -272,7 +255,6 @@ router.put(
         request.reviewComments = req.body.reviewComments || "";
         request.status = "waiting_second_approval";
 
-        // ✅ SET middleBy date (Bambang Wuryanto)
         request.proposedData.organizationData.signatures.middleBy = {
           title: "Director",
           name: "Bambang Wuryanto",
@@ -282,7 +264,6 @@ router.put(
 
         console.log("✅ SET middleBy.date:", humanDate);
 
-        // Mark as modified to ensure MongoDB saves nested object
         request.markModified("proposedData");
         await request.save();
 
@@ -302,7 +283,6 @@ router.put(
         });
       }
 
-      // FINAL APPROVAL LOGIC
       if (request.status === "waiting_second_approval") {
         if (!isFinalApprover) {
           return res.status(403).json({
@@ -327,14 +307,12 @@ router.put(
           (req.body.reviewComments || "");
         request.status = "approved";
 
-        // ✅ SET approvedBy date (Eko Maryanto)
         request.proposedData.organizationData.signatures.approvedBy = {
           name: "Eko Maryanto",
           date: humanDate,
           _ts: now.toISOString(),
         };
 
-        // ✅ SET Effective Date = Final Approval Date
         request.proposedData.organizationData.header.effectiveDate = humanDate;
         request.proposedData.organizationData.header._effectiveDateTs =
           now.toISOString();
@@ -342,7 +320,6 @@ router.put(
         console.log("✅ SET approvedBy.date:", humanDate);
         console.log("✅ SET effectiveDate:", humanDate);
 
-        // Mark as modified
         request.markModified("proposedData");
         await request.save();
 
@@ -376,9 +353,6 @@ router.put(
   }
 );
 
-// @route   PUT /api/so-change-requests/:id/reject
-// @desc    Reject SO change request
-// @access  Private (requires "SO Changes First Approval" or "SO Changes Final Approval")
 router.put(
   "/:id/reject",
   [
@@ -421,7 +395,6 @@ router.put(
         });
       }
 
-      // ✅ hanya boleh reject di pending (first) atau waiting_second_approval (final)
       if (!["pending", "waiting_second_approval"].includes(request.status)) {
         return res.status(400).json({
           success: false,
@@ -475,9 +448,6 @@ router.put(
   }
 );
 
-// @route   PUT /api/so-change-requests/:id/revisi
-// @desc    Mark SO change request as "revisi" (request revision by approver)
-// @access  Private (requires "SO Changes First Approval" or "SO Changes Final Approval")
 router.put(
   "/:id/revisi",
   [
@@ -573,9 +543,6 @@ router.put(
   }
 );
 
-// @route   PUT /api/so-change-requests/:id/cancel
-// @desc    Cancel SO change request (by requester)
-// @access  Private
 router.put("/:id/cancel", auth, async (req, res) => {
   try {
     const request = await SOChangeRequest.findById(req.params.id);
@@ -587,7 +554,6 @@ router.put("/:id/cancel", auth, async (req, res) => {
       });
     }
 
-    // Only requester can cancel
     if (request.requestedBy.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -623,9 +589,6 @@ router.put("/:id/cancel", auth, async (req, res) => {
   }
 });
 
-// @route   DELETE /api/so-change-requests/:id
-// @desc    Delete SO change request
-// @access  Private (only requester or admin)
 router.delete("/:id", auth, async (req, res) => {
   try {
     const request = await SOChangeRequest.findById(req.params.id);
@@ -639,7 +602,6 @@ router.delete("/:id", auth, async (req, res) => {
 
     const userPermissions = req.user.role?.permissions || [];
 
-    // Only requester or admin can delete
     if (
       request.requestedBy.toString() !== req.user.id &&
       !userPermissions.includes("Manage Users")

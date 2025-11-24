@@ -10,20 +10,16 @@ const ManagementDevelopment = () => {
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
 
-  // Function to handle print/download
   const handlePrint = () => {
-    // Set data attributes on the print container for CSS targeting
     const printContainer = document.querySelector('.print-container');
     if (printContainer) {
       printContainer.setAttribute('data-paper', printSettings.paperSize);
       printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
     
-    // Set data attributes on document root for @page rules
     document.documentElement.setAttribute('data-paper', printSettings.paperSize);
     document.documentElement.setAttribute('data-orientation', printSettings.orientation);
     
-    // Create dynamic @page rule
     const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
     printStyle.id = 'dynamic-print-style';
     
@@ -118,7 +114,6 @@ const ManagementDevelopment = () => {
         <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
           
           {/* Header Section with borders */}
-                    {/* Header Section with borders */}
           <div className="mb-4 border-2 border-black p-3 print:mb-3 print:p-3 print:border-2">
             <div className="flex items-start gap-2">
               <div className="w-32 flex items-center justify-center p-4 border-2 border-black" style={{ height: '160px' }}>
@@ -185,8 +180,6 @@ const ManagementDevelopment = () => {
             </div>
           </div>
           
-
-
           {/* Header Rows */}
           <div className="mb-6 relative print:mb-4" style={{ zIndex: 2 }}>
             <div className="grid grid-cols-4 gap-4 mb-4 print:gap-4 print:mb-4">

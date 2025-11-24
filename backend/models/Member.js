@@ -15,16 +15,14 @@ const memberSchema = new mongoose.Schema({
     ref: 'Department',
     required: true
   },
-  // Optional fields that don't require login account
   noPNK: {
     type: String,
-    sparse: true // Allows null/undefined values without unique constraint
+    sparse: true 
   },
   email: {
     type: String,
-    sparse: true // Allows null/undefined values without unique constraint
+    sparse: true 
   },
-  // Link to User account if this member has login access
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -39,7 +37,6 @@ const memberSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
 memberSchema.index({ department: 1 });
 memberSchema.index({ name: 1 });
 memberSchema.index({ user: 1 });

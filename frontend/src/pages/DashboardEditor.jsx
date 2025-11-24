@@ -17,7 +17,6 @@ const DashboardEditor = () => {
     affectedSection: "departments",
   });
 
-  // New states for drawing features
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [selectedElement, setSelectedElement] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -30,8 +29,6 @@ const DashboardEditor = () => {
 
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-
-  // Mouse tracking for drawing connectors
   const handleMouseMove = useCallback(
     (e) => {
       if (containerRef.current) {
@@ -51,7 +48,6 @@ const DashboardEditor = () => {
     [isDrawingConnector, connectorStart]
   );
 
-  // Add new box functionality
   const addNewBox = (boxData) => {
     const newBox = {
       id: `new-box-${Date.now()}`,
@@ -66,7 +62,6 @@ const DashboardEditor = () => {
     setShowAddBoxPanel(false);
   };
 
-  // Connector drawing functionality
   const startConnector = (elementId, position) => {
     if (!isDrawingMode) return;
 
@@ -92,12 +87,10 @@ const DashboardEditor = () => {
     setTempConnector(null);
   };
 
-  // Delete connector
   const deleteConnector = (connectorId) => {
     setConnectors((prev) => prev.filter((c) => c.id !== connectorId));
   };
 
-  // Load saved layout including custom elements
   useEffect(() => {
     const savedLayout = localStorage.getItem("dashboard-editor-layout");
     if (savedLayout) {
@@ -107,7 +100,6 @@ const DashboardEditor = () => {
     }
   }, []);
 
-  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions =
@@ -121,7 +113,6 @@ const DashboardEditor = () => {
     return user && userPermissions?.includes("SO DCI Editor");
   }, [user]);
 
-  // Initialize organization data - COMPLETE data from Dashboard
   useEffect(() => {
     const initialData = {
       header: {
@@ -409,7 +400,6 @@ const DashboardEditor = () => {
       },
     };
 
-    // Load from localStorage if exists
     const savedData = localStorage.getItem("dashboard-organization-data");
     if (savedData) {
       setOrganizationData(JSON.parse(savedData));
@@ -418,7 +408,6 @@ const DashboardEditor = () => {
     }
   }, []);
 
-  // If no access, show access denied
   if (!hasAccess) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -440,7 +429,6 @@ const DashboardEditor = () => {
     );
   }
 
-  // Loading state
   if (!organizationData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -476,7 +464,6 @@ const DashboardEditor = () => {
     });
   };
 
-  // Open submit modal
   const openSubmitModal = () => {
     setShowSubmitModal(true);
     setSubmitForm({
@@ -487,7 +474,6 @@ const DashboardEditor = () => {
     });
   };
 
-  // Submit for approval
   const submitForApproval = async () => {
     if (!submitForm.title.trim()) {
       alert("Please enter a title for this change request");
@@ -500,9 +486,8 @@ const DashboardEditor = () => {
     }
 
     try {
-      // set prepared date to today (DD/MM/YYYY)
       const now = new Date();
-      const humanDate = now.toLocaleDateString("en-GB"); // DD/MM/YYYY
+      const humanDate = now.toLocaleDateString("en-GB");
 
       const dataToSubmit = {
         ...organizationData,
@@ -511,9 +496,8 @@ const DashboardEditor = () => {
           preparedBy: {
             ...(organizationData.signatures?.preparedBy || {}),
             date: humanDate,
-            _ts: now.toISOString(), // optional machine-readable timestamp
+            _ts: now.toISOString(),
           },
-          // keep other signature objects intact
           middleBy: {
             ...(organizationData.signatures?.middleBy || {}),
           },
@@ -525,20 +509,17 @@ const DashboardEditor = () => {
         modifiedBy: user?.name || user?.username,
       };
 
-      // Save layout data including connectors and custom boxes
       const layoutData = {
         connectors,
         newBoxes,
         lastModified: new Date().toISOString(),
       };
 
-      // Get current data from localStorage for comparison
       const currentDataStr = localStorage.getItem(
         "dashboard-organization-data"
       );
       const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
 
-      // Create change request
       const requestData = {
         title: submitForm.title,
         description: submitForm.description,
@@ -565,8 +546,6 @@ const DashboardEditor = () => {
           priority: "medium",
           affectedSection: "departments",
         });
-
-        // Redirect to SO Change Requests page
         navigate("/so-change-requests");
       }
     } catch (error) {
@@ -589,7 +568,6 @@ const DashboardEditor = () => {
     }
   };
 
-  // Editable Box Component with drag & drop support - Enhanced
   const EditableBox = ({ item, category, className = "", style = {} }) => {
     const [isEditing, setIsEditing] = useState({});
     const boxRef = useRef(null);
@@ -678,7 +656,6 @@ const DashboardEditor = () => {
       return baseClasses;
     };
 
-    // Calculate final style combining position and custom styles
     const finalStyle = {
       ...style,
     };
@@ -732,7 +709,6 @@ const DashboardEditor = () => {
     );
   };
 
-  // SVG Connector Component
   const ConnectorSVG = () => {
     if (!containerRef.current) return null;
 
@@ -805,7 +781,6 @@ const DashboardEditor = () => {
     );
   };
 
-  // Add Box Panel Component
   const AddBoxPanel = () => {
     const [newBoxData, setNewBoxData] = useState({
       code: "",
@@ -894,7 +869,6 @@ const DashboardEditor = () => {
     );
   };
 
-  // Custom Box Component for new boxes
   const CustomBox = ({ box }) => {
     const [position, setPosition] = useState(box.position);
     const [isEditing, setIsEditing] = useState({});
@@ -1663,7 +1637,6 @@ const DashboardEditor = () => {
                     </div>
                   );
                 } else if (item.code === "MDO2.0") {
-                  // Skip MDO2.0 as it's handled in the combined box
                   return null;
                 } else {
                   return (

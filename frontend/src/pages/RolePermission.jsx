@@ -31,8 +31,8 @@ const RolePermission = () => {
     ],
     soChangeRequests: [
       "View Own SO Change Requests",
-      "SO Changes First Approval", // Director
-      "SO Changes Final Approval", // President Director
+      "SO Changes First Approval",
+      "SO Changes Final Approval",
     ],
 
     soBagianChangeRequests: [
@@ -81,7 +81,6 @@ const RolePermission = () => {
     ],
   };
 
-  // Fetch roles from API
   const fetchRoles = async () => {
     try {
       setLoading(true);

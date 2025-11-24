@@ -10,14 +10,12 @@ const DepartmentEditor = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [departmentData, setDepartmentData] = useState(null);
 
-  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
     return user && userPermissions?.includes('SO DCI Editor');
   }, [user]);
 
-  // Department configurations
   const departmentConfigs = {
     'finance-department': {
       name: 'Finance Department',
@@ -95,12 +93,10 @@ const DepartmentEditor = () => {
 
   const currentDept = departmentConfigs[departmentId];
 
-  // Initialize department data
   useEffect(() => {
     if (!currentDept) return;
 
     const getInitialData = () => {
-      // Different initial data structure for each department
       switch(departmentId) {
         case 'manufactur-battery':
           return {
@@ -265,7 +261,6 @@ const DepartmentEditor = () => {
 
     const initialData = getInitialData();
     
-    // Load from localStorage if exists
     const savedData = localStorage.getItem(currentDept.storageKey);
     if (savedData) {
       try {
@@ -279,7 +274,6 @@ const DepartmentEditor = () => {
     }
   }, [departmentId, currentDept]);
 
-  // If no access, show access denied
   if (!hasAccess) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -297,7 +291,6 @@ const DepartmentEditor = () => {
     );
   }
 
-  // Loading state
   if (!departmentData || !currentDept) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -338,10 +331,8 @@ const DepartmentEditor = () => {
         modifiedBy: user?.name || user?.username
       };
       
-      // Save to localStorage
       localStorage.setItem(currentDept.storageKey, JSON.stringify(dataToSave));
       
-      // Dispatch custom event to notify department component
       window.dispatchEvent(new CustomEvent(`${departmentId}-data-updated`, { 
         detail: dataToSave 
       }));
@@ -358,7 +349,6 @@ const DepartmentEditor = () => {
     }
   };
 
-  // Editable Box Component
   const EditableBox = ({ item, category, className = "" }) => {
     const [isEditing, setIsEditing] = useState({});
 

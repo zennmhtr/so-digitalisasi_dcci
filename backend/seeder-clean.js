@@ -9,7 +9,6 @@ const JobDescription = require('./models/JobDescription');
 
 const seedData = async () => {
   try {
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -17,7 +16,6 @@ const seedData = async () => {
 
     console.log('Connected to MongoDB');
 
-    // Clear ALL existing data including dummy data
     await User.deleteMany({});
     await Role.deleteMany({});
     await Department.deleteMany({});
@@ -25,7 +23,6 @@ const seedData = async () => {
 
     console.log('Cleared ALL existing data including dummy data');
 
-    // Create departments that match the frontend
     const departments = await Department.insertMany([
       {
         code: 'FIN',
@@ -91,7 +88,6 @@ const seedData = async () => {
 
     console.log('Created departments');
 
-    // Create roles
     const roles = await Role.insertMany([
       {
         name: 'Super Admin',
@@ -162,7 +158,6 @@ const seedData = async () => {
 
     console.log('Created roles');
 
-    // Create clean admin user only
     const salt = await bcrypt.genSalt(10);
     const users = [
       {
@@ -171,8 +166,8 @@ const seedData = async () => {
         email: 'admin@hr-digital.com',
         username: 'admin',
         password: await bcrypt.hash('admin123', salt),
-        role: roles[0]._id, // Super Admin
-        department: departments[1]._id, // HRGA & IT Department
+        role: roles[0]._id, 
+        department: departments[1]._id,
         status: 'active'
       }
     ];

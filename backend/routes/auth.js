@@ -8,9 +8,6 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   POST /api/auth/login
-// @desc    Login user
-// @access  Public
 router.post('/login', [
   body('noPNK').notEmpty().withMessage('noPNK is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
@@ -27,7 +24,6 @@ router.post('/login', [
 
     const { noPNK, password } = req.body;
 
-    // Check if user exists by noPNK
     const user = await User.findOne({ 
       $or: [{ noPNK }] 
     })
@@ -41,7 +37,6 @@ router.post('/login', [
       });
     }
 
-    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -50,7 +45,6 @@ router.post('/login', [
       });
     }
 
-    // Check if user is active
     if (user.status !== 'active') {
       return res.status(401).json({
         success: false,
@@ -58,7 +52,6 @@ router.post('/login', [
       });
     }
 
-    // Create token
     const payload = {
       user: {
         id: user._id,
@@ -97,9 +90,6 @@ router.post('/login', [
   }
 });
 
-// @route   GET /api/auth/me
-// @desc    Get current user
-// @access  Private
 router.get('/me', async (req, res) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -138,9 +128,6 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// @route   PUT /api/auth/change-password
-// @desc    Change user password
-// @access  Private
 router.put('/change-password', [
   auth,
   body('oldPassword').notEmpty().withMessage('Old password is required'),
@@ -165,7 +152,6 @@ router.put('/change-password', [
     const { oldPassword, newPassword } = req.body;
     const userId = req.user.id;
 
-    // Find user
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -174,7 +160,6 @@ router.put('/change-password', [
       });
     }
 
-    // Check old password
     const isMatch = await user.comparePassword(oldPassword);
     if (!isMatch) {
       return res.status(400).json({
@@ -183,7 +168,6 @@ router.put('/change-password', [
       });
     }
 
-    // Update password
     user.password = newPassword;
     await user.save();
 

@@ -5,9 +5,6 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/roles
-// @desc    Get all roles
-// @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -40,9 +37,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/roles/:id
-// @desc    Get role by ID
-// @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
@@ -68,9 +62,6 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/roles
-// @desc    Create new role
-// @access  Private
 router.post('/', [
   auth,
   body('name').notEmpty().withMessage('Role name is required'),
@@ -89,7 +80,6 @@ router.post('/', [
 
     const { name, description, permissions, active } = req.body;
 
-    // Check if role already exists
     const existingRole = await Role.findOne({ name });
     if (existingRole) {
       return res.status(400).json({
@@ -122,9 +112,6 @@ router.post('/', [
   }
 });
 
-// @route   PUT /api/roles/:id
-// @desc    Update role
-// @access  Private
 router.put('/:id', [
   auth,
   body('name').optional().notEmpty().withMessage('Role name cannot be empty'),
@@ -152,7 +139,6 @@ router.put('/:id', [
 
     const { name, description, permissions, active } = req.body;
 
-    // Check for duplicate name if updating
     if (name && name !== role.name) {
       const existingRole = await Role.findOne({ name });
       if (existingRole) {
@@ -163,7 +149,6 @@ router.put('/:id', [
       }
     }
 
-    // Update fields
     if (name) role.name = name;
     if (description) role.description = description;
     if (permissions) role.permissions = permissions;
@@ -186,9 +171,6 @@ router.put('/:id', [
   }
 });
 
-// @route   DELETE /api/roles/:id
-// @desc    Delete role
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);

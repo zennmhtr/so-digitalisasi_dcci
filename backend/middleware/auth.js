@@ -1,10 +1,8 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
-  // Get token from header
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
-  // Check if not token
   if (!token) {
     return res.status(401).json({
       success: false,

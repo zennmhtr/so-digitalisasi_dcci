@@ -5,19 +5,16 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/departments
-// @desc    Get all departments
-// @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100; // Increase limit to show all departments
+    const limit = parseInt(req.query.limit) || 100; 
     const skip = (page - 1) * limit;
 
     const departments = await Department.find()
       .skip(skip)
       .limit(limit)
-      .sort({ code: 1 }); // Sort by code alphabetically instead of created date
+      .sort({ code: 1 }); 
 
     const total = await Department.countDocuments();
 
@@ -40,9 +37,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/departments/:id
-// @desc    Get department by ID
-// @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
@@ -68,9 +62,6 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/departments
-// @desc    Create new department
-// @access  Private
 router.post('/', [
   auth,
   body('code').notEmpty().withMessage('Department code is required'),
@@ -89,7 +80,6 @@ router.post('/', [
 
     const { code, name, description } = req.body;
 
-    // Check if department already exists
     const existingDepartment = await Department.findOne({
       $or: [{ code: code.toUpperCase() }, { name }]
     });
@@ -124,9 +114,6 @@ router.post('/', [
   }
 });
 
-// @route   PUT /api/departments/:id
-// @desc    Update department
-// @access  Private
 router.put('/:id', [
   auth,
   body('code').optional().notEmpty().withMessage('Department code cannot be empty'),
@@ -154,7 +141,6 @@ router.put('/:id', [
 
     const { code, name, description } = req.body;
 
-    // Check for duplicates if updating unique fields
     if (code || name) {
       const existingDepartment = await Department.findOne({
         _id: { $ne: req.params.id },
@@ -172,7 +158,6 @@ router.put('/:id', [
       }
     }
 
-    // Update fields
     if (code) department.code = code.toUpperCase();
     if (name) department.name = name;
     if (description) department.description = description;
@@ -194,9 +179,6 @@ router.put('/:id', [
   }
 });
 
-// @route   DELETE /api/departments/:id
-// @desc    Delete department
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);

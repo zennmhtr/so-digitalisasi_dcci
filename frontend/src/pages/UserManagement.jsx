@@ -21,7 +21,6 @@ const UserManagement = () => {
     status: 'active'
   });
 
-  // Fetch data from API
   const fetchUsers = async () => {
     try {
       const response = await usersAPI.getAll();
@@ -116,7 +115,6 @@ const UserManagement = () => {
     e.preventDefault();
     
     try {
-      // Don't send password if it's empty for updates
       const dataToSend = { ...formData };
       if (editingUser && !dataToSend.password) {
         delete dataToSend.password;

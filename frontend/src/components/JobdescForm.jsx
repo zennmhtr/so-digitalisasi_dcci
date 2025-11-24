@@ -62,7 +62,6 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
       [field]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -136,31 +135,29 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
     setSaving(true);
     
     try {
-      // Clean up empty array items
       const cleanData = {
         ...formData,
         responsibilities: formData.responsibilities.filter(r => r.trim()),
         accountabilities: formData.accountabilities.filter(a => a.trim()),
         interactions: {
           internal: formData.interactions.internal.filter(i => i.trim()),
-          external: [] // Always empty since we removed external interactions
+          external: []
         },
         competence: {
           managerial: formData.competence.managerial.filter(m => m.trim()),
-          technical: [], // Always empty since we removed technical
-          behavioral: [], // Always empty since we removed behavioral
+          technical: [],
+          behavioral: [],
           skill: formData.competence.skill.filter(s => s.trim())
         },
         jobSpecification: {
           ...formData.jobSpecification,
-          skills: [], // Always empty since we removed skills
-          certification: [] // Always empty since we removed certification
+          skills: [],
+          certification: []
         },
         tanggal: formData.tanggal,
         revisi: formData.revisi
       };
 
-      // Remove the timeout and directly call onSave
       onSave(cleanData);
     } catch (error) {
       console.error('Error saving jobdesc:', error);

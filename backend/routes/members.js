@@ -7,9 +7,6 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/members
-// @desc    Get all members (both users and non-user members)
-// @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const departmentId = req.query.department;
@@ -22,7 +19,6 @@ router.get('/', auth, async (req, res) => {
       filter.department = departmentId;
     }
 
-    // Get all members (with or without user accounts)
     const members = await Member.find(filter)
       .populate('user', 'name noPNK email username')
       .populate('department', 'name code')
@@ -30,7 +26,6 @@ router.get('/', auth, async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // Transform members to consistent format
     const transformedMembers = members.map(member => ({
       id: member._id,
       type: 'member',
@@ -65,20 +60,15 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/members/department/:departmentId
-// @desc    Get all members by department
-// @access  Private
 router.get('/department/:departmentId', auth, async (req, res) => {
   try {
     const departmentId = req.params.departmentId;
 
-    // Get all members from the department
     const members = await Member.find({ department: departmentId })
       .populate('user', 'name noPNK email username')
       .populate('department', 'name code')
       .sort({ createdAt: -1 });
 
-    // Transform members to consistent format
     const transformedMembers = members.map(member => ({
       id: member._id,
       type: 'member',
@@ -106,9 +96,6 @@ router.get('/department/:departmentId', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/members
-// @desc    Create new member (without user account)
-// @access  Private
 router.post('/', [
   auth,
   body('name').notEmpty().withMessage('Name is required'),
@@ -127,7 +114,6 @@ router.post('/', [
 
     const { name, position, department, noPNK, email } = req.body;
 
-    // Check if member with same name already exists in the department
     const existingMember = await Member.findOne({
       name: name,
       department: department
@@ -140,7 +126,6 @@ router.post('/', [
       });
     }
 
-    // Check for NPK or email conflicts if provided
     if (noPNK || email) {
       const conflicts = [];
       
@@ -178,7 +163,6 @@ router.post('/', [
     const newMember = await Member.findById(member._id)
       .populate('department', 'name code');
 
-    // Transform to consistent format
     const transformedMember = {
       id: newMember._id,
       type: 'member',
@@ -207,9 +191,6 @@ router.post('/', [
   }
 });
 
-// @route   POST /api/members/:id/create-user
-// @desc    Create user account for existing member
-// @access  Private
 router.post('/:id/create-user', [
   auth,
   body('noPNK').notEmpty().withMessage('No PNK is required'),
@@ -243,7 +224,6 @@ router.post('/:id/create-user', [
 
     const { noPNK, email, username, password = 'password123' } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { noPNK }, { username }]
     });
@@ -255,7 +235,6 @@ router.post('/:id/create-user', [
       });
     }
 
-    // Find or create role for member's position
     const Role = require('../models/Role');
     let role = await Role.findOne({ name: member.position });
     
@@ -282,7 +261,6 @@ router.post('/:id/create-user', [
 
     await user.save();
 
-    // Link user to member
     member.user = user._id;
     member.noPNK = noPNK;
     member.email = email;
@@ -318,9 +296,6 @@ router.post('/:id/create-user', [
   }
 });
 
-// @route   PUT /api/members/:id
-// @desc    Update member
-// @access  Private
 router.put('/:id', [
   auth,
   body('name').optional().notEmpty().withMessage('Name cannot be empty'),
@@ -346,7 +321,6 @@ router.put('/:id', [
 
     const { name, position, department, noPNK, email } = req.body;
 
-    // Check for conflicts
     if (name && name !== member.name) {
       const nameConflict = await Member.findOne({
         _id: { $ne: req.params.id },
@@ -361,7 +335,6 @@ router.put('/:id', [
       }
     }
 
-    // Check NPK/email conflicts if provided
     if (noPNK || email) {
       const conflicts = [];
       
@@ -385,7 +358,6 @@ router.put('/:id', [
       }
     }
 
-    // Update member fields
     if (name) member.name = name;
     if (position) member.position = position;
     if (department) member.department = department;
@@ -394,7 +366,6 @@ router.put('/:id', [
 
     await member.save();
 
-    // Update linked user if exists
     if (member.user && (name || position || department || noPNK || email)) {
       const user = await User.findById(member.user);
       if (user) {
@@ -452,9 +423,6 @@ router.put('/:id', [
   }
 });
 
-// @route   DELETE /api/members/:id
-// @desc    Delete member (and optionally linked user)
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const member = await Member.findById(req.params.id);
@@ -465,7 +433,6 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
 
-    // Delete related job descriptions
     const JobDescription = require('../models/JobDescription');
     await JobDescription.deleteMany({ 
       $or: [
@@ -474,7 +441,6 @@ router.delete('/:id', auth, async (req, res) => {
       ]
     });
 
-    // Delete linked user if exists (optional - could be made configurable)
     if (member.user) {
       await User.findByIdAndDelete(member.user);
     }

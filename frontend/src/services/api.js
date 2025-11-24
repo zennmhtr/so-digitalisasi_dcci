@@ -9,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -23,7 +22,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -37,7 +35,6 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
@@ -46,7 +43,6 @@ export const authAPI = {
   getCurrentUser: () => api.get('/auth/me'),
 };
 
-// Users API
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id) => api.get(`/users/${id}`),
@@ -55,7 +51,6 @@ export const usersAPI = {
   delete: (id) => api.delete(`/users/${id}`),
 };
 
-// Roles API
 export const rolesAPI = {
   getAll: () => api.get('/roles'),
   getById: (id) => api.get(`/roles/${id}`),
@@ -64,7 +59,6 @@ export const rolesAPI = {
   delete: (id) => api.delete(`/roles/${id}`),
 };
 
-// Departments API
 export const departmentsAPI = {
   getAll: () => api.get('/departments'),
   getById: (id) => api.get(`/departments/${id}`),
@@ -73,7 +67,6 @@ export const departmentsAPI = {
   delete: (id) => api.delete(`/departments/${id}`),
 };
 
-// Job Descriptions API
 export const jobDescriptionsAPI = {
   getAll: (params) => api.get('/jobdescriptions', { params }),
   getById: (id) => api.get(`/jobdescriptions/${id}`),
@@ -85,7 +78,6 @@ export const jobDescriptionsAPI = {
   approve: (id) => api.put(`/jobdescriptions/${id}/approve`),
 };
 
-// Members API
 export const membersAPI = {
   getAll: (params) => api.get('/members', { params }),
   getByDepartment: (departmentId) => api.get(`/members/department/${departmentId}`),
@@ -94,7 +86,6 @@ export const membersAPI = {
   delete: (id) => api.delete(`/members/${id}`),
 };
 
-// SO Change Requests API
 export const soChangeRequestsAPI = {
   getAll: (params) => api.get('/so-change-requests', { params }),
   getById: (id) => api.get(`/so-change-requests/${id}`),

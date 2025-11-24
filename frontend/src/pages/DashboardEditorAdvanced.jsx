@@ -11,20 +11,17 @@ const DashboardEditorAdvanced = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check if user has SO DCI Editor permission
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions = typeof userRole === 'object' ? userRole?.permissions : [];
     return user && userPermissions?.includes('SO DCI Editor');
   }, [user]);
 
-  // Load organization data from localStorage
   useEffect(() => {
     const savedData = localStorage.getItem('dashboard-organization-data');
     if (savedData) {
       setOrganizationData(JSON.parse(savedData));
     } else {
-      // Initialize with default data if not found
       const initialData = {
         header: {
           title: "ORGANIZATION STRUCTURE",
@@ -56,7 +53,7 @@ const DashboardEditorAdvanced = () => {
             { id: 'prd-1', code: 'PRD1.0', title: 'CONTROLCABLE MANUFACTURE', name: 'KARNA SATIA SALIM*', empId: '23230114' }
           ]
         },
-        positions: {} // Initialize positions object
+        positions: {} 
       };
       
       setOrganizationData(initialData);
@@ -64,28 +61,22 @@ const DashboardEditorAdvanced = () => {
     }
   }, []);
 
-  // Handle data changes
   const handleDataChange = (newData) => {
     setOrganizationData(newData);
     setHasChanges(true);
-    // Don't auto-save to dashboard - wait for manual save
   };
 
-  // Save changes to dashboard
   const handleSave = async () => {
     if (!organizationData || !hasChanges) return;
     
     setIsSaving(true);
     try {
-      // Save to localStorage (dashboard will read from this)
       localStorage.setItem('dashboard-organization-data', JSON.stringify(organizationData));
       
-      // Dispatch event to notify dashboard of changes
       window.dispatchEvent(new CustomEvent('dashboard-data-updated', { 
         detail: organizationData 
       }));
       
-      // Dispatch storage event for dashboard to listen to
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'dashboard-organization-data',
         newValue: JSON.stringify(organizationData),
@@ -95,7 +86,6 @@ const DashboardEditorAdvanced = () => {
       setHasChanges(false);
       setShowSaveDialog(true);
       
-      // Hide success message after 3 seconds
       setTimeout(() => {
         setShowSaveDialog(false);
       }, 3000);
@@ -108,12 +98,11 @@ const DashboardEditorAdvanced = () => {
     }
   };
 
-  // Reset positions to default
   const handleResetPositions = () => {
     if (confirm('Are you sure you want to reset all positions to default? This action cannot be undone.')) {
       const resetData = {
         ...organizationData,
-        positions: {} // Clear all custom positions
+        positions: {} 
       };
       setOrganizationData(resetData);
       setHasChanges(true);

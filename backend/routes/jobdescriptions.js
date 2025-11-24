@@ -8,9 +8,6 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/jobdescriptions
-// @desc    Get all job descriptions
-// @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -54,9 +51,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/jobdescriptions/:id
-// @desc    Get job description by ID
-// @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
     const jobDesc = await JobDescription.findById(req.params.id)
@@ -86,14 +80,10 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/jobdescriptions/member/:memberId
-// @desc    Get job description by member ID or noPNK
-// @access  Private
 router.get('/member/:memberId', auth, async (req, res) => {
   try {
     const memberId = req.params.memberId;
     
-    // Try to find by member ID, user ID, or memberNoPNK
     let jobDesc = await JobDescription.findOne({ 
       $or: [
         { member: memberId },
@@ -128,9 +118,6 @@ router.get('/member/:memberId', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/jobdescriptions/department/:departmentId
-// @desc    Get all job descriptions by department
-// @access  Private
 router.get('/department/:departmentId', auth, async (req, res) => {
   try {
     const departmentId = req.params.departmentId;
@@ -157,9 +144,6 @@ router.get('/department/:departmentId', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/jobdescriptions
-// @desc    Create new job description
-// @access  Private
 router.post('/', [
   auth,
   body('department').notEmpty().withMessage('Department is required'),
@@ -198,7 +182,6 @@ router.post('/', [
       status
     } = req.body;
 
-    // Check if job description already exists for this member
     const existingJobDesc = await JobDescription.findOne({
       $or: [
         ...(member ? [{ member }] : []),
@@ -257,9 +240,6 @@ router.post('/', [
   }
 });
 
-// @route   PUT /api/jobdescriptions/:id
-// @desc    Update job description
-// @access  Private
 router.put('/:id', [
   auth,
   body('division').optional().notEmpty().withMessage('Division cannot be empty'),
@@ -320,9 +300,6 @@ router.put('/:id', [
   }
 });
 
-// @route   DELETE /api/jobdescriptions/:id
-// @desc    Delete job description
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const jobDesc = await JobDescription.findById(req.params.id);
@@ -350,9 +327,6 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   PUT /api/jobdescriptions/:id/approve
-// @desc    Approve job description
-// @access  Private
 router.put('/:id/approve', auth, async (req, res) => {
   try {
     const jobDesc = await JobDescription.findById(req.params.id);

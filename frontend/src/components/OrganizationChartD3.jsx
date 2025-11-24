@@ -13,7 +13,6 @@ const OrganizationChartD3 = ({
   const [selectedNode, setSelectedNode] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Convert organization data to D3 format
   useEffect(() => {
     if (!organizationData) return;
 
@@ -23,20 +22,18 @@ const OrganizationChartD3 = ({
     let yOffset = 100;
     const columnWidth = 250;
 
-    // Convert organization structure to nodes
     organizationData.structure?.bod?.forEach((item, index) => {
       nodeData.push({
         id: item.id,
         ...item,
         x: 100,
         y: yOffset + (index * 120),
-        fx: 100, // Fixed x position
-        fy: yOffset + (index * 120), // Fixed y position initially
+        fx: 100,
+        fy: yOffset + (index * 120), 
         category: 'bod'
       });
     });
 
-    // Management nodes
     let mgmtYOffset = 300;
     organizationData.structure?.management?.forEach((item, index) => {
       if (item.code !== 'MDO2.0') {
@@ -52,7 +49,6 @@ const OrganizationChartD3 = ({
       }
     });
 
-    // Department nodes
     let deptYOffset = 500;
     organizationData.structure?.departments?.forEach((item, index) => {
       nodeData.push({
@@ -66,7 +62,6 @@ const OrganizationChartD3 = ({
       });
     });
 
-    // Section nodes
     let sectYOffset = 100;
     organizationData.structure?.sections?.forEach((item, index) => {
       nodeData.push({
@@ -84,22 +79,19 @@ const OrganizationChartD3 = ({
     setLinks(linkData);
   }, [organizationData]);
 
-  // D3 Simulation and Rendering
   useEffect(() => {
     if (!nodes.length) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Clear previous renders
+    svg.selectAll("*").remove(); 
 
     const width = 1400;
     const height = 1000;
 
     svg.attr('width', width).attr('height', height);
 
-    // Create container group for zooming/panning
     const container = svg.append('g');
 
-    // Add zoom behavior
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
@@ -108,19 +100,16 @@ const OrganizationChartD3 = ({
 
     svg.call(zoom);
 
-    // Create simulation
     const simulation = d3.forceSimulation(nodes)
       .force('link', d3.forceLink(links).id(d => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(60));
 
-    // Create curved path generator
     const linkPath = d3.linkVertical()
       .x(d => d.x)
       .y(d => d.y);
 
-    // Create links (connections)
     const link = container.selectAll('.link')
       .data(links)
       .enter()
@@ -131,7 +120,6 @@ const OrganizationChartD3 = ({
       .attr('stroke-width', 2)
       .attr('marker-end', 'url(#arrowhead)');
 
-    // Add arrowhead marker
     const defs = svg.append('defs');
     defs.append('marker')
       .attr('id', 'arrowhead')
@@ -147,7 +135,6 @@ const OrganizationChartD3 = ({
       .attr('fill', '#3B82F6')
       .style('stroke', 'none');
 
-    // Create node groups
     const nodeGroup = container.selectAll('.node')
       .data(nodes)
       .enter()
@@ -155,7 +142,6 @@ const OrganizationChartD3 = ({
       .attr('class', 'node')
       .style('cursor', isEditMode ? 'move' : 'default');
 
-    // Add node rectangles
     nodeGroup.append('rect')
       .attr('width', 200)
       .attr('height', 80)
@@ -167,7 +153,6 @@ const OrganizationChartD3 = ({
       .attr('stroke-width', 2)
       .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
 
-    // Add code section
     nodeGroup.append('rect')
       .attr('width', 30)
       .attr('height', 80)
@@ -178,7 +163,6 @@ const OrganizationChartD3 = ({
       .attr('stroke', d => d.isCustom ? '#a855f7' : '#6b7280')
       .attr('stroke-width', 1);
 
-    // Add code text
     nodeGroup.append('text')
       .attr('x', -85)
       .attr('y', 0)
@@ -189,7 +173,6 @@ const OrganizationChartD3 = ({
       .style('fill', '#000')
       .text(d => d.code || 'CODE');
 
-    // Add title text
     nodeGroup.append('text')
       .attr('x', -20)
       .attr('y', -15)
@@ -231,7 +214,6 @@ const OrganizationChartD3 = ({
           .text(line.join(' '));
       });
 
-    // Add name text
     nodeGroup.append('text')
       .attr('x', -20)
       .attr('y', 10)
@@ -240,7 +222,6 @@ const OrganizationChartD3 = ({
       .style('fill', '#000')
       .text(d => d.name || '');
 
-    // Add employee ID text
     nodeGroup.append('text')
       .attr('x', -20)
       .attr('y', 25)
@@ -249,7 +230,6 @@ const OrganizationChartD3 = ({
       .style('fill', '#666')
       .text(d => d.empId ? `(${d.empId})` : '');
 
-    // Add delete button for custom nodes
     nodeGroup.filter(d => d.isCustom)
       .append('circle')
       .attr('cx', 90)
@@ -273,7 +253,6 @@ const OrganizationChartD3 = ({
       .style('pointer-events', 'none')
       .text('×');
 
-    // Add drag behavior for edit mode
     if (isEditMode) {
       const drag = d3.drag()
         .on('start', (event, d) => {
@@ -287,18 +266,15 @@ const OrganizationChartD3 = ({
         })
         .on('end', (event, d) => {
           if (!event.active) simulation.alphaTarget(0);
-          // Keep the new position
         });
 
       nodeGroup.call(drag);
     }
 
-    // Add connection behavior
     nodeGroup.on('click', (event, d) => {
       if (!isEditMode) return;
       
       if (isConnecting && selectedNode && selectedNode.id !== d.id) {
-        // Create new connection
         const newLink = {
           source: selectedNode.id,
           target: d.id,
@@ -308,17 +284,14 @@ const OrganizationChartD3 = ({
         setIsConnecting(false);
         setSelectedNode(null);
       } else if (!isConnecting) {
-        // Start connecting
         setSelectedNode(d);
         setIsConnecting(true);
       } else {
-        // Cancel connection
         setIsConnecting(false);
         setSelectedNode(null);
       }
     });
 
-    // Add double-click to add new node
     svg.on('dblclick', (event) => {
       if (!isEditMode) return;
       
@@ -340,31 +313,25 @@ const OrganizationChartD3 = ({
       setNodes(prev => [...prev, newNode]);
     });
 
-    // Update positions on simulation tick
     simulation.on('tick', () => {
-      // Update link positions with curves
       link.attr('d', d => {
         const dx = d.target.x - d.source.x;
         const dy = d.target.y - d.source.y;
         const dr = Math.sqrt(dx * dx + dy * dy);
         
-        // Create curved path
         const sweep = dx > 0 ? 1 : 0;
         return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
       });
 
-      // Update node positions
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    // Cleanup function
     return () => {
       simulation.stop();
     };
 
   }, [nodes, links, isEditMode, isConnecting, selectedNode]);
 
-  // Handle saving
   const handleSave = useCallback(() => {
     const layoutData = {
       nodes: nodes.map(node => ({

@@ -2,7 +2,6 @@ import React from 'react';
 import { X, Download, Printer, Edit, Trash2 } from 'lucide-react';
 
 const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = false }) => {
-  // Handle case where jobdesc is null or undefined
   if (!jobdesc) {
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -32,9 +31,8 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
     );
   }
 
-  console.log('JobdescViewer - jobdesc data:', jobdesc); // Debug log
+  console.log('JobdescViewer - jobdesc data:', jobdesc);
   const handlePrint = () => {
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     const jobDescContent = document.querySelector('.border-2.border-black').innerHTML;
     
@@ -227,7 +225,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
   };
 
   const handleDownload = () => {
-    handlePrint(); // For now, use print dialog which can save as PDF
+    handlePrint();
   };
 
   return (
@@ -299,7 +297,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
                     className="max-w-full max-h-26 object-contain mb-2"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = "/images/dcilong.png"; // Fallback logo
+                      e.target.src = "/images/dcilong.png";
                     }}
                   />
                  

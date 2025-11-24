@@ -10,20 +10,16 @@ const QaDepartment = () => {
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
 
-  // Function to handle print/download
   const handlePrint = () => {
-    // Set data attributes on the print container for CSS targeting
     const printContainer = document.querySelector('.print-container');
     if (printContainer) {
       printContainer.setAttribute('data-paper', printSettings.paperSize);
       printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
     
-    // Set data attributes on document root for @page rules
     document.documentElement.setAttribute('data-paper', printSettings.paperSize);
     document.documentElement.setAttribute('data-orientation', printSettings.orientation);
     
-    // Create dynamic @page rule
     const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
     printStyle.id = 'dynamic-print-style';
     
@@ -352,7 +348,6 @@ const QaDepartment = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

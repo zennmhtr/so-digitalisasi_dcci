@@ -21,7 +21,6 @@ const SOChangeRequests = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
 
-  // Define permissions
   const isFirstApprover = user?.role?.permissions?.includes(
     "SO Changes First Approval"
   );
@@ -30,7 +29,7 @@ const SOChangeRequests = () => {
   );
   const canViewOwn = user?.role?.permissions?.includes(
     "View Own SO Change Requests"
-  ); // untuk karyawan
+  );
 
   const canApprove = isFirstApprover || isFinalApprover;
 
@@ -40,7 +39,6 @@ const SOChangeRequests = () => {
     canApprove: canApprove,
   });
 
-  // Debug logging
   useEffect(() => {
     const isFirstApprover = user?.role?.permissions?.includes(
       "SO Changes First Approval"
@@ -61,7 +59,6 @@ const SOChangeRequests = () => {
     });
   }, [user, canApprove]);
 
-  // Load requests
   useEffect(() => {
     loadRequests();
   }, [selectedTab]);
@@ -83,7 +80,6 @@ const SOChangeRequests = () => {
     }
   };
 
-  // Handle approve
   const handleApprove = async (requestId) => {
     if (!canApprove) {
       alert("You do not have permission to approve requests");
@@ -105,24 +101,19 @@ const SOChangeRequests = () => {
         const updatedRequest = response.data.data;
         console.log("✅ Approve response:", updatedRequest);
 
-        // If backend returned fully approved (second approver done) -> apply changes & redirect
         if (updatedRequest.status === "approved") {
           const applied = applyChangesToDashboard(updatedRequest);
           if (!applied) {
-            // If apply failed, close modal and refresh list
             setShowDetailModal(false);
             setReviewComments("");
             loadRequests();
           }
-          // applyChangesToDashboard will redirect to "/" if successful
         } else if (updatedRequest.status === "waiting_second_approval") {
-          // First approver accepted: show message and refresh list (DO NOT apply changes)
           alert("First approval recorded. Waiting for second approver.");
           setShowDetailModal(false);
           setReviewComments("");
           loadRequests();
         } else {
-          // Fallback: just refresh
           setShowDetailModal(false);
           setReviewComments("");
           loadRequests();
@@ -137,7 +128,6 @@ const SOChangeRequests = () => {
     }
   };
 
-  // Handle Revisi
   const handleRevisi = async (requestId) => {
     if (!canApprove) {
       alert("You do not have permission to revisi requests");
@@ -176,14 +166,12 @@ const SOChangeRequests = () => {
     }
   };
 
-  // Handle reject
   const handleReject = async (requestId) => {
     if (!canApprove) {
       alert("You do not have permission to reject requests");
       return;
     }
 
-    // Validate review comments - MUST have reason for rejection
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments || trimmedComments.length === 0) {
       setShowValidationError(true);
@@ -191,7 +179,6 @@ const SOChangeRequests = () => {
         "⚠️ Please provide a reason for rejection in the Review Comments field."
       );
 
-      // Auto hide error after 5 seconds
       setTimeout(() => {
         setShowValidationError(false);
       }, 5000);
@@ -226,7 +213,6 @@ const SOChangeRequests = () => {
     }
   };
 
-  // Handle cancel
   const handleCancel = async (requestId) => {
     if (!confirm("Are you sure you want to cancel this request?")) {
       return;
@@ -249,24 +235,20 @@ const SOChangeRequests = () => {
     }
   };
 
-  // Apply approved changes to dashboard
   const applyChangesToDashboard = (request) => {
     try {
       const { proposedData } = request;
 
       console.log("🔄 Applying changes to dashboard:", proposedData);
 
-      // Check if proposedData has organizationData and layoutData structure
       if (proposedData && proposedData.organizationData) {
         console.log("✅ Found organizationData, saving to localStorage...");
 
-        // Save organization data to localStorage
         localStorage.setItem(
           "dashboard-organization-data",
           JSON.stringify(proposedData.organizationData)
         );
 
-        // Save layout data if exists
         if (proposedData.layoutData) {
           console.log("✅ Found layoutData, saving to localStorage...");
           localStorage.setItem(
@@ -277,17 +259,14 @@ const SOChangeRequests = () => {
 
         console.log("✅ Changes applied to dashboard localStorage");
 
-        // Show success message and reload page to reflect changes
         alert(
           "✅ Request approved successfully! Dashboard will reload to show changes."
         );
 
-        // Reload the page to dashboard
         window.location.href = "/";
 
         return true;
       } else {
-        // Old format - apply based on affected section
         console.log(
           "⚠️ Using old format, applying based on affectedSection..."
         );
@@ -329,7 +308,6 @@ const SOChangeRequests = () => {
 
         console.log("✅ Changes applied to dashboard (old format)");
 
-        // Show success message and reload page
         alert(
           "✅ Request approved successfully! Dashboard will reload to show changes."
         );
@@ -346,15 +324,13 @@ const SOChangeRequests = () => {
     }
   };
 
-  // View request detail
   const viewDetail = (request) => {
     setSelectedRequest(request);
     setReviewComments("");
-    setShowValidationError(false); // Reset validation error
+    setShowValidationError(false);
     setShowDetailModal(true);
   };
 
-  // Get status badge
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: {
@@ -386,7 +362,7 @@ const SOChangeRequests = () => {
         color: "bg-orange-100 text-orange-800",
         icon: MessageSquare,
         text: "Revisi",
-      }, // <—
+      },
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -402,7 +378,6 @@ const SOChangeRequests = () => {
     );
   };
 
-  // Get priority badge
   const getPriorityBadge = (priority) => {
     const colors = {
       low: "bg-gray-100 text-gray-700",
@@ -422,7 +397,6 @@ const SOChangeRequests = () => {
     );
   };
 
-  // Format date
   const formatDate = (date) => {
     return new Date(date).toLocaleString("id-ID", {
       year: "numeric",
@@ -433,10 +407,8 @@ const SOChangeRequests = () => {
     });
   };
 
-  // Filter requests by tab
   const filteredRequests = requests;
 
-  // If user has neither Approve nor View Own permission => deny access
   if (!canApprove && !canViewOwn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -739,7 +711,7 @@ const SOChangeRequests = () => {
                       value={reviewComments}
                       onChange={(e) => {
                         setReviewComments(e.target.value);
-                        setShowValidationError(false); // Clear error when typing
+                        setShowValidationError(false);
                       }}
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                         showValidationError

@@ -87,7 +87,6 @@ const SOBagianChangeRequests = () => {
     }
   };
 
-  // Handle Approve
   const handleApprove = async (requestId) => {
     if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to approve requests");
@@ -113,11 +112,10 @@ const SOBagianChangeRequests = () => {
     } catch (error) {
       console.error("❌ Error approving request:", error);
       alert(error.response?.data?.message || "Failed to approve request");
-      setActionLoading(false); // Set loading false hanya jika error
+      setActionLoading(false); 
     }
   };
 
-  // Handle Revisi
   const handleRevisi = async (requestId) => {
     if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to revisi requests");
@@ -156,7 +154,6 @@ const SOBagianChangeRequests = () => {
     }
   };
 
-  // Handle Reject
   const handleReject = async (requestId) => {
     if (!canApproveRequest(selectedRequest)) {
       alert("You do not have permission to reject requests");
@@ -203,7 +200,6 @@ const SOBagianChangeRequests = () => {
     }
   };
 
-  // Handle Cancel
   const handleCancel = async (requestId) => {
     if (!confirm("Are you sure you want to cancel this request?")) {
       return;
@@ -661,10 +657,10 @@ const SOBagianChangeRequests = () => {
                   <div
                     className={`border-l-4 p-4 ${
                       selectedRequest.status === "rejected"
-                        ? "bg-red-50 border-red-500" // ✅ Styling untuk rejected
+                        ? "bg-red-50 border-red-500" 
                         : selectedRequest.status === "revisi"
-                        ? "bg-orange-50 border-orange-500" // Styling untuk revisi
-                        : "bg-blue-50 border-blue-500" // Default styling
+                        ? "bg-orange-50 border-orange-500" 
+                        : "bg-blue-50 border-blue-500"
                     }`}
                   >
                     <p className="text-gray-700">

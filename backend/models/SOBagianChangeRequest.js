@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const soBagianChangeRequestSchema = new mongoose.Schema(
   {
-    // Request Information
     title: {
       type: String,
       required: true,
@@ -12,38 +11,32 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Requested By
     requestedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    // Department ID
     department: {
       type: String,
       required: true,
     },
 
-    // SO Data Changes
     changeType: {
       type: String,
       enum: ["update", "add", "delete"],
       required: true,
     },
 
-    // Store the new SO data that is being requested
     proposedData: {
       type: mongoose.Schema.Types.Mixed,
       required: true,
     },
 
-    // Store the current/old SO data for comparison
     currentData: {
       type: mongoose.Schema.Types.Mixed,
     },
 
-    // Status
     status: {
       type: String,
       enum: [
@@ -56,7 +49,6 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    // Approval Information
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -76,14 +68,12 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       type: Date,
     },
 
-    // Priority
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],
       default: "medium",
     },
 
-    // Metadata
     submittedAt: {
       type: Date,
       default: Date.now,
@@ -94,7 +84,6 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for faster queries
 soBagianChangeRequestSchema.index({ requestedBy: 1, status: 1 });
 soBagianChangeRequestSchema.index({ status: 1, createdAt: -1 });
 soBagianChangeRequestSchema.index(({department: 1, status: 1}));

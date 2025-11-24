@@ -9,23 +9,18 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
   const [positions, setPositions] = useState({});
   const containerRef = useRef(null);
 
-  // Check permissions
   const canViewSODetails = user?.role?.permissions?.includes('View SO Details') || false;
 
-  // Initialize positions based on exact dashboard layout
   useEffect(() => {
     if (!organizationData) return;
 
     const initialPositions = {};
     
-    // Default positions matching dashboard exactly
     const defaultPositions = {
-      // Board of Commissioners - centered at top
       'commissioners-header': { x: 400, y: 20 },
       'president-commissioner': { x: 250, y: 100 },
       'commissioners-list': { x: 470, y: 100 },
       
-      // Column headers - exact 5-column grid
       'header-bod': { x: 50, y: 250 },
       'header-management': { x: 250, y: 250 },
       'header-division': { x: 450, y: 250 },
@@ -33,7 +28,6 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
       'header-section': { x: 850, y: 250 },
     };
 
-    // Set positions from saved data or use defaults
     Object.keys(defaultPositions).forEach(key => {
       initialPositions[key] = organizationData.positions?.[key] || defaultPositions[key];
     });
@@ -53,10 +47,10 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.management) {
       organizationData.structure.management.forEach((item, index) => {
         const key = `management-${item.id}`;
-        let yPos = 500; // Start after BOD spacing
+        let yPos = 500; 
         
         if (item.code === 'MIO1.0') yPos = 500;
-        else if (item.code === 'MDO1.0') yPos = 590; // Combined MDO box
+        else if (item.code === 'MDO1.0') yPos = 590; 
         else if (item.code === 'MRO1.0') yPos = 760;
         else if (item.code === 'CRO1.0') yPos = 850;
         else if (item.code === 'CO2.0') yPos = 940;
@@ -69,7 +63,7 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.divisions) {
       organizationData.structure.divisions.forEach((item, index) => {
         const key = `division-${item.id}`;
-        let yPos = 650; // Align with content
+        let yPos = 650; //
         if (index === 1) yPos = 750;
         if (index === 2) yPos = 850;
         
@@ -102,9 +96,8 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.sections) {
       organizationData.structure.sections.forEach((item, index) => {
         const key = `section-${item.id}`;
-        let yPos = 320 + index * 90; // Basic spacing
+        let yPos = 320 + index * 90; 
         
-        // Special positioning for specific items
         const specialPositions = {
           3: 750,  // MARKETING after large gap
           4: 840,  // ENGINEERING
@@ -160,7 +153,6 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
 
   const handleMouseUp = () => {
     if (draggedItem) {
-      // Save positions to organizationData
       const updatedData = {
         ...organizationData,
         positions: positions
@@ -199,7 +191,6 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     const position = positions[itemKey] || { x: 0, y: 0 };
     const isDragging = draggedItem?.key === itemKey;
 
-    // Higher z-index for commissioners to ensure they're above header
     const isCommissioner = itemKey.includes('commissioners') || itemKey.includes('president-commissioner');
     const zIndex = isDragging ? 'z-50' : (isCommissioner ? 'z-30' : 'z-10');
 
@@ -354,7 +345,6 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
       {/* Draggable Management Cards */}
       {organizationData.structure?.management?.map((item) => {
         if (item.code === 'MDO1.0') {
-          // Combined MDO box
           const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
           return (
             <DraggableCard key="mdo-combined" itemKey={`management-${item.id}`}>
@@ -404,10 +394,8 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
             </DraggableCard>
           );
         } else if (item.code === 'MDO2.0') {
-          // Skip MDO2.0 as it's handled in the combined box
           return null;
         } else {
-          // Regular management item
           return (
             <DraggableCard key={item.id} itemKey={`management-${item.id}`}>
               <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-44 ${
