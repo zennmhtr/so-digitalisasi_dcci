@@ -126,8 +126,10 @@ const Layout = ({ children, sidebarVisible = true }) => {
   });
 
   const hasSOBagianChangeRequestsAccess = 
-    userPermissions?.includes("SO Bagian Approval") ||
-    userPermissions?.includes("SO Bagian Request");
+    userPermissions?.includes("SO Changes First Approval") ||
+    userPermissions?.includes("SO Bagian Request") ||
+    userPermissions?.some((perm) =>
+    perm.startsWith("SO Bagian") && perm.endsWith("Approval"));
   
   console.log("🔐 Layout SO Bagian Change Requests Check:", {
     userName: user?.name,
@@ -154,7 +156,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
     hasApprovePermission:
     userPermissions?.includes("SO Changes First Approval") ||
     userPermissions?.includes("SO Changes Final Approval") ||
-    userPermissions?.includes("SO Bagian Approval"),
+    userPermissions?.some((perm) =>
+    perm.startsWith("SO Bagian") && perm.endsWith("Approval")),
     rawUserObject: user,
   });
 

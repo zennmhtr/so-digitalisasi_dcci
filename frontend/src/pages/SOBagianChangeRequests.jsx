@@ -25,14 +25,15 @@ const SOBagianChangeRequests = () => {
       "Finance Department": "SO Bagian Finance Approval",
       "HRGA & IT Department": "SO Bagian HRGA & IT Approval",
       "Management Development": "SO Bagian Management Development Approval",
-      "Management Representative": "SO Bagian Management Representative Approval",
+      "Management Representative":
+        "SO Bagian Management Representative Approval",
       "Manufacturing Battery": "SO Bagian Manufacturing Battery Approval",
       "Manufacturing Cable": "SO Bagian Manufacturing Cable Approval",
       "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
       "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
       "MI & SHE": "SO Bagian MI & SHE Approval",
-      "PPIC": "SO Bagian PPIC Approval",
-      "Purchasing": "SO Bagian Purchasing Approval",
+      PPIC: "SO Bagian PPIC Approval",
+      Purchasing: "SO Bagian Purchasing Approval",
       "QA Department": "SO Bagian QA Approval",
     };
     return mapping[departmentName] || null;
@@ -40,18 +41,24 @@ const SOBagianChangeRequests = () => {
 
   const canApproveRequest = (request) => {
     const userPermissions = user?.role?.permissions || [];
+
     if (userPermissions.includes("Manage Users")) return true;
+    if (userPermissions.includes("SO Changes First Approval")) return true;
 
     const requiredPermission = getDepartmentApprovalPermission(request.department);
-    return requiredPermission && userPermissions.includes(requiredPermission);
+    const isManagerApprover =
+      requiredPermission && userPermissions.includes(requiredPermission);
+
+    return isManagerApprover;
   };
 
   const hasAnyApprovalPermission = () => {
     const userPermissions = user?.role?.permissions || [];
     if (userPermissions.includes("Manage Users")) return true;
+    if (userPermissions.includes("SO Changes First Approval")) return true;
 
-    return userPermissions.some(perm =>
-      perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    return userPermissions.some(
+      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
     );
   };
 
@@ -107,12 +114,25 @@ const SOBagianChangeRequests = () => {
       if (response.data.success) {
         const updatedRequest = response.data.data;
         console.log("✅ Approve response:", updatedRequest);
-        applyChangesToSOBagian(updatedRequest);
+        if (updatedRequest.status === "approved") {
+          applyChangesToSOBagian(updatedRequest);
+        } else if (updatedRequest.status === "waiting_director_approval") {
+          alert("First approval recorded. waiting for director approval.");
+          setShowDetailModal(false);
+          setReviewComments("");
+          loadRequests();
+          setActionLoading(false);
+        } else {
+          setShowDetailModal(false);
+          setReviewComments("");
+          loadRequests();
+          setActionLoading(false);
+        }
       }
     } catch (error) {
       console.error("❌ Error approving request:", error);
       alert(error.response?.data?.message || "Failed to approve request");
-      setActionLoading(false); 
+      setActionLoading(false);
     }
   };
 
@@ -317,6 +337,11 @@ const SOBagianChangeRequests = () => {
         icon: Clock,
         text: "Pending",
       },
+      waiting_director_approval: {
+        color: "bg-blue-100 text-blue-800",
+        icon: Clock,
+        text: "Waiting Director Approval",
+      },
       approved: {
         color: "bg-green-100 text-green-800",
         icon: CheckCircle,
@@ -331,11 +356,6 @@ const SOBagianChangeRequests = () => {
         color: "bg-gray-100 text-gray-800",
         icon: AlertCircle,
         text: "Cancelled",
-      },
-      waiting_second_approval: {
-        color: "bg-blue-100 text-blue-800",
-        icon: Clock,
-        text: "Waiting Second Approval",
       },
       revisi: {
         color: "bg-orange-100 text-orange-800",
@@ -424,6 +444,7 @@ const SOBagianChangeRequests = () => {
               {[
                 { id: "all", label: "All Request" },
                 { id: "pending", label: "Pending" },
+                { id: "waiting_director_approval", label: "Waiting Director" },
                 { id: "approved", label: "Approved" },
                 { id: "rejected", label: "Rejected" },
                 { id: "cancelled", label: "Cancel" },
@@ -458,113 +479,165 @@ const SOBagianChangeRequests = () => {
               <p className="text-gray-600">No request found</p>
             </div>
           ) : (
-            filteredRequests.map((request) => (
-              <div
-                key={request._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {request.title}
-                      </h3>
-                      {getStatusBadge(request.status)}
-                      {getPriorityBadge(request.priority)}
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                        {request.department}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-3">
-                      {request.description}
-                    </p>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <span>
-                        <strong>Requested by:</strong>{" "}
-                        {request.requestedBy?.name || "Unknown"}
-                      </span>
-                      <span>
-                        <strong>Date:</strong>
-                        {formatDate(request.createdAt)}
-                      </span>
-                    </div>
+            filteredRequests.map((request) => {
+              const userPermissions = user?.role?.permissions || [];
+              const isManagerApprover =
+                getDepartmentApprovalPermission(request.department) &&
+                userPermissions.includes(
+                  getDepartmentApprovalPermission(request.department)
+                );
+              const isDirectorApprover = userPermissions.includes(
+                "SO Changes First Approval"
+              );
+              return (
+                <div
+                  key={request._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {request.title}
+                        </h3>
+                        {getStatusBadge(request.status)}
+                        {getPriorityBadge(request.priority)}
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                          {request.department}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-3">
+                        {request.description}
+                      </p>
+                      <div className="flex items-center gap-6 text-sm text-gray-500">
+                        <span>
+                          <strong>Requested by:</strong>{" "}
+                          {request.requestedBy?.name || "Unknown"}
+                        </span>
+                        <span>
+                          <strong>Date:</strong>
+                          {formatDate(request.createdAt)}
+                        </span>
+                      </div>
 
-                    {request.approvedBy && (
-                      <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
-                        <span>
-                          <strong>Approved by:</strong>{" "}
-                          {request.approvedBy.name}
-                        </span>
-                        {request.approvedAt && (
+                      {(request.firstApprovedBy ||
+                        request.secondApprovedBy) && (
+                        <div className="mt-2 text-sm text-gray-500">
+                          <strong>Approval Stage:</strong>{" "}
+                          {request.firstApprovedBy && (
+                            <span>
+                              ✅ Approved By: {request.firstApprovedBy?.name}{" "}
+                              {request.firstApprovedAt
+                                ? `(${formatDate(request.firstApprovedAt)})`
+                                : ""}
+                            </span>
+                          )}
+                          {request.secondApprovedBy ? (
+                            <span>
+                              {" | ✅ Second Approve: "}
+                              {request.secondApprovedBy?.name}{" "}
+                              {request.secondApprovedAt
+                                ? `(${formatDate(request.secondApprovedAt)})`
+                                : ""}
+                            </span>
+                          ) : request.status === "waiting_director_approval" ? (
+                            <span className="text-blue-600">
+                              {" "}
+                              | 🕒 Waiting for Director Approval
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+
+                      {request.approvedBy && (
+                        <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
                           <span>
-                            <strong>Date:</strong>{" "}
-                            {formatDate(request.approvedAt)}
+                            <strong>Approved by:</strong>{" "}
+                            {request.approvedBy.name}
                           </span>
-                        )}
-                      </div>
-                    )}
-                    {request.reviewedBy && (
-                      <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
-                        <span>
-                          <strong>Reviewed by:</strong>{" "}
-                          {request.reviewedBy.name}
-                        </span>
-                        {request.reviewedAt && (
+                          {request.approvedAt && (
+                            <span>
+                              <strong>Date:</strong>{" "}
+                              {formatDate(request.approvedAt)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {request.reviewedBy && (
+                        <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
                           <span>
-                            <strong>Date:</strong>{" "}
-                            {formatDate(request.reviewedAt)}
+                            <strong>Reviewed by:</strong>{" "}
+                            {request.reviewedBy.name}
                           </span>
+                          {request.reviewedAt && (
+                            <span>
+                              <strong>Date:</strong>{" "}
+                              {formatDate(request.reviewedAt)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      {canApproveRequest(request) &&
+                        request.status === "pending" &&
+                        request.requestedBy?._id !== user?.id && (
+                          <button
+                            onClick={() => viewDetail(request)}
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
+                          >
+                            Review & Approve
+                          </button>
                         )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    {canApproveRequest(request) &&
-                      request.status === "pending" && (
+
+                      {canApproveRequest(request) &&
+                        request.status === "waiting_director_approval" &&
+                        request.requestedBy?._id !== user?.id && (
+                          <button
+                            onClick={() => viewDetail(request)}
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-400 text-white rounded hover:bg-blue-500 transition-colors"
+                          >
+                            Director Final Approve
+                          </button>
+                        )}
+
+                      {request.status === "revisi" && (
                         <button
                           onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
                         >
-                          Approve
+                          <MessageSquare className="w-4 h-4" />
+                          View Revisi
                         </button>
                       )}
 
-                    {request.status === "revisi" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        View Revisi
-                      </button>
-                    )}
-
-                    {request.status === "rejected" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        View Rejected
-                      </button>
-                    )}
-
-                    {canViewBagian &&
-                      !canApproveRequest(request) &&
-                      request.status === "pending" &&
-                      request.requestedBy?._id === user?.id && (
+                      {request.status === "rejected" && (
                         <button
-                          onClick={() => handleCancel(request._id)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors "
+                          onClick={() => viewDetail(request)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                         >
                           <XCircle className="w-4 h-4" />
-                          Cancel Request
+                          View Rejected
                         </button>
                       )}
+
+                      {canViewBagian &&
+                        !canApproveRequest(request) &&
+                        request.status === "pending" &&
+                        request.requestedBy?._id === user?.id && (
+                          <button
+                            onClick={() => handleCancel(request._id)}
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors "
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Cancel Request
+                          </button>
+                        )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -648,6 +721,53 @@ const SOBagianChangeRequests = () => {
                 </div>
               </div>
 
+              {(selectedRequest.firstApprovedBy ||
+                selectedRequest.secondApprovedBy) && (
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">
+                    Approval Progress:
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedRequest.firstApprovedBy && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <span>
+                          <strong>Manager Approval:</strong>{" "}
+                          {selectedRequest.firstApprovedBy.name}
+                        </span>
+                        {selectedRequest.firstApprovedAt && (
+                          <span className="text-gray-500">
+                            ({formatDate(selectedRequest.firstApprovedAt)})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {selectedRequest.secondApprovedBy ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <span>
+                          <strong>Director Approval:</strong>{" "}
+                          {selectedRequest.secondApprovedBy.name}
+                        </span>
+                        {selectedRequest.secondApprovedAt && (
+                          <span className="text-gray-500">
+                            ({formatDate(selectedRequest.secondApprovedAt)})
+                          </span>
+                        )}
+                      </div>
+                    ) : selectedRequest.status ===
+                      "waiting_director_approval" ? (
+                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                        <Clock className="w-5 h-5" />
+                        <span>
+                          <strong>Director Approval:</strong> Pending
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
               {/* Review Comments (if reviewed) */}
               {selectedRequest.reviewComments && (
                 <div>
@@ -657,13 +777,13 @@ const SOBagianChangeRequests = () => {
                   <div
                     className={`border-l-4 p-4 ${
                       selectedRequest.status === "rejected"
-                        ? "bg-red-50 border-red-500" 
+                        ? "bg-red-50 border-red-500"
                         : selectedRequest.status === "revisi"
-                        ? "bg-orange-50 border-orange-500" 
+                        ? "bg-orange-50 border-orange-500"
                         : "bg-blue-50 border-blue-500"
                     }`}
                   >
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 whitespace-pre-wrap">
                       {selectedRequest.reviewComments}
                     </p>
                     <p className="text-sm text-gray-500 mt-2">
@@ -675,7 +795,9 @@ const SOBagianChangeRequests = () => {
               )}
 
               {canApproveRequest(selectedRequest) &&
-                ["pending"].includes(selectedRequest.status) && (
+                ["pending", "waiting_director_approval"].includes(
+                  selectedRequest.status
+                ) && (
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-3">
                       <MessageSquare className="inline w-5 h-5 mr-2" />
@@ -758,6 +880,45 @@ const SOBagianChangeRequests = () => {
                       >
                         <CheckCircle className="w-4 h-4" />
                         Approve
+                      </button>
+                    </>
+                  )}
+                  {selectedRequest.status === "waiting_director_approval" && (
+                    <>
+                      <button
+                        onClick={() => handleReject(selectedRequest._id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-alowwed flex items-center gap-2"
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                      onClick={() => handleRevisi(selectedRequest._id)}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={actionLoading}
+                      >
+                        <AlertCircle className="w-4 h-4"/>
+                        Send for Revision
+                      </button>
+
+                      <button 
+                      onClick={() => handleApprove(selectedRequest._id)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={actionLoading}
+                      >
+                        <CheckCircle className="w-4 h-4"/>
+                        Final Approve
                       </button>
                     </>
                   )}

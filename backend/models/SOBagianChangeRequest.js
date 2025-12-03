@@ -41,6 +41,7 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
       type: String,
       enum: [
         "pending",
+        "waiting_director_approval",
         "approved",
         "rejected",
         "cancelled",
@@ -58,6 +59,22 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
     },
     reviewComments: {
       type: String,
+    },
+
+    firstApprovedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    firstApprovedAt: {
+      type: Date,
+    },
+
+    secondApprovedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    secondApprovedAt: {
+      type: Date,
     },
 
     approvedBy: {

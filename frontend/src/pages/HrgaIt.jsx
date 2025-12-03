@@ -239,9 +239,6 @@ const HrgaIt = () => {
                 <div className="flex flex-col h-full">
                   {/* Header */}
                   <div className="flex border-b border-gray-400">
-                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      <p className="text-sm font-bold">HRD1.0</p>
-                    </div>
                     <div className="p-2 flex-1 text-center bg-gray-100">
                       <p className="text-sm font-semibold leading-tight whitespace-nowrap">HRDGA & IT</p>
                     </div>
@@ -250,7 +247,7 @@ const HrgaIt = () => {
                   {/* Staff dalam Section Head */}
                   <div className="flex border-b border-gray-300 flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      <p className="text-sm font-bold"></p>
+                      <p className="text-sm font-bold">HRD1.0</p>
                     </div>
                     <div className="p-3 flex-1 text-center flex flex-col justify-center">
                       <p className="text-sm font-semibold leading-tight">DIKI WAHYUDI *</p>
