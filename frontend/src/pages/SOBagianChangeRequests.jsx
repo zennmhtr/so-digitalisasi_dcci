@@ -45,11 +45,20 @@ const SOBagianChangeRequests = () => {
     if (userPermissions.includes("Manage Users")) return true;
     if (userPermissions.includes("SO Changes First Approval")) return true;
 
-    const requiredPermission = getDepartmentApprovalPermission(request.department);
+    const requiredPermission = getDepartmentApprovalPermission(
+      request.department
+    );
     const isManagerApprover =
       requiredPermission && userPermissions.includes(requiredPermission);
 
     return isManagerApprover;
+  };
+
+  const isRequesterManager = (request) => {
+    const requesterPermissions = request.requestedBy?.role?.permissions || [];
+    return requesterPermissions.some(
+      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    );
   };
 
   const hasAnyApprovalPermission = () => {
@@ -441,27 +450,45 @@ const SOBagianChangeRequests = () => {
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px">
-              {[
-                { id: "all", label: "All Request" },
-                { id: "pending", label: "Pending" },
-                { id: "waiting_director_approval", label: "Waiting Director" },
-                { id: "approved", label: "Approved" },
-                { id: "rejected", label: "Rejected" },
-                { id: "cancelled", label: "Cancel" },
-                { id: "revisi", label: "Revisi" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedTab(tab.id)}
-                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    selectedTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {(() => {
+                const userPermissions = user?.role?.permissions || [];
+                const isDirector =
+                  userPermissions.includes("SO Changes First Approval") ||
+                  userPermissions.includes("Manage Users");
+
+                return [
+                  { id: "all", label: "All Request" },
+                  { id: "pending", label: "Pending" },
+                  {
+                    id: "waiting_director_approval",
+                    label: "Waiting Director",
+                  },
+                  { id: "approved", label: "Approved" },
+                  { id: "rejected", label: "Rejected" },
+                  { id: "cancelled", label: "Cancel" },
+                  { id: "revisi", label: "Revisi" },
+                ]
+                  .filter((tab) => {
+                    // ✅ Hilangkan tab "Cancel" untuk Director
+                    if (tab.id === "cancelled") {
+                      return !isDirector;
+                    }
+                    return true;
+                  })
+                  .map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setSelectedTab(tab.id)}
+                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        selectedTab === tab.id
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ));
+              })()}
             </nav>
           </div>
         </div>
@@ -581,24 +608,87 @@ const SOBagianChangeRequests = () => {
                     <div className="flex gap-2 ml-4">
                       {canApproveRequest(request) &&
                         request.status === "pending" &&
-                        request.requestedBy?._id !== user?.id && (
-                          <button
-                            onClick={() => viewDetail(request)}
-                            className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
-                          >
-                            Review & Approve
-                          </button>
+                        request.requestedBy?._id !== user?.id &&
+                        !isRequesterManager(request) && (
+                          <>
+                            {getDepartmentApprovalPermission(
+                              request.department
+                            ) &&
+                            userPermissions.includes(
+                              getDepartmentApprovalPermission(
+                                request.department
+                              )
+                            ) ? (
+                              <button
+                                onClick={() => viewDetail(request)}
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
+                              >
+                                Review & Approve
+                              </button>
+                            ) : (
+                              <button
+                                disabled
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded cursor-not-allowed"
+                                title="Waiting for Manager Approval First"
+                              >
+                                <Clock className="w-4 h-4" />
+                                Wait Manager Approval
+                              </button>
+                            )}
+                          </>
+                        )}
+
+                      {canApproveRequest(request) &&
+                        request.status === "pending" &&
+                        request.requestedBy?._id !== user?.id &&
+                        isRequesterManager(request) && (
+                          <>
+                            {userPermissions.includes(
+                              "SO Changes First Approval"
+                            ) || userPermissions.includes("Manage Users") ? (
+                              <button
+                                onClick={() => viewDetail(request)}
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
+                              >
+                                Review & Approve
+                              </button>
+                            ) : (
+                              <button
+                                disabled
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded cursor-not-allowed"
+                                title="Only Director can approve Manager's request"
+                              >
+                                <Clock className="w-4 h-4" />
+                                Director Approval Required
+                              </button>
+                            )}
+                          </>
                         )}
 
                       {canApproveRequest(request) &&
                         request.status === "waiting_director_approval" &&
                         request.requestedBy?._id !== user?.id && (
-                          <button
-                            onClick={() => viewDetail(request)}
-                            className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-400 text-white rounded hover:bg-blue-500 transition-colors"
-                          >
-                            Director Final Approve
-                          </button>
+                          <>
+                            {userPermissions.includes(
+                              "SO Changes First Approval"
+                            ) || userPermissions.includes("Manage Users") ? (
+                              <button
+                                onClick={() => viewDetail(request)}
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                              >
+                                Director Final Approve
+                              </button>
+                            ) : (
+                              <button
+                                disabled
+                                className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-100 text-blue-600 rounded cursor-not-allowed"
+                                title="Waiting for Director approval"
+                              >
+                                <Clock className="w-4 h-4" />
+                                Wait For Director's Approval
+                              </button>
+                            )}
+                          </>
                         )}
 
                       {request.status === "revisi" && (
@@ -621,13 +711,14 @@ const SOBagianChangeRequests = () => {
                         </button>
                       )}
 
-                      {canViewBagian &&
-                        !canApproveRequest(request) &&
-                        request.status === "pending" &&
-                        request.requestedBy?._id === user?.id && (
+                      {request.status === "pending" &&
+                        request.requestedBy?._id === user?.id &&
+                        !userPermissions.includes(
+                          "SO Changes First Approval"
+                        ) && (
                           <button
                             onClick={() => handleCancel(request._id)}
-                            className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors "
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                           >
                             <XCircle className="w-4 h-4" />
                             Cancel Request
@@ -904,20 +995,20 @@ const SOBagianChangeRequests = () => {
                       </button>
 
                       <button
-                      onClick={() => handleRevisi(selectedRequest._id)}
-                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      disabled={actionLoading}
+                        onClick={() => handleRevisi(selectedRequest._id)}
+                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={actionLoading}
                       >
-                        <AlertCircle className="w-4 h-4"/>
+                        <AlertCircle className="w-4 h-4" />
                         Send for Revision
                       </button>
 
-                      <button 
-                      onClick={() => handleApprove(selectedRequest._id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      disabled={actionLoading}
+                      <button
+                        onClick={() => handleApprove(selectedRequest._id)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={actionLoading}
                       >
-                        <CheckCircle className="w-4 h-4"/>
+                        <CheckCircle className="w-4 h-4" />
                         Final Approve
                       </button>
                     </>

@@ -96,7 +96,14 @@ router.get("/", auth, async (req, res) => {
     }
 
     const request = await SOBagianChangeRequest.find(filter)
-      .populate("requestedBy", "name email department")
+      .populate({
+        path: "requestedBy",
+        select: "name email department role",
+        populate: {
+          path: "role",
+          select: "name permissions"
+        }
+      })
       .populate("reviewedBy", "name email")
       .populate("firstApprovedBy", "name email")
       .populate("secondApprovedBy", "name email")
@@ -614,7 +621,6 @@ router.put(
         });
       }
 
-      // ✅ Check if requester is Manager
       const requesterPermissions = request.requestedBy.role?.permissions || [];
       const isRequesterManager = isUserManager(requesterPermissions);
 
@@ -631,10 +637,8 @@ router.put(
         canRejectAll,
       });
 
-      // ✅ SCENARIO 1: Employee Request
       if (!isRequesterManager) {
         if (request.status === "pending") {
-          // Manager can reject at pending stage
           if (!isManagerApprover && !canRejectAll) {
             return res.status(403).json({
               success: false,
@@ -652,7 +656,6 @@ router.put(
           request.reviewComments = req.body.reviewComments;
 
         } else if (request.status === "waiting_director_approval") {
-          // Director can reject at waiting_director_approval stage
           if (!isDirectorApprover && !canRejectAll) {
             return res.status(403).json({
               success: false,
@@ -672,10 +675,8 @@ router.put(
             "Director rejection: " + req.body.reviewComments;
         }
       } 
-      // ✅ SCENARIO 2: Manager Request
       else {
         if (request.status === "pending") {
-          // Only Director can reject Manager's request
           if (!isDirectorApprover && !canRejectAll) {
             return res.status(403).json({
               success: false,
@@ -693,7 +694,6 @@ router.put(
           request.reviewComments = req.body.reviewComments;
 
         } else if (request.status === "waiting_director_approval") {
-          // Manager requests should NOT reach this status
           return res.status(400).json({
             success: false,
             message: "Invalid status: Manager requests should not reach waiting_director_approval",
