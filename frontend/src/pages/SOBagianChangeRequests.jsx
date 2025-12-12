@@ -32,8 +32,8 @@ const SOBagianChangeRequests = () => {
       "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
       "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
       "MI & SHE": "SO Bagian MI & SHE Approval",
-      PPIC: "SO Bagian PPIC Approval",
-      Purchasing: "SO Bagian Purchasing Approval",
+      "PPIC": "SO Bagian PPIC Approval",
+      "Purchasing": "SO Bagian Purchasing Approval",
       "QA Department": "SO Bagian QA Approval",
     };
     return mapping[departmentName] || null;
@@ -469,7 +469,6 @@ const SOBagianChangeRequests = () => {
                   { id: "revisi", label: "Revisi" },
                 ]
                   .filter((tab) => {
-                    // ✅ Hilangkan tab "Cancel" untuk Director
                     if (tab.id === "cancelled") {
                       return !isDirector;
                     }

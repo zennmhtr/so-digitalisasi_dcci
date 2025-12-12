@@ -1496,7 +1496,6 @@ const SoBagianEditor = () => {
     );
   };
 
-  // Helper function to create clickable code button
   const renderCodeButton = (person) => {
     if (!person || !person.empId) {
       return (
@@ -2780,7 +2779,7 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className=" bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">

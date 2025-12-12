@@ -16,8 +16,8 @@ const getDepartmentApprovalPermission = (departmentName) => {
     "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
     "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
     "MI & SHE": "SO Bagian MI & SHE Approval",
-    PPIC: "SO Bagian PPIC Approval",
-    Purchasing: "SO Bagian Purchasing Approval",
+    "PPIC": "SO Bagian PPIC Approval",
+    "Purchasing": "SO Bagian Purchasing Approval",
     "QA Department": "SO Bagian QA Approval",
   };
   return mapping[departmentName] || null;

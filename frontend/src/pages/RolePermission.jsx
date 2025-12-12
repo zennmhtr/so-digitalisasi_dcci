@@ -52,6 +52,7 @@ const RolePermission = () => {
     ],
 
     jobdescDepartments: [
+      "Job Desc Request",
       "Finance Department",
       "HRGA & IT Department",
       "Management Development",
@@ -65,6 +66,7 @@ const RolePermission = () => {
       "Purchasing",
       "QA Department",
     ],
+    
     soDetailsView: [
       "View Finance SO",
       "View HRGA & IT SO",
