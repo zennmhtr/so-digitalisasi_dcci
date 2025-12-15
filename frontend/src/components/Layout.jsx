@@ -125,15 +125,32 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userPermissions: userPermissions,
   });
 
-  const hasSOBagianChangeRequestsAccess = 
+  const hasSOBagianChangeRequestsAccess =
     userPermissions?.includes("SO Changes First Approval") ||
     userPermissions?.includes("SO Bagian Request") ||
-    userPermissions?.some((perm) =>
-    perm.startsWith("SO Bagian") && perm.endsWith("Approval"));
-  
+    userPermissions?.some(
+      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    );
+
   console.log("🔐 Layout SO Bagian Change Requests Check:", {
     userName: user?.name,
     hasSOBagianChangeRequestsAccess: hasSOBagianChangeRequestsAccess,
+    userPermissions: userPermissions,
+  });
+
+  const hasJobDescChangeRequestsAccess =
+    userPermissions?.includes("Job Desc Request") ||
+    userPermissions?.includes("Manage Users") ||
+    userPermissions?.includes("SO Changes First Approval") || 
+    userPermissions?.some(
+      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    );
+
+  console.log("🔍 Layout Job Desc Request Permission Check:", {
+    userName: user?.name,
+    hasJobDescChangeRequestsAccess: hasJobDescChangeRequestsAccess,
+    hasJobDescManagementAccess: hasJobdescAccess,
+    hasDirectorPermission: userPermissions?.includes("SO Changes First Approval"),
     userPermissions: userPermissions,
   });
 
@@ -150,14 +167,16 @@ const Layout = ({ children, sidebarVisible = true }) => {
     permissionsIsArray: Array.isArray(userPermissions),
     permissionsLength: userPermissions?.length,
     hasDashboardEditorAccess: hasDashboardEditorAccess,
+    hasJobDescChangeRequestsAccess: hasJobDescChangeRequestsAccess,
     hasSOChangeRequestsAccess: hasSOChangeRequestsAccess,
     hasSOBagianChangeRequestsAccess: hasSOBagianChangeRequestsAccess,
     hasSubmitPermission: userPermissions?.includes("Submit SO Changes"),
     hasApprovePermission:
-    userPermissions?.includes("SO Changes First Approval") ||
-    userPermissions?.includes("SO Changes Final Approval") ||
-    userPermissions?.some((perm) =>
-    perm.startsWith("SO Bagian") && perm.endsWith("Approval")),
+      userPermissions?.includes("SO Changes First Approval") ||
+      userPermissions?.includes("SO Changes Final Approval") ||
+      userPermissions?.some(
+        (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+      ),
     rawUserObject: user,
   });
 
@@ -198,6 +217,15 @@ const Layout = ({ children, sidebarVisible = true }) => {
             name: "Job Description",
             href: "/jobdesc-management",
             icon: FileText,
+          },
+        ]
+      : []),
+    ...(hasJobDescChangeRequestsAccess
+      ? [
+          {
+            name: "JobDesc Change Requests",
+            href: "/jobdesc-change-requests",
+            icon: GitPullRequest,
           },
         ]
       : []),

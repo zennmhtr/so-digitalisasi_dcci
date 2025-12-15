@@ -27,6 +27,7 @@ import DepartmentEditor from './components/DepartmentEditor';
 import JobdescManagement from './pages/JobdescManagement';
 import SOChangeRequests from './pages/SOChangeRequests';
 import SOBagianChangeRequests from './pages/SOBagianChangeRequests';
+import JobDescChangeRequests from './pages/JobDescChangeRequests';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -168,6 +169,13 @@ function AppRoutes() {
         <ProtectedRoute>
           <Layout>
             <SOBagianChangeRequests />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/jobdesc-change-requests" element={
+        <ProtectedRoute>
+          <Layout>
+            <JobDescChangeRequests />
           </Layout>
         </ProtectedRoute>
       } />

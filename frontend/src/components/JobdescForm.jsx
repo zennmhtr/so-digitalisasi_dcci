@@ -125,47 +125,51 @@ const JobdescForm = ({ user, existingJobdesc, onSave, onCancel, selectedDepartme
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) {
+    return;
+  }
 
-    setSaving(true);
-    
-    try {
-      const cleanData = {
-        ...formData,
-        responsibilities: formData.responsibilities.filter(r => r.trim()),
-        accountabilities: formData.accountabilities.filter(a => a.trim()),
-        interactions: {
-          internal: formData.interactions.internal.filter(i => i.trim()),
-          external: []
-        },
-        competence: {
-          managerial: formData.competence.managerial.filter(m => m.trim()),
-          technical: [],
-          behavioral: [],
-          skill: formData.competence.skill.filter(s => s.trim())
-        },
-        jobSpecification: {
-          ...formData.jobSpecification,
-          skills: [],
-          certification: []
-        },
-        tanggal: formData.tanggal,
-        revisi: formData.revisi
-      };
+  setSaving(true);
+  
+  try {
+    const cleanData = {
+      ...formData,
+      responsibilities: formData.responsibilities.filter(r => r.trim()),
+      accountabilities: formData.accountabilities.filter(a => a.trim()),
+      interactions: {
+        internal: formData.interactions.internal.filter(i => i.trim()),
+        external: []
+      },
+      competence: {
+        managerial: formData.competence.managerial.filter(m => m.trim()),
+        technical: [],
+        behavioral: [],
+        skill: formData.competence.skill.filter(s => s.trim())
+      },
+      jobSpecification: {
+        ...formData.jobSpecification,
+        skills: [],
+        certification: []
+      },
+      tanggal: formData.tanggal,
+      revisi: formData.revisi
+    };
 
+    if (existingJobdesc) {
       onSave(cleanData);
-    } catch (error) {
-      console.error('Error saving jobdesc:', error);
-      alert('Failed to save job description. Please try again.');
-    } finally {
-      setSaving(false);
+    } else {
+      onSave(cleanData, true); 
     }
-  };
+  } catch (error) {
+    console.error('Error saving jobdesc:', error);
+    alert('Failed to save job description. Please try again.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">

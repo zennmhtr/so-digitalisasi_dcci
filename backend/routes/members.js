@@ -99,12 +99,14 @@ router.get('/department/:departmentId', auth, async (req, res) => {
 router.post('/', [
   auth,
   body('name').notEmpty().withMessage('Name is required'),
+  body('noPNK').notEmpty().withMessage('No PNK is required'),
   body('position').notEmpty().withMessage('Position is required'),
   body('department').notEmpty().withMessage('Department is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation errors',
@@ -113,6 +115,13 @@ router.post('/', [
     }
 
     const { name, position, department, noPNK, email } = req.body;
+
+    console.log('📥 Received member data:', {
+      name,
+      noPNK,
+      position,
+      department
+    });
 
     const existingMember = await Member.findOne({
       name: name,
@@ -126,25 +135,12 @@ router.post('/', [
       });
     }
 
-    if (noPNK || email) {
-      const conflicts = [];
-      
-      if (noPNK) {
-        const noPNKConflict = await Member.findOne({ noPNK: noPNK }) || 
-                             await User.findOne({ noPNK: noPNK });
-        if (noPNKConflict) conflicts.push('NPK');
-      }
-      
-      if (email) {
-        const emailConflict = await Member.findOne({ email: email }) || 
-                             await User.findOne({ email: email });
-        if (emailConflict) conflicts.push('Email');
-      }
-      
-      if (conflicts.length > 0) {
+    if (noPNK) {
+      const noPNKConflict = await Member.findOne({ noPNK: noPNK });
+      if (noPNKConflict) {
         return res.status(400).json({
           success: false,
-          message: `${conflicts.join(' and ')} already exists`
+          message: 'NPK already exists'
         });
       }
     }

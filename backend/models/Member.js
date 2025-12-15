@@ -17,6 +17,7 @@ const memberSchema = new mongoose.Schema({
   },
   noPNK: {
     type: String,
+    unique: true,
     sparse: true 
   },
   email: {

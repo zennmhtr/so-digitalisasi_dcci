@@ -108,4 +108,15 @@ export const soBagianChangeRequestsAPI = {
   delete: (id) => api.delete(`/so-bagian-change-requests/${id}`),
 };
 
+export const jobDescChangeRequestsAPI = {
+  getAll: (params) => api.get('/jobdesc-change-requests', { params }),
+  getById: (id) => api.get(`/jobdesc-change-requests/${id}`),
+  create: (requestData) => api.post('/jobdesc-change-requests', requestData),
+  approve: (id, reviewComments) => api.put(`/jobdesc-change-requests/${id}/approve`, { reviewComments }),
+  revisi: (id, reviewComments) => api.put(`/jobdesc-change-requests/${id}/revisi`, { reviewComments }),
+  reject: (id, reviewComments) => api.put(`/jobdesc-change-requests/${id}/reject`, { reviewComments }),
+  cancel: (id) => api.put(`/jobdesc-change-requests/${id}/cancel`),
+  delete: (id) => api.delete(`/jobdesc-change-requests/${id}`),
+}
+
 export default api;
