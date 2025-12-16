@@ -1151,9 +1151,7 @@ const JobdescManagement = () => {
                                         <Edit className="w-4 h-4" />
                                       </button>
                                     )}
-                                    {!canCreate && (
-                                      <button disabled>Edit</button>
-                                    )}
+                                    
                                     {jobDescriptions[member.id] && (
                                       <button
                                         onClick={() => handlePrint(member)}
@@ -1240,6 +1238,7 @@ const JobdescManagement = () => {
             setShowJobdescViewer(false);
             handleDeleteJobdesc(selectedMember);
           }}
+          canDelete={canCreateJobdesc(selectedMember)}
         />
       )}
     </div>

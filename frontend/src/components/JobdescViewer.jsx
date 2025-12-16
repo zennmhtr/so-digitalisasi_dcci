@@ -1,13 +1,23 @@
-import React from 'react';
-import { X, Download, Printer, Edit, Trash2 } from 'lucide-react';
+import React from "react";
+import { X, Download, Printer, Edit, Trash2 } from "lucide-react";
 
-const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = false }) => {
+const JobdescViewer = ({
+  user,
+  jobdesc,
+  onClose,
+  onEdit,
+  onDelete,
+  viewOnly = false,
+  canDelete = false,
+}) => {
   if (!jobdesc) {
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div className="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">No Job Description Found</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              No Job Description Found
+            </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 p-1"
@@ -16,7 +26,7 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
             </button>
           </div>
           <p className="text-gray-600 mb-4">
-            No job description found for {user?.name || 'this member'}.
+            No job description found for {user?.name || "this member"}.
           </p>
           <div className="flex justify-end space-x-3">
             <button
@@ -31,11 +41,13 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
     );
   }
 
-  console.log('JobdescViewer - jobdesc data:', jobdesc);
+  console.log("JobdescViewer - jobdesc data:", jobdesc);
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    const jobDescContent = document.querySelector('.border-2.border-black').innerHTML;
-    
+    const printWindow = window.open("", "_blank");
+    const jobDescContent = document.querySelector(
+      ".border-2.border-black"
+    ).innerHTML;
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -214,10 +226,10 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
       </body>
       </html>
     `);
-    
+
     printWindow.document.close();
     printWindow.focus();
-    
+
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
@@ -234,26 +246,30 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
         {/* Header with Actions */}
         <div className="flex justify-between items-center mb-6 print:hidden">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">Job Description</h3>
+            <h3 className="text-xl font-semibold text-gray-900">
+              Job Description
+            </h3>
             <p className="text-gray-600 text-sm mt-1">
-              Employee: <span className="font-medium">{user.name}</span> ({user.noPNK})
+              Employee: <span className="font-medium">{user.name}</span> (
+              {user.noPNK})
             </p>
           </div>
           <div className="flex items-center space-x-2">
             {!viewOnly && (
               <>
                 <button
-                  onClick={onEdit}
-                  className="flex items-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Edit Job Description"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </button>
-                <button
                   onClick={onDelete}
-                  className="flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete Job Description"
+                  disabled={!canDelete}
+                  className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                    canDelete
+                      ? "text-red-600 hover:bg-red-50 cursor-pointer"
+                      : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                  }`}
+                  title={
+                    canDelete
+                      ? "Delete Job Description"
+                      : "You don't have permission to delete"
+                  }
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Delete
@@ -284,26 +300,28 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
         </div>
 
         {/* Job Description Document Format */}
-        <div className="bg-white border-2 border-black print:border-black" style={{ fontFamily: 'Arial, sans-serif' }}>
+        <div
+          className="bg-white border-2 border-black print:border-black"
+          style={{ fontFamily: "Arial, sans-serif" }}
+        >
           {/* Header Section */}
           <div className="border-b-2 border-black">
             <div className="flex">
               {/* Logo and Company Section */}
               <div className="w-64 border-r-2 border-black p-2">
                 <div className="flex flex-col items-center">
-                  <img 
-                    src="/images/dcilong.png" 
-                    alt="Dharma Group Logo" 
+                  <img
+                    src="/images/dcilong.png"
+                    alt="Dharma Group Logo"
                     className="max-w-full max-h-26 object-contain mb-2"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "/images/dcilong.png";
                     }}
                   />
-                 
                 </div>
               </div>
-              
+
               {/* Title Section */}
               <div className="flex-1 border-r-2 border-black flex flex-col justify-between p-2">
                 <div></div>
@@ -313,15 +331,19 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div className="text-left">
                     <span className="font-medium">Tanggal: </span>
-                    <span>{jobdesc?.tanggal ? new Date(jobdesc.tanggal).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID')}</span>
+                    <span>
+                      {jobdesc?.tanggal
+                        ? new Date(jobdesc.tanggal).toLocaleDateString("id-ID")
+                        : new Date().toLocaleDateString("id-ID")}
+                    </span>
                   </div>
                   <div className="text-left">
                     <span className="font-medium">Revisi: </span>
-                    <span>{jobdesc?.revisi || '0'}</span>
+                    <span>{jobdesc?.revisi || "0"}</span>
                   </div>
                 </div>
               </div>
-              
+
               {/* Dibuat Section */}
               <div className="w-32 border-r-2 border-black">
                 <div className="border-b border-black p-1 text-center">
@@ -352,14 +374,14 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
                   <div className="flex">
                     <span className="font-bold w-32">DIVISION</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc?.division || '-'}</span>
+                    <span>{jobdesc?.division || "-"}</span>
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">POSITION TITLE</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc?.positionTitle || '-'}</span>
+                    <span>{jobdesc?.positionTitle || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -368,14 +390,20 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
                   <div className="flex">
                     <span className="font-bold w-32">DEPARTMENT</span>
                     <span className="mr-2">:</span>
-                    <span>{(jobdesc?.department?.name || user?.department?.name || '-').toUpperCase()}</span>
+                    <span>
+                      {(
+                        jobdesc?.department?.name ||
+                        user?.department?.name ||
+                        "-"
+                      ).toUpperCase()}
+                    </span>
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">REPORTS TO</span>
                     <span className="mr-2">:</span>
-                    <span>{jobdesc?.reportsTo || '-'}</span>
+                    <span>{jobdesc?.reportsTo || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -386,10 +414,15 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">RESPONSIBILITIES</span>
-              <span className="text-xs ml-8">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
+              <span className="text-xs ml-8">
+                (Responsibilities berisi urutan tugas pemegang jabatan serta
+                tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang
+                dipegangnya, bisa tugas harian atau tugas bekala)
+              </span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc?.responsibilities && jobdesc.responsibilities.length > 0 ? (
+              {jobdesc?.responsibilities &&
+              jobdesc.responsibilities.length > 0 ? (
                 jobdesc.responsibilities.map((responsibility, index) => (
                   <li key={index}>{responsibility}</li>
                 ))
@@ -403,10 +436,16 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">ACCOUNTABILITIES</span>
-              <span className="text-xs ml-8">Accountabilities berisi wewenang yang dilimpahkan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan yang lain, bisa berisi :</span>
+              <span className="text-xs ml-8">
+                Accountabilities berisi wewenang yang dilimpahkan kepada jabatan
+                untuk dapat melaksanakan tugas dengan baik, dan hal-hal apa yang
+                diberikan oleh jabatan ini tetapi tidak diberikan kepada jabatan
+                yang lain, bisa berisi :
+              </span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc?.accountabilities && jobdesc.accountabilities.length > 0 ? (
+              {jobdesc?.accountabilities &&
+              jobdesc.accountabilities.length > 0 ? (
                 jobdesc.accountabilities.map((accountability, index) => (
                   <li key={index}>{accountability}</li>
                 ))
@@ -420,10 +459,15 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">INTERACTIONS</span>
-              <span className="text-xs ml-8">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
+              <span className="text-xs ml-8">
+                (Interaksi berisi bagian / dengan siapa saja yang bersangkutan
+                berhubungan / bekerjasama untuk kelancaran tugas - tugasnya,
+                baik didalam maupun diluar perusahaan)
+              </span>
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              {jobdesc?.interactions?.internal && jobdesc.interactions.internal.length > 0 ? (
+              {jobdesc?.interactions?.internal &&
+              jobdesc.interactions.internal.length > 0 ? (
                 jobdesc.interactions.internal.map((interaction, index) => (
                   <li key={index}>{interaction}</li>
                 ))
@@ -437,14 +481,23 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
           <div className="border-b border-black p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">COMPETENCE</span>
-              <span className="text-xs ml-8"> (Competence berisi keahlian dan / atau pengetahuan khusus yang harus dimiliki pemegang jabatan untuk dapat berhasil dalam melaksanakan tugasnya. Diberikan juga lamanya waktu minimal pengalaman dibidang tersebut)</span>
+              <span className="text-xs ml-8">
+                {" "}
+                (Competence berisi keahlian dan / atau pengetahuan khusus yang
+                harus dimiliki pemegang jabatan untuk dapat berhasil dalam
+                melaksanakan tugasnya. Diberikan juga lamanya waktu minimal
+                pengalaman dibidang tersebut)
+              </span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <p className="font-bold text-sm mb-2">A. Competence Managerial :</p>
+                <p className="font-bold text-sm mb-2">
+                  A. Competence Managerial :
+                </p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
-                  {jobdesc.competence?.managerial && jobdesc.competence.managerial.length > 0 ? (
+                  {jobdesc.competence?.managerial &&
+                  jobdesc.competence.managerial.length > 0 ? (
                     jobdesc.competence.managerial.map((comp, index) => (
                       <li key={index}>{comp}</li>
                     ))
@@ -464,11 +517,12 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
                   )}
                 </ol>
               </div>
-              
+
               <div>
                 <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
-                  {jobdesc.competence?.skill && jobdesc.competence.skill.length > 0 ? (
+                  {jobdesc.competence?.skill &&
+                  jobdesc.competence.skill.length > 0 ? (
                     jobdesc.competence.skill.map((skill, index) => (
                       <li key={index}>{skill}</li>
                     ))
@@ -490,30 +544,40 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
           <div className="p-3">
             <div className="mb-2">
               <span className="font-bold text-sm">JOB SPECIFICATION</span>
-              <span className="text-xs ml-8">(berisi persyaratan yang harus dipenuhi pemegang jabatan)</span>
+              <span className="text-xs ml-8">
+                (berisi persyaratan yang harus dipenuhi pemegang jabatan)
+              </span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-8 text-sm">
               <div className="space-y-1">
                 <div className="flex">
                   <span className="w-44">Usia</span>
                   <span className="mr-2">:</span>
-                  <span>{jobdesc.jobSpecification?.age || 'Min. 21 Tahun'}</span>
+                  <span>
+                    {jobdesc.jobSpecification?.age || "Min. 21 Tahun"}
+                  </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pendidikan</span>
                   <span className="mr-2">:</span>
-                  <span>{jobdesc.jobSpecification?.education || 'Minimal D3'}</span>
+                  <span>
+                    {jobdesc.jobSpecification?.education || "Minimal D3"}
+                  </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pendidikan Non Formal</span>
                   <span className="mr-2">:</span>
-                  <span>{jobdesc.jobSpecification?.nonFormalEducation || '-'}</span>
+                  <span>
+                    {jobdesc.jobSpecification?.nonFormalEducation || "-"}
+                  </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pengalaman Kerja</span>
                   <span className="mr-2">:</span>
-                  <span>{jobdesc.jobSpecification?.experience || 'Min. 1 Tahun'}</span>
+                  <span>
+                    {jobdesc.jobSpecification?.experience || "Min. 1 Tahun"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -522,14 +586,17 @@ const JobdescViewer = ({ user, jobdesc, onClose, onEdit, onDelete, viewOnly = fa
       </div>
 
       {/* Print Styles - Simplified */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @media print {
           .print\\:hidden {
             display: none !important;
           }
         }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 };
