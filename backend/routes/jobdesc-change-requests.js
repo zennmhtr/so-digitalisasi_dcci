@@ -17,8 +17,8 @@ const getDepartmentApprovalPermission = (departmentName) => {
     "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
     "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
     "MI & SHE": "SO Bagian MI & SHE Approval",
-    "PPIC": "SO Bagian PPIC Approval",
-    "Purchasing": "SO Bagian Purchasing Approval",
+    PPIC: "SO Bagian PPIC Approval",
+    Purchasing: "SO Bagian Purchasing Approval",
     "QA Department": "SO Bagian QA Approval",
   };
   return mapping[departmentName] || null;
@@ -32,7 +32,7 @@ const isUserManager = (userPermissions) => {
 
 const applyJobDescChanges = async (request) => {
   try {
-    console.log("📝 Applying Job Desc changes to database...");
+    console.log("🔄 Applying Job Desc changes to database...");
 
     const proposedData = request.proposedData;
     if (!proposedData || !proposedData.jobDescData) {
@@ -45,40 +45,88 @@ const applyJobDescChanges = async (request) => {
 
     console.log("📦 Job Desc Data:", jobDescData);
     console.log("👤 Member Info:", memberInfo);
+    console.log("🔄 Change Type:", request.changeType);
 
-    const newJobDesc = new JobDescription({
-      member: jobDescData.member || null,
-      user: jobDescData.user || null,
-      memberName: jobDescData.memberName,
-      memberNoPNK: jobDescData.memberNoPNK,
-      memberEmail: jobDescData.memberEmail,
-      memberPosition: jobDescData.memberPosition,
-      department: jobDescData.department,
-      tanggal: jobDescData.tanggal || new Date(),
-      revisi: jobDescData.revisi || "0",
-      division: jobDescData.division,
-      positionTitle: jobDescData.positionTitle,
-      reportsTo: jobDescData.reportsTo,
-      responsibilities: jobDescData.responsibilities || [],
-      accountabilities: jobDescData.accountabilities || [],
-      interactions: jobDescData.interactions || { internal: [], external: [] },
-      competence: jobDescData.competence || {
-        managerial: [],
-        technical: [],
-        behavioral: [],
-        skill: [],
-      },
-      jobSpecification: jobDescData.jobSpecification || {},
-      status: "approved",
-      createdBy: request.requestedBy,
-      approvedBy: request.approvedBy,
-      approvedAt: new Date(),
-    });
+    if (request.changeType === "update" && jobDescData._id) {
+      console.log("📝 Updating existing Job Description:", jobDescData._id);
 
-    await newJobDesc.save();
-    console.log("✅ Job Description created successfully in database");
+      const existingJobDesc = await JobDescription.findById(jobDescData._id);
 
-    return true;
+      if (!existingJobDesc) {
+        console.error(
+          "❌ Job Description not found for update:",
+          jobDescData._id
+        );
+        return false;
+      }
+
+      existingJobDesc.tanggal = jobDescData.tanggal || existingJobDesc.tanggal;
+      existingJobDesc.revisi = jobDescData.revisi || existingJobDesc.revisi;
+      existingJobDesc.division =
+        jobDescData.division || existingJobDesc.division;
+      existingJobDesc.positionTitle =
+        jobDescData.positionTitle || existingJobDesc.positionTitle;
+      existingJobDesc.reportsTo =
+        jobDescData.reportsTo || existingJobDesc.reportsTo;
+      existingJobDesc.responsibilities =
+        jobDescData.responsibilities || existingJobDesc.responsibilities;
+      existingJobDesc.accountabilities =
+        jobDescData.accountabilities || existingJobDesc.accountabilities;
+      existingJobDesc.interactions =
+        jobDescData.interactions || existingJobDesc.interactions;
+      existingJobDesc.competence =
+        jobDescData.competence || existingJobDesc.competence;
+      existingJobDesc.jobSpecification =
+        jobDescData.jobSpecification || existingJobDesc.jobSpecification;
+      existingJobDesc.status = "approved";
+      existingJobDesc.approvedBy = request.approvedBy;
+      existingJobDesc.approvedAt = new Date();
+
+      await existingJobDesc.save();
+      console.log("✅ Job Description updated successfully in database");
+
+      return true;
+    }
+    else {
+      console.log("➕ Creating new Job Description");
+
+      const newJobDesc = new JobDescription({
+        member: jobDescData.member || null,
+        user: jobDescData.user || null,
+        memberName: jobDescData.memberName,
+        memberNoPNK: jobDescData.memberNoPNK,
+        memberEmail: jobDescData.memberEmail,
+        memberPosition: jobDescData.memberPosition,
+        department: jobDescData.department,
+        tanggal: jobDescData.tanggal || new Date(),
+        revisi: jobDescData.revisi || "0",
+        division: jobDescData.division,
+        positionTitle: jobDescData.positionTitle,
+        reportsTo: jobDescData.reportsTo,
+        responsibilities: jobDescData.responsibilities || [],
+        accountabilities: jobDescData.accountabilities || [],
+        interactions: jobDescData.interactions || {
+          internal: [],
+          external: [],
+        },
+        competence: jobDescData.competence || {
+          managerial: [],
+          technical: [],
+          behavioral: [],
+          skill: [],
+        },
+        jobSpecification: jobDescData.jobSpecification || {},
+        status: "approved",
+        createdBy: request.requestedBy,
+        approvedBy: request.approvedBy,
+        approvedAt: new Date(),
+      });
+
+      await newJobDesc.save();
+      console.log("✅ Job Description created successfully in database");
+
+      return true;
+    }
   } catch (error) {
     console.error("❌ Error applying job desc changes:", error);
     return false;
@@ -102,65 +150,83 @@ router.get("/", auth, async (req, res) => {
       "SO Changes First Approval"
     );
     const hasAnyApprovalPermission = departmentApprovalPermissions.length > 0;
+    const hasJobDescRequest = userPermissions.includes("Job Desc Request");
 
-    if (!canSeeAllRequests) {
-      if (hasDirectorApproval) {
-        filter.$or = [
-          { requestedBy: req.user.id },
-          { status: { $in: ["pending", "waiting_director_approval", "approved", "rejected", "revisi"]}},
-          { firstApprovedBy: req.user.id },
-          { secondApprovedBy: req.user.id },
-          { approvedBy: req.user.id },
-          { reviewedBy: req.user.id },
-        ];
-      } else if (hasAnyApprovalPermission) {
-        const approvalDepartments = departmentApprovalPermissions
-          .map((perm) => {
-            const match = perm.match(/SO Bagian (.+) Approval/);
-            if (match) {
-              const deptName = match[1];
-              const deptMapping = {
-                Finance: "Finance Department",
-                "HRGA & IT": "HRGA & IT Department",
-                "Management Development": "Management Development",
-                "Management Representative": "Management Representative",
-                "Manufacturing Battery": "Manufacturing Battery",
-                "Manufacturing Cable": "Manufacturing Cable",
-                "Marketing Battery": "Marketing Battery Department",
-                "Marketing Engineering": "Marketing Engineering",
-                "MI & SHE": "MI & SHE",
-                "PPIC": "PPIC",
-                "Purchasing": "Purchasing",
-                "QA": "QA Department",
-              };
-              return deptMapping[deptName] || deptName;
-            }
-            return null;
-          })
-          .filter(Boolean);
-        filter.$or = [
-          { requestedBy: req.user.id },
-          { department: { $in: approvalDepartments } },
-          { firstApprovedBy: req.user.id },
-          { secondApprovedBy: req.user.id },
-          { approvedBy: req.user.id },
-          { reviewedBy: req.user.id },
-        ];
-      } else {
-        filter.requestedBy = req.user.id;
-      }
-    }
-
-    console.log("🔍 JobDesc Change Request Filter:", {
+    console.log("🔍 JobDesc Request Filter Debug:", {
       userId: req.user.id,
       username: req.user.username,
-      hasDirectorApproval,
       canSeeAllRequests,
+      hasDirectorApproval,
       hasAnyApprovalPermission,
-      filter: JSON.stringify(filter)
+      hasJobDescRequest,
     });
 
-    const request = await JobDescChangeRequest.find(filter)
+    if (canSeeAllRequests) {
+      console.log("👑 Super Admin - sees all requests");
+    } 
+    else if (hasDirectorApproval) {
+      console.log("🎯 Director - sees director approval + own requests");
+      filter.$or = [
+        { requestedBy: req.user.id }, 
+        { status: { $in: ["pending", "waiting_director_approval"] } },
+        { firstApprovedBy: req.user.id },
+        { secondApprovedBy: req.user.id },
+        { approvedBy: req.user.id },
+        { reviewedBy: req.user.id },
+      ];
+    } 
+    else if (hasAnyApprovalPermission) {
+      console.log("👔 Manager - sees department requests + own requests");
+      
+      const approvalDepartments = departmentApprovalPermissions
+        .map((perm) => {
+          const match = perm.match(/SO Bagian (.+) Approval/);
+          if (match) {
+            const deptName = match[1];
+            const deptMapping = {
+              Finance: "Finance Department",
+              "HRGA & IT": "HRGA & IT Department",
+              "Management Development": "Management Development",
+              "Management Representative": "Management Representative",
+              "Manufacturing Battery": "Manufacturing Battery",
+              "Manufacturing Cable": "Manufacturing Cable",
+              "Marketing Battery": "Marketing Battery Department",
+              "Marketing Engineering": "Marketing Engineering",
+              "MI & SHE": "MI & SHE",
+              PPIC: "PPIC",
+              Purchasing: "Purchasing",
+              QA: "QA Department",
+            };
+            return deptMapping[deptName] || deptName;
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      filter.$or = [
+        { requestedBy: req.user.id },
+        { 
+          department: { $in: approvalDepartments },
+          status: { $in: ["pending", "waiting_director_approval", "approved", "rejected", "revisi"] }
+        }, 
+        { firstApprovedBy: req.user.id },
+        { secondApprovedBy: req.user.id },
+        { approvedBy: req.user.id },
+        { reviewedBy: req.user.id },
+      ];
+    } 
+    else if (hasJobDescRequest) {
+      console.log("👤 Employee - sees ONLY own requests");
+      filter.requestedBy = req.user.id;
+    }
+    else {
+      console.log("🚫 No permission - sees nothing");
+      filter._id = null;
+    }
+
+    console.log("🔍 Final filter:", JSON.stringify(filter));
+
+    const requests = await JobDescChangeRequest.find(filter)
       .populate({
         path: "requestedBy",
         select: "name email department role",
@@ -175,9 +241,11 @@ router.get("/", auth, async (req, res) => {
       .populate("approvedBy", "name email")
       .sort({ createdAt: -1 });
 
+    console.log(`📊 Found ${requests.length} requests for user ${req.user.username}`);
+
     res.json({
       success: true,
-      data: request,
+      data: requests,
     });
   } catch (error) {
     console.error("Error fetching Job Desc change requests:", error);

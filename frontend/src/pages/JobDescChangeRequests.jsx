@@ -32,8 +32,8 @@ const JobDescChangeRequests = () => {
       "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
       "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
       "MI & SHE": "SO Bagian MI & SHE Approval",
-      "PPIC": "SO Bagian PPIC Approval",
-      "Purchasing": "SO Bagian Purchasing Approval",
+      PPIC: "SO Bagian PPIC Approval",
+      Purchasing: "SO Bagian Purchasing Approval",
       "QA Department": "SO Bagian QA Approval",
     };
     return mapping[departmentName] || null;
@@ -69,6 +69,42 @@ const JobDescChangeRequests = () => {
     return userPermissions.some(
       (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
     );
+  };
+
+  const getUserVisibilityInfo = () => {
+    const userPermissions = user?.role?.permissions || [];
+
+    if (userPermissions.includes("Manage Users")) {
+      return {
+        type: "admin",
+        message: "You can see all job description change requests",
+        color: "bg-purple-50 border-purple-200 text-purple-800",
+      };
+    }
+
+    if (userPermissions.includes("SO Changes First Approval")) {
+      return {
+        type: "director",
+        message:
+          "You can see requests that need director approval and your own requests",
+        color: "bg-blue-50 border-blue-200 text-blue-800",
+      };
+    }
+
+    const hasManagerPermission = userPermissions.some(
+      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    );
+
+    if (hasManagerPermission) {
+      return {
+        type: "manager",
+        message:
+          "You can see requests from your department and your own requests",
+        color: "bg-green-50 border-green-200 text-green-800",
+      };
+    }
+
+    return null;
   };
 
   const canViewBagian = user?.role?.permissions?.includes("Job Desc Request");
@@ -424,6 +460,60 @@ const JobDescChangeRequests = () => {
             Review and approve Job Desc change requests
           </p>
         </div>
+
+        {(() => {
+          const visibilityInfo = getUserVisibilityInfo();
+
+          // Jangan tampilkan banner jika null
+          if (!visibilityInfo) return null;
+
+          return (
+            <div
+              className={`mb-4 p-4 rounded-lg border ${visibilityInfo.color}`}
+            >
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {visibilityInfo.type === "admin" && (
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                  {visibilityInfo.type === "director" && (
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                  )}
+                  {visibilityInfo.type === "manager" && (
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium">
+                    {visibilityInfo.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">

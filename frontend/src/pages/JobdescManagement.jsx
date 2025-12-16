@@ -770,7 +770,10 @@ const JobdescManagement = () => {
     }, 500);
   };
 
-  const handleJobdescSave = async (jobdescData, isNewRequest = false) => {
+  const handleJobdescSave = async (
+    jobdescData,
+    existingJobdescToUpdate = null
+  ) => {
     try {
       setLoading(true);
       const selectedDept = departments.find(
@@ -782,135 +785,123 @@ const JobdescManagement = () => {
         return;
       }
 
-      if (isNewRequest) {
-        console.log(
-          "🔄 Creating new job description - sending to approval flow"
-        );
+      const isUpdate = existingJobdescToUpdate !== null;
+      const changeType = isUpdate ? "update" : "add";
+      const actionText = isUpdate ? "update" : "creation";
 
-        if (
-          !confirm(
-            "This will submit the job description for approval. Continue?"
-          )
-        ) {
-          setLoading(false);
-          return;
-        }
+      console.log(
+        `🔄 Job Description ${actionText} - sending to approval flow`
+      );
 
-        const changeRequestPayload = {
-          title: `New Job Description for ${selectedMember.name}`,
-          description: `Job description creation request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`,
-          changeType: "add",
-          department: selectedDepartment,
-          priority: "medium",
-          proposedData: {
-            jobDescData: {
-              member:
-                selectedMember.type === "member" ? selectedMember.id : null,
-              user: selectedMember.user || null,
-              memberName: selectedMember.name,
-              memberNoPNK: selectedMember.noPNK,
-              memberEmail: selectedMember.email,
-              memberPosition: selectedMember.position,
-              department: selectedDept._id,
-              tanggal: jobdescData.tanggal || new Date().toISOString(),
-              revisi: jobdescData.revisi || "0",
-              division: jobdescData.division,
-              positionTitle: jobdescData.positionTitle,
-              reportsTo: jobdescData.reportsTo,
-              responsibilities: jobdescData.responsibilities || [],
-              accountabilities: jobdescData.accountabilities || [],
-              interactions: jobdescData.interactions || {
-                internal: [],
-                external: [],
-              },
-              competence: jobdescData.competence || {
-                managerial: [],
-                technical: [],
-                behavioral: [],
-                skill: [],
-              },
-              jobSpecification: jobdescData.jobSpecification || {},
+      const confirmMessage = isUpdate
+        ? "This will submit the job description update for approval. Continue?"
+        : "This will submit the job description for approval. Continue?";
+
+      if (!confirm(confirmMessage)) {
+        setLoading(false);
+        return;
+      }
+
+      const changeRequestPayload = {
+        title: isUpdate
+          ? `Update Job Description for ${selectedMember.name}`
+          : `New Job Description for ${selectedMember.name}`,
+        description: isUpdate
+          ? `Job description update request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`
+          : `Job description creation request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`,
+        changeType: changeType,
+        department: selectedDepartment,
+        priority: "medium",
+        proposedData: {
+          jobDescData: {
+            ...(isUpdate && { _id: existingJobdescToUpdate._id }), // Include ID for update
+            member: selectedMember.type === "member" ? selectedMember.id : null,
+            user: selectedMember.user || null,
+            memberName: selectedMember.name,
+            memberNoPNK: selectedMember.noPNK,
+            memberEmail: selectedMember.email,
+            memberPosition: selectedMember.position,
+            department: selectedDept._id,
+            tanggal: jobdescData.tanggal || new Date().toISOString(),
+            revisi: jobdescData.revisi || "0",
+            division: jobdescData.division,
+            positionTitle: jobdescData.positionTitle,
+            reportsTo: jobdescData.reportsTo,
+            responsibilities: jobdescData.responsibilities || [],
+            accountabilities: jobdescData.accountabilities || [],
+            interactions: jobdescData.interactions || {
+              internal: [],
+              external: [],
             },
-            memberInfo: {
-              name: selectedMember.name,
-              noPNK: selectedMember.noPNK,
-              email: selectedMember.email,
-              position: selectedMember.position,
+            competence: jobdescData.competence || {
+              managerial: [],
+              technical: [],
+              behavioral: [],
+              skill: [],
             },
-            organizationData: {
-              departmentId: selectedDept._id,
-              departmentName: selectedDepartment,
-              header: {
-                effectiveDate: new Date().toLocaleDateString("en-GB"),
-                _effectiveDateTs: new Date().toISOString(),
+            jobSpecification: jobdescData.jobSpecification || {},
+          },
+          memberInfo: {
+            name: selectedMember.name,
+            noPNK: selectedMember.noPNK,
+            email: selectedMember.email,
+            position: selectedMember.position,
+          },
+          organizationData: {
+            departmentId: selectedDept._id,
+            departmentName: selectedDepartment,
+            header: {
+              effectiveDate: new Date().toLocaleDateString("en-GB"),
+              _effectiveDateTs: new Date().toISOString(),
+            },
+            signatures: {
+              preparedBy: {
+                date: new Date().toLocaleDateString("en-GB"),
+                _ts: new Date().toISOString(),
               },
-              signatures: {
-                preparedBy: {
-                  date: new Date().toLocaleDateString("en-GB"),
-                  _ts: new Date().toISOString(),
-                },
-                approvedBy: {
-                  date: "",
-                  _ts: "",
-                },
+              approvedBy: {
+                date: "",
+                _ts: "",
               },
             },
           },
-          currentData: null,
-        };
+        },
+        currentData: isUpdate
+          ? {
+              jobDescData: {
+                _id: existingJobdescToUpdate._id,
+                division: existingJobdescToUpdate.division,
+                positionTitle: existingJobdescToUpdate.positionTitle,
+                reportsTo: existingJobdescToUpdate.reportsTo,
+                responsibilities: existingJobdescToUpdate.responsibilities,
+                accountabilities: existingJobdescToUpdate.accountabilities,
+                interactions: existingJobdescToUpdate.interactions,
+                competence: existingJobdescToUpdate.competence,
+                jobSpecification: existingJobdescToUpdate.jobSpecification,
+                tanggal: existingJobdescToUpdate.tanggal,
+                revisi: existingJobdescToUpdate.revisi,
+              },
+            }
+          : null,
+      };
 
-        console.log(
-          "📤 Sending job desc change request:",
-          changeRequestPayload
-        );
+      console.log("📤 Sending job desc change request:", changeRequestPayload);
 
-        const response = await jobDescChangeRequestsAPI.create(
-          changeRequestPayload
-        );
+      const response = await jobDescChangeRequestsAPI.create(
+        changeRequestPayload
+      );
 
-        if (response.data.success) {
-          alert("✅ Job description submitted for approval successfully!");
-          setShowJobdescForm(false);
-          setSelectedMember(null);
-          setEditingJobdesc(null);
-          await loadDepartmentMembers(selectedDept._id);
-        }
-      }
-      else {
-        console.log("🔄 Updating existing job description - direct save");
+      if (response.data.success) {
+        const successMessage = isUpdate
+          ? "✅ Job description update submitted for approval successfully!"
+          : "✅ Job description submitted for approval successfully!";
 
-        const payload = {
-          ...jobdescData,
-          member: selectedMember.type === "member" ? selectedMember.id : null,
-          user: selectedMember.user || null,
-          memberName: selectedMember.name,
-          memberNoPNK: selectedMember.noPNK,
-          memberEmail: selectedMember.email,
-          memberPosition: selectedMember.position,
-          department: selectedDept._id,
-        };
+        alert(successMessage);
+        setShowJobdescForm(false);
+        setSelectedMember(null);
+        setEditingJobdesc(null);
 
-        let response;
-        if (editingJobdesc) {
-          response = await jobDescriptionsAPI.update(
-            editingJobdesc._id,
-            payload
-          );
-        } else {
-          response = await jobDescriptionsAPI.create(payload);
-        }
-
-        if (response.data.success) {
-          setJobDescriptions((prev) => ({
-            ...prev,
-            [selectedMember.id]: response.data.data,
-          }));
-
-          setShowJobdescForm(false);
-          setSelectedMember(null);
-          setEditingJobdesc(null);
-          alert("Job description updated successfully");
-        }
+        await loadDepartmentMembers(selectedDept._id);
       }
     } catch (err) {
       console.error("Error saving job description:", err);

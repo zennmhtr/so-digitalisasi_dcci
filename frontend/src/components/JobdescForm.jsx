@@ -161,10 +161,10 @@ const JobdescForm = ({
     }
 
     // Konfirmasi sebelum submit
-    const confirmMessage = existingJobdesc 
-      ? 'Are you sure you want to update this job description? Changes will be saved directly.'
-      : 'Are you sure you want to submit this job description for approval? It will go through the approval process.';
-    
+    const confirmMessage = existingJobdesc
+      ? "Are you sure you want to update this job description? Changes will be saved directly."
+      : "Are you sure you want to submit this job description for approval? It will go through the approval process.";
+
     if (!window.confirm(confirmMessage)) {
       return;
     }
@@ -194,12 +194,7 @@ const JobdescForm = ({
         tanggal: formData.tanggal,
         revisi: formData.revisi,
       };
-
-      if (existingJobdesc) {
-        onSave(cleanData, false);
-      } else {
-        onSave(cleanData, true);
-      }
+      onSave(cleanData, existingJobdesc || null);
     } catch (error) {
       console.error("Error saving jobdesc:", error);
       alert("Failed to save job description. Please try again.");
@@ -242,7 +237,6 @@ const JobdescForm = ({
             <h4 className="text-lg font-medium text-gray-900 mb-4">
               Basic Information
             </h4>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -454,9 +448,7 @@ const JobdescForm = ({
             <h4 className="text-lg font-medium text-gray-900 mb-4">
               Interactions
             </h4>
-
             <div>
-              {/* Internal Interactions */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h5 className="font-medium text-gray-700">
@@ -695,30 +687,19 @@ const JobdescForm = ({
             <button
               type="submit"
               disabled={saving}
-              className={`px-6 py-2 text-white rounded-md transition-colors disabled:opacity-50 flex items-center ${
-                existingJobdesc 
-                  ? 'bg-blue-600 hover:bg-blue-700' 
-                  : 'bg-green-600 hover:bg-green-700'
-              }`}
+              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:opacity-50 flex items-center"
             >
               {saving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {existingJobdesc ? 'Updating...' : 'Submitting...'}
+                  Submitting...
                 </>
               ) : (
                 <>
-                  {existingJobdesc ? (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Update Job Description
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Submit for Approval
-                    </>
-                  )}
+                  <Send className="w-4 h-4 mr-2" />
+                  {existingJobdesc
+                    ? "Submit Update for Approval"
+                    : "Submit for Approval"}
                 </>
               )}
             </button>
