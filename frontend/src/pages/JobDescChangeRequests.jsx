@@ -5,6 +5,7 @@ import {
   Clock,
   MessageSquare,
   AlertCircle,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { jobDescChangeRequestsAPI } from "../services/api";
@@ -19,6 +20,8 @@ const JobDescChangeRequests = () => {
   const [reviewComments, setReviewComments] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [showJobDescPreview, setShowJobDescPreview] = useState(false);
+  const [previewJobDescData, setPreviewJobDescData] = useState(null);
 
   const getDepartmentApprovalPermission = (departmentName) => {
     const mapping = {
@@ -317,6 +320,24 @@ const JobDescChangeRequests = () => {
     setReviewComments("");
     setShowValidationError(false);
     setShowDetailModal(true);
+  };
+
+  const handlePreviewJobDesc = (request) => {
+    if (request.proposedData && request.proposedData.jobDescData) {
+      setPreviewJobDescData({
+        jobDesc: request.proposedData.jobDescData,
+        memberInfo: request.proposedData.memberInfo || {
+          name: request.requestedBy?.name,
+          noPNK: request.proposedData.jobDescData.memberNoPNK,
+          email: request.proposedData.jobDescData.memberEmail,
+          position: request.proposedData.jobDescData.memberPosition,
+        },
+        departmentName: request.department,
+      });
+      setShowJobDescPreview(true);
+    } else {
+      alert("Job description data not found in request");
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -891,6 +912,17 @@ const JobDescChangeRequests = () => {
                     )}
                   </div>
                 )}
+              {selectedRequest && (
+                <div className="border-t border-gray-200 pt-4">
+                  <button
+                    onClick={() => handlePreviewJobDesc(selectedRequest)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+                  >
+                    <Eye className="w-5 h-5" />
+                    <span className="font-medium">Preview Job Description</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -985,6 +1017,311 @@ const JobDescChangeRequests = () => {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Job Description Preview Modal */}
+      {showJobDescPreview && previewJobDescData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Job Description Preview
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Employee:{" "}
+                  <span className="font-medium">
+                    {previewJobDescData.memberInfo.name}
+                  </span>{" "}
+                  ({previewJobDescData.memberInfo.noPNK})
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowJobDescPreview(false);
+                  setPreviewJobDescData(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Job Description Content */}
+            <div className="p-6">
+              <div
+                className="bg-white border-2 border-black"
+                style={{ fontFamily: "Arial, sans-serif" }}
+              >
+                {/* Header Section */}
+                <div className="border-b-2 border-black">
+                  <div className="flex">
+                    {/* Logo Section */}
+                    <div className="w-64 border-r-2 border-black p-2">
+                      <div className="flex flex-col items-center">
+                        <img
+                          src="/images/dcilong.png"
+                          alt="Dharma Group Logo"
+                          className="max-w-full max-h-26 object-contain mb-2"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/images/dcilong.png";
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Title Section */}
+                    <div className="flex-1 border-r-2 border-black flex flex-col justify-between p-2">
+                      <div></div>
+                      <div className="text-center">
+                        <h1 className="text-xl font-bold italic">
+                          JOB DESCRIPTION
+                        </h1>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div className="text-left">
+                          <span className="font-medium">Tanggal: </span>
+                          <span>
+                            {previewJobDescData.jobDesc?.tanggal
+                              ? new Date(
+                                  previewJobDescData.jobDesc.tanggal
+                                ).toLocaleDateString("id-ID")
+                              : new Date().toLocaleDateString("id-ID")}
+                          </span>
+                        </div>
+                        <div className="text-left">
+                          <span className="font-medium">Revisi: </span>
+                          <span>
+                            {previewJobDescData.jobDesc?.revisi || "0"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dibuat Section */}
+                    <div className="w-32 border-r-2 border-black">
+                      <div className="border-b border-black p-1 text-center">
+                        <p className="text-xs font-bold">Dibuat,</p>
+                      </div>
+                      <div className="border-b border-black p-12 text-center"></div>
+                    </div>
+
+                    {/* Disetujui Section */}
+                    <div className="w-32">
+                      <div className="border-b border-black p-1 text-center">
+                        <p className="text-xs font-bold">Disetujui,</p>
+                      </div>
+                      <div className="border-b border-black p-12 text-center"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Basic Information */}
+                <div className="border-b-2 border-black">
+                  <div className="flex">
+                    <div className="flex-1 border-r border-black">
+                      <div className="border-b border-black p-3">
+                        <div className="flex">
+                          <span className="font-bold w-32">DIVISION</span>
+                          <span className="mr-2">:</span>
+                          <span>
+                            {previewJobDescData.jobDesc?.division || "-"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex">
+                          <span className="font-bold w-32">POSITION TITLE</span>
+                          <span className="mr-2">:</span>
+                          <span>
+                            {previewJobDescData.jobDesc?.positionTitle || "-"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="border-b border-black p-3">
+                        <div className="flex">
+                          <span className="font-bold w-32">DEPARTMENT</span>
+                          <span className="mr-2">:</span>
+                          <span>
+                            {previewJobDescData.departmentName?.toUpperCase() ||
+                              "-"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex">
+                          <span className="font-bold w-32">REPORTS TO</span>
+                          <span className="mr-2">:</span>
+                          <span>
+                            {previewJobDescData.jobDesc?.reportsTo || "-"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Responsibilities */}
+                <div className="border-b border-black p-3">
+                  <div className="mb-2">
+                    <span className="font-bold text-sm">RESPONSIBILITIES</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    {previewJobDescData.jobDesc?.responsibilities &&
+                    previewJobDescData.jobDesc.responsibilities.length > 0 ? (
+                      previewJobDescData.jobDesc.responsibilities.map(
+                        (responsibility, index) => (
+                          <li key={index}>{responsibility}</li>
+                        )
+                      )
+                    ) : (
+                      <li>No responsibilities defined</li>
+                    )}
+                  </ol>
+                </div>
+
+                {/* Accountabilities */}
+                <div className="border-b border-black p-3">
+                  <div className="mb-2">
+                    <span className="font-bold text-sm">ACCOUNTABILITIES</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    {previewJobDescData.jobDesc?.accountabilities &&
+                    previewJobDescData.jobDesc.accountabilities.length > 0 ? (
+                      previewJobDescData.jobDesc.accountabilities.map(
+                        (accountability, index) => (
+                          <li key={index}>{accountability}</li>
+                        )
+                      )
+                    ) : (
+                      <li>No accountabilities defined</li>
+                    )}
+                  </ol>
+                </div>
+
+                {/* Interactions */}
+                <div className="border-b border-black p-3">
+                  <div className="mb-2">
+                    <span className="font-bold text-sm">INTERACTIONS</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    {previewJobDescData.jobDesc?.interactions?.internal &&
+                    previewJobDescData.jobDesc.interactions.internal.length >
+                      0 ? (
+                      previewJobDescData.jobDesc.interactions.internal.map(
+                        (interaction, index) => (
+                          <li key={index}>{interaction}</li>
+                        )
+                      )
+                    ) : (
+                      <li>No interactions defined</li>
+                    )}
+                  </ol>
+                </div>
+
+                {/* Competence */}
+                <div className="border-b border-black p-3">
+                  <div className="mb-2">
+                    <span className="font-bold text-sm">COMPETENCE</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <p className="font-bold text-sm mb-2">
+                        A. Competence Managerial :
+                      </p>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        {previewJobDescData.jobDesc?.competence?.managerial &&
+                        previewJobDescData.jobDesc.competence.managerial
+                          .length > 0 ? (
+                          previewJobDescData.jobDesc.competence.managerial.map(
+                            (comp, index) => <li key={index}>{comp}</li>
+                          )
+                        ) : (
+                          <li>No managerial competence defined</li>
+                        )}
+                      </ol>
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm mb-2">
+                        B. Competence Skill :
+                      </p>
+                      <ol className="list-decimal list-inside space-y-1 text-sm">
+                        {previewJobDescData.jobDesc?.competence?.skill &&
+                        previewJobDescData.jobDesc.competence.skill.length >
+                          0 ? (
+                          previewJobDescData.jobDesc.competence.skill.map(
+                            (skill, index) => <li key={index}>{skill}</li>
+                          )
+                        ) : (
+                          <li>No skills defined</li>
+                        )}
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Job Specification */}
+                <div className="p-3">
+                  <div className="mb-2">
+                    <span className="font-bold text-sm">JOB SPECIFICATION</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-8 text-sm">
+                    <div className="space-y-1">
+                      <div className="flex">
+                        <span className="w-44">Usia</span>
+                        <span className="mr-2">:</span>
+                        <span>
+                          {previewJobDescData.jobDesc?.jobSpecification?.age ||
+                            "-"}
+                        </span>
+                      </div>
+                      <div className="flex">
+                        <span className="w-44">Pendidikan</span>
+                        <span className="mr-2">:</span>
+                        <span>
+                          {previewJobDescData.jobDesc?.jobSpecification
+                            ?.education || "-"}
+                        </span>
+                      </div>
+                      <div className="flex">
+                        <span className="w-44">Pendidikan Non Formal</span>
+                        <span className="mr-2">:</span>
+                        <span>
+                          {previewJobDescData.jobDesc?.jobSpecification
+                            ?.nonFormalEducation || "-"}
+                        </span>
+                      </div>
+                      <div className="flex">
+                        <span className="w-44">Pengalaman Kerja</span>
+                        <span className="mr-2">:</span>
+                        <span>
+                          {previewJobDescData.jobDesc?.jobSpecification
+                            ?.experience || "-"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowJobDescPreview(false);
+                  setPreviewJobDescData(null);
+                }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Close Preview
+              </button>
             </div>
           </div>
         </div>

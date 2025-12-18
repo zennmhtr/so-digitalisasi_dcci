@@ -34,6 +34,13 @@ const JobdescManagement = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingJobdesc, setEditingJobdesc] = useState(null);
   const [jobDescriptions, setJobDescriptions] = useState({});
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
+  const [submitConfirmData, setSubmitConfirmData] = useState({
+    description: "",
+    priority: "medium",
+  });
+  const [pendingJobdescData, setPendingJobdescData] = useState(null);
+  const [pendingExistingJobdesc, setPendingExistingJobdesc] = useState(null);
 
   console.log("JobdescManagement rendered, user:", user);
 
@@ -93,7 +100,6 @@ const JobdescManagement = () => {
   const canCreateJobdesc = (member) => {
     const isDirector = isManagerForDepartment(selectedDepartment);
 
-    // Cek kesamaan berdasarkan noPNK atau email
     const isSelf =
       (member.noPNK && user?.noPNK && member.noPNK === user.noPNK) ||
       (member.email &&
@@ -774,6 +780,22 @@ const JobdescManagement = () => {
     jobdescData,
     existingJobdescToUpdate = null
   ) => {
+    setPendingJobdescData(jobdescData);
+    setPendingExistingJobdesc(existingJobdescToUpdate);
+
+    const defaultDescription = existingJobdescToUpdate
+      ? `Job description update request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`
+      : `Job description creation request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`;
+
+    setSubmitConfirmData({
+      description: defaultDescription,
+      priority: "medium",
+    });
+
+    setShowSubmitConfirmModal(true);
+  };
+
+  const handleConfirmedSubmit = async () => {
     try {
       setLoading(true);
       const selectedDept = departments.find(
@@ -785,36 +807,26 @@ const JobdescManagement = () => {
         return;
       }
 
-      const isUpdate = existingJobdescToUpdate !== null;
+      const isUpdate = pendingExistingJobdesc !== null;
       const changeType = isUpdate ? "update" : "add";
-      const actionText = isUpdate ? "update" : "creation";
 
       console.log(
-        `🔄 Job Description ${actionText} - sending to approval flow`
+        `📄 Job Description ${
+          isUpdate ? "update" : "creation"
+        } - sending to approval flow`
       );
-
-      const confirmMessage = isUpdate
-        ? "This will submit the job description update for approval. Continue?"
-        : "This will submit the job description for approval. Continue?";
-
-      if (!confirm(confirmMessage)) {
-        setLoading(false);
-        return;
-      }
 
       const changeRequestPayload = {
         title: isUpdate
           ? `Update Job Description for ${selectedMember.name}`
           : `New Job Description for ${selectedMember.name}`,
-        description: isUpdate
-          ? `Job description update request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`
-          : `Job description creation request for ${selectedMember.name} (${selectedMember.noPNK}) - Position: ${jobdescData.positionTitle}`,
+        description: submitConfirmData.description, 
         changeType: changeType,
         department: selectedDepartment,
-        priority: "medium",
+        priority: submitConfirmData.priority, 
         proposedData: {
           jobDescData: {
-            ...(isUpdate && { _id: existingJobdescToUpdate._id }), // Include ID for update
+            ...(isUpdate && { _id: pendingExistingJobdesc._id }),
             member: selectedMember.type === "member" ? selectedMember.id : null,
             user: selectedMember.user || null,
             memberName: selectedMember.name,
@@ -822,24 +834,24 @@ const JobdescManagement = () => {
             memberEmail: selectedMember.email,
             memberPosition: selectedMember.position,
             department: selectedDept._id,
-            tanggal: jobdescData.tanggal || new Date().toISOString(),
-            revisi: jobdescData.revisi || "0",
-            division: jobdescData.division,
-            positionTitle: jobdescData.positionTitle,
-            reportsTo: jobdescData.reportsTo,
-            responsibilities: jobdescData.responsibilities || [],
-            accountabilities: jobdescData.accountabilities || [],
-            interactions: jobdescData.interactions || {
+            tanggal: pendingJobdescData.tanggal || new Date().toISOString(),
+            revisi: pendingJobdescData.revisi || "0",
+            division: pendingJobdescData.division,
+            positionTitle: pendingJobdescData.positionTitle,
+            reportsTo: pendingJobdescData.reportsTo,
+            responsibilities: pendingJobdescData.responsibilities || [],
+            accountabilities: pendingJobdescData.accountabilities || [],
+            interactions: pendingJobdescData.interactions || {
               internal: [],
               external: [],
             },
-            competence: jobdescData.competence || {
+            competence: pendingJobdescData.competence || {
               managerial: [],
               technical: [],
               behavioral: [],
               skill: [],
             },
-            jobSpecification: jobdescData.jobSpecification || {},
+            jobSpecification: pendingJobdescData.jobSpecification || {},
           },
           memberInfo: {
             name: selectedMember.name,
@@ -869,17 +881,17 @@ const JobdescManagement = () => {
         currentData: isUpdate
           ? {
               jobDescData: {
-                _id: existingJobdescToUpdate._id,
-                division: existingJobdescToUpdate.division,
-                positionTitle: existingJobdescToUpdate.positionTitle,
-                reportsTo: existingJobdescToUpdate.reportsTo,
-                responsibilities: existingJobdescToUpdate.responsibilities,
-                accountabilities: existingJobdescToUpdate.accountabilities,
-                interactions: existingJobdescToUpdate.interactions,
-                competence: existingJobdescToUpdate.competence,
-                jobSpecification: existingJobdescToUpdate.jobSpecification,
-                tanggal: existingJobdescToUpdate.tanggal,
-                revisi: existingJobdescToUpdate.revisi,
+                _id: pendingExistingJobdesc._id,
+                division: pendingExistingJobdesc.division,
+                positionTitle: pendingExistingJobdesc.positionTitle,
+                reportsTo: pendingExistingJobdesc.reportsTo,
+                responsibilities: pendingExistingJobdesc.responsibilities,
+                accountabilities: pendingExistingJobdesc.accountabilities,
+                interactions: pendingExistingJobdesc.interactions,
+                competence: pendingExistingJobdesc.competence,
+                jobSpecification: pendingExistingJobdesc.jobSpecification,
+                tanggal: pendingExistingJobdesc.tanggal,
+                revisi: pendingExistingJobdesc.revisi,
               },
             }
           : null,
@@ -897,9 +909,17 @@ const JobdescManagement = () => {
           : "✅ Job description submitted for approval successfully!";
 
         alert(successMessage);
+
         setShowJobdescForm(false);
+        setShowSubmitConfirmModal(false);
         setSelectedMember(null);
         setEditingJobdesc(null);
+        setPendingJobdescData(null);
+        setPendingExistingJobdesc(null);
+        setSubmitConfirmData({
+          description: "",
+          priority: "medium",
+        });
 
         await loadDepartmentMembers(selectedDept._id);
       }
@@ -1151,7 +1171,7 @@ const JobdescManagement = () => {
                                         <Edit className="w-4 h-4" />
                                       </button>
                                     )}
-                                    
+
                                     {jobDescriptions[member.id] && (
                                       <button
                                         onClick={() => handlePrint(member)}
@@ -1240,6 +1260,177 @@ const JobdescManagement = () => {
           }}
           canDelete={canCreateJobdesc(selectedMember)}
         />
+      )}
+      {/* Submit Confirmation Modal */}
+      {showSubmitConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Confirm Job Description Submission
+              </h2>
+              <button
+                onClick={() => {
+                  setShowSubmitConfirmModal(false);
+                  setPendingJobdescData(null);
+                  setPendingExistingJobdesc(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-blue-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-700">
+                      <strong>Employee:</strong> {selectedMember?.name} (
+                      {selectedMember?.noPNK})
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      <strong>Position:</strong>{" "}
+                      {pendingJobdescData?.positionTitle}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={submitConfirmData.description}
+                  onChange={(e) =>
+                    setSubmitConfirmData({
+                      ...submitConfirmData,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="4"
+                  placeholder="Describe the job description changes..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={submitConfirmData.priority}
+                  onChange={(e) =>
+                    setSubmitConfirmData({
+                      ...submitConfirmData,
+                      priority: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-yellow-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Important:</strong> This job description will be
+                      submitted for approval and will not appear until approved
+                      by the manager and director.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSubmitConfirmModal(false);
+                  setPendingJobdescData(null);
+                  setPendingExistingJobdesc(null);
+                }}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmedSubmit}
+                disabled={loading || !submitConfirmData.description.trim()}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Submit for Approval
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
