@@ -221,6 +221,9 @@ router.post(
         department,
       } = req.body;
 
+      console.log("📥 Received currentData:", currentData ? "YES" : "NO");
+      console.log("📥 CurrentData structure:", JSON.stringify(currentData, null, 2));
+
       const changeRequest = new SOBagianChangeRequest({
         title,
         description,
@@ -237,6 +240,8 @@ router.post(
       const populatedRequest = await SOBagianChangeRequest.findById(
         changeRequest._id
       ).populate("requestedBy", "name email department");
+
+      console.log("✅ Saved currentData:", populatedRequest.currentData ? "YES" : "NO");
 
       res.status(201).json({
         success: true,

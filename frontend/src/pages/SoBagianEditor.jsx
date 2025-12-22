@@ -557,7 +557,6 @@ const SoBagianEditor = () => {
             empId: "23110109",
             group: "STAFF/UNIT HEAD",
           },
-          // GROUP HEAD
           // (Group co & ci)
           {
             id: "prd1-1-1",
@@ -1402,9 +1401,30 @@ const SoBagianEditor = () => {
       const now = new Date();
       const currentStructure = departmentData[selectedDepartment.id];
 
+      const storageKey = `so-bagian-${selectedDepartment.id}`;
+      const savedDataRaw = localStorage.getItem(storageKey);
+      let originalStructure = null;
+
+      if (savedDataRaw) {
+        try {
+          originalStructure = JSON.parse(savedDataRaw);
+          console.log("📦 Found original data from localStorage:", originalStructure);
+        } catch (err) {
+          console.error("Error parsing original data:", err);
+        }
+      }
+
+      if (!originalStructure) {
+        const defaultDept = departments.find(d => d.id === selectedDepartment.id);
+        if (defaultDept && defaultDept.structure) {
+          originalStructure = defaultDept.structure;
+          console.log("📦 Using default department structure as original data");
+        }
+      }
+
       console.log("📤 Current structure data:", currentStructure);
+      console.log("📤 Original structure data:", originalStructure);
       console.log("📤 Selected department:", selectedDepartment);
-      const humanDate = now.toLocaleDateString("en-GB");
 
       const dataToSubmit = {
         departmentId: selectedDepartment.id,
@@ -1412,6 +1432,11 @@ const SoBagianEditor = () => {
         lastModified: now.toISOString(),
         modifiedBy: user?.name || user?.username,
       };
+
+      const currentDataToSubmit = originalStructure ? {
+        departmentId: selectedDepartment.id,
+        structure: originalStructure,
+      } : null;
 
       const requestData = {
         title: submitForm.title,
@@ -1422,10 +1447,13 @@ const SoBagianEditor = () => {
         proposedData: {
           organizationData: dataToSubmit,
         },
-        currentData: null,
+        currentData: currentDataToSubmit ? {
+          organizationData: currentDataToSubmit
+        } : null,
       };
 
       console.log("📤 Submitting request with data:", requestData);
+      console.log("📤 Has currentData:", !!requestData.currentData);
 
       const response = await soBagianChangeRequestsAPI.create(requestData);
 
