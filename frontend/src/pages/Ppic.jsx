@@ -11,38 +11,145 @@ const Ppic = () => {
   const [showPrintOptions, setShowPrintOptions] = useState(false);
 
   const handlePrint = () => {
-    const printContainer = document.querySelector(".print-container");
+    const printContainer = document.querySelector('.print-container');
     if (printContainer) {
-      printContainer.setAttribute("data-paper", printSettings.paperSize);
-      printContainer.setAttribute(
-        "data-orientation",
-        printSettings.orientation
-      );
+      printContainer.setAttribute('data-paper', printSettings.paperSize);
+      printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
 
-    document.documentElement.setAttribute(
-      "data-paper",
-      printSettings.paperSize
-    );
-    document.documentElement.setAttribute(
-      "data-orientation",
-      printSettings.orientation
-    );
+    document.documentElement.setAttribute('data-paper', printSettings.paperSize);
+    document.documentElement.setAttribute('data-orientation', printSettings.orientation);
 
-    const printStyle =
-      document.getElementById("dynamic-print-style") ||
-      document.createElement("style");
-    printStyle.id = "dynamic-print-style";
+    const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
+    printStyle.id = 'dynamic-print-style';
 
     const paperSize = printSettings.paperSize;
     const orientation = printSettings.orientation;
-    const margin = paperSize === "A3" ? "10mm" : "8mm";
+
+    let scale = 0.75;
+    if (paperSize === 'A4' && orientation === 'landscape') {
+      scale = 0.55;
+    } else if (paperSize === 'A4' && orientation === 'portrait') {
+      scale = 0.62;
+    } else if (paperSize === 'A3' && orientation === 'landscape') {
+      scale = 0.75;
+    } else if (paperSize === 'A3' && orientation === 'portrait') {
+      scale = 0.88;
+    }
 
     printStyle.innerHTML = `
       @media print {
         @page {
           size: ${paperSize} ${orientation};
-          margin: ${margin};
+          margin: 0;
+        }
+        
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        .print\\:hidden,
+        button,
+        [class*="print:hidden"] {
+          display: none !important;
+        }
+        
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          background: white !important;
+          overflow: hidden !important;
+        }
+        
+        body > div {
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .min-h-screen {
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .print-container {
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: visible !important;
+          background: white !important;
+        }
+        
+        .print-container > div {
+          transform: scale(${scale}) !important;
+          transform-origin: top left !important;
+          width: ${100 / scale}% !important;
+          padding: 12px !important;
+        }
+        
+        .bg-blue-300 {
+          background-color: #93c5fd !important;
+        }
+        
+        .bg-gray-100 {
+          background-color: #f3f4f6 !important;
+        }
+        
+        .bg-white {
+          background-color: #ffffff !important;
+        }
+        
+        .bg-gray-50 {
+          background-color: #ffffff !important;
+        }
+        
+        .border,
+        .border-2,
+        .border-4,
+        .border-black {
+          border-color: #000000 !important;
+        }
+        
+        .border-gray-300 {
+          border-color: #d1d5db !important;
+        }
+        
+        .border-gray-400 {
+          border-color: #9ca3af !important;
+        }
+        
+        /* Pastikan text color */
+        .text-black {
+          color: #000000 !important;
+        }
+        
+        .text-gray-800,
+        .text-gray-700,
+        .text-gray-600,
+        .text-gray-500 {
+          color: #000000 !important;
+        }
+        
+        img {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          display: block !important;
+        }
+        
+        * {
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
         }
       }
     `;

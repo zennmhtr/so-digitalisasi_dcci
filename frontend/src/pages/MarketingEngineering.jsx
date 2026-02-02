@@ -16,34 +16,152 @@ const MarketingEngineering = () => {
       printContainer.setAttribute('data-paper', printSettings.paperSize);
       printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
-    
+
     document.documentElement.setAttribute('data-paper', printSettings.paperSize);
     document.documentElement.setAttribute('data-orientation', printSettings.orientation);
-    
+
     const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
     printStyle.id = 'dynamic-print-style';
-    
+
     const paperSize = printSettings.paperSize;
     const orientation = printSettings.orientation;
-    const margin = paperSize === 'A3' ? '10mm' : '8mm';
-    
+
+    let scale = 0.75;
+    if (paperSize === 'A4' && orientation === 'landscape') {
+      scale = 0.53;
+    } else if (paperSize === 'A4' && orientation === 'portrait') {
+      scale = 0.62;
+    } else if (paperSize === 'A3' && orientation === 'landscape') {
+      scale = 0.75;
+    } else if (paperSize === 'A3' && orientation === 'portrait') {
+      scale = 0.88;
+    }
+
     printStyle.innerHTML = `
       @media print {
         @page {
           size: ${paperSize} ${orientation};
-          margin: ${margin};
+          margin: 0;
+        }
+        
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        .print\\:hidden,
+        button,
+        [class*="print:hidden"] {
+          display: none !important;
+        }
+        
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          background: white !important;
+          overflow: hidden !important;
+        }
+        
+        body > div {
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .min-h-screen {
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .print-container {
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: visible !important;
+          background: white !important;
+        }
+        
+        .print-container > div {
+          transform: scale(${scale}) !important;
+          transform-origin: top left !important;
+          width: ${100 / scale}% !important;
+          padding: 12px !important;
+        }
+        
+        .bg-blue-300 {
+          background-color: #93c5fd !important;
+        }
+        
+        .bg-gray-100 {
+          background-color: #f3f4f6 !important;
+        }
+        
+        .bg-white {
+          background-color: #ffffff !important;
+        }
+        
+        .bg-gray-50 {
+          background-color: #ffffff !important;
+        }
+        
+        .border,
+        .border-2,
+        .border-4,
+        .border-black {
+          border-color: #000000 !important;
+        }
+        
+        .border-gray-300 {
+          border-color: #d1d5db !important;
+        }
+        
+        .border-gray-400 {
+          border-color: #9ca3af !important;
+        }
+        
+        /* Pastikan text color */
+        .text-black {
+          color: #000000 !important;
+        }
+        
+        .text-gray-800,
+        .text-gray-700,
+        .text-gray-600,
+        .text-gray-500 {
+          color: #000000 !important;
+        }
+        
+        img {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          display: block !important;
+        }
+        
+        * {
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
         }
       }
     `;
-    
+
     document.head.appendChild(printStyle);
-    
+
     setTimeout(() => {
       window.print();
     }, 100);
   };
 
-      return (
+  return (
     <div className="min-h-screen bg-gray-50 p-4">
       {/* Back Button and Print Button */}
       <div className="mb-4 flex justify-between print:hidden">
@@ -58,13 +176,13 @@ const MarketingEngineering = () => {
             onClick={() => setShowPrintOptions(!showPrintOptions)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
           >
-        Print Settings
+            Print Settings
           </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
           >
-        Download
+            Download
           </button>
         </div>
       </div>
@@ -80,7 +198,7 @@ const MarketingEngineering = () => {
               </label>
               <select
                 value={printSettings.paperSize}
-                onChange={(e) => setPrintSettings({...printSettings, paperSize: e.target.value})}
+                onChange={(e) => setPrintSettings({ ...printSettings, paperSize: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="A4">A4</option>
@@ -93,7 +211,7 @@ const MarketingEngineering = () => {
               </label>
               <select
                 value={printSettings.orientation}
-                onChange={(e) => setPrintSettings({...printSettings, orientation: e.target.value})}
+                onChange={(e) => setPrintSettings({ ...printSettings, orientation: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="landscape">Landscape</option>
@@ -112,14 +230,14 @@ const MarketingEngineering = () => {
       {/* HRGA-IT Department Organization Chart */}
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
         <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
-          
+
           {/* Header Section with borders */}
           <div className="mb-4 border-2 border-black p-3 print:mb-3 print:p-3 print:border-2">
             <div className="flex items-start gap-2">
               <div className="w-32 flex items-center justify-center p-4 border-2 border-black" style={{ height: '160px' }}>
-                <img 
-                  src="/logo/dcci.png" 
-                  alt="Dharma Group Logo" 
+                <img
+                  src="/logo/dcci.png"
+                  alt="Dharma Group Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -200,7 +318,7 @@ const MarketingEngineering = () => {
 
           {/* Content Grid */}
           <div className="grid grid-cols-4 gap-4 relative org-grid" style={{ zIndex: 2 }}>
-            
+
             {/* Kolom 1 - Board of Director */}
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
@@ -214,7 +332,7 @@ const MarketingEngineering = () => {
                   <p className="text-sm leading-tight">(23200235)</p>
                 </div>
               </div>
-              
+
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                   <p className="text-sm font-bold">BOD1.1</p>
@@ -246,7 +364,7 @@ const MarketingEngineering = () => {
             {/* Kolom 3 - Section Head */}
             <div className="space-y-4 flex flex-col items-center">
               {/* Sales & Marketing Control Cable */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[300px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                   <p className="text-sm font-bold">MKT1.1</p>
                 </div>
@@ -262,7 +380,7 @@ const MarketingEngineering = () => {
               <div className="h-[185px]"></div>
 
               {/* Engineering Control Cable */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[300px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                   <p className="text-sm font-bold">ENG1.0</p>
                 </div>
@@ -278,7 +396,7 @@ const MarketingEngineering = () => {
             {/* Kolom 4 - Staff Level */}
             <div className="space-y-4 flex flex-col items-center staff-cards">
               {/* Sales & Marketing Control Cable Staff */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[180px] w-[350px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[180px] w-[280px]">
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
@@ -288,13 +406,13 @@ const MarketingEngineering = () => {
                       <p className="text-sm font-semibold leading-tight">SALES & MARKETING<br />CONTROL CABLE</p>
                     </div>
                   </div>
-                  
+
                   {[
                     { id: "MKT1.1", name: "RIKA TRI HARMELIA", nip: "(23110101)" },
                     { id: "MKT1.2", name: "KHANSA Z.H", nip: "(23230110)" },
                   ].map((staff, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className={`flex border-b border-gray-300 flex-1 ${i === 1 ? 'border-b-0' : ''}`}
                     >
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
@@ -310,7 +428,7 @@ const MarketingEngineering = () => {
               </div>
 
               {/* Customer Representative */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[350px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                   <p className="text-sm font-bold">MKT1.3</p>
                 </div>
@@ -323,7 +441,7 @@ const MarketingEngineering = () => {
               </div>
 
               {/* Product & Quality Engineering Cable */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm w-[350px] min-h-[160px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[160px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">ENG1.1</p>
@@ -351,7 +469,7 @@ const MarketingEngineering = () => {
               </div>
 
               {/* Process Engineering Cable */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm w-[350px] min-h-[160px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[160px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">ENG1.2</p>
@@ -379,7 +497,7 @@ const MarketingEngineering = () => {
               </div>
 
               {/* New Business Development */}
-              <div className="bg-white border border-gray-400 rounded shadow-sm w-[350px] min-h-[140px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[140px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">ENG1.3</p>

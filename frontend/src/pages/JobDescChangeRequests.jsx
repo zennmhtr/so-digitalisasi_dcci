@@ -397,9 +397,8 @@ const JobDescChangeRequests = () => {
 
     return (
       <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          color[priority] || color.medium
-        }`}
+        className={`px-2 py-1 rounded text-xs font-medium ${color[priority] || color.medium
+          }`}
       >
         {priority?.toUpperCase() || "MEDIUM"}
       </span>
@@ -477,11 +476,10 @@ const JobDescChangeRequests = () => {
                     <button
                       key={tab.id}
                       onClick={() => setSelectedTab(tab.id)}
-                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                        selectedTab === tab.id
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${selectedTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -546,32 +544,32 @@ const JobDescChangeRequests = () => {
 
                       {(request.firstApprovedBy ||
                         request.secondApprovedBy) && (
-                        <div className="mt-2 text-sm text-gray-500">
-                          <strong>Approval Stage:</strong>{" "}
-                          {request.firstApprovedBy && (
-                            <span>
-                              ✅ Approved By: {request.firstApprovedBy?.name}{" "}
-                              {request.firstApprovedAt
-                                ? `(${formatDate(request.firstApprovedAt)})`
-                                : ""}
-                            </span>
-                          )}
-                          {request.secondApprovedBy ? (
-                            <span>
-                              {" | ✅ Second Approve: "}
-                              {request.secondApprovedBy?.name}{" "}
-                              {request.secondApprovedAt
-                                ? `(${formatDate(request.secondApprovedAt)})`
-                                : ""}
-                            </span>
-                          ) : request.status === "waiting_director_approval" ? (
-                            <span className="text-blue-600">
-                              {" "}
-                              | 🕒 Waiting for Director Approval
-                            </span>
-                          ) : null}
-                        </div>
-                      )}
+                          <div className="mt-2 text-sm text-gray-500">
+                            <strong>Approval Stage:</strong>{" "}
+                            {request.firstApprovedBy && (
+                              <span>
+                                ✅ Approved By: {request.firstApprovedBy?.name}{" "}
+                                {request.firstApprovedAt
+                                  ? `(${formatDate(request.firstApprovedAt)})`
+                                  : ""}
+                              </span>
+                            )}
+                            {request.secondApprovedBy ? (
+                              <span>
+                                {" | ✅ Second Approve: "}
+                                {request.secondApprovedBy?.name}{" "}
+                                {request.secondApprovedAt
+                                  ? `(${formatDate(request.secondApprovedAt)})`
+                                  : ""}
+                              </span>
+                            ) : request.status === "waiting_director_approval" ? (
+                              <span className="text-blue-600">
+                                {" "}
+                                | 🕒 Waiting for Director Approval
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
 
                       {request.approvedBy && (
                         <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
@@ -611,11 +609,11 @@ const JobDescChangeRequests = () => {
                             {getDepartmentApprovalPermission(
                               request.department
                             ) &&
-                            userPermissions.includes(
-                              getDepartmentApprovalPermission(
-                                request.department
-                              )
-                            ) ? (
+                              userPermissions.includes(
+                                getDepartmentApprovalPermission(
+                                  request.department
+                                )
+                              ) ? (
                               <button
                                 onClick={() => viewDetail(request)}
                                 className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
@@ -688,6 +686,16 @@ const JobDescChangeRequests = () => {
                           </>
                         )}
 
+                      {request.status === "approved" && (
+                        <button
+                          onClick={() => viewDetail(request)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          View Approved
+                        </button>
+                      )}
+
                       {request.status === "revisi" && (
                         <button
                           onClick={() => viewDetail(request)}
@@ -734,13 +742,12 @@ const JobDescChangeRequests = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4x1 w-full max-h-[90vh] overflow-y-auto">
             <div
-              className={`sticky top-0 border-b border-gray-200 px-6 py-4 flex justify-between items-center ${
-                selectedRequest.status === "revisi"
-                  ? "bg-orange-50"
-                  : selectedRequest.status === "rejected"
+              className={`sticky top-0 border-b border-gray-200 px-6 py-4 flex justify-between items-center ${selectedRequest.status === "revisi"
+                ? "bg-orange-50"
+                : selectedRequest.status === "rejected"
                   ? "bg-red-50"
                   : "bg-white"
-              }`}
+                }`}
             >
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
@@ -806,50 +813,50 @@ const JobDescChangeRequests = () => {
 
               {(selectedRequest.firstApprovedBy ||
                 selectedRequest.secondApprovedBy) && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">
-                    Approval Progress:
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedRequest.firstApprovedBy && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        <span>
-                          <strong>Manager Approval:</strong>{" "}
-                          {selectedRequest.firstApprovedBy.name}
-                        </span>
-                        {selectedRequest.firstApprovedAt && (
-                          <span className="text-gray-500">
-                            ({formatDate(selectedRequest.firstApprovedAt)})
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      Approval Progress:
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedRequest.firstApprovedBy && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          <span>
+                            <strong>Manager Approval:</strong>{" "}
+                            {selectedRequest.firstApprovedBy.name}
                           </span>
-                        )}
-                      </div>
-                    )}
-                    {selectedRequest.secondApprovedBy ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        <span>
-                          <strong>Director Approval:</strong>{" "}
-                          {selectedRequest.secondApprovedBy.name}
-                        </span>
-                        {selectedRequest.secondApprovedAt && (
-                          <span className="text-gray-500">
-                            ({formatDate(selectedRequest.secondApprovedAt)})
+                          {selectedRequest.firstApprovedAt && (
+                            <span className="text-gray-500">
+                              ({formatDate(selectedRequest.firstApprovedAt)})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {selectedRequest.secondApprovedBy ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          <span>
+                            <strong>Director Approval:</strong>{" "}
+                            {selectedRequest.secondApprovedBy.name}
                           </span>
-                        )}
-                      </div>
-                    ) : selectedRequest.status ===
-                      "waiting_director_approval" ? (
-                      <div className="flex items-center gap-2 text-sm text-blue-600">
-                        <Clock className="w-5 h-5" />
-                        <span>
-                          <strong>Director Approval:</strong> Pending
-                        </span>
-                      </div>
-                    ) : null}
+                          {selectedRequest.secondApprovedAt && (
+                            <span className="text-gray-500">
+                              ({formatDate(selectedRequest.secondApprovedAt)})
+                            </span>
+                          )}
+                        </div>
+                      ) : selectedRequest.status ===
+                        "waiting_director_approval" ? (
+                        <div className="flex items-center gap-2 text-sm text-blue-600">
+                          <Clock className="w-5 h-5" />
+                          <span>
+                            <strong>Director Approval:</strong> Pending
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {selectedRequest.reviewComments && (
                 <div>
@@ -857,13 +864,12 @@ const JobDescChangeRequests = () => {
                     Review Comments:
                   </h4>
                   <div
-                    className={`border-l-4 p-4 ${
-                      selectedRequest.status === "rejected"
-                        ? "bg-red-50 border-red-500"
-                        : selectedRequest.status === "revisi"
+                    className={`border-l-4 p-4 ${selectedRequest.status === "rejected"
+                      ? "bg-red-50 border-red-500"
+                      : selectedRequest.status === "revisi"
                         ? "bg-orange-50 border-orange-500"
                         : "bg-blue-50 border-blue 500"
-                    }`}
+                      }`}
                   >
                     <p className="text-gray-700 whitespace-pre-wrap">
                       {selectedRequest.reviewComments}
@@ -897,11 +903,10 @@ const JobDescChangeRequests = () => {
                         setReviewComments(e.target.value);
                         setShowValidationError(false);
                       }}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                        showValidationError
-                          ? "border-red-500 focus:ring-red-500 bg-red-50"
-                          : "border-gray-300 focus:ring-blue-500"
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${showValidationError
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                        }`}
                       rows="4"
                       placeholder="Add your comments here... (Required if rejecting"
                     />
@@ -1088,8 +1093,8 @@ const JobDescChangeRequests = () => {
                           <span>
                             {previewJobDescData.jobDesc?.tanggal
                               ? new Date(
-                                  previewJobDescData.jobDesc.tanggal
-                                ).toLocaleDateString("id-ID")
+                                previewJobDescData.jobDesc.tanggal
+                              ).toLocaleDateString("id-ID")
                               : new Date().toLocaleDateString("id-ID")}
                           </span>
                         </div>
@@ -1174,7 +1179,7 @@ const JobDescChangeRequests = () => {
                   </div>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     {previewJobDescData.jobDesc?.responsibilities &&
-                    previewJobDescData.jobDesc.responsibilities.length > 0 ? (
+                      previewJobDescData.jobDesc.responsibilities.length > 0 ? (
                       previewJobDescData.jobDesc.responsibilities.map(
                         (responsibility, index) => (
                           <li key={index}>{responsibility}</li>
@@ -1193,7 +1198,7 @@ const JobDescChangeRequests = () => {
                   </div>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     {previewJobDescData.jobDesc?.accountabilities &&
-                    previewJobDescData.jobDesc.accountabilities.length > 0 ? (
+                      previewJobDescData.jobDesc.accountabilities.length > 0 ? (
                       previewJobDescData.jobDesc.accountabilities.map(
                         (accountability, index) => (
                           <li key={index}>{accountability}</li>
@@ -1212,7 +1217,7 @@ const JobDescChangeRequests = () => {
                   </div>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     {previewJobDescData.jobDesc?.interactions?.internal &&
-                    previewJobDescData.jobDesc.interactions.internal.length >
+                      previewJobDescData.jobDesc.interactions.internal.length >
                       0 ? (
                       previewJobDescData.jobDesc.interactions.internal.map(
                         (interaction, index) => (
@@ -1237,8 +1242,8 @@ const JobDescChangeRequests = () => {
                       </p>
                       <ol className="list-decimal list-inside space-y-1 text-sm">
                         {previewJobDescData.jobDesc?.competence?.managerial &&
-                        previewJobDescData.jobDesc.competence.managerial
-                          .length > 0 ? (
+                          previewJobDescData.jobDesc.competence.managerial
+                            .length > 0 ? (
                           previewJobDescData.jobDesc.competence.managerial.map(
                             (comp, index) => <li key={index}>{comp}</li>
                           )
@@ -1253,7 +1258,7 @@ const JobDescChangeRequests = () => {
                       </p>
                       <ol className="list-decimal list-inside space-y-1 text-sm">
                         {previewJobDescData.jobDesc?.competence?.skill &&
-                        previewJobDescData.jobDesc.competence.skill.length >
+                          previewJobDescData.jobDesc.competence.skill.length >
                           0 ? (
                           previewJobDescData.jobDesc.competence.skill.map(
                             (skill, index) => <li key={index}>{skill}</li>

@@ -14,27 +14,73 @@ import { useAuth } from "../contexts/AuthContext";
 import { soBagianChangeRequestsAPI } from "../services/api";
 
 const SOBagianPreview = ({ proposedData, currentData }) => {
-  const [showChangeSummary, setShowChangeSummary] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
 
   console.log("🔍 SOBagianPreview Debug:", {
     hasProposedData: !!proposedData,
     hasCurrentData: !!currentData,
-    proposedStructure: proposedData?.organizationData?.structure,
-    currentStructure: currentData?.organizationData?.structure,
+    proposedData: proposedData,
+    currentData: currentData
   });
 
-  if (!proposedData?.organizationData?.structure) {
+  // ✅ VALIDASI DATA
+  if (!proposedData) {
     return (
       <div className="text-center py-8 text-gray-500">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-        <p>No structure data available</p>
+        <p>No proposed data available</p>
       </div>
     );
   }
 
-  const newStructure = proposedData.organizationData.structure;
-  const oldStructure = currentData?.organizationData?.structure || null;
+  // ✅ EXTRACT STRUCTURE DENGAN SAFE HANDLING
+  let newStructure = null;
+  let oldStructure = null;
+
+  // Try to get structure from different possible paths
+  if (proposedData.organizationData?.structure) {
+    newStructure = proposedData.organizationData.structure;
+  } else if (proposedData.structure) {
+    newStructure = proposedData.structure;
+  }
+
+  if (currentData?.organizationData?.structure) {
+    oldStructure = currentData.organizationData.structure;
+  } else if (currentData?.structure) {
+    oldStructure = currentData.structure;
+  }
+
+  console.log("📊 Extracted structures:", {
+    newStructure,
+    oldStructure
+  });
+
+  if (!newStructure) {
+    return (
+      <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-6 h-6 text-yellow-600 mt-0.5" />
+          <div>
+            <h4 className="font-bold text-yellow-800 text-lg">⚠️ Invalid Data Structure</h4>
+            <p className="text-sm text-yellow-700 mt-2">
+              The proposed data structure is missing or invalid.
+            </p>
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="mt-2 text-xs text-yellow-600 underline"
+            >
+              {showDebug ? 'Hide' : 'Show'} Debug Info
+            </button>
+            {showDebug && (
+              <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-64">
+                {JSON.stringify({ proposedData, currentData }, null, 2)}
+              </pre>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const { header: newHeader, positions: newPositions = [] } = newStructure;
   const { header: oldHeader, positions: oldPositions = [] } = oldStructure || {
@@ -42,7 +88,7 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     positions: [],
   };
 
-  console.log("📊 Positions count:", {
+  console.log("📋 Positions count:", {
     newPositions: newPositions.length,
     oldPositions: oldPositions.length,
   });
@@ -60,10 +106,11 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     };
 
     if (!oldStructure || oldPositions.length === 0) {
-      console.log("⚠️ No old structure data - NO CHANGES TO DISPLAY");
+      console.log("⚠️ No old structure data - showing all as new");
       return summary;
     }
 
+    // Header changes
     if (newHeader && oldHeader) {
       if (newHeader.head !== oldHeader.head) {
         summary.headerChanges.push({
@@ -81,6 +128,7 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       }
     }
 
+    // Position changes
     const oldPositionsMap = new Map();
     oldPositions.forEach((pos) => {
       oldPositionsMap.set(pos.code, pos);
@@ -93,10 +141,9 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
 
     newPositions.forEach((newPos) => {
       const oldPos = oldPositionsMap.get(newPos.code);
-      
+
       if (!oldPos) {
         summary.positionChanges.added.push(newPos);
-        console.log("✅ New position:", newPos.code, newPos.name);
       } else {
         const nameChanged = (newPos.name || "").trim() !== (oldPos.name || "").trim();
         const empIdChanged = (newPos.empId || "").trim() !== (oldPos.empId || "").trim();
@@ -114,13 +161,6 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
               title: titleChanged,
             }
           });
-          console.log("✏️ Modified position:", newPos.code, {
-            oldName: oldPos.name,
-            newName: newPos.name,
-            nameChanged,
-            empIdChanged,
-            titleChanged,
-          });
         }
       }
     });
@@ -128,7 +168,6 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     oldPositions.forEach((oldPos) => {
       if (!newPositionsMap.has(oldPos.code)) {
         summary.positionChanges.removed.push(oldPos);
-        console.log("❌ Removed position:", oldPos.code, oldPos.name);
       }
     });
 
@@ -137,23 +176,17 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
 
   const changeSummary = getChangeSummary();
 
-  console.log("📈 Change Summary:", {
-    added: changeSummary.positionChanges.added.length,
-    modified: changeSummary.positionChanges.modified.length,
-    removed: changeSummary.positionChanges.removed.length,
-  });
-
   const renderComparisonBox = (change) => {
     const { old: oldPos, new: newPos, changes } = change;
-    
+
     return (
       <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
         <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
-          {/* SEBELUM */}
+          {/* BEFORE */}
           <div className="p-4 bg-red-50">
             <div className="flex items-center justify-between mb-3">
               <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
-                SEBELUM
+                BEFORE
               </span>
               <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">
                 {oldPos.code}
@@ -161,11 +194,11 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
             </div>
             <div className="space-y-2">
               <div>
-                <p className="text-xs text-gray-600 font-semibold">Jabatan:</p>
+                <p className="text-xs text-gray-600 font-semibold">Position:</p>
                 <p className="text-sm font-bold text-gray-900">{oldPos.title}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-semibold">Nama:</p>
+                <p className="text-xs text-gray-600 font-semibold">Name:</p>
                 <p className="text-base font-bold text-gray-900">{oldPos.name || "TBD"}</p>
               </div>
               <div>
@@ -175,11 +208,11 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
             </div>
           </div>
 
-          {/* SESUDAH */}
+          {/* AFTER */}
           <div className="p-4 bg-green-50">
             <div className="flex items-center justify-between mb-3">
               <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
-                SESUDAH
+                AFTER
               </span>
               <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">
                 {newPos.code}
@@ -187,13 +220,13 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
             </div>
             <div className="space-y-2">
               <div>
-                <p className="text-xs text-gray-600 font-semibold">Jabatan:</p>
+                <p className="text-xs text-gray-600 font-semibold">Position:</p>
                 <p className={`text-sm font-bold ${changes.title ? 'text-green-700 bg-green-200 px-2 py-1 rounded' : 'text-gray-900'}`}>
                   {newPos.title}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-semibold">Nama:</p>
+                <p className="text-xs text-gray-600 font-semibold">Name:</p>
                 <p className={`text-base font-bold ${changes.name ? 'text-green-700 bg-green-200 px-2 py-1 rounded' : 'text-gray-900'}`}>
                   {newPos.name || "TBD"}
                 </p>
@@ -211,7 +244,7 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     );
   };
 
-  const hasAnyChanges = 
+  const hasAnyChanges =
     changeSummary.headerChanges.length > 0 ||
     changeSummary.positionChanges.added.length > 0 ||
     changeSummary.positionChanges.modified.length > 0 ||
@@ -219,18 +252,29 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
 
   if (!currentData || !oldStructure) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-6">
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-6">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-6 h-6 text-red-600 mt-0.5" />
+          <AlertCircle className="w-6 h-6 text-blue-600 mt-0.5" />
           <div>
-            <h4 className="font-bold text-red-800 text-lg">⚠️ Data BEFORE Tidak Tersedia</h4>
-            <p className="text-sm text-red-700 mt-2">
-              Sistem tidak memiliki data struktur sebelumnya (currentData). 
-              Tidak dapat menampilkan perbandingan perubahan.
+            <h4 className="font-bold text-blue-800 text-lg">ℹ️ New Structure Request</h4>
+            <p className="text-sm text-blue-700 mt-2">
+              This is a new structure creation or no previous data available.
             </p>
-            <p className="text-sm text-red-700 mt-2 font-semibold">
-              Solusi: Pastikan Anda menyimpan data di localStorage sebelum melakukan perubahan.
-            </p>
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-blue-800 mb-2">
+                Proposed Structure:
+              </p>
+              <div className="bg-white rounded p-3 space-y-2">
+                <div>
+                  <span className="text-xs text-gray-600">Department Head:</span>
+                  <p className="font-semibold">{newHeader?.head} ({newHeader?.empId})</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-600">Total Positions:</span>
+                  <p className="font-semibold">{newPositions.length} positions</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -241,19 +285,67 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     return (
       <div className="text-center py-12">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Tidak Ada Perubahan</h3>
-        <p className="text-gray-600">Struktur organisasi tidak mengalami perubahan.</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Changes Detected</h3>
+        <p className="text-gray-600">The organization structure has not been modified.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header Changes */}
+      {changeSummary.headerChanges.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            <FileText className="w-5 h-5 text-orange-600" />
+            📝 Header Changes
+          </h3>
+          <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
+            <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
+              {/* Before */}
+              <div className="p-4 bg-red-50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                    BEFORE
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {changeSummary.headerChanges.map((change, idx) => (
+                    <div key={idx}>
+                      <p className="text-xs text-gray-600 font-semibold">{change.field}:</p>
+                      <p className="text-sm font-bold text-gray-900">{change.old}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* After */}
+              <div className="p-4 bg-green-50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+                    AFTER
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {changeSummary.headerChanges.map((change, idx) => (
+                    <div key={idx}>
+                      <p className="text-xs text-gray-600 font-semibold">{change.field}:</p>
+                      <p className="text-sm font-bold text-gray-900">{change.new}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modified Positions */}
       {changeSummary.positionChanges.modified.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            ✏️ Data yang Diubah ({changeSummary.positionChanges.modified.length})
+            ✏️ Modified Positions ({changeSummary.positionChanges.modified.length})
           </h3>
           <div className="grid grid-cols-1 gap-4">
             {changeSummary.positionChanges.modified.map((change, idx) => (
@@ -264,11 +356,12 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
           </div>
         </div>
       )}
-      {/* Posisi Baru - Jika Ada */}
+
+      {/* Added Positions */}
       {changeSummary.positionChanges.added.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ✅ Posisi Baru ({changeSummary.positionChanges.added.length})
+            ✅ New Positions ({changeSummary.positionChanges.added.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {changeSummary.positionChanges.added.map((position, idx) => (
@@ -281,11 +374,11 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
         </div>
       )}
 
-      {/* Posisi Dihapus - Jika Ada */}
+      {/* Removed Positions */}
       {changeSummary.positionChanges.removed.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ❌ Posisi yang Dihapus ({changeSummary.positionChanges.removed.length})
+            ❌ Removed Positions ({changeSummary.positionChanges.removed.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {changeSummary.positionChanges.removed.map((position, idx) => (
@@ -357,9 +450,8 @@ const SOBagianDetailModal = ({
     };
     return (
       <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          colors[priority] || colors.medium
-        }`}
+        className={`px-2 py-1 rounded text-xs font-medium ${colors[priority] || colors.medium
+          }`}
       >
         {priority?.toUpperCase() || "MEDIUM"}
       </span>
@@ -394,21 +486,19 @@ const SOBagianDetailModal = ({
           <div className="flex gap-4 mt-4 border-b border-gray-200">
             <button
               onClick={() => setActiveTab("preview")}
-              className={`pb-2 px-1 font-medium text-sm transition-colors ${
-                activeTab === "preview"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              className={`pb-2 px-1 font-medium text-sm transition-colors ${activeTab === "preview"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
             >
               Structure Preview
             </button>
             <button
               onClick={() => setActiveTab("details")}
-              className={`pb-2 px-1 font-medium text-sm transition-colors ${
-                activeTab === "details"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+              className={`pb-2 px-1 font-medium text-sm transition-colors ${activeTab === "details"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
             >
               Request Details
             </button>
@@ -507,13 +597,12 @@ const SOBagianDetailModal = ({
                     Review Comments:
                   </h4>
                   <div
-                    className={`border-l-4 p-4 ${
-                      request.status === "rejected"
-                        ? "bg-red-50 border-red-500"
-                        : request.status === "revisi"
+                    className={`border-l-4 p-4 ${request.status === "rejected"
+                      ? "bg-red-50 border-red-500"
+                      : request.status === "revisi"
                         ? "bg-orange-50 border-orange-500"
                         : "bg-blue-50 border-blue-500"
-                    }`}
+                      }`}
                   >
                     <p className="text-gray-700 whitespace-pre-wrap">
                       {request.reviewComments}
@@ -549,11 +638,10 @@ const SOBagianDetailModal = ({
                         setReviewComments(e.target.value);
                         setShowValidationError(false);
                       }}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                        showValidationError
-                          ? "border-red-500 focus:ring-red-500 bg-red-50"
-                          : "border-gray-300 focus:ring-blue-500"
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${showValidationError
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                        }`}
                       rows="4"
                       placeholder="Add your comments here... (Required if rejecting)"
                     />
@@ -871,81 +959,141 @@ const SOBagianChangeRequests = () => {
 
   const applyChangesToSOBagian = (request) => {
     try {
+      console.log("🔥 APPLY CHANGES - START");
+      console.log("📄 Full request object:", request);
+
       const { proposedData } = request;
-      console.log("📄 Full request:", request);
-      console.log("📄 Proposed data:", proposedData);
 
-      if (proposedData && proposedData.organizationData) {
-        const orgData = proposedData.organizationData;
-        console.log("📦 Organization data:", orgData);
-
-        const departmentId = orgData.departmentId;
-        const structure = orgData.structure;
-
-        if (!departmentId) {
-          console.error("❌ No departmentId found");
-          alert("⚠️ Cannot apply changes: Department ID not found");
-          return false;
-        }
-
-        if (!structure) {
-          console.error("❌ No structure found");
-          alert("⚠️ Cannot apply changes: Structure data not found");
-          return false;
-        }
-
-        console.log("🔍 Department ID:", departmentId);
-        console.log("🔍 Structure:", structure);
-
-        const storageKey = `so-bagian-${departmentId}`;
-
-        const dataToSave = {
-          ...structure,
-          lastModified: orgData.lastModified || new Date().toISOString(),
-          modifiedBy: orgData.modifiedBy || "System",
-          approvedAt: request.approvedAt,
-          approvedBy: request.approvedBy?.name || "Unknown",
-        };
-
-        console.log("💾 Storage key:", storageKey);
-        console.log("💾 Data to save:", dataToSave);
-
-        localStorage.setItem(storageKey, JSON.stringify(dataToSave));
-
-        const saved = localStorage.getItem(storageKey);
-        console.log("✅ Saved data verification:", JSON.parse(saved));
-
-        window.dispatchEvent(
-          new CustomEvent(`so-bagian-${departmentId}-updated`, {
-            detail: dataToSave,
-          })
-        );
-
-        console.log("✅ Changes applied successfully");
-
-        setShowDetailModal(false);
-        setReviewComments("");
-        loadRequests();
-
-        alert(
-          "✅ Request approved successfully! Redirecting to SO Bagian Editor..."
-        );
-
-        setTimeout(() => {
-          window.location.href = `/so-bagian-editor?dept=${departmentId}`;
-        }, 1500);
-
-        return true;
-      } else {
-        console.error("❌ Invalid data structure");
-        alert("⚠️ Request format invalid. Cannot apply changes.");
+      if (!proposedData) {
+        console.error("❌ No proposedData found");
+        alert("⚠️ Cannot apply changes: No proposed data");
         return false;
       }
-    } catch (error) {
-      console.error("❌ Error applying changes:", error);
-      alert(
-        "Changes approved but failed to apply. Please refresh the page manually."
+
+      console.log("📦 Proposed data:", proposedData);
+
+      // ✅ TRY MULTIPLE PATHS TO GET organizationData
+      let orgData = null;
+
+      if (proposedData.organizationData) {
+        orgData = proposedData.organizationData;
+        console.log("✅ Found organizationData directly");
+      } else if (proposedData.structure) {
+        // Fallback: if structure is directly in proposedData
+        orgData = proposedData;
+        console.log("✅ Using proposedData as organizationData");
+      }
+
+      if (!orgData) {
+        console.error("❌ No organization data found");
+        alert("⚠️ Cannot apply changes: Invalid data structure");
+        return false;
+      }
+
+      console.log("📊 Organization data:", orgData);
+
+      // ✅ GET departmentId
+      let departmentId = orgData.departmentId;
+
+      // Fallback: try to get from request.department
+      if (!departmentId && request.department) {
+        // Convert department name to ID
+        const deptMapping = {
+          "HRGA & IT Department": "hrga-it",
+          "Finance Department": "finance",
+          "Management Development": "management-development",
+          "Management Representative": "management-representative",
+          "Manufacturing Battery": "manufactur-battery",
+          "Manufacturing Cable": "manufacturing-cable",
+          "Marketing Battery Department": "marketing-battery",
+          "Marketing Engineering": "marketing-engineering",
+          "MI & SHE": "mi-she",
+          "PPIC": "ppic",
+          "Purchasing": "purchasing",
+          "QA Department": "qa"
+        };
+
+        departmentId = deptMapping[request.department];
+        console.log("🔄 Converted department name to ID:", request.department, "→", departmentId);
+      }
+
+      if (!departmentId) {
+        console.error("❌ No departmentId found");
+        console.log("Available data:", { orgData, request });
+        alert("⚠️ Cannot apply changes: Department ID not found");
+        return false;
+      }
+
+      console.log("🏢 Department ID:", departmentId);
+
+      // ✅ GET structure
+      const structure = orgData.structure;
+
+      if (!structure) {
+        console.error("❌ No structure found");
+        alert("⚠️ Cannot apply changes: Structure data not found");
+        return false;
+      }
+
+      console.log("🏗️ Structure:", structure);
+
+      // ✅ PREPARE DATA TO SAVE
+      const storageKey = `so-bagian-${departmentId}`;
+      console.log("💾 Storage key:", storageKey);
+
+      const dataToSave = {
+        header: structure.header,
+        positions: structure.positions,
+        lastModified: orgData.lastModified || new Date().toISOString(),
+        modifiedBy: orgData.modifiedBy || "System",
+        approvedAt: request.approvedAt,
+        approvedBy: request.approvedBy?.name || "Unknown",
+      };
+
+      console.log("💾 Data to save:", dataToSave);
+
+      // ✅ SAVE TO LOCALSTORAGE
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+        console.log("✅ Saved to localStorage");
+
+        // Verify
+        const saved = localStorage.getItem(storageKey);
+        console.log("✅ Verification - Data in localStorage:", JSON.parse(saved));
+      } catch (storageError) {
+        console.error("❌ localStorage error:", storageError);
+        alert("⚠️ Failed to save to localStorage");
+        return false;
+      }
+
+      // ✅ DISPATCH EVENT
+      const eventName = `so-bagian-${departmentId}-updated`;
+      console.log("📡 Dispatching event:", eventName);
+      console.log("📡 Event data:", dataToSave);
+
+      window.dispatchEvent(
+        new CustomEvent(eventName, {
+          detail: dataToSave,
+        })
       );
+
+      console.log("✅ Event dispatched successfully");
+      console.log("🔥 APPLY CHANGES - COMPLETE");
+
+      // ✅ CLOSE MODAL & RELOAD
+      setShowDetailModal(false);
+      setReviewComments("");
+      loadRequests();
+
+      // ✅ SHOW SUCCESS MESSAGE
+      alert(`✅ Changes approved and applied!\n\nDepartment: ${request.department}\nStorage Key: ${storageKey}\nEvent: ${eventName}\n\nThe ${request.department} page will now reflect the changes.`);
+
+      return true;
+
+    } catch (error) {
+      console.error("❌ ERROR in applyChangesToSOBagian:", error);
+      console.error("Stack trace:", error.stack);
+      alert(`⚠️ Error applying changes: ${error.message}`);
       return false;
     }
   };
@@ -1014,9 +1162,8 @@ const SOBagianChangeRequests = () => {
 
     return (
       <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          color[priority] || color.medium
-        }`}
+        className={`px-2 py-1 rounded text-xs font-medium ${color[priority] || color.medium
+          }`}
       >
         {priority?.toUpperCase() || "MEDIUM"}
       </span>
@@ -1096,11 +1243,10 @@ const SOBagianChangeRequests = () => {
                     <button
                       key={tab.id}
                       onClick={() => setSelectedTab(tab.id)}
-                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                        selectedTab === tab.id
-                          ? "border-blue-500 text-blue-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
+                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${selectedTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -1166,32 +1312,32 @@ const SOBagianChangeRequests = () => {
 
                       {(request.firstApprovedBy ||
                         request.secondApprovedBy) && (
-                        <div className="mt-2 text-sm text-gray-500">
-                          <strong>Approval Stage:</strong>{" "}
-                          {request.firstApprovedBy && (
-                            <span>
-                              ✅ Approved By: {request.firstApprovedBy?.name}{" "}
-                              {request.firstApprovedAt
-                                ? `(${formatDate(request.firstApprovedAt)})`
-                                : ""}
-                            </span>
-                          )}
-                          {request.secondApprovedBy ? (
-                            <span>
-                              {" | ✅ Second Approve: "}
-                              {request.secondApprovedBy?.name}{" "}
-                              {request.secondApprovedAt
-                                ? `(${formatDate(request.secondApprovedAt)})`
-                                : ""}
-                            </span>
-                          ) : request.status === "waiting_director_approval" ? (
-                            <span className="text-blue-600">
-                              {" "}
-                              | 🕒 Waiting for Director Approval
-                            </span>
-                          ) : null}
-                        </div>
-                      )}
+                          <div className="mt-2 text-sm text-gray-500">
+                            <strong>Approval Stage:</strong>{" "}
+                            {request.firstApprovedBy && (
+                              <span>
+                                ✅ Approved By: {request.firstApprovedBy?.name}{" "}
+                                {request.firstApprovedAt
+                                  ? `(${formatDate(request.firstApprovedAt)})`
+                                  : ""}
+                              </span>
+                            )}
+                            {request.secondApprovedBy ? (
+                              <span>
+                                {" | ✅ Second Approve: "}
+                                {request.secondApprovedBy?.name}{" "}
+                                {request.secondApprovedAt
+                                  ? `(${formatDate(request.secondApprovedAt)})`
+                                  : ""}
+                              </span>
+                            ) : request.status === "waiting_director_approval" ? (
+                              <span className="text-blue-600">
+                                {" "}
+                                | 🕒 Waiting for Director Approval
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
 
                       {request.approvedBy && (
                         <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
@@ -1231,11 +1377,11 @@ const SOBagianChangeRequests = () => {
                             {getDepartmentApprovalPermission(
                               request.department
                             ) &&
-                            userPermissions.includes(
-                              getDepartmentApprovalPermission(
-                                request.department
-                              )
-                            ) ? (
+                              userPermissions.includes(
+                                getDepartmentApprovalPermission(
+                                  request.department
+                                )
+                              ) ? (
                               <button
                                 onClick={() => viewDetail(request)}
                                 className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
@@ -1307,6 +1453,16 @@ const SOBagianChangeRequests = () => {
                             )}
                           </>
                         )}
+
+                      {request.status === "approved" && (
+                        <button
+                          onClick={() => viewDetail(request)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          View Approved
+                        </button>
+                      )}
 
                       {request.status === "revisi" && (
                         <button

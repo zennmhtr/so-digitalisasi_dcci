@@ -16,28 +16,146 @@ const ManufacturingCable = () => {
       printContainer.setAttribute('data-paper', printSettings.paperSize);
       printContainer.setAttribute('data-orientation', printSettings.orientation);
     }
-    
+
     document.documentElement.setAttribute('data-paper', printSettings.paperSize);
     document.documentElement.setAttribute('data-orientation', printSettings.orientation);
-    
+
     const printStyle = document.getElementById('dynamic-print-style') || document.createElement('style');
     printStyle.id = 'dynamic-print-style';
-    
+
     const paperSize = printSettings.paperSize;
     const orientation = printSettings.orientation;
-    const margin = paperSize === 'A3' ? '10mm' : '8mm';
-    
+
+    let scale = 0.75;
+    if (paperSize === 'A4' && orientation === 'landscape') {
+      scale = 0.35;
+    } else if (paperSize === 'A4' && orientation === 'portrait') {
+      scale = 0.50;
+    } else if (paperSize === 'A3' && orientation === 'landscape') {
+      scale = 0.95;
+    } else if (paperSize === 'A3' && orientation === 'portrait') {
+      scale = 0.88;
+    }
+
     printStyle.innerHTML = `
       @media print {
         @page {
           size: ${paperSize} ${orientation};
-          margin: ${margin};
+          margin: 0;
+        }
+        
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        
+        .print\\:hidden,
+        button,
+        [class*="print:hidden"] {
+          display: none !important;
+        }
+        
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          background: white !important;
+          overflow: hidden !important;
+        }
+        
+        body > div {
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .min-h-screen {
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+        }
+        
+        .print-container {
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: visible !important;
+          background: white !important;
+        }
+        
+        .print-container > div {
+          transform: scale(${scale}) !important;
+          transform-origin: top left !important;
+          width: ${100 / scale}% !important;
+          padding: 12px !important;
+        }
+        
+        .bg-blue-300 {
+          background-color: #93c5fd !important;
+        }
+        
+        .bg-gray-100 {
+          background-color: #f3f4f6 !important;
+        }
+        
+        .bg-white {
+          background-color: #ffffff !important;
+        }
+        
+        .bg-gray-50 {
+          background-color: #ffffff !important;
+        }
+        
+        .border,
+        .border-2,
+        .border-4,
+        .border-black {
+          border-color: #000000 !important;
+        }
+        
+        .border-gray-300 {
+          border-color: #d1d5db !important;
+        }
+        
+        .border-gray-400 {
+          border-color: #9ca3af !important;
+        }
+        
+        /* Pastikan text color */
+        .text-black {
+          color: #000000 !important;
+        }
+        
+        .text-gray-800,
+        .text-gray-700,
+        .text-gray-600,
+        .text-gray-500 {
+          color: #000000 !important;
+        }
+        
+        img {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          display: block !important;
+        }
+        
+        * {
+          page-break-inside: avoid !important;
+          page-break-after: avoid !important;
+          page-break-before: avoid !important;
         }
       }
     `;
-    
+
     document.head.appendChild(printStyle);
-    
+
     setTimeout(() => {
       window.print();
     }, 100);
@@ -80,7 +198,7 @@ const ManufacturingCable = () => {
               </label>
               <select
                 value={printSettings.paperSize}
-                onChange={(e) => setPrintSettings({...printSettings, paperSize: e.target.value})}
+                onChange={(e) => setPrintSettings({ ...printSettings, paperSize: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="A4">A4</option>
@@ -93,7 +211,7 @@ const ManufacturingCable = () => {
               </label>
               <select
                 value={printSettings.orientation}
-                onChange={(e) => setPrintSettings({...printSettings, orientation: e.target.value})}
+                onChange={(e) => setPrintSettings({ ...printSettings, orientation: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="landscape">Landscape</option>
@@ -112,14 +230,14 @@ const ManufacturingCable = () => {
       {/* Manufacturing Cable Department Organization Chart */}
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
         <div className="min-w-[1200px] relative p-4 print:min-w-0 print:p-0">
-          
+
           {/* Header Section with borders */}
           <div className="mb-4 border-2 border-black p-3 print:mb-3 print:p-3 print:border-2">
             <div className="flex items-start gap-2">
               <div className="w-32 flex items-center justify-center p-4 border-2 border-black" style={{ height: '160px' }}>
-                <img 
-                  src="/logo/dcci.png" 
-                  alt="Dharma Group Logo" 
+                <img
+                  src="/logo/dcci.png"
+                  alt="Dharma Group Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -178,7 +296,7 @@ const ManufacturingCable = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Header Rows */}
           <div className="mb-6 relative" style={{ zIndex: 2 }}>
             <div className="grid grid-cols-6 gap-2 mb-4">
@@ -205,7 +323,7 @@ const ManufacturingCable = () => {
 
           {/* Content Grid */}
           <div className="grid grid-cols-6 gap-2 relative org-grid" style={{ zIndex: 2 }}>
-            
+
             {/* Kolom 1 - Board of Director */}
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
@@ -219,7 +337,7 @@ const ManufacturingCable = () => {
                   <p className="text-xs leading-tight uppercase">(23200235)</p>
                 </div>
               </div>
-              
+
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold uppercase">BOD1.1</p>
@@ -267,7 +385,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-            <div className="min-h-[420px]"></div>  
+              <div className="min-h-[420px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold uppercase">PRD1.2</p>
@@ -280,7 +398,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-            <div className="min-h-[880px]"></div>  
+              <div className="min-h-[880px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold uppercase">PRD1.0.1</p>
@@ -326,7 +444,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-                <div className="min-h-[240px]"></div>  
+              <div className="min-h-[240px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[300px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold uppercase">PRD1.2.1</p>
@@ -371,7 +489,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-               <div className="min-h-[10px]"></div>  
+              <div className="min-h-[10px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold uppercase">PRD1.1.4</p>
@@ -383,7 +501,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-            <div className="min-h-[30px]"></div>  
+              <div className="min-h-[30px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
@@ -431,8 +549,8 @@ const ManufacturingCable = () => {
               </div>
 
 
-            <div className="min-h-[240px]"></div>  
-               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
+              <div className="min-h-[240px]"></div>
+              <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                     <p className="text-xs font-bold uppercase">PRD1.2.3</p>
@@ -467,7 +585,7 @@ const ManufacturingCable = () => {
                     <p className="text-xs font-bold uppercase">PRD1.2.4</p>
                     {/* Empty for alignment */}
                   </div>
-                  
+
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
                     <p className="text-xs leading-tight uppercase">HERI MOHAMMAD AFANDI</p>
                     <p className="text-xs leading-tight uppercase">(23060138)</p>
@@ -519,7 +637,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
 
-            <div className="min-h-[130px]"></div>  
+              <div className="min-h-[130px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
@@ -565,7 +683,7 @@ const ManufacturingCable = () => {
                 </div>
               </div>
             </div>
-            </div>
+          </div>
 
           {/* Notes Section */}
           <div className="mt-8 border-2 border-black p-3 inline-block">

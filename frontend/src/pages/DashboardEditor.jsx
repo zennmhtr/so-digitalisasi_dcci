@@ -10,6 +10,8 @@ const DashboardEditor = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [organizationData, setOrganizationData] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
+  const [editModeStartData, setEditModeStartData] = useState(null);
   const [submitForm, setSubmitForm] = useState({
     title: "",
     description: "",
@@ -91,15 +93,6 @@ const DashboardEditor = () => {
     setConnectors((prev) => prev.filter((c) => c.id !== connectorId));
   };
 
-  useEffect(() => {
-    const savedLayout = localStorage.getItem("dashboard-editor-layout");
-    if (savedLayout) {
-      const layout = JSON.parse(savedLayout);
-      setConnectors(layout.connectors || []);
-      setNewBoxes(layout.newBoxes || []);
-    }
-  }, []);
-
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
     const userPermissions =
@@ -123,15 +116,20 @@ const DashboardEditor = () => {
         preparedDate: "08/09/2025",
         approvedDate: "08/09/2025",
       },
-      commissioners: {
-        president: {
-          title: "PRESIDENT COMMISIONER",
-          name: "IRIANTO SANTOSO",
+      signatures: {
+        preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
+        middleBy: {
+          title: "Bambang Wuryanto",
+          name: "Bambang Wuryanto",
+          date: "08/09/2025",
         },
+        approvedBy: { name: "Eko Maryanto", date: "08/09/2025" },
+      },
+      commissioners: {
+        president: { title: "PRESIDENT COMMISIONER", name: "IRIANTO SANTOSO" },
         commissioners: ["SUBAGIO", "HONG KUO MING", "LIAO CHIN HSIEN"],
       },
       structure: {
-        // Board of Directors - Column 1
         bod: [
           {
             id: "bod-1",
@@ -148,7 +146,6 @@ const DashboardEditor = () => {
             empId: "23200038",
           },
         ],
-        // Management Functions - Column 2
         management: [
           {
             id: "mio-1",
@@ -203,7 +200,6 @@ const DashboardEditor = () => {
             empId: "23030023",
           },
         ],
-        // Division Labels - Column 3
         divisions: [
           {
             id: "div-1",
@@ -217,7 +213,6 @@ const DashboardEditor = () => {
             type: "business-label",
           },
         ],
-        // Department Head - Column 4
         departments: [
           {
             id: "qa-1",
@@ -238,7 +233,7 @@ const DashboardEditor = () => {
             route: "/ppic",
           },
           {
-            id: "mkt-eng",
+            id: "mkt-1",
             code: "MKT1.0",
             title: "MI & SHE (5R-SMK3-ISO 14001)",
             name: "ANDREAS AGUNG S.",
@@ -253,7 +248,7 @@ const DashboardEditor = () => {
             name: "RENDRA PRAMONO",
             empId: "23200067",
             clickable: true,
-            route: "/marketing-battery-department",
+            route: "/marketing-battery-engineering",
           },
           {
             id: "rnd-1",
@@ -263,7 +258,7 @@ const DashboardEditor = () => {
             empId: "23200067",
           },
           {
-            id: "qac-2",
+            id: "qac-1",
             code: "QAC2.0",
             title: "QA/QC/DOC",
             name: "RENDRA PRAMONO",
@@ -277,7 +272,6 @@ const DashboardEditor = () => {
             empId: "",
           },
         ],
-        // Section Head / Engineering Product Leader - Column 5
         sections: [
           {
             id: "prd-1",
@@ -301,7 +295,7 @@ const DashboardEditor = () => {
             id: "prd-3",
             code: "PRD3.0",
             title: "BATTERY PME",
-            name: "DIONISIUS AUGUSTO**",
+            name: "DIONISIUS AUGUSTO",
             empId: "23220105",
             clickable: true,
             route: "/manufactur-battery",
@@ -335,21 +329,21 @@ const DashboardEditor = () => {
             empId: "23220049",
           },
           {
-            id: "rnd-1-0",
+            id: "rnd-1",
             code: "RND1.0",
             title: "AUX & POWER BATTERY ENGINEERING PRODUCT LEADER",
             name: "BRIAN BUDI SANTOSO**",
             empId: "23210077",
           },
           {
-            id: "rnd-2-0",
+            id: "rnd-2",
             code: "RND2.0",
             title: "ESS ENGINEERING PRODUCT LEADER",
             name: "RAIHAN RAMADHAN**",
             empId: "23220104",
           },
           {
-            id: "rnd-3-0",
+            id: "rnd-3",
             code: "RND3.0",
             title: "MICRO CONTROLLER ENGINEERING PRODUCT LEADER",
             name: "ELISABETH GUSTI**",
@@ -401,10 +395,34 @@ const DashboardEditor = () => {
     };
 
     const savedData = localStorage.getItem("dashboard-organization-data");
+
     if (savedData) {
-      setOrganizationData(JSON.parse(savedData));
+      try {
+        const parsedData = JSON.parse(savedData);
+        setOrganizationData(parsedData);
+
+        setOriginalData(JSON.parse(JSON.stringify(parsedData)));
+
+        console.log("✅ Loaded existing data from localStorage");
+      } catch (error) {
+        console.error("❌ Error parsing saved data:", error);
+        localStorage.setItem(
+          "dashboard-organization-data",
+          JSON.stringify(initialData)
+        );
+        setOrganizationData(initialData);
+        setOriginalData(JSON.parse(JSON.stringify(initialData)));
+      }
     } else {
+      localStorage.setItem(
+        "dashboard-organization-data",
+        JSON.stringify(initialData)
+      );
       setOrganizationData(initialData);
+
+      setOriginalData(JSON.parse(JSON.stringify(initialData)));
+
+      console.log("✅ Created initial data");
     }
   }, []);
 
@@ -489,6 +507,44 @@ const DashboardEditor = () => {
       const now = new Date();
       const humanDate = now.toLocaleDateString("en-GB");
 
+      let baselineData = editModeStartData;
+
+      if (!baselineData) {
+        console.warn("⚠️ editModeStartData not found, trying originalData");
+        baselineData = originalData;
+      }
+
+      if (!baselineData) {
+        console.warn("⚠️ originalData not found, trying localStorage");
+        const savedDataRaw = localStorage.getItem(
+          "dashboard-organization-data"
+        );
+        if (savedDataRaw) {
+          baselineData = JSON.parse(savedDataRaw);
+        }
+      }
+
+      if (!baselineData) {
+        alert(
+          "❌ Error: Cannot find original data for comparison. Please refresh the page."
+        );
+        return;
+      }
+
+      console.log("\n🔍 SUBMIT DEBUG:");
+      console.log("📊 Baseline data (BEFORE):", {
+        hasBOD: !!baselineData.structure?.bod,
+        hasManagement: !!baselineData.structure?.management,
+        managementSample: baselineData.structure?.management?.[0],
+        fullBaseline: baselineData,
+      });
+      console.log("📊 Current data (AFTER):", {
+        hasBOD: !!organizationData.structure?.bod,
+        hasManagement: !!organizationData.structure?.management,
+        managementSample: organizationData.structure?.management?.[0],
+        fullCurrent: organizationData,
+      });
+
       const dataToSubmit = {
         ...organizationData,
         signatures: {
@@ -498,12 +554,8 @@ const DashboardEditor = () => {
             date: humanDate,
             _ts: now.toISOString(),
           },
-          middleBy: {
-            ...(organizationData.signatures?.middleBy || {}),
-          },
-          approvedBy: {
-            ...(organizationData.signatures?.approvedBy || {}),
-          },
+          middleBy: { ...(organizationData.signatures?.middleBy || {}) },
+          approvedBy: { ...(organizationData.signatures?.approvedBy || {}) },
         },
         lastModified: now.toISOString(),
         modifiedBy: user?.name || user?.username,
@@ -515,11 +567,6 @@ const DashboardEditor = () => {
         lastModified: new Date().toISOString(),
       };
 
-      const currentDataStr = localStorage.getItem(
-        "dashboard-organization-data"
-      );
-      const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
-
       const requestData = {
         title: submitForm.title,
         description: submitForm.description,
@@ -530,15 +577,25 @@ const DashboardEditor = () => {
           organizationData: dataToSubmit,
           layoutData: layoutData,
         },
-        currentData: currentData,
+        currentData: {
+          organizationData: baselineData,
+        },
       };
+
+      console.log("📤 Final request payload:", {
+        title: requestData.title,
+        hasCurrentData: !!requestData.currentData?.organizationData,
+        hasProposedData: !!requestData.proposedData?.organizationData,
+        currentManagement:
+          requestData.currentData?.organizationData?.structure?.management,
+        proposedManagement:
+          requestData.proposedData?.organizationData?.structure?.management,
+      });
 
       const response = await soChangeRequestsAPI.create(requestData);
 
       if (response.data.success) {
-        alert(
-          "✅ Change request submitted successfully! Your changes will appear in the dashboard after approval."
-        );
+        alert("✅ Change request submitted successfully!");
         setShowSubmitModal(false);
         setSubmitForm({
           title: "",
@@ -546,13 +603,16 @@ const DashboardEditor = () => {
           priority: "medium",
           affectedSection: "departments",
         });
+
+        setEditModeStartData(null);
+        setIsEditMode(false);
+
         navigate("/so-change-requests");
       }
     } catch (error) {
-      console.error("Error submitting change request:", error);
+      console.error("❌ Error submitting change request:", error);
       alert(
-        error.response?.data?.message ||
-          "Failed to submit change request. Please try again."
+        error.response?.data?.message || "Failed to submit change request."
       );
     }
   };
@@ -566,147 +626,6 @@ const DashboardEditor = () => {
       localStorage.removeItem("dashboard-organization-data");
       window.location.reload();
     }
-  };
-
-  const EditableBox = ({ item, category, className = "", style = {} }) => {
-    const [isEditing, setIsEditing] = useState({});
-    const boxRef = useRef(null);
-
-    const startEdit = (field) => {
-      if (isEditMode && !isDrawingMode) {
-        setIsEditing((prev) => ({ ...prev, [field]: true }));
-      }
-    };
-
-    const finishEdit = (field, value) => {
-      handleEdit(category, item.id, field, value);
-      setIsEditing((prev) => ({ ...prev, [field]: false }));
-    };
-
-    const handleBoxClick = (e) => {
-      if (isDrawingMode) {
-        e.stopPropagation();
-        const rect = boxRef.current.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2 - containerRect.left;
-        const centerY = rect.top + rect.height / 2 - containerRect.top;
-
-        if (isDrawingConnector) {
-          finishConnector(item.id, { x: centerX, y: centerY });
-        } else {
-          startConnector(item.id, { x: centerX, y: centerY });
-        }
-        return;
-      }
-
-      if (item.clickable && item.route && !isEditMode) {
-        navigate(item.route);
-      }
-    };
-
-    const renderEditableField = (field, value, placeholder = "") => {
-      if (isEditing[field]) {
-        return (
-          <input
-            type="text"
-            defaultValue={value}
-            className="w-full px-1 py-0.5 text-xs border rounded bg-yellow-50"
-            placeholder={placeholder}
-            autoFocus
-            onBlur={(e) => finishEdit(field, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                finishEdit(field, e.target.value);
-              } else if (e.key === "Escape") {
-                setIsEditing((prev) => ({ ...prev, [field]: false }));
-              }
-            }}
-          />
-        );
-      }
-
-      return (
-        <span
-          onClick={() => startEdit(field)}
-          className={
-            isEditMode && !isDrawingMode
-              ? "cursor-pointer hover:bg-yellow-100 rounded px-1"
-              : ""
-          }
-          title={isEditMode && !isDrawingMode ? "Click to edit" : ""}
-        >
-          {value || placeholder}
-        </span>
-      );
-    };
-
-    const getBoxStyle = () => {
-      let baseClasses = `bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className}`;
-
-      if (isDrawingMode) {
-        baseClasses +=
-          " cursor-crosshair ring-2 ring-green-300 hover:ring-green-400";
-      } else if (isEditMode) {
-        baseClasses += " ring-2 ring-blue-200";
-      } else if (item.clickable) {
-        baseClasses +=
-          " cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200";
-      }
-
-      return baseClasses;
-    };
-
-    const finalStyle = {
-      ...style,
-    };
-
-    return (
-      <div
-        ref={boxRef}
-        className={getBoxStyle()}
-        style={finalStyle}
-        onClick={handleBoxClick}
-        data-element-id={item.id}
-      >
-        <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-          <p className="text-xs font-bold">
-            {renderEditableField("code", item.code, "CODE")}
-          </p>
-        </div>
-        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-          <p className="text-xs font-semibold mb-1 leading-tight">
-            {renderEditableField("title", item.title, "Title")}
-          </p>
-          {(item.name || isEditMode) && (
-            <>
-              <hr className="my-1 border-gray-300" />
-              <p className="text-xs leading-tight">
-                {renderEditableField("name", item.name, "Name")}
-              </p>
-              {(item.empId || isEditMode) && (
-                <p className="text-xs leading-tight">
-                  ({renderEditableField("empId", item.empId, "ID")})
-                </p>
-              )}
-            </>
-          )}
-          {/* Mode indicators */}
-          {isDrawingMode && (
-            <p className="text-xs text-green-600 mt-1 font-semibold">
-              🔗 Click to connect
-            </p>
-          )}
-          {item.clickable && !isEditMode && !isDrawingMode && (
-            <p className="text-xs text-blue-600 mt-1 font-semibold">
-              Click to view details →
-            </p>
-          )}
-          {isEditMode && !isDrawingMode && (
-            <p className="text-xs text-gray-500 mt-1">Click fields to edit</p>
-          )}
-        </div>
-      </div>
-    );
   };
 
   const ConnectorSVG = () => {
@@ -735,11 +654,9 @@ const DashboardEditor = () => {
             />
             {/* Arrow marker */}
             <polygon
-              points={`${connector.end.x - 8},${connector.end.y - 4} ${
-                connector.end.x
-              },${connector.end.y} ${connector.end.x - 8},${
-                connector.end.y + 4
-              }`}
+              points={`${connector.end.x - 8},${connector.end.y - 4} ${connector.end.x
+                },${connector.end.y} ${connector.end.x - 8},${connector.end.y + 4
+                }`}
               fill="#3B82F6"
             />
             {/* Delete button for connector */}
@@ -979,16 +896,33 @@ const DashboardEditor = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => {
-                  setIsEditMode(!isEditMode);
+                  const newEditMode = !isEditMode;
+                  setIsEditMode(newEditMode);
                   setIsDrawingMode(false);
+
+                  if (newEditMode && organizationData) {
+                    console.log("🔒 ENTERING EDIT MODE - Taking snapshot");
+                    console.log(
+                      "📸 Current data before edit:",
+                      organizationData
+                    );
+
+                    const snapshot = JSON.parse(
+                      JSON.stringify(organizationData)
+                    );
+                    setEditModeStartData(snapshot);
+
+                    console.log("✅ Snapshot saved:", snapshot);
+                  } else if (!newEditMode) {
+                    console.log("🚪 EXITING EDIT MODE");
+                  }
                 }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  isEditMode
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${isEditMode
                     ? "bg-green-600 hover:bg-green-700 text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+                  }`}
               >
-                {isEditMode ? "Edit Mode" : "View Mode"}
+                {isEditMode ? "✏️ Edit Mode" : "👁️ View Mode"}
               </button>
             </div>
           </div>
@@ -996,24 +930,24 @@ const DashboardEditor = () => {
           <div className="flex items-center space-x-2">
             {isEditMode && (
               <button
-              onClick={() => openSubmitModal()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                onClick={() => openSubmitModal()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Submit for Approval
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Submit for Approval
+              </button>
             )}
 
             <button
@@ -1176,31 +1110,10 @@ const DashboardEditor = () => {
                 </p>
                 <p className="text-xs text-gray-500">
                   Prep Date :{" "}
-                  {isEditMode ? (
-                    <input
-                      type="text"
-                      value={
-                        organizationData.signatures?.preparedBy?.date ||
-                        "08/09/2025"
-                      }
-                      onChange={(e) => {
-                        setOrganizationData((prev) => ({
-                          ...prev,
-                          signatures: {
-                            ...prev.signatures,
-                            preparedBy: {
-                              ...prev.signatures?.preparedBy,
-                              date: e.target.value,
-                            },
-                          },
-                        }));
-                      }}
-                      className="bg-yellow-50 border rounded px-1 text-xs w-20 ml-1"
-                    />
-                  ) : (
-                    organizationData.signatures?.preparedBy?.date ||
-                    "08/09/2025"
-                  )}
+                  <span className="font-semibold text-gray-700">
+                    {organizationData.signatures?.preparedBy?.date ||
+                      "Auto on submit"}
+                  </span>
                 </p>
               </div>
 
@@ -1239,30 +1152,10 @@ const DashboardEditor = () => {
                 </p>
                 <p className="text-xs text-gray-500">
                   Prepared Date :{" "}
-                  {isEditMode ? (
-                    <input
-                      type="text"
-                      value={
-                        organizationData.signatures?.middleBy?.date ||
-                        "08/09/2025"
-                      }
-                      onChange={(e) => {
-                        setOrganizationData((prev) => ({
-                          ...prev,
-                          signatures: {
-                            ...prev.signatures,
-                            middleBy: {
-                              ...prev.signatures?.middleBy,
-                              date: e.target.value,
-                            },
-                          },
-                        }));
-                      }}
-                      className="bg-yellow-50 border rounded px-1 text-xs w-20 ml-1"
-                    />
-                  ) : (
-                    organizationData.signatures?.middleBy?.date || "08/09/2025"
-                  )}
+                  <span className="font-semibold text-gray-700">
+                    {organizationData.signatures?.middleBy?.date ||
+                      "Pending first approval"}
+                  </span>
                 </p>
               </div>
 
@@ -1301,31 +1194,10 @@ const DashboardEditor = () => {
                 </p>
                 <p className="text-xs text-gray-500">
                   Prepared Date :{" "}
-                  {isEditMode ? (
-                    <input
-                      type="text"
-                      value={
-                        organizationData.signatures?.approvedBy?.date ||
-                        "08/09/2025"
-                      }
-                      onChange={(e) => {
-                        setOrganizationData((prev) => ({
-                          ...prev,
-                          signatures: {
-                            ...prev.signatures,
-                            approvedBy: {
-                              ...prev.signatures?.approvedBy,
-                              date: e.target.value,
-                            },
-                          },
-                        }));
-                      }}
-                      className="bg-yellow-50 border rounded px-1 text-xs w-20 ml-1"
-                    />
-                  ) : (
-                    organizationData.signatures?.approvedBy?.date ||
-                    "08/09/2025"
-                  )}
+                  <span className="font-semibold text-gray-700">
+                    {organizationData.signatures?.approvedBy?.date ||
+                      "Pending final approval"}
+                  </span>
                 </p>
               </div>
             </div>
@@ -1442,38 +1314,117 @@ const DashboardEditor = () => {
           </div>
         </div>
 
-        {/* Main Content Grid - 5 Columns - COMPLETE STRUCTURE */}
         <div className="mb-6">
           <div className="grid grid-cols-5 gap-4">
             {/* Column 1 - Board of Directors */}
             <div className="space-y-3">
               {organizationData.structure.bod.map((item) => (
-                <EditableBox key={item.id} item={item} category="bod" />
+                <div
+                  key={item.id}
+                  className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                    } ${item.clickable && !isEditMode
+                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                      : ""
+                    }`}
+                  onClick={() => {
+                    if (item.clickable && item.route && !isEditMode) {
+                      navigate(item.route);
+                    }
+                  }}
+                >
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                    <p className="text-xs font-bold">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.code}
+                          onChange={(e) =>
+                            handleEdit("bod", item.id, "code", e.target.value)
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                        />
+                      ) : (
+                        item.code
+                      )}
+                    </p>
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-1 leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.title}
+                          onChange={(e) =>
+                            handleEdit("bod", item.id, "title", e.target.value)
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.title
+                      )}
+                    </p>
+                    <hr className="my-1 border-gray-300" />
+                    <p className="text-xs leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) =>
+                            handleEdit("bod", item.id, "name", e.target.value)
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.name
+                      )}
+                    </p>
+                    <p className="text-xs leading-tight">
+                      (
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.empId}
+                          onChange={(e) =>
+                            handleEdit("bod", item.id, "empId", e.target.value)
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                        />
+                      ) : (
+                        item.empId
+                      )}
+                      )
+                    </p>
+                    {item.clickable && !isEditMode && (
+                      <p className="text-xs text-blue-600 mt-1 font-semibold">
+                        Click to view details →
+                      </p>
+                    )}
+                    {isEditMode && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click Fields to edit
+                      </p>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
 
             {/* Column 2 - Management Functions */}
             <div className="space-y-4">
-              {/* Empty space to align with President Director */}
               <div className="min-h-[180px]"></div>
-
-              {/* Management items with special handling for combined MDO */}
               {organizationData.structure.management.map((item) => {
                 if (item.code === "MDO1.0") {
-                  // Combined MDO box
                   const mdo2 = organizationData.structure.management.find(
                     (m) => m.code === "MDO2.0"
                   );
                   return (
                     <div
                       key="mdo-combined"
-                      className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                        isEditMode ? "ring-2 ring-blue-200" : ""
-                      } ${
-                        mdo2?.clickable && !isEditMode
+                      className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                        } ${mdo2?.clickable && !isEditMode
                           ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
                           : ""
-                      }`}
+                        }`}
                       onClick={() => {
                         if (mdo2?.clickable && mdo2?.route && !isEditMode) {
                           navigate(mdo2.route);
@@ -1485,12 +1436,21 @@ const DashboardEditor = () => {
                         <div className="flex border-b border-gray-300">
                           <div className="p-2 flex-1 text-center bg-gray-100">
                             <p className="text-xs font-semibold leading-tight">
-                              MANAGEMENT DEVELOPMENT/PDCA
+                              {isEditMode ? (
+                                <input
+                                  type="text"
+                                  value={item.title}
+                                  onChange={(e) =>
+                                    handleEdit("management", item.id, "title", e.target.value)
+                                  }
+                                  className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs text-center"
+                                />
+                              ) : (
+                                item.title
+                              )}
                             </p>
                           </div>
                         </div>
-
-                        {/* First content row (MDO1.0) */}
                         <div className="flex border-b border-gray-300 flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             <p className="text-xs font-bold">
@@ -1556,8 +1516,6 @@ const DashboardEditor = () => {
                             </p>
                           </div>
                         </div>
-
-                        {/* Second content row (MDO2.0) */}
                         <div className="flex flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                             <p className="text-xs font-bold">
@@ -1640,11 +1598,113 @@ const DashboardEditor = () => {
                   return null;
                 } else {
                   return (
-                    <EditableBox
+                    <div
                       key={item.id}
-                      item={item}
-                      category="management"
-                    />
+                      className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                        } ${item.clickable && !isEditMode
+                          ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                          : ""
+                        }`}
+                      onClick={() => {
+                        if (item.clickable && item.route && !isEditMode) {
+                          navigate(item.route);
+                        }
+                      }}
+                    >
+                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                        <p className="text-xs font-bold">
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={item.code}
+                              onChange={(e) =>
+                                handleEdit(
+                                  "management",
+                                  item.id,
+                                  "code",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                            />
+                          ) : (
+                            item.code
+                          )}
+                        </p>
+                      </div>
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-xs font-semibold mb-1 leading-tight">
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={item.title}
+                              onChange={(e) =>
+                                handleEdit(
+                                  "management",
+                                  item.id,
+                                  "title",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                            />
+                          ) : (
+                            item.title
+                          )}
+                        </p>
+                        <hr className="my-1 border-gray-300" />
+                        <p className="text-xs leading-tight">
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) =>
+                                handleEdit(
+                                  "management",
+                                  item.id,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                            />
+                          ) : (
+                            item.name
+                          )}
+                        </p>
+                        <p className="text-xs leading-tight">
+                          (
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={item.empId}
+                              onChange={(e) =>
+                                handleEdit(
+                                  "management",
+                                  item.id,
+                                  "empId",
+                                  e.target.value
+                                )
+                              }
+                              className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                            />
+                          ) : (
+                            item.empId
+                          )}
+                          )
+                        </p>
+                        {item.clickable && !isEditMode && (
+                          <p className="text-xs text-blue-600 mt-1 font-semibold">
+                            Click to view details →
+                          </p>
+                        )}
+                        {isEditMode && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Click fields to edit
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   );
                 }
               })}
@@ -1652,7 +1712,6 @@ const DashboardEditor = () => {
 
             {/* Column 3 - Division Head (Business Labels) */}
             <div className="space-y-3">
-              {/* Spacers to align with content */}
               <div className="min-h-[110px]"></div>
               <div className="min-h-[120px]"></div>
               <div className="min-h-[200px]"></div>
@@ -1669,11 +1728,9 @@ const DashboardEditor = () => {
                     ></div>
                   )}
                   <div
-                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${
-                      index === 0 ? "[100px]" : "[80px]"
-                    } flex items-center justify-center ${
-                      isEditMode ? "ring-2 ring-blue-200" : ""
-                    }`}
+                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${index === 0 ? "[100px]" : "[80px]"
+                      } flex items-center justify-center ${isEditMode ? "ring-2 ring-blue-200" : ""
+                      }`}
                   >
                     <span className="leading-tight">
                       {isEditMode ? (
@@ -1701,33 +1758,229 @@ const DashboardEditor = () => {
 
             {/* Column 4 - Department Head */}
             <div className="space-y-3">
-              {/* Spacers */}
               <div className="min-h-[110px]"></div>
               <div className="min-h-[150px]"></div>
               <div className="min-h-[190px]"></div>
 
               {organizationData.structure.departments.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  {index === 1 && <div className="min-h-[10px]"></div>}
-                  {index === 3 && <div className="min-h-[1px]"></div>}
-                  {index === 4 && <div className="min-h-[105px]"></div>}
-                  {index === 5 && <div className="min-h-[110px]"></div>}
-                  {index === 6 && <div className="min-h-[250px]"></div>}
-                  <EditableBox item={item} category="departments" />
-                  {index === 6 && <div className="min-h-[1px]"></div>}
-                </React.Fragment>
+                <div
+                  className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                    } ${item.clickable && !isEditMode
+                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                      : ""
+                    }`}
+                  onClick={() => {
+                    if (item.clickable && item.route && !isEditMode) {
+                      navigate(item.route);
+                    }
+                  }}
+                >
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                    <p className="text-xs font-bold">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.code}
+                          onChange={(e) =>
+                            handleEdit(
+                              "departments",
+                              item.id,
+                              "code",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                        />
+                      ) : (
+                        item.code
+                      )}
+                    </p>
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-1 leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.title}
+                          onChange={(e) =>
+                            handleEdit(
+                              "departments",
+                              item.id,
+                              "title",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.title
+                      )}
+                    </p>
+                    <hr className="my-1 border-gray-300" />
+                    <p className="text-xs leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) =>
+                            handleEdit(
+                              "departments",
+                              item.id,
+                              "name",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.name
+                      )}
+                    </p>
+                    <p className="text-xs leading-tight">
+                      (
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.empId}
+                          onChange={(e) =>
+                            handleEdit(
+                              "departments",
+                              item.id,
+                              "empId",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                        />
+                      ) : (
+                        item.empId
+                      )}
+                      )
+                    </p>
+                    {item.clickable && !isEditMode && (
+                      <p className="text-xs text-blue-600 mt-1 font-semibold">
+                        Click to view details →
+                      </p>
+                    )}
+                    {isEditMode && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click fields to edit
+                      </p>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
 
             {/* Column 5 - Section Head / Engineering Product Leader */}
             <div className="space-y-3">
               {organizationData.structure.sections.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  {index === 3 && <div className="min-h-[435px]"></div>}
-                  {index === 4 && <div className="min-h-[10px]"></div>}
-                  {index === 5 && <div className="min-h-[10px]"></div>}
-                  <EditableBox item={item} category="sections" />
-                </React.Fragment>
+                <div
+                  className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                    } ${item.clickable && !isEditMode
+                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                      : ""
+                    }`}
+                  onClick={() => {
+                    if (item.clickable && item.route && !isEditMode) {
+                      navigate(item.route);
+                    }
+                  }}
+                >
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                    <p className="text-xs font-bold">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.code}
+                          onChange={(e) =>
+                            handleEdit(
+                              "sections",
+                              item.id,
+                              "code",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                        />
+                      ) : (
+                        item.code
+                      )}
+                    </p>
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-1 leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.title}
+                          onChange={(e) =>
+                            handleEdit(
+                              "sections",
+                              item.id,
+                              "title",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.title
+                      )}
+                    </p>
+                    <hr className="my-1 border-gray-300" />
+                    <p className="text-xs leading-tight">
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) =>
+                            handleEdit(
+                              "sections",
+                              item.id,
+                              "name",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                        />
+                      ) : (
+                        item.name
+                      )}
+                    </p>
+                    <p className="text-xs leading-tight">
+                      (
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={item.empId}
+                          onChange={(e) =>
+                            handleEdit(
+                              "sections",
+                              item.id,
+                              "empId",
+                              e.target.value
+                            )
+                          }
+                          className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                        />
+                      ) : (
+                        item.empId
+                      )}
+                      )
+                    </p>
+                    {item.clickable && !isEditMode && (
+                      <p className="text-xs text-blue-600 mt-1 font-semibold">
+                        Click to view details →
+                      </p>
+                    )}
+                    {isEditMode && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click fields to edit
+                      </p>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -1881,7 +2134,8 @@ const DashboardEditor = () => {
                   <div className="ml-3">
                     <p className="text-sm text-yellow-700">
                       <strong>Important:</strong> Your changes will not appear
-                      in the dashboard until approved by a Director & President Director.
+                      in the dashboard until approved by a Director & President
+                      Director.
                     </p>
                   </div>
                 </div>
