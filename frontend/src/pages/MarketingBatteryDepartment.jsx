@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,75 @@ const MarketingBatteryDepartment = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "MARKETING BATTERY",
+      code: "MKT2.0",
+      head: "RENDRA PRAMONO",
+      empId: "23200067",
+    },
+    positions: [
+      {
+        id: "mkt2-1",
+        code: "MKT2.1",
+        title: "AUX & POWER BATTERY MARKETING",
+        name: "CHRYSNA YULIAWAN**",
+        empId: "23240177",
+      },
+      {
+        id: "mkt2-2",
+        code: "MKT2.2",
+        title: "ESS MARKETING",
+        name: "FERDINAND STEVANUS A**",
+        empId: "23220049",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-marketing-battery';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-marketing-battery-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-marketing-battery', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -350,13 +419,13 @@ const MarketingBatteryDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[280px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">MKT2.0</p>
+                  <p className="text-xs font-bold uppercase">{orgData.header.code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">MARKETING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">RENDRA PRAMONO</p>
-                  <p className="text-xs leading-tight uppercase">(23200067)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -365,25 +434,25 @@ const MarketingBatteryDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[280px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC2.1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">AUX & POWER BATTERY MARKETING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">CHRYSNA YULIAWAN **</p>
-                  <p className="text-xs leading-tight uppercase">(23240177)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[280px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC2.1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">ESS MARKETING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">FERDINAND STEVANUS A. **</p>
-                  <p className="text-xs leading-tight uppercase">(23220049)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                 </div>
               </div>
             </div>

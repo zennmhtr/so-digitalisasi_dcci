@@ -21,7 +21,7 @@ const HrgaIt = () => {
       {
         id: "hrd-2",
         code: "HRD2.0",
-        title: "VERONICA HANI M. **",
+        title: "HRGA & IT",
         name: "VERONICA HANI M. **",
         empId: "23240206",
       },
@@ -68,11 +68,9 @@ const HrgaIt = () => {
         empId: "23220040",
       },
     ]
-  };
-
+  }
   const [orgData, setOrgData] = useState(defaultData);
 
-  // ✅ FUNGSI LOAD DATA
   const loadDataFromStorage = () => {
     try {
       const storageKey = 'so-bagian-hrga-it';
@@ -91,18 +89,16 @@ const HrgaIt = () => {
       setOrgData(defaultData);
       return false;
     } catch (error) {
-      console.error('❌ Error loading data:', error);
+      console.error('Error:', error);
       setOrgData(defaultData);
       return false;
     }
   };
 
-  // ✅ LOAD SAAT PERTAMA KALI
   useEffect(() => {
     loadDataFromStorage();
   }, []);
 
-  // ✅ LISTEN EVENT UPDATE
   useEffect(() => {
     const eventName = 'so-bagian-hrga-it-updated';
 
@@ -110,16 +106,22 @@ const HrgaIt = () => {
       console.log('🔔 HRGA-IT: Structure update received');
       const newData = event.detail;
 
+      console.log('📦 New Header:', newData?.header);
+      console.log('📦 New Positions:', newData?.positions);
+
       if (newData && newData.header && newData.positions) {
         setOrgData(newData);
 
         try {
           localStorage.setItem('so-bagian-hrga-it', JSON.stringify(newData));
+          console.log('✅ Data saved to localStorage');
         } catch (err) {
           console.error('❌ Save error:', err);
         }
 
         alert('✅ HRGA-IT structure updated successfully!');
+      } else {
+        console.error('❌ Invalid data structure received:', newData);
       }
     };
 
@@ -476,7 +478,7 @@ const HrgaIt = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">HRGA & IT</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.positions[0]?.title || "HRGA & IT"}</p>
                     </div>
                   </div>
 
@@ -513,7 +515,7 @@ const HrgaIt = () => {
                       <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">HRD</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.positions[1]?.title || "HRD"}</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
@@ -536,7 +538,7 @@ const HrgaIt = () => {
                       <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">GENERAL AFFAIR & IND. RELATIONS</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.positions[2]?.title || "GENERAL AFFAIR & IND. RELATIONS"}</p>
                     </div>
                   </div>
                   {orgData.positions.slice(2, 5).map((staff, i) => (
@@ -561,7 +563,7 @@ const HrgaIt = () => {
                       <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">INFORMATION TECHNOLOGY</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.positions[5]?.title || "INFORMATION TECHNOLOGY"}</p>
                     </div>
                   </div>
                   {orgData.positions.slice(5, 7).map((staff, i) => (

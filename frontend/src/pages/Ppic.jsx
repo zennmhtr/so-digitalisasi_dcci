@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/print-styles.css";
 
@@ -9,6 +9,166 @@ const Ppic = () => {
     orientation: "landscape",
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "PPIC",
+      code: "PPIC1.0",
+      head: "DIKI WAHYUDI*",
+      empId: "23060056",
+    },
+    positions: [
+      {
+        id: "ppic1-1",
+        code: "PPIC1.1",
+        title: "PPC CONTROLCABLE",
+        name: "ADE AKHMAD FAUZI*",
+        empId: "23090093",
+      },
+      {
+        id: "ppic1-2",
+        code: "PPIC1.2",
+        title: "BATTERY & AHM OES",
+        name: "BUCHORI**",
+        empId: "23120159",
+      },
+      {
+        id: "ppic1-3",
+        code: "PPIC1.3",
+        title: "WHS CONTROLCABLE",
+        name: "ANANG SUTAMTOMO**",
+        empId: "23080082",
+      },
+      {
+        id: "ppic1-3-1",
+        code: "PPIC1.3.1",
+        title: "CONTROLCABLE",
+        name: "SETIYONO",
+        empId: "23090090",
+      },
+      {
+        id: "ppic1-1-1",
+        code: "PPIC1.1.1",
+        title: "PROD PLAN",
+        name: "ERLI SULIANTO",
+        empId: "23070073",
+      },
+      {
+        id: "ppic1-1-2",
+        code: "PPIC1.1.2",
+        title: "DN/MANIFEST",
+        name: "EFRAIN TAMBUNAN",
+        empId: "23110111",
+      },
+      {
+        id: "ppic1-1-3",
+        code: "PPIC1.1.3",
+        title: "DELIVERY",
+        name: "SUDARMANTO",
+        empId: "23120151",
+      },
+      {
+        id: "ppic1-1-4",
+        code: "PPIC1.1.4",
+        title: "DELIVERY",
+        name: "OPERATOR",
+        empId: "-",
+      },
+      {
+        id: "ppic1-2-1",
+        code: "PPIC1.2.1",
+        title: "BATTERY",
+        name: "SRI NATIN",
+        empId: "231202130",
+      },
+      {
+        id: "ppic1-2-2",
+        code: "PPIC1.2.2",
+        title: "BATTERY STAFF",
+        name: "M. HAMAM MUCHLISIN",
+        empId: "23120174",
+      },
+      {
+        id: "ppic1-3-2",
+        code: "PPIC1.3.2",
+        title: "SUPPLIER CONTROL",
+        name: "SULASTRI",
+        empId: "23120190",
+      },
+      {
+        id: "ppic1-3-3",
+        code: "PPIC1.3.3",
+        title: "MRP",
+        name: "LAILA FITRIYAH",
+        empId: "23120196",
+      },
+      {
+        id: "ppic1-3-4",
+        code: "PPIC1.3.4",
+        title: "RM & OHP",
+        name: "SUPRIYANTO",
+        empId: "23120153",
+      },
+      {
+        id: "ppic1-3-5",
+        code: "PPIC1.3.5",
+        title: "HASIL PRODUKGAS",
+        name: "RAGIL PAMUGKAS",
+        empId: "23120154",
+      },
+      {
+        id: "ppic1-3-6",
+        code: "PPIC1.3.6",
+        title: "SUPPLY",
+        name: "OPERATOR (2)",
+        empId: "-",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-ppic';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-ppic-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-ppic', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -378,7 +538,7 @@ const Ppic = () => {
           >
             {/* Kolom 1 - Board of Director */}
             <div className="space-y-3 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold">BOD1.0</p>
                 </div>
@@ -392,7 +552,7 @@ const Ppic = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <p className="text-xs font-bold">BOD1.1</p>
                 </div>
@@ -409,17 +569,17 @@ const Ppic = () => {
 
             {/* Kolom 2 - Department Head */}
             <div className="space-y-3 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.0</p>
+                  <p className="text-xs font-bold">{orgData.header.code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    PPC
+                    {orgData.header.title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">DIKI WAHYUDI*</p>
-                  <p className="text-xs leading-tight">(23060056)</p>
+                  <p className="text-xs leading-tight">{orgData.header.head}</p>
+                  <p className="text-xs leading-tight">{orgData.header.empId}</p>
                 </div>
               </div>
             </div>
@@ -431,47 +591,47 @@ const Ppic = () => {
 
             {/* Kolom 4 - Unit Head/Staff */}
             <div className="space-y-3 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.1</p>
+                  <p className="text-xs font-bold">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    PPC CONTROLCABLE
+                    {orgData.positions[0].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ADE AKHMAD FAUZI*</p>
-                  <p className="text-xs leading-tight">(23090093)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[0].empId}</p>
                 </div>
               </div>
 
               <div className="min-h-[200px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.2</p>
+                  <p className="text-xs font-bold">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    BATTERY & AHM OES
+                    {orgData.positions[1].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">BUCHORI*</p>
-                  <p className="text-xs leading-tight">(23120159)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[1].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[1].empId}</p>
                 </div>
               </div>
 
               <div className="min-h-[40px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3</p>
+                  <p className="text-xs font-bold">{orgData.positions[2].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    WHS CONTROLCABLE
+                    {orgData.positions[2].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ANANG SUTAMTOMO*</p>
-                  <p className="text-xs leading-tight">(23080082)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[2].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[2].empId}</p>
                 </div>
               </div>
             </div>
@@ -479,178 +639,182 @@ const Ppic = () => {
             {/* Kolom 5 - Group Head */}
             <div className="space-y-3 flex flex-col items-center">
               <div className="min-h-[475px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.1</p>
+                  <p className="text-xs font-bold">{orgData.positions[3].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    CONTROLCABLE
+                    {orgData.positions[3].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SETIYONO</p>
-                  <p className="text-xs leading-tight">(23090090)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[3].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[3].empId}</p>
                 </div>
               </div>
             </div>
 
             {/* Kolom 6 - Member */}
             <div className="space-y-3 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.1.1</p>
+                  <p className="text-xs font-bold">{orgData.positions[4].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    PROD PLAN
+                    {orgData.positions[4].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">ERLI SULIANTO</p>
-                  <p className="text-xs leading-tight">(23070073)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[4].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[4].empId}</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.1.2</p>
+                  <p className="text-xs font-bold">{orgData.positions[5].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    DNI/MANIFEST
+                    {orgData.positions[5].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">EFPAIN TAMBUNAN</p>
-                  <p className="text-xs leading-tight">(23110111)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[5].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[5].empId}</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[190px]">
                 <div className="flex flex-col h-full">
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">PPIC1.1.3</p>
+                      <p className="text-xs font-bold">{orgData.positions[6].code}</p>
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <div className="bg-gray-100 p-1 mb-1">
                         <p className="text-xs font-semibold leading-tight">
-                          DELIVERY
+                          {orgData.positions[6].title}
                         </p>
                       </div>
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">SUDARMANTO</p>
-                      <p className="text-xs leading-tight">(23120151)</p>
+                      <p className="text-xs leading-tight">{orgData.positions[6].name}</p>
+                      <p className="text-xs leading-tight">{orgData.positions[6].empId}</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">PPIC1.1.4</p>
+                      <p className="text-xs font-bold">{orgData.positions[7].code}</p>
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">OPERATOR</p>
+                      <p className="text-xs leading-tight">{orgData.positions[7].name}</p>
+                      <p className="text-xs leading-tight">{orgData.positions[7].empId}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[190px]">
                 <div className="flex flex-col h-full">
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">PPIC1.2.1</p>
+                      <p className="text-xs font-bold">{orgData.positions[8].code}</p>
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <div className="bg-gray-100 p-1 mb-1">
                         <p className="text-xs font-semibold leading-tight">
-                          BATTERY
+                          {orgData.positions[8].title}
                         </p>
                       </div>
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">SRINATIN</p>
-                      <p className="text-xs leading-tight">(23120130)</p>
+                      <p className="text-xs leading-tight">{orgData.positions[8].name}</p>
+                      <p className="text-xs leading-tight">{orgData.positions[8].empId}</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">PPIC1.2.2</p>
+                      <p className="text-xs font-bold">{orgData.positions[9].code}</p>
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
                       <p className="text-xs leading-tight">
-                        M. HAMAM MUCHLISIN
+                        {orgData.positions[9].name}
                       </p>
-                      <p className="text-xs leading-tight">(23120174)</p>
+                      <p className="text-xs leading-tight">{orgData.positions[9].empId}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.2</p>
+                  <p className="text-xs font-bold">{orgData.positions[10].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    SUPPLIER CONTROL
+                    {orgData.positions[10].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SULASTRI</p>
-                  <p className="text-xs leading-tight">(23120190)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[10].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[10].empId}</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.3</p>
+                  <p className="text-xs font-bold">{orgData.positions[11].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    MRP
+                    {orgData.positions[11].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">LAILA FITRIYAH</p>
-                  <p className="text-xs leading-tight">(23120196)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[11].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[11].empId}</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.4</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">
-                    RM & OHP
-                  </p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">SUPRIYANTO</p>
-                  <p className="text-xs leading-tight">(23120153)</p>
+              <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[190px]">
+                <div className="flex flex-col h-full">
+                  <div className="flex flex-1">
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                      <p className="text-xs font-bold">{orgData.positions[12].code}</p>
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <div className="bg-gray-100 p-1 mb-1">
+                        <p className="text-xs font-semibold leading-tight">
+                          {orgData.positions[12].title}
+                        </p>
+                      </div>
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">{orgData.positions[12].name}</p>
+                      <p className="text-xs leading-tight">{orgData.positions[12].empId}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-1">
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                      <p className="text-xs font-bold">{orgData.positions[13].code}</p>
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">{orgData.positions[13].name}</p>
+                      <p className="text-xs leading-tight">{orgData.positions[13].empId}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.5</p>
+                  <p className="text-xs font-bold">{orgData.positions[14].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
-                    HASIL PRODUKGAS
+                    {orgData.positions[14].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">RAGIL PAMUGKAS</p>
-                  <p className="text-xs leading-tight">(23120154)</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[200px]">
-                <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">PPIC1.3.6</p>
-                </div>
-                <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight">
-                    SUPPLY
-                  </p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">OPERATOR (2)</p>
+                  <p className="text-xs leading-tight">{orgData.positions[14].name}</p>
+                  <p className="text-xs leading-tight">{orgData.positions[14].empId}</p>
                 </div>
               </div>
             </div>

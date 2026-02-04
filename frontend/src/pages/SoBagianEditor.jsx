@@ -1398,6 +1398,10 @@ const SoBagianEditor = () => {
         modifiedBy: user?.name || user?.username,
       };
 
+      console.log("🔍 Current Structure Header:", currentStructure?.header);
+      console.log("🔍 Current Structure Positions:", currentStructure?.positions);
+      console.log("🔍 Full Data to Submit:", JSON.stringify(dataToSubmit, null, 2));
+
       const currentDataToSubmit = originalStructure
         ? {
           departmentId: selectedDepartment.id,

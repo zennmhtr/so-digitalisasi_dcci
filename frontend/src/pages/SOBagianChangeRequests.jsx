@@ -1042,22 +1042,21 @@ const SOBagianChangeRequests = () => {
       console.log("💾 Storage key:", storageKey);
 
       const dataToSave = {
-        header: structure.header,
-        positions: structure.positions,
+        header: JSON.parse(JSON.stringify(structure.header)),
+        positions: JSON.parse(JSON.stringify(structure.positions)),
         lastModified: orgData.lastModified || new Date().toISOString(),
         modifiedBy: orgData.modifiedBy || "System",
         approvedAt: request.approvedAt,
         approvedBy: request.approvedBy?.name || "Unknown",
       };
 
-      console.log("💾 Data to save:", dataToSave);
+      console.log("📋 Header data being saved:", dataToSave.header);
+      console.log("📋 Positions data being saved:", dataToSave.positions);
 
-      // ✅ SAVE TO LOCALSTORAGE
       try {
         localStorage.setItem(storageKey, JSON.stringify(dataToSave));
         console.log("✅ Saved to localStorage");
 
-        // Verify
         const saved = localStorage.getItem(storageKey);
         console.log("✅ Verification - Data in localStorage:", JSON.parse(saved));
       } catch (storageError) {
@@ -1066,7 +1065,6 @@ const SOBagianChangeRequests = () => {
         return false;
       }
 
-      // ✅ DISPATCH EVENT
       const eventName = `so-bagian-${departmentId}-updated`;
       console.log("📡 Dispatching event:", eventName);
       console.log("📡 Event data:", dataToSave);

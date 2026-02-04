@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,68 @@ const ManagementRepresentative = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "MANAGEMENT REPRESENTATIVE",
+      code: "MRO1.0",
+      head: "SUGIYARTO*",
+      empId: "23600041",
+    },
+    positions: [
+      {
+        id: "mro1-1",
+        code: "MRO1.1",
+        title: "MANAGEMENT REPRESENTATIVE",
+        name: "BOBI SAPUTRA",
+        empId: "23240175",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-management-representative';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-management-representative-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-management-representative', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -354,13 +416,13 @@ const ManagementRepresentative = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[290px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">MR01.0</p>
+                  <p className="text-sm font-bold">{orgData.header.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">MANAGEMENT<br />REPRESENTATIVE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">SUGIYARTO *</p>
-                  <p className="text-sm leading-tight">(23060041)</p>
+                  <p className="text-sm leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
                 </div>
               </div>
             </div>
@@ -369,13 +431,13 @@ const ManagementRepresentative = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[290px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">MR01.1</p>
+                  <p className="text-sm font-bold">{orgData.positions[0]?.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">MANAGEMENT<br />REPRESENTATIVE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[0]?.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">BOBI SAPUTRA</p>
-                  <p className="text-sm leading-tight">(23240175)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[0]?.name}</p>
+                  <p className="text-sm leading-tight">{orgData.positions[0]?.empId}</p>
                 </div>
               </div>
             </div>

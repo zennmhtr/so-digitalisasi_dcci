@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,152 @@ const MarketingEngineering = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "MARKETING ENGINEERING",
+      code: "MKT1.0",
+      head: "ANDREAS AGUNG S.",
+      empId: "23040119",
+    },
+    positions: [
+      {
+        id: "mkt1-1",
+        code: "MKT1.1",
+        title: "SALES & MARKETING CONTROLCABLE",
+        name: "SAVITRI OCTAVIANI",
+        empId: "23130254",
+      },
+      {
+        id: "eng1-0",
+        code: "ENG1.0",
+        title: "ENGINEERING CONTROLCABLE",
+        name: "SUGIYARTO",
+        empId: "23060041",
+      },
+      {
+        id: "mkt1-1-1",
+        code: "MKT1.1.1",
+        title: "SALES & MARKETING CONTROLCABLE",
+        name: "RIKA TRI HARMELIA",
+        empId: "23110101",
+      },
+      {
+        id: "mkt1-1-2",
+        code: "MKT1.1.2",
+        title: "SALES & MARKETING CONTROLCABLE",
+        name: "KHANSA Z.H",
+        empId: "23230110",
+      },
+      {
+        id: "mkt1-1-3",
+        code: "MKT1.1.3",
+        title: "CUSTOMER REPRESENTATIVE",
+        name: "SUMIYARTO",
+        empId: "23030015",
+      },
+      {
+        id: "eng1-1",
+        code: "ENG1.1",
+        title: "PRODUCT & QUALITY ENGINEERING CABLE",
+        name: "NUR DWI WAHYONO",
+        empId: "23120160",
+      },
+      {
+        id: "eng1-1",
+        code: "ENG1.1",
+        title: "PRODUCT & QUALITY ENGINEERING CABLE",
+        name: "ALIF PRIATNA",
+        empId: "23190773",
+      },
+      {
+        id: "eng1-1",
+        code: "ENG1.1",
+        title: "PRODUCT & QUALITY ENGINEERING CABLE",
+        name: "ANNISA SEPTIYANING CHOIR*",
+        empId: "23240228",
+      },
+      {
+        id: "eng1-2",
+        code: "ENG1.2",
+        title: "PROCESS ENGINEERING CABLE",
+        name: "MUHAMMAD SYARIFUDIN",
+        empId: "23190727",
+      },
+      {
+        id: "eng1-2",
+        code: "ENG1.2",
+        title: "PROCESS ENGINEERING CABLE",
+        name: "AHMAD JAELANI SIDIK*",
+        empId: "23240227",
+      },
+      {
+        id: "eng1-2",
+        code: "ENG1.2",
+        title: "PROCESS ENGINEERING CABLE",
+        name: "DEDI SETIADI",
+        empId: "23120143",
+      },
+      {
+        id: "eng1-3",
+        code: "ENG1.3",
+        title: "NEW BUSINESS DEVELOPMENT",
+        name: "ANNISA SETIYANING CHOIR*",
+        empId: "23240228",
+      },
+      {
+        id: "eng1-3",
+        code: "ENG1.3",
+        title: "NEW BUSINESS DEVELOPMENT",
+        name: "AHMAD JAELANI SIDIK*",
+        empId: "23240227",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-marketing-engineering';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-marketing-engineering-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-marketing-engineering', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -350,13 +496,13 @@ const MarketingEngineering = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">MKT1.0</p>
+                  <p className="text-sm font-bold">{orgData.header.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">MARKETING</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">ANDREAS AGUNG S.</p>
-                  <p className="text-sm leading-tight">(23040019)</p>
+                  <p className="text-sm leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -366,13 +512,13 @@ const MarketingEngineering = () => {
               {/* Sales & Marketing Control Cable */}
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">MKT1.1</p>
+                  <p className="text-sm font-bold">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">SALES & MARKETING<br />CONTROL CABLE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[0].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">SAVITRI OCTAVIANI</p>
-                  <p className="text-sm leading-tight">(23130254)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[0].empId})</p>
                 </div>
               </div>
 
@@ -382,13 +528,13 @@ const MarketingEngineering = () => {
               {/* Engineering Control Cable */}
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">ENG1.0</p>
+                  <p className="text-sm font-bold">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">ENGINEERING<br />CONTROL CABLE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[1].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">SUGIYARTO</p>
-                  <p className="text-sm leading-tight">(23060041)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[1].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[1].empId})</p>
                 </div>
               </div>
             </div>
@@ -399,28 +545,21 @@ const MarketingEngineering = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[180px] w-[280px]">
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
-                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20">
                       <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">SALES & MARKETING<br />CONTROL CABLE</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.positions[2]?.title}</p>
                     </div>
                   </div>
-
-                  {[
-                    { id: "MKT1.1", name: "RIKA TRI HARMELIA", nip: "(23110101)" },
-                    { id: "MKT1.2", name: "KHANSA Z.H", nip: "(23230110)" },
-                  ].map((staff, i) => (
-                    <div
-                      key={i}
-                      className={`flex border-b border-gray-300 flex-1 ${i === 1 ? 'border-b-0' : ''}`}
-                    >
+                  {orgData.positions.slice(2, 4).map((staff, i) => (
+                    <div key={i} className={`flex flex-1 ${i < 2 ? 'border-b border-gray-300' : ''}`}>
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">{staff.id}</p>
+                        <p className="text-sm font-bold">{staff?.code}</p>
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <p className="text-sm font-semibold leading-tight">{staff.name}</p>
-                        <p className="text-sm leading-tight">{staff.nip}</p>
+                        <p className="text-sm leading-tight">{staff?.name}</p>
+                        <p className="text-sm leading-tight">({staff?.empId})</p>
                       </div>
                     </div>
                   ))}
@@ -430,13 +569,13 @@ const MarketingEngineering = () => {
               {/* Customer Representative */}
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">MKT1.3</p>
+                  <p className="text-sm font-bold">{orgData.positions[4]?.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">CUSTOMER REPRESENTATIVE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">{orgData.positions[4]?.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">SUMIYARTO</p>
-                  <p className="text-sm leading-tight">(23030015)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[4]?.name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[4]?.empId})</p>
                 </div>
               </div>
 
@@ -444,24 +583,24 @@ const MarketingEngineering = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[160px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">ENG1.1</p>
+                    <p className="text-sm font-bold">{orgData.positions[5]?.code}</p>
                   </div>
                   <div className="flex-1">
                     <div className="bg-gray-100 p-2 text-center border-b border-gray-400">
-                      <p className="text-sm font-bold">PRODUCT & QUALITY ENGINEERING CABLE</p>
+                      <p className="text-sm font-bold">{orgData.positions[5]?.title}</p>
                     </div>
                     <div className="p-2 space-y-2">
                       <div className="text-center">
-                        <p className="text-sm font-semibold">NUR DWI WAHYONO</p>
-                        <p className="text-sm">(23120160)</p>
+                        <p className="text-sm">{orgData.positions[6]?.name}</p>
+                        <p className="text-sm">({orgData.positions[6]?.empId})</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold">ALIF PRIATNA</p>
-                        <p className="text-sm">(23190773)</p>
+                        <p className="text-sm">{orgData.positions[7]?.name}</p>
+                        <p className="text-sm">({orgData.positions[7]?.empId})</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold">ANNISA' SEPTIYANING CHOIR*</p>
-                        <p className="text-sm">(23240228)</p>
+                        <p className="text-sm">{orgData.positions[8]?.name}</p>
+                        <p className="text-sm">({orgData.positions[8]?.empId})</p>
                       </div>
                     </div>
                   </div>
@@ -472,24 +611,24 @@ const MarketingEngineering = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[160px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">ENG1.2</p>
+                    <p className="text-sm font-bold">{orgData.positions[9]?.code}</p>
                   </div>
                   <div className="flex-1">
                     <div className="bg-gray-100 p-2 text-center border-b border-gray-400">
-                      <p className="text-sm font-bold">PROCESS ENGINEERING CABLE</p>
+                      <p className="text-sm font-bold">{orgData.positions[9]?.title}</p>
                     </div>
                     <div className="p-2 space-y-2">
                       <div className="text-center">
-                        <p className="text-sm font-semibold">MUHAMMAD SYARIFUDIN</p>
-                        <p className="text-sm">(23190727)</p>
+                        <p className="text-sm">{orgData.positions[10]?.name}</p>
+                        <p className="text-sm">({orgData.positions[10]?.empId})</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold">AHMAD JAELANI SIDIK*</p>
-                        <p className="text-sm">(23240227)</p>
+                        <p className="text-sm">{orgData.positions[11]?.name}</p>
+                        <p className="text-sm">({orgData.positions[11]?.empId})</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold">DEDI SETIADI</p>
-                        <p className="text-sm">(23120143)</p>
+                        <p className="text-sm">{orgData.positions[12]?.name}</p>
+                        <p className="text-sm">({orgData.positions[12]?.empId})</p>
                       </div>
                     </div>
                   </div>
@@ -500,20 +639,20 @@ const MarketingEngineering = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] min-h-[140px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">ENG1.3</p>
+                    <p className="text-sm font-bold">{orgData.positions[11]?.code}</p>
                   </div>
                   <div className="flex-1">
                     <div className="bg-gray-100 p-2 text-center border-b border-gray-400">
-                      <p className="text-sm font-bold">NEW BUSINESS DEVELOPMENT</p>
+                      <p className="text-sm font-bold">{orgData.positions[11]?.title}</p>
                     </div>
                     <div className="p-2 space-y-2">
                       <div className="text-center">
-                        <p className="text-sm font-semibold">ANNISA' SEPTIYANING CHOIR*</p>
-                        <p className="text-sm">(23240228)</p>
+                        <p className="text-sm">{orgData.positions[11]?.name}</p>
+                        <p className="text-sm">({orgData.positions[11]?.empId})</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold">AHMAD JAELANI SIDIK*</p>
-                        <p className="text-sm">(23240227)</p>
+                        <p className="text-sm">{orgData.positions[12]?.name}</p>
+                        <p className="text-sm">({orgData.positions[12]?.empId})</p>
                       </div>
                     </div>
                   </div>

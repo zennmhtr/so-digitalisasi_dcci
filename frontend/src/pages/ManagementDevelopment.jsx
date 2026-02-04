@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,76 @@ const ManagementDevelopment = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "MANAGEMENT DEVELOPMENT DEPARTMENT",
+      code: "MDO",
+      head: "",
+      empId: "",
+      effectiveDate: "30 September 2025",
+    },
+    positions: [
+      {
+        id: "mdo-1",
+        code: "MDO1.0",
+        title: "MANAGEMENT DEVELOPEMENT/PDCA",
+        name: "KARNA SATIA SALIM*",
+        empId: "23230114",
+      },
+      {
+        id: "mdo-2",
+        code: "MDO2.0",
+        title: "MANAGEMENT DEVELOPEMENT/PDCA",
+        name: "WAHYU KARTIKO ADI",
+        empId: "23240175",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-management-development';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-management-development-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-management-development', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -357,32 +427,24 @@ const ManagementDevelopment = () => {
               </div>
             </div>
 
-            {/* Information Technology Section */}
-            <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[180px] w-[290px]">
+            <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[290px]">
               <div className="flex flex-col h-full">
                 <div className="flex border-b border-gray-400">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20">
                     <p className="text-sm font-bold"></p>
                   </div>
                   <div className="p-2 flex-1 text-center bg-gray-100">
-                    <p className="text-sm font-semibold leading-tight">MANAGEMENT DEVELOPEMENT/PDCA</p>
+                    <p className="text-sm font-semibold leading-tight">{orgData.positions[0]?.title || "Management Development"}</p>
                   </div>
                 </div>
-
-                {[
-                  { id: "MDO1.0", name: "KARNA SATIA SALIM*", nip: "(23230114)" },
-                  { id: "MDO2.0", name: "WAHYU KARTIKO ADI", nip: "(23240175)" },
-                ].map((staff, i) => (
-                  <div
-                    key={i}
-                    className={`flex border-b border-gray-300 flex-1 ${i === 1 ? 'border-b-0' : ''}`}
-                  >
+                {orgData.positions.slice(0, 2).map((staff, i) => (
+                  <div key={i} className={`flex flex-1 ${i < 2 ? 'border-b border-gray-300' : ''}`}>
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      <p className="text-sm font-bold">{staff.id}</p>
+                      <p className="text-sm font-bold">{staff?.code}</p>
                     </div>
                     <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                      <p className="text-sm font-semibold leading-tight">{staff.name}</p>
-                      <p className="text-sm leading-tight">{staff.nip}</p>
+                      <p className="text-sm font-semibold leading-tight">{staff?.name}</p>
+                      <p className="text-sm leading-tight">({staff?.empId})</p>
                     </div>
                   </div>
                 ))}

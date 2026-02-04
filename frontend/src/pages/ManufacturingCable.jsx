@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -10,6 +10,336 @@ const ManufacturingCable = () => {
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
 
+  const defaultData = {
+    header: {
+      title: "CONTROLCABLE MANUFACTURE",
+      code: "PRD1.0",
+      head: "KARNA SATIA SALIM*",
+      empId: "23230114",
+    },
+    positions: [
+      {
+        id: "prd1-1",
+        code: "PRD1.1",
+        title: "MANUFACTURING UNIT",
+        name: "DADI ROSADI",
+        empId: "23060049",
+      },
+      {
+        id: "prd1-2",
+        code: "PRD1.2",
+        title: "ASSEMBLING UNIT",
+        name: "M. SUGIARTO",
+        empId: "23050024",
+      },
+      {
+        id: "prd1-0-1",
+        code: "PRD1.0.1",
+        title: "PRODUCTION ENGINEERING",
+        name: "CHOIRUL AMIN",
+        empId: "23110109",
+      },
+      {
+        id: "prd1-1-1",
+        code: "PRD1.1.1",
+        title: "GROUP CO&CI",
+        name: "AGUS PURWANTORO",
+        empId: "23120156",
+      },
+      {
+        id: "prd1-1-1",
+        code: "PRD1.1.1",
+        title: "GROUP CO&CI",
+        name: "AJI BABAN",
+        empId: "23120156",
+      },
+      {
+        id: "prd1-1-2",
+        code: "PRD1.1.2",
+        title: "GROUP PO",
+        name: "MAYAR SANTOSO",
+        empId: "23090089",
+      },
+      {
+        id: "prd1-1-2",
+        code: "PRD1.1.2",
+        title: "GROUP PO",
+        name: "IWAN SUPRIYADI",
+        empId: "23110114",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "PIKI TAOFIK",
+        empId: "23110117",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "DEDY IRWANSYAH",
+        empId: "23120132",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "AGUNG BASUKI",
+        empId: "23070072",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "YULIANTO",
+        empId: "23110122",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "SOPAN",
+        empId: "23110118",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "MUJIATI",
+        empId: "23120164",
+      },
+      {
+        id: "prd1-2-1",
+        code: "PRD1.2.1",
+        title: "GROUP ASSEMBLING",
+        name: "HIDAYATUL",
+        empId: "23120165",
+      },
+      {
+        id: "prd1-1-3",
+        code: "PRD1.1.3",
+        title: "COMPONENT OUTER & COMPONENT INNER",
+        name: "TEAM MEMBER",
+        empId: "-",
+      },
+      {
+        id: "prd1-1-4",
+        code: "PRD1.1.4",
+        title: "PROSES OUTER",
+        name: "TEAM MEMBER",
+        empId: "-",
+      },
+      {
+        id: "prd1-1-5",
+        code: "PRD1.1.5",
+        title: "MAINTENANCE",
+        name: "TRI YULIYANTO",
+        empId: "23110120",
+      },
+      {
+        id: "prd1-1-6",
+        code: "PRD1.1.6",
+        title: "MAINTENANCE",
+        name: "AHMAD DAYU ZAINI",
+        empId: "23180703",
+      },
+      {
+        id: "prd1-1-7",
+        code: "PRD1.1.7",
+        title: "PRODUCTION ENGINEERING",
+        name: "HANA OKTA",
+        empId: "23120155",
+      },
+      {
+        id: "prd1-2-2",
+        code: "PRD1.2.2",
+        title: "ASSEMBLING",
+        name: "TEAM MEMBER",
+        empId: "-",
+      },
+
+      //(Quality Control Process)
+      {
+        id: "prd1-2-3",
+        code: "PRD1.2.3",
+        title: "QUALITY CONTROL PROCESS",
+        name: "SUGIHARTO (COORD)",
+        empId: "23120137",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "CIPTO RAHMAD SASONO",
+        empId: "23060047",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "DENDI SETYAWAN",
+        empId: "23120146",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "HERI MOHAMMAD AFANDI",
+        empId: "23120138",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "INDRI NOVITA SARI",
+        empId: "23110113",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "PARTO",
+        empId: "23120140",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "SUPANTO",
+        empId: "23090091",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "WANTO",
+        empId: "23110121",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "JUPRI SAHALA",
+        empId: "23120154",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "ARIYANTO",
+        empId: "23120219",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-2-4",
+        code: "PRD1.2.4",
+        title: "QUALITY CONTROL PROCESS",
+        name: "TEAM MEMBER",
+        empId: "-",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      // (QUALITY CONTROL INCOMING)
+      {
+        id: "prd1-0-2",
+        code: "PRD1.0.2",
+        title: "QUALITY CONTROL INCOMING",
+        name: "MAULANA MALIK IBRAHIM",
+        empId: "23220078",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-0-3",
+        code: "PRD1.0.3",
+        title: "QUALITY CONTROL INCOMING",
+        name: "MOH. NURHIDAYAT",
+        empId: "23120181",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      // (ADMINISTRATION)
+      {
+        id: "prd1-0-4",
+        code: "PRD1.0.4",
+        title: "ADMINISTRATION",
+        name: "DWI WIDYASTUTI",
+        empId: "23120191",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-0-5",
+        code: "PRD1.0.5",
+        title: "ADMINISTRATION",
+        name: "MELINDA SURYANI HASIBUAN",
+        empId: "23230008",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-0-6",
+        code: "PRD1.0.6",
+        title: "ADMINISTRATION",
+        name: "RIRIN ERLINA",
+        empId: "23120217",
+        group: "TEAM MEMBER/ADMIN",
+      },
+      {
+        id: "prd1-0-7",
+        code: "PRD1.0.7",
+        title: "ADMINISTRATION",
+        name: "ANDI PUTRA MALBA SYAGGAF",
+        empId: "23230027",
+        group: "TEAM MEMBER/ADMIN",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-manufacturing-cable';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-manufacturing-cable-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-manufacturing-cable', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
     if (printContainer) {
@@ -360,54 +690,54 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.0</p>
+                  <p className="text-xs font-bold uppercase">{orgData.header.code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">CONTROLCABLE MANUFACTURE</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">KARNA SATIA SALIM*</p>
-                  <p className="text-xs leading-tight uppercase">(23230114)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
 
             {/* Kolom 4 - Staff/Unit Head */}
             <div className="space-y-4 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">MANUFACTURING UNIT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DANI BORSOI</p>
-                  <p className="text-xs leading-tight uppercase">(23060049)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                 </div>
               </div>
 
               <div className="min-h-[420px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">ASSEMBLING UNIT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">M. SUGIARTO</p>
-                  <p className="text-xs leading-tight uppercase">(23050024)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                 </div>
               </div>
 
               <div className="min-h-[880px]"></div>
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.0.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[2].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">PRODUCTION ENGINEERING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">CHOIRUL AMIN</p>
-                  <p className="text-xs leading-tight uppercase">(23110109)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[2].empId})</p>
                 </div>
               </div>
             </div>
@@ -416,62 +746,62 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[3].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">GROUP CO & CI</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">AGUS PURWANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23120139)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[3].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[3].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">AJI BABAN</p>
-                  <p className="text-xs leading-tight uppercase">(23120156)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[4].empId})</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[5].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">GROUP PO</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[5].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">MAYAR SANTOSO</p>
-                  <p className="text-xs leading-tight uppercase">(23090089)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[5].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[5].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">IWAN SUPRIYADI</p>
-                  <p className="text-xs leading-tight uppercase">(23110114)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[6].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[6].empId})</p>
                 </div>
               </div>
 
               <div className="min-h-[240px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[300px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.2.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[7].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">GROUP ASSEMBLING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[7].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">PIKI TAOFIK</p>
-                  <p className="text-xs leading-tight uppercase">(23110117)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[7].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[7].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DEDY IRWANSYAH</p>
-                  <p className="text-xs leading-tight uppercase">(23120132)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[8].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[8].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">AGUNG BASUKI</p>
-                  <p className="text-xs leading-tight uppercase">(23070072)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[9].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[9].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">YULIYANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23110122)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[10].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[10].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">SOPAN</p>
-                  <p className="text-xs leading-tight uppercase">(23110118)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[11].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[11].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">MUJIATI</p>
-                  <p className="text-xs leading-tight uppercase">(23120164)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[12].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[12].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">HIDAYATUL</p>
-                  <p className="text-xs leading-tight uppercase">(23120165)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[13].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[13].empId})</p>
                 </div>
               </div>
             </div>
@@ -480,24 +810,24 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1.3</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[14].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">COMPONENT OUTER & COMPONENT INNER</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[14].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TEAM MEMBER</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[14].name}</p>
                 </div>
               </div>
 
               <div className="min-h-[10px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1.4</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[15].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">PROSES OUTER</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[15].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TEAM MEMBER</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[15].name}</p>
                 </div>
               </div>
 
@@ -505,46 +835,46 @@ const ManufacturingCable = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.1.5</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[16].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">MAINTENANCE</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[16].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">TRI YULIANTO</p>
-                    <p className="text-xs leading-tight uppercase">(23110120)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[16].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[16].empId})</p>
                   </div>
                 </div>
                 <div className="flex border-t border-gray-400">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.1.6</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[17].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">AHMAD DAYU ZAINI</p>
-                    <p className="text-xs leading-tight uppercase">(23180703)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[17].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[17].empId})</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.1.7</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[18].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">PRODUCTION ENGINEERING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[18].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">HANA OKTA</p>
-                  <p className="text-xs leading-tight uppercase">(23120155)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[18].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[18].empId})</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD1.2.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[19].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">ASSEMBLING</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[19].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TEAM MEMBER</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[19].name}</p>
                 </div>
               </div>
 
@@ -553,13 +883,13 @@ const ManufacturingCable = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.2.3</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[20].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY CONTROL PROSES</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[20].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">SUGIHARTO (COORD)</p>
-                    <p className="text-xs leading-tight uppercase">(23120137)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[20].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[20].empId})</p>
                   </div>
                 </div>
                 <div className="flex border-t border-gray-400">
@@ -567,8 +897,8 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">CIPTO RACHMAD SASONO</p>
-                    <p className="text-xs leading-tight uppercase">(23060047)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[21].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[21].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
@@ -576,19 +906,19 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">DENDI SETYAWAN</p>
-                    <p className="text-xs leading-tight uppercase">(23120146)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[22].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[22].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.2.4</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[23].code}</p>
                     {/* Empty for alignment */}
                   </div>
 
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">HERI MOHAMMAD AFANDI</p>
-                    <p className="text-xs leading-tight uppercase">(23060138)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[23].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[23].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
@@ -596,8 +926,8 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">INDRI NOVITA SARI</p>
-                    <p className="text-xs leading-tight uppercase">(23110113)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[24].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[24].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
@@ -605,25 +935,16 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">PARTO</p>
-                    <p className="text-xs leading-tight uppercase">(23120140)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[25].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[25].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">SUPANTO</p>
-                    <p className="text-xs leading-tight uppercase">(23090091)</p>
-                  </div>
-                </div>
-                <div className="flex">
-                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    {/* Empty for alignment */}
-                  </div>
-                  <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">WANTO</p>
-                    <p className="text-xs leading-tight uppercase">(23110121)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[26].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[26].empId})</p>
                   </div>
                 </div>
                 <div className="flex">
@@ -631,8 +952,17 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">JUPRI SAHALA</p>
-                    <p className="text-xs leading-tight uppercase">(23120154)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[27].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[27].empId})</p>
+                  </div>
+                </div>
+                <div className="flex">
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                    {/* Empty for alignment */}
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[28].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[28].empId})</p>
                   </div>
                 </div>
               </div>
@@ -641,45 +971,45 @@ const ManufacturingCable = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.0.2</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[29].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY CONTROL INCOMING</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[29].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">MAULANA MALIK IBRAHIM</p>
-                    <p className="text-xs leading-tight uppercase">(23220078)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[29].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[29].empId})</p>
                   </div>
                 </div>
                 <div className="flex border-t border-gray-400">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD1.0.3</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[30].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">MOH. NURHIDAYAT</p>
-                    <p className="text-xs leading-tight uppercase">(23120181)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[30].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[30].empId})</p>
                   </div>
                 </div>
               </div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[160px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <div className="flex flex-col">
-                    <p className="text-xs font-bold uppercase">PRD1.0.4</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[31].code}</p>
                   </div>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">ADMINISTRATION</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[31].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DWI WIDYASTUTI</p>
-                  <p className="text-xs leading-tight uppercase">(23120191)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[31].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[31].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">MELINDA SURYANI HASIBUAN</p>
-                  <p className="text-xs leading-tight uppercase">(23230008)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[32].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[32].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">RIRIN ERLINA</p>
-                  <p className="text-xs leading-tight uppercase">(23120217)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[33].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[33].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">ANDI PUTRA MALBA SYAGAF</p>
-                  <p className="text-xs leading-tight uppercase">(23230027)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[34].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[34].empId})</p>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,90 @@ const FinanceDepartment = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "FINANCE & ACCOUNTING",
+      code: "FIN1.0",
+      head: "YULIUS PERMATA",
+      empId: "23220017",
+      effectiveDate: "30 September 2025",
+    },
+    positions: [
+      {
+        id: "fin-1",
+        code: "FIN1.1",
+        title: "FINANCE & ACCOUNTING",
+        name: "FAKHDARENI",
+        empId: "23060055",
+      },
+      {
+        id: "fin-2",
+        code: "FIN1.2",
+        title: "FINANCE & ACCOUNTING",
+        name: "KHOIRUNNISA",
+        empId: "23170572",
+      },
+      {
+        id: "fin-3",
+        code: "FIN1.3",
+        title: "FINANCE & ACCOUNTING",
+        name: "SITI ROKHAYATI",
+        empId: "23120177",
+      },
+      {
+        id: "fin-4",
+        code: "FIN1.4",
+        title: "FINANCE & ACCOUNTING",
+        name: "ANNISA NUR HANDAYANI",
+        empId: "23120198",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-finance';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-finance-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-finance', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -343,13 +427,13 @@ const FinanceDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[290px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">FIN1.0</p>
+                  <p className="text-sm font-bold">{orgData.header.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">FINANCE & ACCOUNTING</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">{orgData.header.title || "FINANCE & ACCOUNTING"}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">YULIUS PERMATA</p>
-                  <p className="text-sm leading-tight">(23220017)</p>
+                  <p className="text-sm leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
                 </div>
               </div>
             </div>
@@ -360,38 +444,27 @@ const FinanceDepartment = () => {
                 <div className="flex flex-col h-full">
                   {/* Header */}
                   <div className="flex border-b border-gray-400">
-                    <div className="bg-gray-100 p-3 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                       <p className="text-sm font-bold"></p>
                     </div>
                     <div className="p-3 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight whitespace-nowrap">FINANCE & ACCOUNTING</p>
+                      <p className="text-sm font-semibold leading-tight whitespace-nowrap">{orgData.positions[0].title || "FINANCE & ACCOUNTING"}</p>
                     </div>
                   </div>
-
-                  {/* Daftar Staff */}
-                  {[
-                    { id: "FIN1.1", name: "FAKHDARENI", nip: "(23060055)" },
-                    { id: "FIN1.2", name: "KHOIRUNNISA", nip: "(23170572)" },
-                    { id: "FIN1.3", name: "SITI ROKHAYATI", nip: "(23120177)" },
-                    { id: "FIN1.4", name: "ANNISA NUR HANDAYANI", nip: "(23120198)" },
-                  ].map((staff, i) => (
-                    <div
-                      key={i}
-                      className={`flex border-b border-gray-300 flex-1 ${i === 3 ? 'border-b-0' : ''}`}
-                    >
-                      <div className="bg-gray-100 p-3 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">{staff.id}</p>
+                  {orgData.positions.slice(0, 4).map((staff, i) => (
+                    <div key={i} className={`flex flex-1 ${i < 2 ? 'border-b border-gray-300' : ''}`}>
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                        <p className="text-sm font-bold">{staff?.code}</p>
                       </div>
-                      <div className="p-4 flex-1 text-center flex flex-col justify-center">
-                        <p className="text-sm font-semibold leading-tight">{staff.name}</p>
-                        <p className="text-sm leading-tight">{staff.nip}</p>
+                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <p className="text-sm font-semibold leading-tight">{staff?.name}</p>
+                        <p className="text-sm leading-tight">({staff?.empId})</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Notes Section */}

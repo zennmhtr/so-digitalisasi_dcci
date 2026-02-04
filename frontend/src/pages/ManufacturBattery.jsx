@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,229 @@ const ManufacturBattery = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "BATTERY PRODUCTION & PME",
+      code: "PRD2.0",
+      head: "DIONISIUS AUGUSTO**",
+      empId: "23220105",
+    },
+    positions: [
+      {
+        id: "prd-2-1",
+        code: "PRD2.1",
+        title: "BATTERY PRODUCTION",
+        name: "YEREMIA SOTYA",
+        empId: "23230135",
+        group: "ENGINEER",
+      },
+      {
+        id: "prd-2-2",
+        code: "PRD2.2",
+        title: "BATTERY PRODUCTION",
+        name: "ASEP AGUNG WIGUNA",
+        empId: "23190805",
+        group: "ENGINEER",
+      },
+      {
+        id: "prd-2-3",
+        code: "PRD2.3",
+        title: "QUALITY ASSURANCE",
+        name: "ADHITYA SATIAWA SURYADATA",
+        empId: "23230091",
+        group: "ENGINEER",
+      },
+      {
+        id: "prd-3-0",
+        code: "PRD3.0",
+        title: "BATTERY PME",
+        name: "TBR",
+        empId: "-",
+        group: "ENGINEER",
+      },
+      {
+        id: "prd-2-1-1-1",
+        code: "PRD2.1.1",
+        title: "AUXILIARY BATTERY PRODUCT",
+        name: "RIZAL GUNAWAN",
+        empId: "23230055",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-1-2",
+        code: "PRD2.1.1",
+        title: "AUXILIARY BATTERY PRODUCT",
+        name: "MUH. NANDER",
+        empId: "23120193",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-1-3",
+        code: "PRD2.1.1",
+        title: "AUXILIARY BATTERY PRODUCT",
+        name: "GANTIANTO",
+        empId: "23120145",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-1-4",
+        code: "PRD2.1.1",
+        title: "AUXILIARY BATTERY PRODUCT",
+        name: "TARMUDIN",
+        empId: "23120184",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-1-5",
+        code: "PRD2.1.1",
+        title: "AUXILIARY BATTERY PRODUCT",
+        name: "DEDI SUKMA",
+        empId: "23110110",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-2-1",
+        code: "PRD2.1.2",
+        title: "BESS PRODUCT",
+        name: "EKO DAMAR WAHYUDI",
+        empId: "23230115",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-2-2",
+        code: "PRD2.1.2",
+        title: "BESS PRODUCT",
+        name: "WIDODO",
+        empId: "23120197",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-2-3",
+        code: "PRD2.1.2",
+        title: "BESS PRODUCT",
+        name: "SUPRIYONO",
+        empId: "23110119",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-2-4",
+        code: "PRD2.1.2",
+        title: "BESS PRODUCT",
+        name: "PUTRI LESTARI",
+        empId: "23240229",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-1",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "RIZIQ RIDWAN",
+        empId: "23210079",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-2",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "AINA WAKHORIDAH",
+        empId: "23230053",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-3",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "DENDI SETIAWAN",
+        empId: "23230054",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-4",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "GALIH SOMAT",
+        empId: "23230116",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-5",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "M. YUNUS ARIFAI",
+        empId: "23120192",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-6",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "DODIK",
+        empId: "23120161",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-1-3-7",
+        code: "PRD2.1.3",
+        title: "BEV PRODUCT",
+        name: "NACA RODIANA HENDRAYANA",
+        empId: "23120199",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+      {
+        id: "prd-2-3-1",
+        code: "PRD2.3.1",
+        title: "QUALITY CHECK",
+        name: "TBR",
+        empId: "-",
+        group: "TEAM MEMBER/TECHNICIAN",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-manufactur-battery';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-manufactur-battery-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-manufactur-battery', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -355,157 +578,157 @@ const ManufacturBattery = () => {
 
             {/* Kolom 3 - Senior Engineer */}
             <div className="space-y-4 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[230px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.0</p>
+                  <p className="text-xs font-bold uppercase">{orgData.header.code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">BATTERY PRODUCTION & PME</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DIONISIUS AUGUSTO**</p>
-                  <p className="text-xs leading-tight uppercase">(23220105)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.header.headName}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
 
             {/* Kolom 4 - Engineer */}
             <div className="space-y-4 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD2.1</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[0].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">BATTERY PRODUCTION</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">YEREMIA SOTYA</p>
-                    <p className="text-xs leading-tight uppercase">(23230135)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                   </div>
                 </div>
                 <div className="flex border-t border-gray-400">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">PRD2.2</p>
+                    <p className="text-xs font-bold uppercase">{orgData.positions[1].code}</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">ASEP AGUNG WIGUNA</p>
-                    <p className="text-xs leading-tight uppercase">(23190805)</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                   </div>
                 </div>
               </div>
 
               <div className="min-h-[665px]"></div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[230px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.3</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[2].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY ASSURANCE</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">ADHITYA SATIAWA</p>
-                  <p className="text-xs leading-tight uppercase">SURYADATA (23230091)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[2].empId})</p>
                 </div>
               </div>
 
               <div className="min-h-[2px]"></div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[230px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD3.0</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[3].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">BATTERY PME</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TBR</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[3].empId})</p>
                 </div>
               </div>
             </div>
 
             {/* Kolom 5 - Team Member/Technician */}
             <div className="space-y-4 flex flex-col items-center">
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[200px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[200px] w-[230px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[4].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">AUXILIARY BATTERY PRODUCT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[4].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">RIZAL GUNAWAN</p>
-                  <p className="text-xs leading-tight uppercase">(23230055)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[4].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">MUH. NANDER</p>
-                  <p className="text-xs leading-tight uppercase">(23120193)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[5].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[5].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">GANTIANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23120145)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[6].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[6].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TARMUDIN</p>
-                  <p className="text-xs leading-tight uppercase">(23120184)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[7].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[7].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DEDI SUKMA</p>
-                  <p className="text-xs leading-tight uppercase">(23110110)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[8].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[8].empId})</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[180px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[180px] w-[230px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.1.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[9].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">BESS PRODUCT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[9].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">EKO DAMAR WAHYUDI</p>
-                  <p className="text-xs leading-tight uppercase">(23230115)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[9].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[9].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">WIDODO</p>
-                  <p className="text-xs leading-tight uppercase">(23120197)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[10].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[10].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">SUPRIYONO</p>
-                  <p className="text-xs leading-tight uppercase">(23110119)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[11].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[11].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">PUTRI LESTARI</p>
-                  <p className="text-xs leading-tight uppercase">(23240229)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[12].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[12].empId})</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[220px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[220px] w-[230px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.1.3</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[13].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">BEV PRODUCT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[13].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">RIZIQ RIDWAN</p>
-                  <p className="text-xs leading-tight uppercase">(23210079)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[13].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[13].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">AINA WAKHORIDAH</p>
-                  <p className="text-xs leading-tight uppercase">(23230053)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[14].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[14].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DENDI SETIAWAN</p>
-                  <p className="text-xs leading-tight uppercase">(23230054)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[15].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[15].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">GALIH SOMAT</p>
-                  <p className="text-xs leading-tight uppercase">(23230116)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[16].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[16].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">M. YUNUS ARIFAI</p>
-                  <p className="text-xs leading-tight uppercase">(23120192)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[17].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[17].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DODIK</p>
-                  <p className="text-xs leading-tight uppercase">(23120161)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[18].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[18].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">NACA RODIANA HENDRAYANA</p>
-                  <p className="text-xs leading-tight uppercase">(23120199)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[19].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[19].empId})</p>
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[240px]">
+              <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[230px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">PRD2.3.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[20].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY CHECK</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[20].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">TBR</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[20].empId})</p>
                 </div>
               </div>
             </div>

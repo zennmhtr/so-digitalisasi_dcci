@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,89 @@ const Purchasing = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "PROCUREMENT & PURCHASING",
+      code: "PCH1.0",
+      head: "DIKI WAHYUDI* / FAKHDARENI*",
+      empId: "23060056 / 23060055",
+    },
+    positions: [
+      {
+        id: "pch1-1",
+        code: "PCH1.1",
+        title: "CONTROLCABLE",
+        name: "RIF'QI FATHAH",
+        empId: "23230017",
+      },
+      {
+        id: "pch1-2",
+        code: "PCH1.2",
+        title: "BATTERY",
+        name: "MARCHELINO DWI PUTRANTO",
+        empId: "23250234",
+      },
+      {
+        id: "pch1-3",
+        code: "PCH1.3",
+        title: "GENERAL & LEGAL",
+        name: "SYIFA NUR MULYANI",
+        empId: "23220060",
+      },
+      {
+        id: "pch1-4",
+        code: "PCH1.4",
+        title: "SUBCONT",
+        name: "ELITRI SULISTIYO",
+        empId: "23110112",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-purchasing';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-purchasing-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-purchasing', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -354,16 +437,13 @@ const Purchasing = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">PCH1.0</p>
+                  <p className="text-sm font-bold">{orgData.header.code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">PROCUREMENT &<br />PURCHASING</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">DIKI WAHYUDI*</p>
-                  <p className="text-sm leading-tight">(23060056)</p>
-                  <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">FAKHDARENI*</p>
-                  <p className="text-sm leading-tight">(23060055)</p>
+                  <p className="text-sm leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
                 </div>
               </div>
             </div>
@@ -372,49 +452,49 @@ const Purchasing = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">PCH1.1</p>
+                  <p className="text-sm font-bold">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">CONTROLCABLE</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[0].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">RIF'QI FATHAH</p>
-                  <p className="text-sm leading-tight">(23230017)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-sm leading-tight">{orgData.positions[0].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">PCH1.2</p>
+                  <p className="text-sm font-bold">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">BATTERY</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[1].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">MARCHELINO DWI PUTRANTO</p>
-                  <p className="text-sm leading-tight">(23250234)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[1].name}</p>
+                  <p className="text-sm leading-tight">{orgData.positions[1].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">PCH1.3</p>
+                  <p className="text-sm font-bold">{orgData.positions[2].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">GENERAL & LEGAL</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[2].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">SYIFA NUR MULYANI</p>
-                  <p className="text-sm leading-tight">(23220060)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[2].name}</p>
+                  <p className="text-sm leading-tight">{orgData.positions[2].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                 <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                  <p className="text-sm font-bold">PCH1.4</p>
+                  <p className="text-sm font-bold">{orgData.positions[3].code}</p>
                 </div>
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-sm font-semibold mb-2 leading-tight">SUBCONT</p>
+                  <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[3].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">ELITRI SULISTIYO</p>
-                  <p className="text-sm leading-tight">(23110112)</p>
+                  <p className="text-sm leading-tight">{orgData.positions[3].name}</p>
+                  <p className="text-sm leading-tight">{orgData.positions[3].empId}</p>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 
@@ -9,6 +9,96 @@ const QaDepartment = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+
+  const defaultData = {
+    header: {
+      title: "QA DEPARTMENT",
+      code: "QAC1.0",
+      head: "M BAGUS SANTOSO",
+      empId: "23220025",
+    },
+    positions: [
+      {
+        id: "qac1-1-1",
+        code: "QAC1.1.1",
+        title: "QUALITY ASSURANCE PROCESS",
+        name: "DWI PURWANTO",
+        empId: "23050023",
+      },
+      {
+        id: "qac1-1-2",
+        code: "QAC1.1.2",
+        title: "QUALITY ASSURANCE PROCESS",
+        name: "SUCI PURWANTO",
+        empId: "23050023",
+      },
+      {
+        id: "qac1-1-3",
+        code: "QAC1.1.3",
+        title: "LAB & KALIBRASI",
+        name: "NURDIANTO",
+        empId: "23160477",
+      },
+      {
+        id: "qac1-1-4",
+        code: "QAC1.1.4",
+        title: "VENDOR MANAGEMENT",
+        name: "SUCI PURWANTO*",
+        empId: "23050023",
+      },
+      {
+        id: "qac1-1-5",
+        code: "QAC1.1.5",
+        title: "CLAIM & COMPLAIN",
+        name: "CANDRA MAULANA",
+        empId: "23080082",
+      },
+    ],
+  };
+
+  const [orgData, setOrgData] = useState(defaultData);
+
+  const loadDataFromStorage = () => {
+    try {
+      const storageKey = 'so-bagian-qa';
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.header && parsed.positions) {
+          setOrgData(parsed);
+          return true;
+        }
+      }
+      setOrgData(defaultData);
+      return false;
+    } catch (error) {
+      console.error('Error:', error);
+      setOrgData(defaultData);
+      return false;
+    }
+  };
+
+  useEffect(() => { loadDataFromStorage(); }, []);
+
+  useEffect(() => {
+    const eventName = 'so-bagian-qa-updated';
+    const handleUpdate = (event) => {
+      const newData = event.detail;
+      if (newData?.header && newData?.positions) {
+        setOrgData(newData);
+        localStorage.setItem('so-bagian-qa', JSON.stringify(newData));
+        alert('Updated!');
+      }
+    };
+    window.addEventListener(eventName, handleUpdate);
+    return () => window.removeEventListener(eventName, handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleFocus = () => loadDataFromStorage();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const handlePrint = () => {
     const printContainer = document.querySelector('.print-container');
@@ -353,13 +443,13 @@ const QaDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.1</p>
+                  <p className="text-xs font-bold uppercase">{orgData.header.code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY ASSURANCE</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">M BAGUS SANTOSO*</p>
-                  <p className="text-xs leading-tight uppercase">(23220025)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.header.empId}</p>
                 </div>
               </div>
             </div>
@@ -368,13 +458,13 @@ const QaDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[0].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY ASSURANCE PROCESS</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">DWI PURWANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23050023)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].empId}</p>
                 </div>
               </div>
             </div>
@@ -388,49 +478,49 @@ const QaDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.2</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[1].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">QUALITY ASSURANCE PROCESS</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">SUCI PURWANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23050023)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.3</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[2].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">LAB & KALIBRASI</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">NURDIANTO</p>
-                  <p className="text-xs leading-tight uppercase">(23160477)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].name}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.4</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[3].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">VENDOR MANAGEMENT</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">SUCI PURWANTO*</p>
-                  <p className="text-xs leading-tight uppercase">(23050023)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[3].name}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[3].empId}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[220px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">QAC1.1.5</p>
+                  <p className="text-xs font-bold uppercase">{orgData.positions[4].code}</p>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">CLAIM & COMPLAIN</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[4].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">CANDRA MAULANA</p>
-                  <p className="text-xs leading-tight uppercase">(23080082)</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].name}</p>
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].empId}</p>
                 </div>
               </div>
             </div>
