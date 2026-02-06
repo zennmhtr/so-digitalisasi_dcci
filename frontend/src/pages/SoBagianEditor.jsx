@@ -24,6 +24,7 @@ const SoBagianEditor = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobdescData, setJobdescData] = useState(null);
   const [loadingJobdesc, setLoadingJobdesc] = useState(false);
+  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
 
   const openSubmitModal = () => {
     setShowSubmitModal(true);
@@ -33,6 +34,44 @@ const SoBagianEditor = () => {
       priority: "medium",
     });
   };
+
+  const checkAllEmployeeJobdescStatus = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/jobdescriptions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+
+        const statusMap = {};
+
+        allJobdesc.forEach(jd => {
+          const jdNoPNK = (jd.memberNoPNK || "").trim();
+          const jdName = (jd.memberName || "").trim().toUpperCase();
+
+          if (jdNoPNK) statusMap[jdNoPNK] = true;
+          if (jdName) statusMap[jdName] = true;
+        })
+        setEmployeeJobdescStatus(statusMap);
+        console.log("✅ Employee Jobdesc Status:", statusMap);
+      }
+    } catch (error) {
+      console.error("Error fetching employee jobdesc status:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDepartment) {
+      checkAllEmployeeJobdescStatus();
+    }
+  }, [selectedDepartment]);
 
   const onCodeClick = async (item) => {
     setSelectedJob(item);
@@ -1504,13 +1543,22 @@ const SoBagianEditor = () => {
       );
     }
 
+    const empId = (person.empId || "").trim();
+    const personName = (person.name || "").trim().toUpperCase();
+    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+
+    const buttonColor = hasJobdesc
+      ? "text-blue-600 hover:bg-blue-50"
+      : "text-red-600 hover:bg-red-50";
+
     return (
       <button
-        className="text-xs font-bold text-blue-600 hover:underline focus:outline-none uppercase"
+        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-2 py-1 rounded transition-colors ${buttonColor}`}
         onClick={(e) => {
           e.stopPropagation();
           onCodeClick(person);
         }}
+        title={hasJobdesc ? "Klik untuk melihat job description" : "Belum memiliki job description"}
       >
         {person.code}
       </button>

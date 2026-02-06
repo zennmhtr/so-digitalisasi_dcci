@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobdescData, setJobdescData] = useState(null);
   const [loadingJobdesc, setLoadingJobdesc] = useState(false);
+  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
 
   const onCodeClick = async (item) => {
     setSelectedJob(item);
@@ -118,6 +119,38 @@ const Dashboard = () => {
       console.error("❌ Error fetching job description:", error);
     } finally {
       setLoadingJobdesc(false);
+    }
+  };
+
+  const checkAllEmployeeJobdescStatus = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/jobdescriptions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+
+        const statusMap = {};
+
+        allJobdesc.forEach(jd => {
+          const jdNoPNK = (jd.memberNoPNK || "").trim();
+          const memberName = (jd.memberName || "").trim().toUpperCase();
+
+          if (jdNoPNK) statusMap[jdNoPNK] = true;
+          if (memberName) statusMap[memberName] = true;
+        })
+        setEmployeeJobdescStatus(statusMap);
+        console.log("✅ Employee jobdesc status:", statusMap);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching employee jobdesc status:", error);
     }
   };
 
@@ -509,9 +542,42 @@ const Dashboard = () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("dashboard-data-updated", handleCustomUpdate);
     };
+
   }, []);
 
-  // Handle print/download
+  useEffect(() => {
+    if (organizationData) {
+      checkAllEmployeeJobdescStatus();
+    }
+  }, [organizationData]);
+
+  const renderCodeButton = (item) => {
+    if (!item.empId) {
+      return <p className="text-xs font-bold">{item.code}</p>;
+    }
+
+    const empId = (item.empId || "").trim();
+    const itemName = (item.name || "").trim().toUpperCase();
+    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[itemName];
+
+    const buttonColor = hasJobdesc
+      ? "text-blue-600 hover:bg-blue-50"
+      : "text-red-600 hover:bg-red-50";
+
+    return (
+      <button
+        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-2 py-1 rounded transition-colors ${buttonColor}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCodeClick(item);
+        }}
+        title={hasJobdesc ? "Klik untuk melihat job description" : "Belum memiliki job description"}
+      >
+        {item.code}
+      </button>
+    );
+  };
+
   const handlePrint = () => {
     const printContainer = document.querySelector(".dashboard-print-container");
     if (!printContainer) return;
@@ -739,69 +805,23 @@ const Dashboard = () => {
                 setJobdescData(null);
                 setSelectedJob(null);
               }}
-              onEdit={() => {}}
-              onDelete={() => {}}
             />
           ) : (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Job Description</h3>
-                    <p className="text-sm font-semibold">{selectedJob?.name}</p>
-                    <p className="text-xs text-gray-600 mb-3">
-                      {selectedJob?.title}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowJobModal(false);
-                      setSelectedJob(null);
-                    }}
-                    className="text-gray-400 hover:text-gray-600 p-1"
-                    aria-label="Close jobdesc"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="border-t border-gray-200 mt-3 pt-3 text-sm leading-tight">
-                  <div className="flex items-start gap-3 text-orange-600 bg-orange-50 p-4 rounded-lg">
-                    <svg
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <div>
-                      <p className="font-semibold mb-1">
-                        Job description belum tersedia
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        Job description untuk{" "}
-                        <strong>{selectedJob?.name}</strong> belum dibuat di
-                        sistem.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end mt-4 gap-2">
-                  <button
-                    onClick={() => {
-                      setShowJobModal(false);
-                      setSelectedJob(null);
-                    }}
-                    className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-                  >
-                    Close
-                  </button>
-                </div>
+                <p className="font-semibold mb-2">Jobdesk Tidak Ditemukan</p>
+                <p className="text-sm text-gray-600">
+                  Tidak ada data jobdesk untuk {selectedJob?.name}
+                </p>
+                <button
+                  onClick={() => {
+                    setShowJobModal(false);
+                    setSelectedJob(null);
+                  }}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  Tutup
+                </button>
               </div>
             </div>
           )}
@@ -1018,11 +1038,10 @@ const Dashboard = () => {
                   return (
                     <div
                       key="mdo-combined"
-                      className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                        mdo2?.clickable && canViewDepartmentSO(mdo2?.route)
-                          ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                          : ""
-                      }`}
+                      className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${mdo2?.clickable && canViewDepartmentSO(mdo2?.route)
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
+                        }`}
                       onClick={() => {
                         if (
                           mdo2?.clickable &&
@@ -1045,22 +1064,8 @@ const Dashboard = () => {
 
                         {/* First content row (MDO1.0) */}
                         <div className="flex border-b border-gray-300 flex-1">
-                          <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                            {/* MDO1.0 - if clickable show button */}
-                            {item.clickable &&
-                            canViewDepartmentSO(item.route) ? (
-                              <button
-                                className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCodeClick(item);
-                                }}
-                              >
-                                {item.code}
-                              </button>
-                            ) : (
-                              <p className="text-xs font-bold">{item.code}</p>
-                            )}
+                          <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                            {renderCodeButton(item)}
                           </div>
                           <div className="p-3 flex-1 text-center flex flex-col justify-center">
                             <p className="text-xs leading-tight">{item.name}</p>
@@ -1073,21 +1078,7 @@ const Dashboard = () => {
                         {/* Second content row (MDO2.0) */}
                         <div className="flex flex-1">
                           <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                            {/* mdo2 code button conditional */}
-                            {mdo2?.clickable &&
-                            canViewDepartmentSO(mdo2?.route) ? (
-                              <button
-                                className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCodeClick(mdo2);
-                                }}
-                              >
-                                {mdo2?.code}
-                              </button>
-                            ) : (
-                              <p className="text-xs font-bold">{mdo2?.code}</p>
-                            )}
+                            {renderCodeButton(item)}
                           </div>
                           <div className="p-3 flex-1 text-center flex flex-col justify-center">
                             <p className="text-xs leading-tight">
@@ -1113,11 +1104,10 @@ const Dashboard = () => {
                   return (
                     <div
                       key={item.id}
-                      className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                        item.clickable && canViewDepartmentSO(item.route)
-                          ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                          : ""
-                      }`}
+                      className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${item.clickable && canViewDepartmentSO(item.route)
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
+                        }`}
                       onClick={() => {
                         if (
                           item.clickable &&
@@ -1128,20 +1118,8 @@ const Dashboard = () => {
                         }
                       }}
                     >
-                      <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                        {item.clickable && canViewDepartmentSO(item.route) ? (
-                          <button
-                            className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCodeClick(item);
-                            }}
-                          >
-                            {item.code}
-                          </button>
-                        ) : (
-                          <p className="text-xs font-bold">{item.code}</p>
-                        )}
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                        {renderCodeButton(item)}
                       </div>
                       <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <p className="text-xs font-semibold mb-1 leading-tight">
@@ -1181,9 +1159,8 @@ const Dashboard = () => {
                     ></div>
                   )}
                   <div
-                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${
-                      index === 0 ? "[100px]" : "[80px]"
-                    } flex items-center justify-center`}
+                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${index === 0 ? "[100px]" : "[80px]"
+                      } flex items-center justify-center`}
                   >
                     <span className="leading-tight">{div.label}</span>
                   </div>
@@ -1206,11 +1183,10 @@ const Dashboard = () => {
                   {index === 5 && <div className="min-h-[110px]"></div>}
                   {index === 6 && <div className="min-h-[250px]"></div>}
                   <div
-                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewDepartmentSO(item.route)
-                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                        : ""
-                    }`}
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${item.clickable && canViewDepartmentSO(item.route)
+                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                      : ""
+                      }`}
                     onClick={() => {
                       if (
                         item.clickable &&
@@ -1222,19 +1198,7 @@ const Dashboard = () => {
                     }}
                   >
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      {item.clickable && canViewDepartmentSO(item.route) ? (
-                        <button
-                          className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCodeClick(item);
-                          }}
-                        >
-                          {item.code}
-                        </button>
-                      ) : (
-                        <p className="text-xs font-bold">{item.code}</p>
-                      )}
+                      {renderCodeButton(item)}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <p className="text-xs font-semibold mb-1 leading-tight">
@@ -1266,11 +1230,10 @@ const Dashboard = () => {
                   {index === 5 && <div className="min-h-[10px]"></div>}
 
                   <div
-                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${
-                      item.clickable && canViewDepartmentSO(item.route)
-                        ? "hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 cursor-pointer"
-                        : ""
-                    }`}
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${item.clickable && canViewDepartmentSO(item.route)
+                      ? "hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 cursor-pointer"
+                      : ""
+                      }`}
                     onClick={() => {
                       if (
                         item.clickable &&
@@ -1281,21 +1244,8 @@ const Dashboard = () => {
                       }
                     }}
                   >
-                    {/* CODE BUTTON CONDITIONAL */}
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                      {item.clickable && canViewDepartmentSO(item.route) ? (
-                        <button
-                          className="text-xs font-bold text-blue-600 hover:underline focus:outline-none"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCodeClick(item);
-                          }}
-                        >
-                          {item.code}
-                        </button>
-                      ) : (
-                        <p className="text-xs font-bold">{item.code}</p>
-                      )}
+                      {renderCodeButton(item)}
                     </div>
 
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
