@@ -230,7 +230,7 @@ const SoBagianEditor = () => {
       structure: {
         header: {
           id: "hrd-1",
-          title: "HRGA & IT DEPARTMENT",
+          title: "HRGA & IT",
           code: "HRD1.0",
           head: "DIKI WAHYUDI *",
           empId: "23060056",
@@ -239,7 +239,7 @@ const SoBagianEditor = () => {
           {
             id: "hrd-2",
             code: "HRD2.0",
-            title: "VERONICA HANI M. **",
+            title: "HRGA & IT",
             name: "VERONICA HANI M. **",
             empId: "23240206",
           },

@@ -31,8 +31,8 @@ const RolePermission = () => {
     ],
     soChangeRequests: [
       "View Own SO Change Requests",
-      "SO Changes First Approval",
-      "SO Changes Final Approval",
+      "SO Changes Director Approval",
+      "SO Changes President Director Approval",
     ],
 
     soBagianChangeRequests: [
@@ -66,7 +66,7 @@ const RolePermission = () => {
       "Purchasing",
       "QA Department",
     ],
-    
+
     soDetailsView: [
       "View Finance SO",
       "View HRGA & IT SO",
@@ -278,11 +278,10 @@ const RolePermission = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          role.active
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${role.active
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {role.active ? "Active" : "Inactive"}
                       </span>

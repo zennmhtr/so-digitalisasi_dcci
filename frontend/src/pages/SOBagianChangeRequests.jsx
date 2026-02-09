@@ -749,7 +749,7 @@ const SOBagianChangeRequests = () => {
     const userPermissions = user?.role?.permissions || [];
 
     if (userPermissions.includes("Manage Users")) return true;
-    if (userPermissions.includes("SO Changes First Approval")) return true;
+    if (userPermissions.includes("SO Changes Director Approval")) return true;
 
     const requiredPermission = getDepartmentApprovalPermission(
       request.department
@@ -770,7 +770,7 @@ const SOBagianChangeRequests = () => {
   const hasAnyApprovalPermission = () => {
     const userPermissions = user?.role?.permissions || [];
     if (userPermissions.includes("Manage Users")) return true;
-    if (userPermissions.includes("SO Changes First Approval")) return true;
+    if (userPermissions.includes("SO Changes Director Approval")) return true;
 
     return userPermissions.some(
       (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
@@ -1216,7 +1216,7 @@ const SOBagianChangeRequests = () => {
               {(() => {
                 const userPermissions = user?.role?.permissions || [];
                 const isDirector =
-                  userPermissions.includes("SO Changes First Approval") ||
+                  userPermissions.includes("SO Changes Director Approval") ||
                   userPermissions.includes("Manage Users");
 
                 return [
@@ -1275,7 +1275,7 @@ const SOBagianChangeRequests = () => {
                   getDepartmentApprovalPermission(request.department)
                 );
               const isDirectorApprover = userPermissions.includes(
-                "SO Changes First Approval"
+                "SO Changes Director Approval"
               );
               return (
                 <div
@@ -1405,7 +1405,7 @@ const SOBagianChangeRequests = () => {
                         isRequesterManager(request) && (
                           <>
                             {userPermissions.includes(
-                              "SO Changes First Approval"
+                              "SO Changes Director Approval"
                             ) || userPermissions.includes("Manage Users") ? (
                               <button
                                 onClick={() => viewDetail(request)}
@@ -1431,7 +1431,7 @@ const SOBagianChangeRequests = () => {
                         request.requestedBy?._id !== user?.id && (
                           <>
                             {userPermissions.includes(
-                              "SO Changes First Approval"
+                              "SO Changes Director Approval"
                             ) || userPermissions.includes("Manage Users") ? (
                               <button
                                 onClick={() => viewDetail(request)}
@@ -1485,7 +1485,7 @@ const SOBagianChangeRequests = () => {
                       {request.status === "pending" &&
                         request.requestedBy?._id === user?.id &&
                         !userPermissions.includes(
-                          "SO Changes First Approval"
+                          "SO Changes Director Approval"
                         ) && (
                           <button
                             onClick={() => handleCancel(request._id)}

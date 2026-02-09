@@ -82,7 +82,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
       console.error("Error changing password:", error);
       alert(
         error.response?.data?.message ||
-          "Error changing password. Please try again."
+        "Error changing password. Please try again."
       );
     } finally {
       setPasswordLoading(false);
@@ -115,8 +115,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
     );
 
   const hasSOChangeRequestsAccess =
-    userPermissions?.includes("SO Changes First Approval") ||
-    userPermissions?.includes("SO Changes Final Approval") ||
+    userPermissions?.includes("SO Changes Director Approval") ||
+    userPermissions?.includes("SO Changes President Director Approval") ||
     userPermissions?.includes("View Own SO Change Requests");
 
   console.log("🔐 Layout SO Change Requests Check:", {
@@ -126,7 +126,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
   });
 
   const hasSOBagianChangeRequestsAccess =
-    userPermissions?.includes("SO Changes First Approval") ||
+    userPermissions?.includes("SO Changes Director Approval") ||
     userPermissions?.includes("SO Bagian Request") ||
     userPermissions?.some(
       (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
@@ -141,7 +141,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
   const hasJobDescChangeRequestsAccess =
     userPermissions?.includes("Job Desc Request") ||
     userPermissions?.includes("Manage Users") ||
-    userPermissions?.includes("SO Changes First Approval") || 
+    userPermissions?.includes("SO Changes Director Approval") ||
     userPermissions?.some(
       (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
     );
@@ -150,7 +150,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userName: user?.name,
     hasJobDescChangeRequestsAccess: hasJobDescChangeRequestsAccess,
     hasJobDescManagementAccess: hasJobdescAccess,
-    hasDirectorPermission: userPermissions?.includes("SO Changes First Approval"),
+    hasDirectorPermission: userPermissions?.includes("SO Changes Director Approval"),
     userPermissions: userPermissions,
   });
 
@@ -172,8 +172,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
     hasSOBagianChangeRequestsAccess: hasSOBagianChangeRequestsAccess,
     hasSubmitPermission: userPermissions?.includes("Submit SO Changes"),
     hasApprovePermission:
-      userPermissions?.includes("SO Changes First Approval") ||
-      userPermissions?.includes("SO Changes Final Approval") ||
+      userPermissions?.includes("SO Changes Director Approval") ||
+      userPermissions?.includes("SO Changes President Director Approval") ||
       userPermissions?.some(
         (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
       ),
@@ -184,82 +184,82 @@ const Layout = ({ children, sidebarVisible = true }) => {
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     ...(hasDashboardEditorAccess || hasSoBagianEditorAccess
       ? [
-          {
-            name: "Organization Structure DCI",
-            icon: Building2,
-            hasChildren: true,
-            children: [
-              ...(hasDashboardEditorAccess
-                ? [
-                    {
-                      name: "Organization Structure",
-                      href: "/dashboard-editor",
-                      icon: LayoutDashboard,
-                    },
-                  ]
-                : []),
-              ...(hasSoBagianEditorAccess
-                ? [
-                    {
-                      name: "SO Bagian",
-                      href: "/so-bagian-editor",
-                      icon: Building2,
-                    },
-                  ]
-                : []),
-            ],
-          },
-        ]
+        {
+          name: "Organization Structure DCI",
+          icon: Building2,
+          hasChildren: true,
+          children: [
+            ...(hasDashboardEditorAccess
+              ? [
+                {
+                  name: "Organization Structure",
+                  href: "/dashboard-editor",
+                  icon: LayoutDashboard,
+                },
+              ]
+              : []),
+            ...(hasSoBagianEditorAccess
+              ? [
+                {
+                  name: "SO Bagian",
+                  href: "/so-bagian-editor",
+                  icon: Building2,
+                },
+              ]
+              : []),
+          ],
+        },
+      ]
       : []),
     ...(hasJobdescAccess
       ? [
-          {
-            name: "Job Description",
-            href: "/jobdesc-management",
-            icon: FileText,
-          },
-        ]
+        {
+          name: "Job Description",
+          href: "/jobdesc-management",
+          icon: FileText,
+        },
+      ]
       : []),
     ...(hasJobDescChangeRequestsAccess
       ? [
-          {
-            name: "JobDesc Change Requests",
-            href: "/jobdesc-change-requests",
-            icon: GitPullRequest,
-          },
-        ]
+        {
+          name: "JobDesc Change Requests",
+          href: "/jobdesc-change-requests",
+          icon: GitPullRequest,
+        },
+      ]
       : []),
     ...(hasSOChangeRequestsAccess
       ? [
-          {
-            name: "SO Change Requests",
-            href: "/so-change-requests",
-            icon: GitPullRequest,
-          },
-        ]
+        {
+          name: "SO Change Requests",
+          href: "/so-change-requests",
+          icon: GitPullRequest,
+        },
+      ]
       : []),
     ...(hasSOBagianChangeRequestsAccess
       ? [
-          {
-            name: "SO Bagian Change Requests",
-            href: "/so-bagian-change-requests",
-            icon: GitPullRequest,
-          },
-        ]
+        {
+          name: "SO Bagian Change Requests",
+          href: "/so-bagian-change-requests",
+          icon: GitPullRequest,
+        },
+      ]
       : []),
     ...(hasMasterDataAccess
       ? [
-          {
-            name: "Master Data",
-            icon: Database,
-            hasChildren: true,
-            children: [
-              { name: "User Management", href: "/users", icon: Users },
-              { name: "Role & Permission", href: "/roles", icon: Shield },
-              { name: "Department", href: "/departments", icon: Building2 },
-            ],
-          },
-        ]
+        {
+          name: "Master Data",
+          icon: Database,
+          hasChildren: true,
+          children: [
+            { name: "User Management", href: "/users", icon: Users },
+            { name: "Role & Permission", href: "/roles", icon: Shield },
+            { name: "Department", href: "/departments", icon: Building2 },
+          ],
+        },
+      ]
       : []),
   ];
 
@@ -318,8 +318,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
                           </span>
                         </div>
                         {(item.name === "Master Data" && masterDataOpen) ||
-                        (item.name === "Organization Structure DCI" &&
-                          organizationStructureOpen) ? (
+                          (item.name === "Organization Structure DCI" &&
+                            organizationStructureOpen) ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
                           <ChevronRight className="w-4 h-4" />
@@ -328,34 +328,32 @@ const Layout = ({ children, sidebarVisible = true }) => {
                       {((item.name === "Master Data" && masterDataOpen) ||
                         (item.name === "Organization Structure DCI" &&
                           organizationStructureOpen)) && (
-                        <div className="ml-4 mt-2 space-y-1">
-                          {item.children.map((child) => (
-                            <NavLink
-                              key={child.name}
-                              to={child.href}
-                              className={({ isActive }) =>
-                                `flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
-                                  isActive
+                          <div className="ml-4 mt-2 space-y-1">
+                            {item.children.map((child) => (
+                              <NavLink
+                                key={child.name}
+                                to={child.href}
+                                className={({ isActive }) =>
+                                  `flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${isActive
                                     ? "bg-blue-50 text-blue-700 border-l-2 border-blue-600"
                                     : "text-gray-600 hover:bg-gray-50"
-                                }`
-                              }
-                            >
-                              <child.icon className="w-4 h-4 mr-3" />
-                              {child.name}
-                            </NavLink>
-                          ))}
-                        </div>
-                      )}
+                                  }`
+                                }
+                              >
+                                <child.icon className="w-4 h-4 mr-3" />
+                                {child.name}
+                              </NavLink>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   ) : (
                     <NavLink
                       to={item.href}
                       className={({ isActive }) =>
-                        `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-blue-50 text-blue-700 border-l-2 border-blue-600"
-                            : "text-gray-700 hover:bg-gray-100"
+                        `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
+                          ? "bg-blue-50 text-blue-700 border-l-2 border-blue-600"
+                          : "text-gray-700 hover:bg-gray-100"
                         }`
                       }
                     >
@@ -380,9 +378,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
 
       {/* Main content */}
       <div
-        className={`flex flex-col flex-1 overflow-hidden ${
-          !sidebarVisible ? "w-full" : ""
-        }`}
+        className={`flex flex-col flex-1 overflow-hidden ${!sidebarVisible ? "w-full" : ""
+          }`}
       >
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px]">
@@ -426,9 +423,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
                 </p>
               </div>
               <ChevronDown
-                className={`w-4 h-4 text-gray-400 transition-transform ${
-                  profileDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 text-gray-400 transition-transform ${profileDropdownOpen ? "rotate-180" : ""
+                  }`}
               />
             </button>
 

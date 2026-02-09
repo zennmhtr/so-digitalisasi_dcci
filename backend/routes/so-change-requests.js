@@ -16,8 +16,8 @@ router.get("/", auth, async (req, res) => {
     if (affectedSection) filter.affectedSection = affectedSection;
 
     const canSeeAllRequests =
-      userPermissions.includes("SO Changes First Approval") ||
-      userPermissions.includes("SO Changes Final Approval");
+      userPermissions.includes("SO Changes Director Approval") ||
+      userPermissions.includes("SO Changes President Director Approval");
 
     if (!canSeeAllRequests) {
       filter.requestedBy = req.user.id;
@@ -60,8 +60,8 @@ router.get("/:id", auth, async (req, res) => {
 
     const userPermissions = req.user.role?.permissions || [];
     const canViewAllRequests =
-      userPermissions.includes("SO Changes First Approval") ||
-      userPermissions.includes("SO Changes Final Approval");
+      userPermissions.includes("SO Changes Director Approval") ||
+      userPermissions.includes("SO Changes President Director Approval");
 
     if (
       request.requestedBy._id.toString() !== req.user.id &&
@@ -168,10 +168,10 @@ router.put(
     try {
       const userPermissions = req.user.role?.permissions || [];
       const isFirstApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const isFinalApprover = userPermissions.includes(
-        "SO Changes Final Approval"
+        "SO Changes President Director Approval"
       );
 
       if (!isFirstApprover && !isFinalApprover) {
@@ -365,10 +365,10 @@ router.put(
     try {
       const userPermissions = req.user.role?.permissions || [];
       const isFirstApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const isFinalApprover = userPermissions.includes(
-        "SO Changes Final Approval"
+        "SO Changes President Director Approval"
       );
 
       if (!isFirstApprover && !isFinalApprover) {
@@ -460,10 +460,10 @@ router.put(
     try {
       const userPermissions = req.user.role?.permissions || [];
       const isFirstApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const isFinalApprover = userPermissions.includes(
-        "SO Changes Final Approval"
+        "SO Changes President Director Approval"
       );
 
       if (!isFirstApprover && !isFinalApprover) {

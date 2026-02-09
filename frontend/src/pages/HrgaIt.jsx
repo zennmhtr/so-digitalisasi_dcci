@@ -12,7 +12,7 @@ const HrgaIt = () => {
 
   const defaultData = {
     header: {
-      title: "HRGA & IT DEPARTMENT",
+      title: "HRGA & IT",
       code: "HRD1.0",
       head: "DIKI WAHYUDI*",
       empId: "23060056",
@@ -478,7 +478,7 @@ const HrgaIt = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">{orgData.positions[0]?.title || "HRGA & IT"}</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.header.title || ""}</p>
                     </div>
                   </div>
 

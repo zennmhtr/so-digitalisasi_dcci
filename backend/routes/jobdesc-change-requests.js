@@ -147,7 +147,7 @@ router.get("/", auth, async (req, res) => {
 
     const canSeeAllRequests = userPermissions.includes("Manage Users");
     const hasDirectorApproval = userPermissions.includes(
-      "SO Changes First Approval"
+      "SO Changes Director Approval"
     );
     const hasAnyApprovalPermission = departmentApprovalPermissions.length > 0;
     const hasJobDescRequest = userPermissions.includes("Job Desc Request");
@@ -163,21 +163,21 @@ router.get("/", auth, async (req, res) => {
 
     if (canSeeAllRequests) {
       console.log("👑 Super Admin - sees all requests");
-    } 
+    }
     else if (hasDirectorApproval) {
       console.log("🎯 Director - sees director approval + own requests");
       filter.$or = [
-        { requestedBy: req.user.id }, 
+        { requestedBy: req.user.id },
         { status: { $in: ["pending", "waiting_director_approval"] } },
         { firstApprovedBy: req.user.id },
         { secondApprovedBy: req.user.id },
         { approvedBy: req.user.id },
         { reviewedBy: req.user.id },
       ];
-    } 
+    }
     else if (hasAnyApprovalPermission) {
       console.log("👔 Manager - sees department requests + own requests");
-      
+
       const approvalDepartments = departmentApprovalPermissions
         .map((perm) => {
           const match = perm.match(/SO Bagian (.+) Approval/);
@@ -205,16 +205,16 @@ router.get("/", auth, async (req, res) => {
 
       filter.$or = [
         { requestedBy: req.user.id },
-        { 
+        {
           department: { $in: approvalDepartments },
           status: { $in: ["pending", "waiting_director_approval", "approved", "rejected", "revisi"] }
-        }, 
+        },
         { firstApprovedBy: req.user.id },
         { secondApprovedBy: req.user.id },
         { approvedBy: req.user.id },
         { reviewedBy: req.user.id },
       ];
-    } 
+    }
     else if (hasJobDescRequest) {
       console.log("👤 Employee - sees ONLY own requests");
       filter.requestedBy = req.user.id;
@@ -275,7 +275,7 @@ router.get("/:id", auth, async (req, res) => {
     const userPermissions = req.user.role?.permissions || [];
     const canViewAllRequests = userPermissions.includes("Manage Users");
     const hasDirectorApproval = userPermissions.includes(
-      "SO Changes First Approval"
+      "SO Changes Director Approval"
     );
     const requiredPermission = getDepartmentApprovalPermission(
       request.department
@@ -416,7 +416,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canApproveAll = userPermissions.includes("Manage Users");
       const requesterPermissions = request.requestedBy.role?.permissions || [];
@@ -437,7 +437,7 @@ router.put(
       if (!isManagerApprover && !isDirectorApprover && !canApproveAll) {
         return res.status(403).json({
           success: false,
-          message: `You do not have permission to approve Job Desc changes for ${request.department}. required Permission: ${requiredPermission} or SO Changes First Approval`,
+          message: `You do not have permission to approve Job Desc changes for ${request.department}. required Permission: ${requiredPermission} or SO Changes Director Approval`,
         });
       }
 
@@ -742,7 +742,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canRejectAll = userPermissions.includes("Manage Users");
 
@@ -900,7 +900,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canRevisiAll = userPermissions.includes("Manage Users");
 

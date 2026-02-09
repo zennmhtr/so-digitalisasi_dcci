@@ -640,10 +640,10 @@ const SOChangeRequests = () => {
   const [activeTab, setActiveTab] = useState("preview");
 
   const isFirstApprover = user?.role?.permissions?.includes(
-    "SO Changes First Approval"
+    "SO Changes Director Approval"
   );
   const isFinalApprover = user?.role?.permissions?.includes(
-    "SO Changes Final Approval"
+    "SO Changes President Director Approval"
   );
   const canViewOwn = user?.role?.permissions?.includes(
     "View Own SO Change Requests"
@@ -659,10 +659,10 @@ const SOChangeRequests = () => {
 
   useEffect(() => {
     const isFirstApprover = user?.role?.permissions?.includes(
-      "SO Changes First Approval"
+      "SO Changes Director Approval"
     );
     const isFinalApprover = user?.role?.permissions?.includes(
-      "SO Changes Final Approval"
+      "SO Changes President Director Approval"
     );
 
     console.log("🔍 SO Change Requests - Permission Debug:", {

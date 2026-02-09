@@ -43,7 +43,7 @@ router.get("/", auth, async (req, res) => {
 
     const canSeeAllRequests = userPermissions.includes("Manage Users");
     const hasDirectorApproval = userPermissions.includes(
-      "SO Changes First Approval"
+      "SO Changes Director Approval"
     );
     const hasAnyApprovalPermission = departmentApprovalPermissions.length > 0;
 
@@ -51,7 +51,7 @@ router.get("/", auth, async (req, res) => {
       if (hasDirectorApproval) {
         filter.$or = [
           { requestedBy: req.user.id },
-          { status: { $in: ["pending", "waiting_director_approval"]} },
+          { status: { $in: ["pending", "waiting_director_approval"] } },
           { firstApprovedBy: req.user.id },
           { secondApprovedBy: req.user.id },
           { approvedBy: req.user.id },
@@ -142,7 +142,7 @@ router.get("/:id", auth, async (req, res) => {
     const userPermissions = req.user.role?.permissions || [];
     const canViewAllRequests = userPermissions.includes("Manage Users");
     const hasDirectorApproval = userPermissions.includes(
-      "SO Changes First Approval"
+      "SO Changes Director Approval"
     );
 
     const requiredPermission = getDepartmentApprovalPermission(
@@ -264,7 +264,7 @@ router.put(
   async (req, res) => {
     try {
       const userPermissions = req.user.role?.permissions || [];
-      
+
       const request = await SOBagianChangeRequest.findById(req.params.id)
         .populate({
           path: 'requestedBy',
@@ -288,7 +288,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canApproveAll = userPermissions.includes("Manage Users");
 
@@ -310,7 +310,7 @@ router.put(
       if (!isManagerApprover && !isDirectorApprover && !canApproveAll) {
         return res.status(403).json({
           success: false,
-          message: `You do not have permission to approve SO Bagian changes for ${request.department}. Required Permission: ${requiredPermission} or SO Changes First Approval`,
+          message: `You do not have permission to approve SO Bagian changes for ${request.department}. Required Permission: ${requiredPermission} or SO Changes Director Approval`,
         });
       }
 
@@ -341,7 +341,7 @@ router.put(
 
       if (isRequesterManager) {
         console.log("✅ Manager Request Flow - Requester is Manager");
-        
+
         if (request.status === "pending") {
           if (!isDirectorApprover && !canApproveAll) {
             return res.status(403).json({
@@ -349,9 +349,9 @@ router.put(
               message: "Only Director can approve Manager's request",
             });
           }
-          
+
           console.log("✅ Director approving Manager's request directly");
-          
+
           request.firstApprovedBy = req.user.id;
           request.firstApprovedAt = now;
           request.approvedBy = req.user.id;
@@ -415,7 +415,7 @@ router.put(
             data: populated,
           });
         }
-        
+
         if (request.status === "waiting_director_approval") {
           return res.status(400).json({
             success: false,
@@ -426,7 +426,7 @@ router.put(
 
       if (!isRequesterManager) {
         console.log("✅ Employee Request Flow - Requester is Employee");
-        
+
         if (request.status === "pending") {
           if (!isManagerApprover && !canApproveAll) {
             return res.status(403).json({
@@ -599,7 +599,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canRejectAll = userPermissions.includes("Manage Users");
 
@@ -652,7 +652,7 @@ router.put(
           }
 
           console.log("✅ Manager rejecting employee request at pending stage");
-          
+
           request.firstApprovedBy = req.user.id;
           request.firstApprovedAt = now;
           request.status = "rejected";
@@ -675,11 +675,11 @@ router.put(
           request.status = "rejected";
           request.reviewedBy = req.user.id;
           request.reviewedAt = now;
-          request.reviewComments = 
+          request.reviewComments =
             (request.reviewComments ? request.reviewComments + "\n" : "") +
             "Director rejection: " + req.body.reviewComments;
         }
-      } 
+      }
       else {
         if (request.status === "pending") {
           if (!isDirectorApprover && !canRejectAll) {
@@ -757,7 +757,7 @@ router.put(
       const isManagerApprover =
         requiredPermission && userPermissions.includes(requiredPermission);
       const isDirectorApprover = userPermissions.includes(
-        "SO Changes First Approval"
+        "SO Changes Director Approval"
       );
       const canRevisiAll = userPermissions.includes("Manage Users");
 
