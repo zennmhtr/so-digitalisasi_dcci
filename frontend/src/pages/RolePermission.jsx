@@ -21,6 +21,7 @@ const RolePermission = () => {
       "Manage Users",
       "Manage Roles",
       "Manage Departments",
+      "Matriks Skill Editor"
     ],
     dashboardEditor: [
       "SO DCI Editor",
@@ -37,18 +38,18 @@ const RolePermission = () => {
 
     soBagianChangeRequests: [
       "SO Bagian Request",
-      "SO Bagian Finance Approval",
-      "SO Bagian HRGA & IT Approval",
-      "SO Bagian Management Development Approval",
-      "SO Bagian Management Representative Approval",
-      "SO Bagian Manufacturing Battery Approval",
-      "SO Bagian Manufacturing Cable Approval",
-      "SO Bagian Marketing Battery Approval",
-      "SO Bagian Marketing Engineering Approval",
-      "SO Bagian MI & SHE Approval",
-      "SO Bagian PPIC Approval",
-      "SO Bagian Purchasing Approval",
-      "SO Bagian QA Approval",
+      "Manager Finance Approval",
+      "Manager HRGA & IT Approval",
+      "Manager Management Development Approval",
+      "Manager Management Representative Approval",
+      "Manager Manufacturing Battery Approval",
+      "Manager Manufacturing Cable Approval",
+      "Manager Marketing Battery Approval",
+      "Manager Marketing Engineering Approval",
+      "Manager MI & SHE Approval",
+      "Manager PPIC Approval",
+      "Manager Purchasing Approval",
+      "Manager QA Approval",
     ],
 
     jobdescDepartments: [
@@ -279,8 +280,8 @@ const RolePermission = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${role.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                           }`}
                       >
                         {role.active ? "Active" : "Inactive"}
@@ -489,13 +490,13 @@ const RolePermission = () => {
                       </div>
                     </div>
 
-                    {/* 🧩 SO BAGIAN CHANGE REQUESTS ACCESS */}
+                    {/* 🧩 MANAGER CHANGE REQUESTS ACCESS */}
                     <div>
                       <h4 className="text-sm font-semibold text-gray-800 mb-2 mt-6">
-                        SO Bagian Change Requests Access
+                        Manager Change Requests Access
                       </h4>
                       <p className="text-xs text-gray-600 mb-3">
-                        Access for submitting, viewing, approving or revising SO
+                        Access for submitting, viewing, approving or revising
                         change requests for spesific deprtments.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

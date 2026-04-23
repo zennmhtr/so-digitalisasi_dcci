@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../assets/print-styles.css";
+import JobdescViewer from "../components/JobdescViewer";
 
 const Ppic = () => {
   const navigate = useNavigate();
@@ -9,6 +10,86 @@ const Ppic = () => {
     orientation: "landscape",
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [jobdescData, setJobdescData] = useState(null);
+  const [loadingJobdesc, setLoadingJobdesc] = useState(false);
+  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
+
+  const checkAllEmployeeJobdescStatus = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const statusMap = {};
+        allJobdesc.forEach(jd => {
+          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const jdName = (jd.memberName || '').trim().toUpperCase();
+          if (jdNoPNK) statusMap[jdNoPNK] = true;
+          if (jdName) statusMap[jdName] = true;
+        });
+        setEmployeeJobdescStatus(statusMap);
+      }
+    } catch (error) {
+      console.error('Error fetching employee jobdesc status:', error);
+    }
+  };
+
+  useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
+
+  const onCodeClick = async (item) => {
+    setSelectedJob(item);
+    setShowJobModal(true);
+    setLoadingJobdesc(true);
+    setJobdescData(null);
+    try {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const foundJobdesc = allJobdesc.find((jd) => {
+          const jdName = (jd.memberName || '').trim().toUpperCase();
+          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const itemName = (item.name || '').trim().toUpperCase();
+          const itemEmpId = (item.empId || '').trim();
+          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
+          if (jdName && itemName && jdName === itemName) return true;
+          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
+          return false;
+        });
+        if (foundJobdesc) setJobdescData(foundJobdesc);
+      }
+    } catch (error) {
+      console.error('Error fetching job description:', error);
+    } finally {
+      setLoadingJobdesc(false);
+    }
+  };
+
+  const renderCodeButton = (person) => {
+    if (!person || !person.empId) {
+      return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
+    }
+    const empId = (person.empId || '').trim();
+    const personName = (person.name || '').trim().toUpperCase();
+    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+    const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+    return (
+      <button
+        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
+        onClick={(e) => { e.stopPropagation(); onCodeClick(person); }}
+        title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
+      >
+        {person.code}
+      </button>
+    );
+  };
+
 
   const defaultData = {
     header: {
@@ -571,7 +652,7 @@ const Ppic = () => {
             <div className="space-y-3 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.header.code}</p>
+                  {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId })}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -593,7 +674,7 @@ const Ppic = () => {
             <div className="space-y-3 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[0].code}</p>
+                  {renderCodeButton(orgData.positions[0])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -608,7 +689,7 @@ const Ppic = () => {
               <div className="min-h-[200px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[1].code}</p>
+                  {renderCodeButton(orgData.positions[1])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -623,7 +704,7 @@ const Ppic = () => {
               <div className="min-h-[40px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[2].code}</p>
+                  {renderCodeButton(orgData.positions[2])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -641,7 +722,7 @@ const Ppic = () => {
               <div className="min-h-[475px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[3].code}</p>
+                  {renderCodeButton(orgData.positions[3])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -658,7 +739,7 @@ const Ppic = () => {
             <div className="space-y-3 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[4].code}</p>
+                  {renderCodeButton(orgData.positions[4])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -672,7 +753,7 @@ const Ppic = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[5].code}</p>
+                  {renderCodeButton(orgData.positions[5])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -688,7 +769,7 @@ const Ppic = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[6].code}</p>
+                      {renderCodeButton(orgData.positions[6])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <div className="bg-gray-100 p-1 mb-1">
@@ -703,7 +784,7 @@ const Ppic = () => {
                   </div>
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[7].code}</p>
+                      {renderCodeButton(orgData.positions[7])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
@@ -718,7 +799,7 @@ const Ppic = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[8].code}</p>
+                      {renderCodeButton(orgData.positions[8])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <div className="bg-gray-100 p-1 mb-1">
@@ -733,7 +814,7 @@ const Ppic = () => {
                   </div>
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[9].code}</p>
+                      {renderCodeButton(orgData.positions[9])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
@@ -748,7 +829,7 @@ const Ppic = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[10].code}</p>
+                  {renderCodeButton(orgData.positions[10])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -762,7 +843,7 @@ const Ppic = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[11].code}</p>
+                  {renderCodeButton(orgData.positions[11])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -778,7 +859,7 @@ const Ppic = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[12].code}</p>
+                      {renderCodeButton(orgData.positions[12])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <div className="bg-gray-100 p-1 mb-1">
@@ -793,7 +874,7 @@ const Ppic = () => {
                   </div>
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                      <p className="text-xs font-bold">{orgData.positions[13].code}</p>
+                      {renderCodeButton(orgData.positions[13])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
@@ -806,7 +887,7 @@ const Ppic = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold">{orgData.positions[14].code}</p>
+                  {renderCodeButton(orgData.positions[14])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight">
@@ -854,6 +935,45 @@ const Ppic = () => {
           </div>
         </div>
       </div>
+
+      {showJobModal && selectedJob && (
+        <>
+          {loadingJobdesc ? (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading job description...</span>
+                </div>
+              </div>
+            </div>
+          ) : jobdescData ? (
+            <JobdescViewer
+              user={{
+                name: selectedJob.name,
+                noPNK: selectedJob.empId,
+                department: { name: jobdescData.division || 'N/A' },
+              }}
+              jobdesc={jobdescData}
+              viewOnly={true}
+              onClose={() => { setShowJobModal(false); setJobdescData(null); setSelectedJob(null); }}
+            />
+          ) : (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <p className="font-semibold mb-2">Jobdesk Tidak Ditemukan</p>
+                <p className="text-sm text-gray-600">Tidak ada data jobdesk untuk {selectedJob?.name}</p>
+                <button
+                  onClick={() => { setShowJobModal(false); setSelectedJob(null); }}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

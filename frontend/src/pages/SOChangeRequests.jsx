@@ -6,6 +6,8 @@ import {
   Eye,
   MessageSquare,
   AlertCircle,
+  FileText,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { soChangeRequestsAPI } from "../services/api";
@@ -877,6 +879,13 @@ const SOChangeRequests = () => {
 
         console.log("✅ Changes applied to dashboard localStorage");
 
+        // Dispatch custom event so Dashboard (if open in same tab) picks up changes immediately
+        window.dispatchEvent(
+          new CustomEvent("dashboard-data-updated", {
+            detail: proposedData.organizationData,
+          })
+        );
+
         alert(
           "✅ Request approved successfully! Dashboard will reload to show changes."
         );
@@ -952,32 +961,32 @@ const SOChangeRequests = () => {
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: {
-        color: "bg-yellow-100 text-yellow-800",
+        color: "bg-yellow-100 text-yellow-800 border-yellow-300",
         icon: Clock,
         text: "Pending",
       },
       approved: {
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-green-800 border-green-300",
         icon: CheckCircle,
         text: "Approved",
       },
       rejected: {
-        color: "bg-red-100 text-red-800",
+        color: "bg-red-100 text-red-800 border-red-300",
         icon: XCircle,
         text: "Rejected",
       },
       cancelled: {
-        color: "bg-gray-100 text-gray-800",
+        color: "bg-gray-100 text-gray-600 border-gray-300",
         icon: AlertCircle,
         text: "Cancelled",
       },
       waiting_second_approval: {
-        color: "bg-blue-100 text-blue-800",
+        color: "bg-blue-100 text-blue-800 border-blue-300",
         icon: Clock,
         text: "Waiting Second Approval",
       },
       revisi: {
-        color: "bg-orange-100 text-orange-800",
+        color: "bg-orange-100 text-orange-800 border-orange-300",
         icon: MessageSquare,
         text: "Revisi",
       },
@@ -988,9 +997,9 @@ const SOChangeRequests = () => {
 
     return (
       <span
-        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${config.color}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${config.color}`}
       >
-        <Icon className="w-3 h-3" />
+        <Icon className="w-3.5 h-3.5" />
         {config.text}
       </span>
     );
@@ -998,16 +1007,15 @@ const SOChangeRequests = () => {
 
   const getPriorityBadge = (priority) => {
     const colors = {
-      low: "bg-gray-100 text-gray-700",
-      medium: "bg-blue-100 text-blue-700",
-      high: "bg-orange-100 text-orange-700",
-      urgent: "bg-red-100 text-red-700",
+      low: "bg-gray-100 text-gray-700 border-gray-300",
+      medium: "bg-blue-100 text-blue-700 border-blue-300",
+      high: "bg-orange-100 text-orange-700 border-orange-300",
+      urgent: "bg-red-100 text-red-700 border-red-300",
     };
 
     return (
       <span
-        className={`px-2 py-1 rounded text-xs font-medium ${colors[priority] || colors.medium
-          }`}
+        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${colors[priority] || colors.medium}`}
       >
         {priority?.toUpperCase() || "MEDIUM"}
       </span>
@@ -1028,211 +1036,205 @@ const SOChangeRequests = () => {
 
   if (!canApprove && !canViewOwn) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Access Denied
-          </h3>
-          <p className="text-gray-600">
-            You do not have permission to view SO Change Requests.
-          </p>
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Akses Ditolak</h2>
+          <p className="text-gray-500">Anda tidak memiliki permission untuk mengakses halaman ini.</p>
         </div>
       </div>
     );
   }
 
+  const allTabs = [
+    { id: "all", label: "All Requests" },
+    { id: "pending", label: "Pending" },
+    { id: "waiting_second_approval", label: "Waiting Approval" },
+    { id: "approved", label: "Approved" },
+    { id: "rejected", label: "Rejected" },
+    { id: "cancelled", label: "Cancelled" },
+    { id: "revisi", label: "Revisi" },
+  ];
+
+  const tabCounts = allTabs.map((tab) => ({
+    ...tab,
+    count: tab.id === "all" ? requests.length : requests.filter((r) => r.status === tab.id).length,
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            SO Change Requests
-          </h1>
-          <p className="text-gray-600 mt-1">
+    <div className="p-6 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">SO Change Requests</h1>
+          <p className="text-gray-500 text-sm mt-1">
             Review and approve organization structure change requests
           </p>
         </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              {[
-                { id: "all", label: "All Requests" },
-                { id: "pending", label: "Pending" },
-                { id: "approved", label: "Approved" },
-                { id: "rejected", label: "Rejected" },
-                { id: "cancelled", label: "Cancel" },
-                { id: "revisi", label: "Revisi" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedTab(tab.id)}
-                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${selectedTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-gray-400" />
+          <span className="text-sm text-gray-500">{requests.length} requests</span>
         </div>
+      </div>
 
-        {/* Requests List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4">Loading requests...</p>
-            </div>
-          ) : filteredRequests.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">No requests found</p>
-            </div>
-          ) : (
-            filteredRequests.map((request) => (
-              <div
-                key={request._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {request.title}
-                      </h3>
-                      {getStatusBadge(request.status)}
-                      {getPriorityBadge(request.priority)}
-                    </div>
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-1">
+          {tabCounts.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedTab(tab.id)}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex items-center gap-2 ${selectedTab === tab.id
+                ? "bg-white border border-b-white border-gray-200 -mb-px text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              {tab.label}
+              {tab.count > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedTab === tab.id ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                  }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-                    <p className="text-gray-600 text-sm mb-3">
-                      {request.description}
-                    </p>
-
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <span>
-                        <strong>Requested by:</strong>{" "}
-                        {request.requestedBy?.name}
-                      </span>
-                      <span>
-                        <strong>Date:</strong> {formatDate(request.createdAt)}
-                      </span>
-                      <span>
-                        <strong>Section:</strong> {request.affectedSection}
-                      </span>
-                    </div>
-
-                    {(request.firstApprovedBy || request.secondApprovedBy) && (
-                      <div className="mt-2 text-sm text-gray-500">
-                        <strong>Approval Stage:</strong>{" "}
-                        {request.firstApprovedBy && (
-                          <span>
-                            ✅ First Approver: {request.firstApprovedBy?.name}{" "}
-                            {request.firstApprovedAt
-                              ? `(${formatDate(request.firstApprovedAt)})`
-                              : ""}
-                          </span>
-                        )}
-                        {request.secondApprovedBy ? (
-                          <span>
-                            {" | ✅ Second Approver: "}
-                            {request.secondApprovedBy?.name}{" "}
-                            {request.secondApprovedAt
-                              ? `(${formatDate(request.secondApprovedAt)})`
-                              : ""}
-                          </span>
-                        ) : request.status === "waiting_second_approval" ? (
-                          <span className="text-blue-600">
-                            {" "}
-                            | 🕒 Waiting for Second Approval
-                          </span>
-                        ) : null}
-                      </div>
-                    )}
-
-                    {request.reviewedBy && (
-                      <div className="mt-2 text-sm text-gray-500">
-                        <strong>Reviewed by:</strong> {request.reviewedBy.name}{" "}
-                        on {formatDate(request.reviewedAt)}
-                      </div>
-                    )}
+      {/* Request List */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+            <p className="text-gray-500">Loading requests...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700">No change requests found</h3>
+            <p className="text-gray-400 mt-1 text-sm">
+              {selectedTab !== "all" ? `No requests with status "${selectedTab}".` : "No requests submitted yet."}
+            </p>
+          </div>
+        ) : (
+          filteredRequests.map((request) => (
+            <div
+              key={request._id}
+              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
+                    {getStatusBadge(request.status)}
+                    {getPriorityBadge(request.priority)}
+                    <span className="text-xs text-gray-400">#{request._id?.slice(-6)}</span>
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    {canApprove &&
-                      request.status === "pending" &&
-                      isFirstApprover && (
-                        <button
-                          onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
-                        >
-                          Review & Approve
-                        </button>
-                      )}
 
-                    {canApprove &&
-                      request.status === "waiting_second_approval" &&
-                      isFinalApprover && (
-                        <button
-                          onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-400 text-white-600 rounded hover:bg-green-100 transition-colors"
-                        >
-                          Review & Final Approve
-                        </button>
-                      )}
+                  <h3 className="text-base font-bold text-gray-900 truncate">{request.title}</h3>
+                  <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
 
-                    {request.status === "approved" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        View Approved
-                      </button>
-                    )}
-
-                    {request.status === "revisi" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        View Revisi
-                      </button>
-                    )}
-
-                    {request.status === "rejected" && (
-                      <button
-                        onClick={() => viewDetail(request)}
-                        className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        View Rejected
-                      </button>
-                    )}
-
-                    {canViewOwn &&
-                      !canApprove &&
-                      request.status === "pending" &&
-                      request.requestedBy?._id === user?.id && (
-                        <button
-                          onClick={() => handleCancel(request._id)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Cancel Request
-                        </button>
-                      )}
+                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
+                    <span>👤 <strong>{request.requestedBy?.name}</strong></span>
+                    <span>📋 {request.affectedSection}</span>
+                    <span>🕐 {formatDate(request.createdAt)}</span>
                   </div>
+
+                  {(request.firstApprovedBy || request.secondApprovedBy) && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      {request.firstApprovedBy && (
+                        <span className="inline-flex items-center gap-1 mr-3">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                          Director: {request.firstApprovedBy?.name}
+
+                        </span>
+                      )}
+                      {request.secondApprovedBy ? (
+                        <span className="inline-flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                          Presiden Director: {request.secondApprovedBy?.name}
+                        </span>
+                      ) : request.status === "waiting_second_approval" ? (
+                        <span className="text-blue-500">🕒 Waiting for Second Approval</span>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {request.reviewedBy && (
+                    <div className="mt-1 text-xs text-gray-400">
+                      Reviewed by {request.reviewedBy.name} · {formatDate(request.reviewedAt)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  {canApprove &&
+                    request.status === "pending" &&
+                    isFirstApprover && (
+                      <button
+                        onClick={() => viewDetail(request)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Review & Approve
+                      </button>
+                    )}
+
+                  {canApprove &&
+                    request.status === "waiting_second_approval" &&
+                    isFinalApprover && (
+                      <button
+                        onClick={() => viewDetail(request)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Review & Final Approve
+                      </button>
+                    )}
+
+                  {request.status === "approved" && (
+                    <button
+                      onClick={() => viewDetail(request)}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      View Approved
+                    </button>
+                  )}
+
+                  {request.status === "revisi" && (
+                    <button
+                      onClick={() => viewDetail(request)}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      View Revisi
+                    </button>
+                  )}
+
+                  {request.status === "rejected" && (
+                    <button
+                      onClick={() => viewDetail(request)}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      View Rejected
+                    </button>
+                  )}
+
+                  {canViewOwn &&
+                    !canApprove &&
+                    request.status === "pending" &&
+                    request.requestedBy?._id === user?.id && (
+                      <button
+                        onClick={() => handleCancel(request._id)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Cancel Request
+                      </button>
+                    )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Detail Modal */}
@@ -1347,7 +1349,7 @@ const SOChangeRequests = () => {
                             <div className="flex items-center gap-2 text-sm">
                               <CheckCircle className="w-5 h-5 text-green-500" />
                               <span>
-                                <strong>First Approval:</strong>{" "}
+                                <strong>Director:</strong>{" "}
                                 {selectedRequest.firstApprovedBy.name}
                               </span>
                               {selectedRequest.firstApprovedAt && (
@@ -1361,7 +1363,7 @@ const SOChangeRequests = () => {
                             <div className="flex items-center gap-2 text-sm">
                               <CheckCircle className="w-5 h-5 text-green-500" />
                               <span>
-                                <strong>Second Approval:</strong>{" "}
+                                <strong>Presiden Director:</strong>{" "}
                                 {selectedRequest.secondApprovedBy.name}
                               </span>
                               {selectedRequest.secondApprovedAt && (
@@ -1375,7 +1377,7 @@ const SOChangeRequests = () => {
                             <div className="flex items-center gap-2 text-sm text-blue-600">
                               <Clock className="w-5 h-5" />
                               <span>
-                                <strong>Second Approval:</strong> Pending
+                                <strong>Presiden Director:</strong> Pending
                               </span>
                             </div>
                           ) : null}

@@ -26,7 +26,7 @@ const OrganizationNode = ({ data, id }) => {
 
   const handleBoxClick = (e) => {
     if (data.isEditMode) return;
-    
+
     if (data.clickable && data.route) {
       navigate(data.route);
     }
@@ -114,7 +114,7 @@ const OrganizationNode = ({ data, id }) => {
             {renderEditableField('code', data.code, 'CODE')}
           </p>
         </div>
-        
+
         {/* Content Column */}
         <div className="p-2 flex-1 text-center flex flex-col justify-center relative">
           {/* Delete button for custom nodes */}
@@ -129,11 +129,11 @@ const OrganizationNode = ({ data, id }) => {
               ×
             </button>
           )}
-          
+
           <p className="text-xs font-semibold mb-1 leading-tight">
             {renderEditableField('title', data.title, 'Title')}
           </p>
-          
+
           {(data.name || data.isEditMode) && (
             <>
               <hr className="my-1 border-gray-300" />
@@ -147,7 +147,7 @@ const OrganizationNode = ({ data, id }) => {
               )}
             </>
           )}
-          
+
           {/* Status indicators */}
           {data.clickable && !data.isEditMode && (
             <p className="text-xs text-blue-600 mt-1 font-semibold">Click to view details →</p>
@@ -164,14 +164,14 @@ const OrganizationNode = ({ data, id }) => {
   );
 };
 
-const TraditionalDashboardView = ({ 
-  organizationData, 
-  isEditMode, 
-  onNodeEdit, 
+const TraditionalDashboardView = ({
+  organizationData,
+  isEditMode,
+  onNodeEdit,
   onSave,
   customNodes = [],
   onCustomNodeAdd,
-  onCustomNodeDelete 
+  onCustomNodeDelete
 }) => {
   const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -231,18 +231,18 @@ const TraditionalDashboardView = ({
 
     const getBoxStyle = () => {
       let baseClasses = `bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className}`;
-      
+
       if (isEditMode) {
         baseClasses += ' ring-2 ring-blue-200';
       } else if (item.clickable) {
         baseClasses += ' cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200';
       }
-      
+
       return baseClasses;
     };
 
     return (
-      <div 
+      <div
         className={getBoxStyle()}
         style={style}
         onClick={handleBoxClick}
@@ -294,9 +294,9 @@ const TraditionalDashboardView = ({
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center">
           <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
-            <img 
-              src="/logo/Logo DG New 2022.png" 
-              alt="Dharma Group Logo" 
+            <img
+              src="/logo/Logo DG New 2022.png"
+              alt="Dharma Group Logo"
               className="w-full h-full object-contain"
             />
           </div>
@@ -341,7 +341,7 @@ const TraditionalDashboardView = ({
         <div className="bg-blue-300 p-4 rounded text-center max-w-md mx-auto mb-6">
           <h3 className="font-bold text-sm text-white">BOARD OF COMMISSIONERS</h3>
         </div>
-        
+
         <div className="flex justify-center gap-6 mb-6">
           <div className="bg-white border border-gray-400 rounded shadow-sm w-48 text-center min-h-[100px]">
             <div className="p-2 bg-gray-100 border-b border-gray-300">
@@ -391,7 +391,7 @@ const TraditionalDashboardView = ({
       {/* Main Content Grid - 5 Columns */}
       <div className="mb-6">
         <div className="grid grid-cols-5 gap-4">
-          
+
           {/* Column 1 - Board of Directors */}
           <div className="space-y-3">
             {organizationData?.structure?.bod?.map((item) => (
@@ -406,14 +406,13 @@ const TraditionalDashboardView = ({
               if (item.code === 'MDO1.0') {
                 const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
                 return (
-                  <div key="mdo-combined" className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${
-                    isEditMode ? 'ring-2 ring-blue-200' : ''
-                  } ${mdo2?.clickable && !isEditMode ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''}`}
-                  onClick={() => {
-                    if (mdo2?.clickable && mdo2?.route && !isEditMode) {
-                      navigate(mdo2.route);
-                    }
-                  }}>
+                  <div key="mdo-combined" className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] ${isEditMode ? 'ring-2 ring-blue-200' : ''
+                    } ${mdo2?.clickable && !isEditMode ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''}`}
+                    onClick={() => {
+                      if (mdo2?.clickable && mdo2?.route && !isEditMode) {
+                        navigate(mdo2.route);
+                      }
+                    }}>
                     <div className="flex flex-col h-full">
                       <div className="flex border-b border-gray-300">
                         <div className="p-2 flex-1 text-center bg-gray-100">
@@ -459,7 +458,7 @@ const TraditionalDashboardView = ({
             <div className="min-h-[200px]"></div>
             <div className="min-h-[120px]"></div>
             <div className="min-h-[130px]"></div>
-            
+
             {organizationData?.structure?.divisions?.map((div, index) => (
               <React.Fragment key={div.id}>
                 {index > 0 && <div className={index === 1 ? "min-h-[100px]" : "min-h-[570px]"}></div>}
@@ -475,7 +474,7 @@ const TraditionalDashboardView = ({
             <div className="min-h-[110px]"></div>
             <div className="min-h-[150px]"></div>
             <div className="min-h-[190px]"></div>
-            
+
             {organizationData?.structure?.departments?.map((item, index) => (
               <React.Fragment key={item.id}>
                 {index === 1 && <div className="min-h-[10px]"></div>}
@@ -526,30 +525,30 @@ const TraditionalDashboardView = ({
   );
 };
 
-const FlowChartView = ({ 
-  organizationData, 
-  isEditMode, 
-  onNodeEdit, 
+const FlowChartView = ({
+  organizationData,
+  isEditMode,
+  onNodeEdit,
   onSave,
   customNodes = [],
   onCustomNodeAdd,
-  onCustomNodeDelete 
+  onCustomNodeDelete
 }) => {
   const initialNodes = useMemo(() => {
     const nodes = [];
     let yOffset = 100;
     const columnWidth = 250;
-    
+
     // Board of Directors - Column 1
     organizationData?.structure?.bod?.forEach((item, index) => {
       nodes.push({
         id: item.id,
         type: 'organizationNode',
         position: { x: 50, y: yOffset + (index * 120) },
-        data: { 
-          ...item, 
-          isEditMode, 
-          onEdit: onNodeEdit 
+        data: {
+          ...item,
+          isEditMode,
+          onEdit: onNodeEdit
         }
       });
     });
@@ -562,10 +561,10 @@ const FlowChartView = ({
           id: item.id,
           type: 'organizationNode',
           position: { x: columnWidth + 50, y: mgmtYOffset + (index * 140) },
-          data: { 
-            ...item, 
-            isEditMode, 
-            onEdit: onNodeEdit 
+          data: {
+            ...item,
+            isEditMode,
+            onEdit: onNodeEdit
           }
         });
       }
@@ -578,10 +577,10 @@ const FlowChartView = ({
         id: item.id,
         type: 'organizationNode',
         position: { x: (columnWidth * 3) + 50, y: deptYOffset + (index * 120) },
-        data: { 
-          ...item, 
-          isEditMode, 
-          onEdit: onNodeEdit 
+        data: {
+          ...item,
+          isEditMode,
+          onEdit: onNodeEdit
         }
       });
     });
@@ -593,10 +592,10 @@ const FlowChartView = ({
         id: item.id,
         type: 'organizationNode',
         position: { x: (columnWidth * 4) + 50, y: sectYOffset + (index * 100) },
-        data: { 
-          ...item, 
-          isEditMode, 
-          onEdit: onNodeEdit 
+        data: {
+          ...item,
+          isEditMode,
+          onEdit: onNodeEdit
         }
       });
     });
@@ -607,12 +606,12 @@ const FlowChartView = ({
         id: node.id,
         type: 'organizationNode',
         position: node.position,
-        data: { 
-          ...node, 
-          isEditMode, 
+        data: {
+          ...node,
+          isEditMode,
           isCustom: true,
           onEdit: onNodeEdit,
-          onDelete: onCustomNodeDelete 
+          onDelete: onCustomNodeDelete
         }
       });
     });
@@ -732,7 +731,7 @@ const FlowChartView = ({
         style: edge.style
       }))
     };
-    
+
     onSave?.(layoutData);
   };
 
@@ -766,13 +765,13 @@ const FlowChartView = ({
         }}
       >
         <Controls />
-        <MiniMap 
-          className="!bg-gray-100" 
+        <MiniMap
+          className="!bg-gray-100"
           nodeColor={(node) => node.data.isCustom ? '#a855f7' : '#3B82F6'}
         />
         <Background variant="dots" gap={20} size={1} />
       </ReactFlow>
-      
+
       {/* Toolbar */}
       {isEditMode && (
         <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10">
@@ -794,10 +793,10 @@ const FlowChartView = ({
   );
 };
 
-const OrganizationChart = ({ 
-  organizationData, 
-  isEditMode = false, 
-  onNodeEdit, 
+const OrganizationChart = ({
+  organizationData,
+  isEditMode = false,
+  onNodeEdit,
   onSave,
   customNodes = [],
   onCustomNodeAdd,
@@ -814,29 +813,27 @@ const OrganizationChart = ({
           <span className="text-sm font-medium text-gray-700">View Mode:</span>
           <button
             onClick={() => setCurrentViewMode('traditional')}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-              currentViewMode === 'traditional'
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${currentViewMode === 'traditional'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             📋 Traditional Layout
           </button>
           <button
             onClick={() => setCurrentViewMode('flowchart')}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-              currentViewMode === 'flowchart'
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${currentViewMode === 'flowchart'
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             🚀 Flow Chart
           </button>
         </div>
-        
+
         <div className="text-sm text-gray-600">
-          {currentViewMode === 'traditional' 
-            ? 'Showing exact dashboard layout - perfect for final presentation' 
+          {currentViewMode === 'traditional'
+            ? 'Showing exact dashboard layout - perfect for final presentation'
             : 'Interactive flow chart - drag, connect, and customize freely'}
         </div>
       </div>

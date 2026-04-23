@@ -25,7 +25,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const response = await authAPI.login({
         noPNK: formData.noPNK,
@@ -36,9 +36,9 @@ const Login = () => {
 
       if (data.success) {
         localStorage.setItem('token', data.token);
-        
+
         login(data.user);
-        
+
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
       } else {
@@ -57,9 +57,9 @@ const Login = () => {
       {/* Left Side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center p-12">
         <div className="max-w-md">
-          <img 
+          <img
             src="/so.png"
-            alt="Login Illustration" 
+            alt="Login Illustration"
             className="w-full h-auto"
           />
         </div>
@@ -71,14 +71,14 @@ const Login = () => {
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Login</h2>
             <p className="text-gray-600">
-              
+
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="noPNK" className="block text-sm font-medium text-gray-700 mb-2">
-                NO PNK
+                NO NPK
               </label>
               <input
                 id="noPNK"
@@ -87,7 +87,7 @@ const Login = () => {
                 required
                 value={formData.noPNK}
                 onChange={handleChange}
-                placeholder="Masukkan no PNK"
+                placeholder="Masukkan no NPK"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
               />
             </div>

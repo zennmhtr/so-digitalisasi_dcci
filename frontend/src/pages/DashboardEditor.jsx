@@ -160,19 +160,9 @@ const DashboardEditor = () => {
             id: "mdo-1",
             code: "MDO1.0",
             title: "MANAGEMENT DEVELOPMENT/PDCA",
-            name: "KARINA SATIA SALIM*",
-            empId: "23230114",
-            type: "combined",
-            part: 1,
-          },
-          {
-            id: "mdo-2",
-            code: "MDO2.0",
-            title: "MANAGEMENT DEVELOPMENT/PDCA",
             name: "WAHYU KARTIKO ADI",
             empId: "23240005",
             type: "combined",
-            part: 2,
             clickable: true,
             route: "/management-development",
           },
@@ -193,31 +183,42 @@ const DashboardEditor = () => {
             empId: "23030015",
           },
           {
-            id: "co2-1",
-            code: "CO2.0",
+            id: "cro-2",
+            code: "CRO2.0",
             title: "CUSTOMER REPRESENTATIVE 4 WHEEL",
             name: "DWI PURWANTO*",
             empId: "23030023",
           },
         ],
-        divisions: [
+        // Business Labels - Column 3
+        business: [
           {
-            id: "div-1",
-            label: "CONTROLCABLE BUSINESS",
+            id: "bus-1",
+            label: "CONTROLCABLE OPERATION",
             type: "business-label",
           },
-          { id: "div-2", label: "BATTERY BUSINESS", type: "business-label" },
           {
-            id: "div-3",
-            label: "AFTERMARKET BUSINESS",
-            type: "business-label",
+            id: "bus-2",
+            label: "DC BATTERY BUSINESS",
+            type: "business-label"
           },
         ],
+        // Division Labels - Column 4
+        divisions: [
+          {
+            id: "mkt2-0",
+            code: "MKT2.0",
+            title: "MARKETING",
+            name: "DADANG AHMAD JUNAEDI",
+            empId: "11230640",
+          }
+        ],
+        // Department Head - Column 5
         departments: [
           {
             id: "qa-1",
             code: "QAC1.0",
-            title: "QA",
+            title: "QUALITY ASSURANCE",
             name: "M BAGUS SANTOSO",
             empId: "23220025",
             clickable: true,
@@ -233,9 +234,9 @@ const DashboardEditor = () => {
             route: "/ppic",
           },
           {
-            id: "mkt-1",
+            id: "mkt-eng",
             code: "MKT1.0",
-            title: "MI & SHE (5R-SMK3-ISO 14001)",
+            title: "ENGINEERING",
             name: "ANDREAS AGUNG S.",
             empId: "23040119",
             clickable: true,
@@ -245,123 +246,16 @@ const DashboardEditor = () => {
             id: "mkt-2",
             code: "MKT2.0",
             title: "MARKETING",
-            name: "RENDRA PRAMONO",
-            empId: "23200067",
+            name: "TBD",
+          },
+          {
+            id: "mkt-eng",
+            code: "MKT2.0",
+            title: "MARKETING ADV.",
+            name: "ANDREAS AGUNG S.",
+            empId: "23040119",
             clickable: true,
-            route: "/marketing-battery-engineering",
-          },
-          {
-            id: "rnd-1",
-            code: "RND1.0",
-            title: "RND",
-            name: "RENDRA PRAMONO",
-            empId: "23200067",
-          },
-          {
-            id: "qac-1",
-            code: "QAC2.0",
-            title: "QA/QC/DOC",
-            name: "RENDRA PRAMONO",
-            empId: "23200067",
-          },
-          {
-            id: "mkt-3",
-            code: "MKT3.0",
-            title: "MARKETING",
-            name: "TBR",
-            empId: "",
-          },
-        ],
-        sections: [
-          {
-            id: "prd-1",
-            code: "PRD1.0",
-            title: "CONTROLCABLE MANUFACTURE",
-            name: "KARNA SATIA SALIM*",
-            empId: "23230114",
-            clickable: true,
-            route: "/manufacturing-cable",
-          },
-          {
-            id: "prd-2",
-            code: "PRD2.0",
-            title: "BATTERY PRODUCTION",
-            name: "DIONISIUS AUGUSTO**",
-            empId: "23220105",
-            clickable: true,
-            route: "/manufactur-battery",
-          },
-          {
-            id: "prd-3",
-            code: "PRD3.0",
-            title: "BATTERY PME",
-            name: "DIONISIUS AUGUSTO",
-            empId: "23220105",
-            clickable: true,
-            route: "/manufactur-battery",
-          },
-          {
-            id: "mkt-1-1",
-            code: "MKT1.1",
-            title: "MARKETING",
-            name: "SAVITRI OCTAVIANI",
-            empId: "23130254",
-          },
-          {
-            id: "eng-1",
-            code: "ENG1.0",
-            title: "ENGINEERING",
-            name: "SUGIYARTO",
-            empId: "2360041",
-          },
-          {
-            id: "mkt-2-1",
-            code: "MKT2.1",
-            title: "AUX & POWER BATTERY MARKETING",
-            name: "CHRYSNA YULIAWAN**",
-            empId: "23240177",
-          },
-          {
-            id: "mkt-2-2",
-            code: "MKT2.2",
-            title: "ESS MARKETING",
-            name: "FERDINAND STEVANUS A**",
-            empId: "23220049",
-          },
-          {
-            id: "rnd-1",
-            code: "RND1.0",
-            title: "AUX & POWER BATTERY ENGINEERING PRODUCT LEADER",
-            name: "BRIAN BUDI SANTOSO**",
-            empId: "23210077",
-          },
-          {
-            id: "rnd-2",
-            code: "RND2.0",
-            title: "ESS ENGINEERING PRODUCT LEADER",
-            name: "RAIHAN RAMADHAN**",
-            empId: "23220104",
-          },
-          {
-            id: "rnd-3",
-            code: "RND3.0",
-            title: "MICRO CONTROLLER ENGINEERING PRODUCT LEADER",
-            name: "ELISABETH GUSTI**",
-            empId: "23230087",
-          },
-          {
-            id: "qac-2-1",
-            code: "QAC2.1",
-            title: "BATTERY QA",
-            name: "BELLA TIURMA PRATIWI**",
-            empId: "23230092",
-          },
-          {
-            id: "mkt-3-1",
-            code: "MKT3.1",
-            title: "MARKETING",
-            name: "TBR",
-            empId: "",
+            route: "/marketing-battery-department",
           },
           {
             id: "hrd-1",
@@ -373,6 +267,13 @@ const DashboardEditor = () => {
             route: "/hrga-it-department",
           },
           {
+            id: "rnd-1",
+            code: "RND1.0",
+            title: "RND & BESS",
+            name: "RENDRA PRAMONO",
+            empId: "23200067",
+          },
+          {
             id: "pch-1",
             code: "PCH1.0",
             title: "PURCHASING",
@@ -380,6 +281,90 @@ const DashboardEditor = () => {
             empId: "23060056",
             clickable: true,
             route: "/purchasing",
+          },
+        ],
+        // Section Head / Engineering Product Leader - Column 6
+        sections: [
+          {
+            id: "prd-1",
+            code: "PRD1.0",
+            title: "MANUFACTURE CONTROLCABLE",
+            name: "KARNA SATIA SALIM*",
+            empId: "23230114",
+            clickable: true,
+            route: "/manufacturing-cable",
+          },
+          {
+            id: "eng1-1",
+            code: "ENG1.1",
+            title: "ENGINEERING",
+            name: "SUGIYARTO",
+            empId: "23060041"
+          },
+          {
+            id: "mkt1-1",
+            code: "MKT1.1",
+            title: "MARKETING",
+            name: "SAVITRI OCTAVIANI",
+            empId: "23130254"
+          },
+          {
+            id: "hrd1-1",
+            code: "HRD1.1",
+            title: "HRDGA & IT",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "mkt2-1",
+            code: "MKT2.1",
+            title: "MARKETING DC BATTERY",
+            name: "CHRYSNA YULIAWAN**",
+            empId: "23240177"
+          },
+          {
+            id: "prd-2",
+            code: "PRD2.0",
+            title: "PRODUCTION & PME BATTERY",
+            name: "DIONISIUS AUGUSTO**",
+            empId: "23220105",
+            clickable: true,
+            route: "/manufactur-battery",
+          },
+          {
+            id: "qac2-0",
+            code: "QAC2.0",
+            title: "QA BATTERY",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "rnd1-1",
+            code: "RND1.1",
+            title: "AUX & POWER BATTERY ENGINEERING",
+            name: "BRIAN BUDI SANTOSO**",
+            empId: "23210077",
+          },
+          {
+            id: "rnd1-2",
+            code: "RND1.2",
+            title: "ESS ENGINEERING",
+            name: "RAIHAN RAMADHAN**",
+            empId: "23220104",
+          },
+          {
+            id: "rnd1-3",
+            code: "RND1.3",
+            title: "MICRO CONTROLLER ENGINEERING",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "mkt3.0",
+            code: "MKT3.0",
+            title: "MARKETING BESS",
+            name: "TBD",
+            empId: "-"
           },
           {
             id: "fin-1",
@@ -918,8 +903,8 @@ const DashboardEditor = () => {
                   }
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${isEditMode
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
               >
                 {isEditMode ? "✏️ Edit Mode" : "👁️ View Mode"}
@@ -1291,7 +1276,7 @@ const DashboardEditor = () => {
 
         {/* Column Headers */}
         <div className="mb-6">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-6 gap-4">
             <div className="bg-blue-300 p-3 rounded text-center">
               <h3 className="font-bold text-xs text-white">
                 BOARD OF DIRECTOR
@@ -1299,6 +1284,9 @@ const DashboardEditor = () => {
             </div>
             <div className="p-3 rounded text-center">
               <h3 className="font-bold text-xs text-transparent">&nbsp;</h3>
+            </div>
+            <div className="bg-blue-300 p-3 rounded text-center">
+              <h3 className="font-bold text-xs text-white">BUSINESS UNIT</h3>
             </div>
             <div className="bg-blue-300 p-3 rounded text-center">
               <h3 className="font-bold text-xs text-white">DIVISION HEAD</h3>
@@ -1315,7 +1303,7 @@ const DashboardEditor = () => {
         </div>
 
         <div className="mb-6">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-6 gap-4">
             {/* Column 1 - Board of Directors */}
             <div className="space-y-3">
               {organizationData.structure.bod.map((item) => (
@@ -1417,6 +1405,108 @@ const DashboardEditor = () => {
                   const mdo2 = organizationData.structure.management.find(
                     (m) => m.code === "MDO2.0"
                   );
+
+                  if (!mdo2) {
+                    return (
+                      <div
+                        key="mdo-combined"
+                        className={`bg-white border border-gray-400 rounded shadow-sm min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                          } ${item.clickable && !isEditMode
+                            ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                            : ""
+                          }`}
+                        onClick={() => {
+                          if (item.clickable && item.route && !isEditMode) {
+                            navigate(item.route);
+                          }
+                        }}
+                      >
+                        <div className="flex flex-col h-full">
+                          {/* Header row */}
+                          <div className="flex border-b border-gray-300">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <p className="text-xs font-semibold leading-tight">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={item.title}
+                                    onChange={(e) =>
+                                      handleEdit("management", item.id, "title", e.target.value)
+                                    }
+                                    className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs text-center"
+                                  />
+                                ) : (
+                                  item.title
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Single content row */}
+                          <div className="flex flex-1">
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                              <p className="text-xs font-bold">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={item.code}
+                                    onChange={(e) =>
+                                      handleEdit("management", item.id, "code", e.target.value)
+                                    }
+                                    className="bg-yellow-50 border rounded px-1 w-12 text-xs"
+                                  />
+                                ) : (
+                                  item.code
+                                )}
+                              </p>
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <p className="text-xs leading-tight">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={item.name}
+                                    onChange={(e) =>
+                                      handleEdit("management", item.id, "name", e.target.value)
+                                    }
+                                    className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                                  />
+                                ) : (
+                                  item.name
+                                )}
+                              </p>
+                              <p className="text-xs leading-tight">
+                                (
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={item.empId}
+                                    onChange={(e) =>
+                                      handleEdit("management", item.id, "empId", e.target.value)
+                                    }
+                                    className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                                  />
+                                ) : (
+                                  item.empId
+                                )}
+                                )
+                              </p>
+                              {item.clickable && !isEditMode && (
+                                <p className="text-xs text-blue-600 mt-1 font-semibold">
+                                  Click to view details →
+                                </p>
+                              )}
+                              {isEditMode && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Click fields to edit
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key="mdo-combined"
@@ -1710,45 +1800,26 @@ const DashboardEditor = () => {
               })}
             </div>
 
-            {/* Column 3 - Division Head (Business Labels) */}
+            {/* Column 3 - Business Unit */}
             <div className="space-y-3">
-              <div className="min-h-[110px]"></div>
-              <div className="min-h-[120px]"></div>
-              <div className="min-h-[200px]"></div>
-              <div className="min-h-[120px]"></div>
-              <div className="min-h-[130px]"></div>
-
-              {organizationData.structure.divisions.map((div, index) => (
-                <React.Fragment key={div.id}>
-                  {index > 0 && (
-                    <div
-                      className={
-                        index === 1 ? "min-h-[100px]" : "min-h-[570px]"
-                      }
-                    ></div>
-                  )}
+              {organizationData.structure?.business?.map((bus, index) => (
+                <React.Fragment key={bus.id}>
+                  {index === 1 && <div className="min-h-[850px]"></div>}
                   <div
-                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-${index === 0 ? "[100px]" : "[80px]"
-                      } flex items-center justify-center ${isEditMode ? "ring-2 ring-blue-200" : ""
-                      }`}
+                    className={`bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[100px] flex items-center justify-center ${isEditMode ? "ring-2 ring-blue-200" : ""}`}
                   >
                     <span className="leading-tight">
                       {isEditMode ? (
                         <input
                           type="text"
-                          value={div.label}
+                          value={bus.label}
                           onChange={(e) =>
-                            handleEdit(
-                              "divisions",
-                              div.id,
-                              "label",
-                              e.target.value
-                            )
+                            handleEdit("business", bus.id, "label", e.target.value)
                           }
                           className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs text-center"
                         />
                       ) : (
-                        div.label
+                        bus.label
                       )}
                     </span>
                   </div>
@@ -1756,231 +1827,332 @@ const DashboardEditor = () => {
               ))}
             </div>
 
-            {/* Column 4 - Department Head */}
+            {/* Column 4 - Division Head */}
             <div className="space-y-3">
-              <div className="min-h-[110px]"></div>
-              <div className="min-h-[150px]"></div>
-              <div className="min-h-[190px]"></div>
+              <div className="min-h-[960px]"></div>
+              {organizationData.structure.divisions.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {index > 0 && <div className="min-h-[570px]"></div>}
+                  <div
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                      } ${item.clickable && !isEditMode
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
+                      }`}
+                    onClick={() => {
+                      if (item.clickable && item.route && !isEditMode) {
+                        navigate(item.route);
+                      }
+                    }}
+                  >
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                      <p className="text-xs font-bold">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.code}
+                            onChange={(e) =>
+                              handleEdit("divisions", item.id, "code", e.target.value)
+                            }
+                            className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                          />
+                        ) : (
+                          item.code
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs font-semibold mb-1 leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) =>
+                              handleEdit("divisions", item.id, "title", e.target.value)
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.title
+                        )}
+                      </p>
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              handleEdit("divisions", item.id, "name", e.target.value)
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.name
+                        )}
+                      </p>
+                      {item.empId && (
+                        <p className="text-xs leading-tight">
+                          (
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={item.empId}
+                              onChange={(e) =>
+                                handleEdit("divisions", item.id, "empId", e.target.value)
+                              }
+                              className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                            />
+                          ) : (
+                            item.empId
+                          )}
+                          )
+                        </p>
+                      )}
+                      {item.clickable && !isEditMode && (
+                        <p className="text-xs text-blue-600 mt-1 font-semibold">
+                          Click to view details →
+                        </p>
+                      )}
+                      {isEditMode && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Click fields to edit
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+            {/* Column 5 - Department Head */}
+            <div className="space-y-3">
+              <div className="min-h-[180px]"></div>
 
               {organizationData.structure.departments.map((item, index) => (
-                <div
-                  className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
-                    } ${item.clickable && !isEditMode
-                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                      : ""
-                    }`}
-                  onClick={() => {
-                    if (item.clickable && item.route && !isEditMode) {
-                      navigate(item.route);
-                    }
-                  }}
-                >
-                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                    <p className="text-xs font-bold">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.code}
-                          onChange={(e) =>
-                            handleEdit(
-                              "departments",
-                              item.id,
-                              "code",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-1 w-10 text-xs"
-                        />
-                      ) : (
-                        item.code
-                      )}
-                    </p>
-                  </div>
-                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.title}
-                          onChange={(e) =>
-                            handleEdit(
-                              "departments",
-                              item.id,
-                              "title",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
-                        />
-                      ) : (
-                        item.title
-                      )}
-                    </p>
-                    <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) =>
-                            handleEdit(
-                              "departments",
-                              item.id,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
-                        />
-                      ) : (
-                        item.name
-                      )}
-                    </p>
-                    <p className="text-xs leading-tight">
-                      (
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.empId}
-                          onChange={(e) =>
-                            handleEdit(
-                              "departments",
-                              item.id,
-                              "empId",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-1 w-16 text-xs"
-                        />
-                      ) : (
-                        item.empId
-                      )}
-                      )
-                    </p>
-                    {item.clickable && !isEditMode && (
-                      <p className="text-xs text-blue-600 mt-1 font-semibold">
-                        Click to view details →
+                <React.Fragment key={item.id}>
+                  {index === 6 && <div className="min-h-[120px]"></div>}
+                  <div
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                      } ${item.clickable && !isEditMode
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
+                      }`}
+                    onClick={() => {
+                      if (item.clickable && item.route && !isEditMode) {
+                        navigate(item.route);
+                      }
+                    }}
+                  >
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                      <p className="text-xs font-bold">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.code}
+                            onChange={(e) =>
+                              handleEdit(
+                                "departments",
+                                item.id,
+                                "code",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                          />
+                        ) : (
+                          item.code
+                        )}
                       </p>
-                    )}
-                    {isEditMode && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Click fields to edit
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs font-semibold mb-1 leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) =>
+                              handleEdit(
+                                "departments",
+                                item.id,
+                                "title",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.title
+                        )}
                       </p>
-                    )}
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              handleEdit(
+                                "departments",
+                                item.id,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.name
+                        )}
+                      </p>
+                      <p className="text-xs leading-tight">
+                        (
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.empId}
+                            onChange={(e) =>
+                              handleEdit(
+                                "departments",
+                                item.id,
+                                "empId",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                          />
+                        ) : (
+                          item.empId
+                        )}
+                        )
+                      </p>
+                      {item.clickable && !isEditMode && (
+                        <p className="text-xs text-blue-600 mt-1 font-semibold">
+                          Click to view details →
+                        </p>
+                      )}
+                      {isEditMode && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Click fields to edit
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </React.Fragment>
               ))}
             </div>
 
-            {/* Column 5 - Section Head / Engineering Product Leader */}
+            {/* Column 6 - Section Head / Engineering Product Leader */}
             <div className="space-y-3">
               {organizationData.structure.sections.map((item, index) => (
-                <div
-                  className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
-                    } ${item.clickable && !isEditMode
-                      ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-                      : ""
-                    }`}
-                  onClick={() => {
-                    if (item.clickable && item.route && !isEditMode) {
-                      navigate(item.route);
-                    }
-                  }}
-                >
-                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
-                    <p className="text-xs font-bold">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.code}
-                          onChange={(e) =>
-                            handleEdit(
-                              "sections",
-                              item.id,
-                              "code",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-1 w-10 text-xs"
-                        />
-                      ) : (
-                        item.code
-                      )}
-                    </p>
-                  </div>
-                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.title}
-                          onChange={(e) =>
-                            handleEdit(
-                              "sections",
-                              item.id,
-                              "title",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
-                        />
-                      ) : (
-                        item.title
-                      )}
-                    </p>
-                    <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight">
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) =>
-                            handleEdit(
-                              "sections",
-                              item.id,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
-                        />
-                      ) : (
-                        item.name
-                      )}
-                    </p>
-                    <p className="text-xs leading-tight">
-                      (
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={item.empId}
-                          onChange={(e) =>
-                            handleEdit(
-                              "sections",
-                              item.id,
-                              "empId",
-                              e.target.value
-                            )
-                          }
-                          className="bg-yellow-50 border rounded px-1 w-16 text-xs"
-                        />
-                      ) : (
-                        item.empId
-                      )}
-                      )
-                    </p>
-                    {item.clickable && !isEditMode && (
-                      <p className="text-xs text-blue-600 mt-1 font-semibold">
-                        Click to view details →
+                <React.Fragment key={item.id}>
+                  {index === 1 && <div className="min-h-[300px]"></div>}
+                  <div
+                    className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${isEditMode ? "ring-2 ring-blue-200" : ""
+                      } ${item.clickable && !isEditMode
+                        ? "cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+                        : ""
+                      }`}
+                    onClick={() => {
+                      if (item.clickable && item.route && !isEditMode) {
+                        navigate(item.route);
+                      }
+                    }}
+                  >
+                    <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
+                      <p className="text-xs font-bold">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.code}
+                            onChange={(e) =>
+                              handleEdit(
+                                "sections",
+                                item.id,
+                                "code",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-1 w-10 text-xs"
+                          />
+                        ) : (
+                          item.code
+                        )}
                       </p>
-                    )}
-                    {isEditMode && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Click fields to edit
+                    </div>
+                    <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-xs font-semibold mb-1 leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) =>
+                              handleEdit(
+                                "sections",
+                                item.id,
+                                "title",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.title
+                        )}
                       </p>
-                    )}
+                      <hr className="my-1 border-gray-300" />
+                      <p className="text-xs leading-tight">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              handleEdit(
+                                "sections",
+                                item.id,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-2 py-1 w-full text-xs"
+                          />
+                        ) : (
+                          item.name
+                        )}
+                      </p>
+                      <p className="text-xs leading-tight">
+                        (
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={item.empId}
+                            onChange={(e) =>
+                              handleEdit(
+                                "sections",
+                                item.id,
+                                "empId",
+                                e.target.value
+                              )
+                            }
+                            className="bg-yellow-50 border rounded px-1 w-16 text-xs"
+                          />
+                        ) : (
+                          item.empId
+                        )}
+                        )
+                      </p>
+                      {item.clickable && !isEditMode && (
+                        <p className="text-xs text-blue-600 mt-1 font-semibold">
+                          Click to view details →
+                        </p>
+                      )}
+                      {isEditMode && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Click fields to edit
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </React.Fragment>
               ))}
             </div>
           </div>

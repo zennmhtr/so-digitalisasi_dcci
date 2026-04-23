@@ -28,17 +28,19 @@ import JobdescManagement from './pages/JobdescManagement';
 import SOChangeRequests from './pages/SOChangeRequests';
 import SOBagianChangeRequests from './pages/SOBagianChangeRequests';
 import JobDescChangeRequests from './pages/JobDescChangeRequests';
+import MatriksSkill from './pages/MatriksSkill';
+import MatriksSkillChangeRequests from './pages/MatriksSkillChangeRequests';
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           isAuthenticated ? <Navigate to="/" replace /> : <Login />
-        } 
+        }
       />
       <Route path="/" element={
         <ProtectedRoute>
@@ -82,7 +84,7 @@ function AppRoutes() {
         <ProtectedRoute>
           <ManagementDevelopment />
         </ProtectedRoute>
-       } />
+      } />
       <Route path="/mi-she" element={
         <ProtectedRoute>
           <MiShe />
@@ -103,7 +105,7 @@ function AppRoutes() {
           <Purchasing />
         </ProtectedRoute>
       } />
-        <Route path="/ppic" element={
+      <Route path="/ppic" element={
         <ProtectedRoute>
           <Ppic />
         </ProtectedRoute>
@@ -176,6 +178,20 @@ function AppRoutes() {
         <ProtectedRoute>
           <Layout>
             <JobDescChangeRequests />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/matriks-skill" element={
+        <ProtectedRoute>
+          <Layout>
+            <MatriksSkill />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/matriks-skill-change-requests" element={
+        <ProtectedRoute>
+          <Layout>
+            <MatriksSkillChangeRequests />
           </Layout>
         </ProtectedRoute>
       } />

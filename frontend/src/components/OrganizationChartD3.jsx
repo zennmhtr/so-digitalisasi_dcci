@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
 
-const OrganizationChartD3 = ({ 
-  organizationData, 
+const OrganizationChartD3 = ({
+  organizationData,
   isEditMode = false,
   onNodeEdit,
-  onSave 
+  onSave
 }) => {
   const svgRef = useRef();
   const [nodes, setNodes] = useState([]);
@@ -18,7 +18,7 @@ const OrganizationChartD3 = ({
 
     const nodeData = [];
     const linkData = [];
-    
+
     let yOffset = 100;
     const columnWidth = 250;
 
@@ -29,7 +29,7 @@ const OrganizationChartD3 = ({
         x: 100,
         y: yOffset + (index * 120),
         fx: 100,
-        fy: yOffset + (index * 120), 
+        fy: yOffset + (index * 120),
         category: 'bod'
       });
     });
@@ -83,7 +83,7 @@ const OrganizationChartD3 = ({
     if (!nodes.length) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); 
+    svg.selectAll("*").remove();
 
     const width = 1400;
     const height = 1000;
@@ -180,17 +180,17 @@ const OrganizationChartD3 = ({
       .style('font-size', '10px')
       .style('font-weight', 'bold')
       .style('fill', '#000')
-      .each(function(d) {
+      .each(function (d) {
         const text = d3.select(this);
         const words = (d.title || '').split(' ');
         text.text('');
-        
+
         let line = [];
         let lineNumber = 0;
         const lineHeight = 1.1;
         const x = text.attr('x');
         const y = text.attr('y');
-        
+
         words.forEach(word => {
           line.push(word);
           text.text(line.join(' '));
@@ -206,7 +206,7 @@ const OrganizationChartD3 = ({
             lineNumber++;
           }
         });
-        
+
         text.append('tspan')
           .attr('x', x)
           .attr('y', y)
@@ -273,7 +273,7 @@ const OrganizationChartD3 = ({
 
     nodeGroup.on('click', (event, d) => {
       if (!isEditMode) return;
-      
+
       if (isConnecting && selectedNode && selectedNode.id !== d.id) {
         const newLink = {
           source: selectedNode.id,
@@ -294,7 +294,7 @@ const OrganizationChartD3 = ({
 
     svg.on('dblclick', (event) => {
       if (!isEditMode) return;
-      
+
       const [x, y] = d3.pointer(event, container.node());
       const newNode = {
         id: `custom-${Date.now()}`,
@@ -309,7 +309,7 @@ const OrganizationChartD3 = ({
         isCustom: true,
         category: 'custom'
       };
-      
+
       setNodes(prev => [...prev, newNode]);
     });
 
@@ -318,7 +318,7 @@ const OrganizationChartD3 = ({
         const dx = d.target.x - d.source.x;
         const dy = d.target.y - d.source.y;
         const dr = Math.sqrt(dx * dx + dy * dy);
-        
+
         const sweep = dx > 0 ? 1 : 0;
         return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
       });
@@ -348,7 +348,7 @@ const OrganizationChartD3 = ({
   return (
     <div className="relative w-full h-[800px] border border-gray-300 rounded-lg bg-gray-50 overflow-hidden">
       <svg ref={svgRef} className="w-full h-full bg-white"></svg>
-      
+
       {/* Control Panel */}
       {isEditMode && (
         <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10">

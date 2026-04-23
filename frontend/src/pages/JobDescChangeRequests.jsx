@@ -6,6 +6,8 @@ import {
   MessageSquare,
   AlertCircle,
   Eye,
+  FileText,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { jobDescChangeRequestsAPI } from "../services/api";
@@ -25,19 +27,19 @@ const JobDescChangeRequests = () => {
 
   const getDepartmentApprovalPermission = (departmentName) => {
     const mapping = {
-      "Finance Department": "SO Bagian Finance Approval",
-      "HRGA & IT Department": "SO Bagian HRGA & IT Approval",
-      "Management Development": "SO Bagian Management Development Approval",
+      "Finance Department": "Manager Finance Approval",
+      "HRGA & IT Department": "Manager HRGA & IT Approval",
+      "Management Development": "Manager Management Development Approval",
       "Management Representative":
-        "SO Bagian Management Representative Approval",
-      "Manufacturing Battery": "SO Bagian Manufacturing Battery Approval",
-      "Manufacturing Cable": "SO Bagian Manufacturing Cable Approval",
-      "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
-      "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
-      "MI & SHE": "SO Bagian MI & SHE Approval",
-      PPIC: "SO Bagian PPIC Approval",
-      Purchasing: "SO Bagian Purchasing Approval",
-      "QA Department": "SO Bagian QA Approval",
+        "Manager Management Representative Approval",
+      "Manufacturing Battery": "Manager Manufacturing Battery Approval",
+      "Manufacturing Cable": "Manager Manufacturing Cable Approval",
+      "Marketing Battery Department": "Manager Marketing Battery Approval",
+      "Marketing Engineering": "Manager Marketing Engineering Approval",
+      "MI & SHE": "Manager MI & SHE Approval",
+      PPIC: "Manager PPIC Approval",
+      Purchasing: "Manager Purchasing Approval",
+      "QA Department": "Manager QA Approval",
     };
     return mapping[departmentName] || null;
   };
@@ -60,7 +62,7 @@ const JobDescChangeRequests = () => {
   const isRequesterManager = (request) => {
     const requesterPermissions = request.requestedBy?.role?.permissions || [];
     return requesterPermissions.some(
-      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
     );
   };
 
@@ -70,7 +72,7 @@ const JobDescChangeRequests = () => {
     if (userPermissions.includes("SO Changes Director Approval")) return true;
 
     return userPermissions.some(
-      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
     );
   };
 
@@ -343,32 +345,32 @@ const JobDescChangeRequests = () => {
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: {
-        color: "bg-yellow-100 text-yellow-800",
+        color: "bg-yellow-100 text-yellow-800 border-yellow-300",
         icon: Clock,
         text: "Pending",
       },
       waiting_director_approval: {
-        color: "bg-blue-100 text-blue-800",
+        color: "bg-blue-100 text-blue-800 border-blue-300",
         icon: Clock,
         text: "Waiting Director Approval",
       },
       approved: {
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-green-800 border-green-300",
         icon: CheckCircle,
         text: "Approved",
       },
       rejected: {
-        color: "bg-red-100 text-red-800",
+        color: "bg-red-100 text-red-800 border-red-300",
         icon: XCircle,
         text: "Rejected",
       },
       cancelled: {
-        color: "bg-gray-100 text-gray-800",
+        color: "bg-gray-100 text-gray-600 border-gray-300",
         icon: AlertCircle,
         text: "Cancelled",
       },
       revisi: {
-        color: "bg-orange-100 text-orange-800",
+        color: "bg-orange-100 text-orange-800 border-orange-300",
         icon: MessageSquare,
         text: "Revisi",
       },
@@ -433,343 +435,291 @@ const JobDescChangeRequests = () => {
     );
   }
 
+  const userPermissionsGlobal = user?.role?.permissions || [];
+  const isDirectorGlobal =
+    userPermissionsGlobal.includes("SO Changes Director Approval") ||
+    userPermissionsGlobal.includes("Manage Users");
+
+  const allTabs = [
+    { id: "all", label: "All Requests" },
+    { id: "pending", label: "Pending" },
+    { id: "waiting_director_approval", label: "Waiting Director" },
+    { id: "approved", label: "Approved" },
+    { id: "rejected", label: "Rejected" },
+    { id: "cancelled", label: "Cancelled" },
+    { id: "revisi", label: "Revisi" },
+  ].filter((tab) => !(tab.id === "cancelled" && isDirectorGlobal));
+
+  const tabCounts = allTabs.map((tab) => ({
+    ...tab,
+    count: tab.id === "all" ? requests.length : requests.filter((r) => r.status === tab.id).length,
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Job Desc Change Requests
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Review and approve Job Desc change requests
+    <div className="p-6 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">JobDesc Change Requests</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Review and approve Job Description change requests
           </p>
         </div>
-
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              {(() => {
-                const userPermissions = user?.role?.permissions || [];
-                const isDirector =
-                  userPermissions.includes("SO Changes Director Approval") ||
-                  userPermissions.includes("Manage Users");
-
-                return [
-                  { id: "all", label: "All Request" },
-                  { id: "pending", label: "Pending" },
-                  {
-                    id: "waiting_director_approval",
-                    label: "Waiting Director",
-                  },
-                  { id: "approved", label: "Approved" },
-                  { id: "rejected", label: "Rejected" },
-                  { id: "cancelled", label: "Cancel" },
-                  { id: "revisi", label: "Revisi" },
-                ]
-                  .filter((tab) => {
-                    if (tab.id === "cancelled") {
-                      return !isDirector;
-                    }
-                    return true;
-                  })
-                  .map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setSelectedTab(tab.id)}
-                      className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${selectedTab === tab.id
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ));
-              })()}
-            </nav>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {loading ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4">Loading request...</p>
-            </div>
-          ) : filteredRequests.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">No Request Found</p>
-            </div>
-          ) : (
-            filteredRequests.map((request) => {
-              const userPermissions = user?.role?.permissions || [];
-              const isManagerApprover =
-                getDepartmentApprovalPermission(request.department) &&
-                userPermissions.includes(
-                  getDepartmentApprovalPermission(request.department)
-                );
-              const isDirectorApprover = userPermissions.includes(
-                "SO Changes Director Approval"
-              );
-              return (
-                <div
-                  key={request._id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {request.title}
-                        </h3>
-                        {getStatusBadge(request.status)}
-                        {getPriorityBadge(request.priority)}
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                          {request.department}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3">
-                        {request.description}
-                      </p>
-                      <div className="flex items-center gap-6 text-sm text-gray-500">
-                        <span>
-                          <strong>Requested by:</strong>{" "}
-                          {request.requestedBy?.name || "unknown"}
-                        </span>
-                        <span>
-                          <strong>Date:</strong>
-                          {formatDate(request.createdAt)}
-                        </span>
-                      </div>
-
-                      {(request.firstApprovedBy ||
-                        request.secondApprovedBy) && (
-                          <div className="mt-2 text-sm text-gray-500">
-                            <strong>Approval Stage:</strong>{" "}
-                            {request.firstApprovedBy && (
-                              <span>
-                                ✅ Approved By: {request.firstApprovedBy?.name}{" "}
-                                {request.firstApprovedAt
-                                  ? `(${formatDate(request.firstApprovedAt)})`
-                                  : ""}
-                              </span>
-                            )}
-                            {request.secondApprovedBy ? (
-                              <span>
-                                {" | ✅ Second Approve: "}
-                                {request.secondApprovedBy?.name}{" "}
-                                {request.secondApprovedAt
-                                  ? `(${formatDate(request.secondApprovedAt)})`
-                                  : ""}
-                              </span>
-                            ) : request.status === "waiting_director_approval" ? (
-                              <span className="text-blue-600">
-                                {" "}
-                                | 🕒 Waiting for Director Approval
-                              </span>
-                            ) : null}
-                          </div>
-                        )}
-
-                      {request.approvedBy && (
-                        <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
-                          <span>
-                            <strong>Approved by:</strong>{" "}
-                            {request.approvedBy.name}
-                          </span>
-                          {request.approvedAt && (
-                            <span>
-                              <strong>Date:</strong>{" "}
-                              {formatDate(request.approvedAt)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {request.reviewedBy && (
-                        <div className="mt-2 flex items-center gap-6 text-sm text-gray-500">
-                          <span>
-                            <strong>Reviewed by:</strong>{" "}
-                            {request.reviewedBy.name}
-                          </span>
-                          {request.reviewedAt && (
-                            <span>
-                              <strong>Date:</strong>{" "}
-                              {formatDate(request.reviewedAt)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      {canApproveRequest(request) &&
-                        request.status === "pending" &&
-                        request.requestedBy?._id !== user?.id &&
-                        !isRequesterManager(request) && (
-                          <>
-                            {getDepartmentApprovalPermission(
-                              request.department
-                            ) &&
-                              userPermissions.includes(
-                                getDepartmentApprovalPermission(
-                                  request.department
-                                )
-                              ) ? (
-                              <button
-                                onClick={() => viewDetail(request)}
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
-                              >
-                                Review & Approve
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded cursor-not-allowed"
-                                title="Waiting for Manager Approval First"
-                              >
-                                <Clock className="w-4 h-4" />
-                                Wait Manager Approval
-                              </button>
-                            )}
-                          </>
-                        )}
-
-                      {canApproveRequest(request) &&
-                        request.status === "pending" &&
-                        request.requestedBy?._id !== user?.id &&
-                        isRequesterManager(request) && (
-                          <>
-                            {userPermissions.includes(
-                              "SO Changes Director Approval"
-                            ) || userPermissions.includes("Manage Users") ? (
-                              <button
-                                onClick={() => viewDetail(request)}
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-800 transition-colors"
-                              >
-                                Review & Approve
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded cursor-nor-allowed"
-                                title="Only Director can approve Manager's request"
-                              >
-                                <Clock className="w-4 h-4" />
-                                Director Approval Required
-                              </button>
-                            )}
-                          </>
-                        )}
-
-                      {canApproveRequest(request) &&
-                        request.status === "waiting_director_approval" &&
-                        request.requestedBy?._id !== user?.id && (
-                          <>
-                            {userPermissions.includes(
-                              "SO Changes Director Approval"
-                            ) || userPermissions.includes("Manage Users") ? (
-                              <button
-                                onClick={() => viewDetail(request)}
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                              >
-                                Director Final Approve
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="flex items-center gap-1 px-3 py-2 text-sm bg-blue-100 text-blue-600 rounded cursor-not-allowed"
-                                title="Waiting for Director approval"
-                              >
-                                <Clock className="w-4 h-4" />
-                                Wait For Director's Approval
-                              </button>
-                            )}
-                          </>
-                        )}
-
-                      {request.status === "approved" && (
-                        <button
-                          onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          View Approved
-                        </button>
-                      )}
-
-                      {request.status === "revisi" && (
-                        <button
-                          onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          View Revisi
-                        </button>
-                      )}
-
-                      {request.status === "rejected" && (
-                        <button
-                          onClick={() => viewDetail(request)}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          View Rejected
-                        </button>
-                      )}
-
-                      {request.status === "pending" &&
-                        request.requestedBy._id === user?.id &&
-                        !userPermissions.includes(
-                          "SO Changes Director Approval"
-                        ) && (
-                          <button
-                            onClick={() => handleCancel(request._id)}
-                            className="flex items-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Cancel Request
-                          </button>
-                        )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-gray-400" />
+          <span className="text-sm text-gray-500">{requests.length} requests</span>
         </div>
       </div>
 
-      {showDetailModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4x1 w-full max-h-[90vh] overflow-y-auto">
-            <div
-              className={`sticky top-0 border-b border-gray-200 px-6 py-4 flex justify-between items-center ${selectedRequest.status === "revisi"
-                ? "bg-orange-50"
-                : selectedRequest.status === "rejected"
-                  ? "bg-red-50"
-                  : "bg-white"
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-1">
+          {tabCounts.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedTab(tab.id)}
+              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex items-center gap-2 ${selectedTab === tab.id
+                ? "bg-white border border-b-white border-gray-200 -mb-px text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
+              {tab.label}
+              {tab.count > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedTab === tab.id ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                  }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Request List */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+            <p className="text-gray-500">Loading requests...</p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700">No change requests found</h3>
+            <p className="text-gray-400 mt-1 text-sm">
+              {selectedTab !== "all" ? `No requests with status "${selectedTab}".` : "No requests submitted yet."}
+            </p>
+          </div>
+        ) : (
+          filteredRequests.map((request) => {
+            const userPermissions = user?.role?.permissions || [];
+            const isManagerApprover =
+              getDepartmentApprovalPermission(request.department) &&
+              userPermissions.includes(getDepartmentApprovalPermission(request.department));
+            const isDirectorApprover = userPermissions.includes("SO Changes Director Approval");
+            return (
+              <div
+                key={request._id}
+                className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow p-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      {getStatusBadge(request.status)}
+                      {getPriorityBadge(request.priority)}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                        {request.department}
+                      </span>
+                      <span className="text-xs text-gray-400">#{request._id?.slice(-6)}</span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-gray-900 truncate">{request.title}</h3>
+                    <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
+
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
+                      <span>👤 <strong>{request.requestedBy?.name || "unknown"}</strong></span>
+                      <span>🕐 {formatDate(request.createdAt)}</span>
+                    </div>
+
+                    {(request.firstApprovedBy || request.secondApprovedBy) && (
+                      <div className="mt-2 text-xs text-gray-400">
+                        {request.firstApprovedBy && (
+                          <span className="inline-flex items-center gap-1 mr-3">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            Approved: {request.firstApprovedBy?.name}
+                            {request.firstApprovedAt ? ` (${formatDate(request.firstApprovedAt)})` : ""}
+                          </span>
+                        )}
+                        {request.secondApprovedBy ? (
+                          <span className="inline-flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            Director: {request.secondApprovedBy?.name}
+                          </span>
+                        ) : request.status === "waiting_director_approval" ? (
+                          <span className="text-blue-500">🕒 Waiting for Director Approval</span>
+                        ) : null}
+                      </div>
+                    )}
+
+                  </div>
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    {canApproveRequest(request) &&
+                      request.status === "pending" &&
+                      request.requestedBy?._id !== user?.id &&
+                      !isRequesterManager(request) && (
+                        <>
+                          {getDepartmentApprovalPermission(
+                            request.department
+                          ) &&
+                            userPermissions.includes(
+                              getDepartmentApprovalPermission(
+                                request.department
+                              )
+                            ) ? (
+                            <button
+                              onClick={() => viewDetail(request)}
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              Review & Approve
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed"
+                              title="Waiting for Manager Approval First"
+                            >
+                              <Clock className="w-4 h-4" />
+                              Wait Manager Approval
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                    {canApproveRequest(request) &&
+                      request.status === "pending" &&
+                      request.requestedBy?._id !== user?.id &&
+                      isRequesterManager(request) && (
+                        <>
+                          {userPermissions.includes(
+                            "SO Changes Director Approval"
+                          ) || userPermissions.includes("Manage Users") ? (
+                            <button
+                              onClick={() => viewDetail(request)}
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              Review & Approve
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed"
+                              title="Only Director can approve Manager's request"
+                            >
+                              <Clock className="w-4 h-4" />
+                              Director Approval Required
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                    {canApproveRequest(request) &&
+                      request.status === "waiting_director_approval" &&
+                      request.requestedBy?._id !== user?.id && (
+                        <>
+                          {userPermissions.includes(
+                            "SO Changes Director Approval"
+                          ) || userPermissions.includes("Manage Users") ? (
+                            <button
+                              onClick={() => viewDetail(request)}
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                              Director Final Approve
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-blue-100 text-blue-600 rounded-lg cursor-not-allowed"
+                              title="Waiting for Director approval"
+                            >
+                              <Clock className="w-4 h-4" />
+                              Wait For Director's Approval
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                    {request.status === "approved" && (
+                      <button
+                        onClick={() => viewDetail(request)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        View Approved
+                      </button>
+                    )}
+
+                    {request.status === "revisi" && (
+                      <button
+                        onClick={() => viewDetail(request)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        View Revisi
+                      </button>
+                    )}
+
+                    {request.status === "rejected" && (
+                      <button
+                        onClick={() => viewDetail(request)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        View Rejected
+                      </button>
+                    )}
+
+                    {request.status === "pending" &&
+                      request.requestedBy._id === user?.id &&
+                      !userPermissions.includes(
+                        "SO Changes Director Approval"
+                      ) && (
+                        <button
+                          onClick={() => handleCancel(request._id)}
+                          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Cancel Request
+                        </button>
+                      )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {showDetailModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-start justify-between bg-gray-50">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  Request Detail
-                </h2>
-                <div className="flex items-center gap-2 mt-1">
+                <h2 className="text-xl font-bold text-gray-900">{selectedRequest.title}</h2>
+                <div className="flex items-center gap-2 mt-1.5">
                   {getStatusBadge(selectedRequest.status)}
                   {getPriorityBadge(selectedRequest.priority)}
-                  <span className="inline-flex item-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
                     {selectedRequest.department}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-gray-400 hover:text-gray-600 p-1"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >&times;</button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
                   {selectedRequest.title}

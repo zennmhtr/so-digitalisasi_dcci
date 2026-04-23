@@ -119,4 +119,17 @@ export const jobDescChangeRequestsAPI = {
   delete: (id) => api.delete(`/jobdesc-change-requests/${id}`),
 }
 
+export const matriksSkillChangeRequestsAPI = {
+  getAll: (params) => api.get('/matriks-skill-change-requests', { params }),
+  getById: (id) => api.get(`/matriks-skill-change-requests/${id}`),
+  create: (requestData) => api.post('/matriks-skill-change-requests', requestData),
+  approve: (id, reviewComments) => api.put(`/matriks-skill-change-requests/${id}/approve`, { reviewComments }),
+  revisi: (id, reviewComments) => api.put(`/matriks-skill-change-requests/${id}/revisi`, { reviewComments }),
+  reject: (id, reviewComments) => api.put(`/matriks-skill-change-requests/${id}/reject`, { reviewComments }),
+  cancel: (id) => api.put(`/matriks-skill-change-requests/${id}/cancel`),
+  delete: (id) => api.delete(`/matriks-skill-change-requests/${id}`),
+  getAllData: () => api.get('/matriks-skill-change-requests/data/all'),
+  initializeData: (data) => api.post('/matriks-skill-change-requests/data/initialize', data),
+}
+
 export default api;

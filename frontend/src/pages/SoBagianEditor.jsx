@@ -1592,16 +1592,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -1896,16 +1896,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -2425,16 +2425,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -2735,16 +2735,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       (MANUFACTURING BATTERY DEPARTMENT)
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -3505,16 +3505,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -4041,16 +4041,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -4455,16 +4455,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -5688,16 +5688,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -6119,7 +6119,7 @@ const SoBagianEditor = () => {
                   <img
                     src="/logo/dcci.png"
                     alt="Dharma Group Logo"
-                    className="w-full h-full object contain"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <div
@@ -6127,16 +6127,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -6527,16 +6527,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -7274,16 +7274,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2x1 font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-x1 font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -8360,16 +8360,16 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-xs font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-1">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
                       (MANUFACTURING BATTERY DEPARTMENT)
                     </h3>
-                    <p className="text-md text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Effective Date : 30 September 2025
                     </p>
                   </div>
@@ -8975,7 +8975,7 @@ const SoBagianEditor = () => {
         {!selectedDepartment ? (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              <h1 className="text-xs font-bold text-gray-800 mb-1">
                 SO Bagian
               </h1>
               <p className="text-gray-600">

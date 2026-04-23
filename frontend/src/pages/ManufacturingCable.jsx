@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
+import JobdescViewer from '../components/JobdescViewer';
 
 const ManufacturingCable = () => {
   const navigate = useNavigate();
@@ -9,6 +10,86 @@ const ManufacturingCable = () => {
     orientation: 'landscape'
   });
   const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [jobdescData, setJobdescData] = useState(null);
+  const [loadingJobdesc, setLoadingJobdesc] = useState(false);
+  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
+
+  const checkAllEmployeeJobdescStatus = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const statusMap = {};
+        allJobdesc.forEach(jd => {
+          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const jdName = (jd.memberName || '').trim().toUpperCase();
+          if (jdNoPNK) statusMap[jdNoPNK] = true;
+          if (jdName) statusMap[jdName] = true;
+        });
+        setEmployeeJobdescStatus(statusMap);
+      }
+    } catch (error) {
+      console.error('Error fetching employee jobdesc status:', error);
+    }
+  };
+
+  useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
+
+  const onCodeClick = async (item) => {
+    setSelectedJob(item);
+    setShowJobModal(true);
+    setLoadingJobdesc(true);
+    setJobdescData(null);
+    try {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const foundJobdesc = allJobdesc.find((jd) => {
+          const jdName = (jd.memberName || '').trim().toUpperCase();
+          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const itemName = (item.name || '').trim().toUpperCase();
+          const itemEmpId = (item.empId || '').trim();
+          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
+          if (jdName && itemName && jdName === itemName) return true;
+          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
+          return false;
+        });
+        if (foundJobdesc) setJobdescData(foundJobdesc);
+      }
+    } catch (error) {
+      console.error('Error fetching job description:', error);
+    } finally {
+      setLoadingJobdesc(false);
+    }
+  };
+
+  const renderCodeButton = (person) => {
+    if (!person || !person.empId) {
+      return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
+    }
+    const empId = (person.empId || '').trim();
+    const personName = (person.name || '').trim().toUpperCase();
+    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+    const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+    return (
+      <button
+        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
+        onClick={(e) => { e.stopPropagation(); onCodeClick(person); }}
+        title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
+      >
+        {person.code}
+      </button>
+    );
+  };
+
 
   const defaultData = {
     header: {
@@ -690,7 +771,7 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.header.code}</p>
+                  {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId })}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
@@ -705,7 +786,7 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[0].code}</p>
+                  {renderCodeButton(orgData.positions[0])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
@@ -718,7 +799,7 @@ const ManufacturingCable = () => {
               <div className="min-h-[420px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[1].code}</p>
+                  {renderCodeButton(orgData.positions[1])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
@@ -731,7 +812,7 @@ const ManufacturingCable = () => {
               <div className="min-h-[880px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[2].code}</p>
+                  {renderCodeButton(orgData.positions[2])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
@@ -746,7 +827,7 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[3].code}</p>
+                  {renderCodeButton(orgData.positions[3])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
@@ -761,7 +842,7 @@ const ManufacturingCable = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[5].code}</p>
+                  {renderCodeButton(orgData.positions[5])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[5].title}</p>
@@ -777,7 +858,7 @@ const ManufacturingCable = () => {
               <div className="min-h-[240px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[300px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[7].code}</p>
+                  {renderCodeButton(orgData.positions[7])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[7].title}</p>
@@ -810,7 +891,7 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[14].code}</p>
+                  {renderCodeButton(orgData.positions[14])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[14].title}</p>
@@ -822,7 +903,7 @@ const ManufacturingCable = () => {
               <div className="min-h-[10px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[15].code}</p>
+                  {renderCodeButton(orgData.positions[15])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[15].title}</p>
@@ -835,7 +916,7 @@ const ManufacturingCable = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[16].code}</p>
+                    {renderCodeButton(orgData.positions[16])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[16].title}</p>
@@ -846,7 +927,7 @@ const ManufacturingCable = () => {
                 </div>
                 <div className="flex border-t border-gray-400">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[17].code}</p>
+                    {renderCodeButton(orgData.positions[17])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs leading-tight uppercase">{orgData.positions[17].name}</p>
@@ -857,7 +938,7 @@ const ManufacturingCable = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[18].code}</p>
+                  {renderCodeButton(orgData.positions[18])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[18].title}</p>
@@ -869,7 +950,7 @@ const ManufacturingCable = () => {
 
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  <p className="text-xs font-bold uppercase">{orgData.positions[19].code}</p>
+                  {renderCodeButton(orgData.positions[19])}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[19].title}</p>
@@ -883,7 +964,7 @@ const ManufacturingCable = () => {
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[20].code}</p>
+                    {renderCodeButton(orgData.positions[20])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[20].title}</p>
@@ -912,7 +993,7 @@ const ManufacturingCable = () => {
                 </div>
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[23].code}</p>
+                    {renderCodeButton(orgData.positions[23])}
                     {/* Empty for alignment */}
                   </div>
 
@@ -965,51 +1046,69 @@ const ManufacturingCable = () => {
                     <p className="text-xs leading-tight uppercase">({orgData.positions[28].empId})</p>
                   </div>
                 </div>
+                <div className="flex">
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                    {/* Empty for alignment */}
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[29].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[29].empId})</p>
+                  </div>
+                </div>
+                <div className="flex">
+                  <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                    {/* Empty for alignment */}
+                  </div>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[30].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[30].empId})</p>
+                  </div>
+                </div>
               </div>
 
               <div className="min-h-[130px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm w-[180px]">
                 <div className="flex">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[29].code}</p>
+                    {renderCodeButton(orgData.positions[31])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[29].title}</p>
+                    <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[31].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[29].name}</p>
-                    <p className="text-xs leading-tight uppercase">({orgData.positions[29].empId})</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[31].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[31].empId})</p>
                   </div>
                 </div>
                 <div className="flex border-t border-gray-400">
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[30].code}</p>
+                    {renderCodeButton(orgData.positions[32])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[30].name}</p>
-                    <p className="text-xs leading-tight uppercase">({orgData.positions[30].empId})</p>
+                    <p className="text-xs leading-tight uppercase">{orgData.positions[32].name}</p>
+                    <p className="text-xs leading-tight uppercase">({orgData.positions[32].empId})</p>
                   </div>
                 </div>
               </div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[160px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   <div className="flex flex-col">
-                    <p className="text-xs font-bold uppercase">{orgData.positions[31].code}</p>
+                    {renderCodeButton(orgData.positions[33])}
                   </div>
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[31].title}</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[31].name}</p>
-                  <p className="text-xs leading-tight uppercase">({orgData.positions[31].empId})</p>
-                  <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[32].name}</p>
-                  <p className="text-xs leading-tight uppercase">({orgData.positions[32].empId})</p>
+                  <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[33].title}</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight uppercase">{orgData.positions[33].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[33].empId})</p>
                   <hr className="my-1 border-gray-300" />
                   <p className="text-xs leading-tight uppercase">{orgData.positions[34].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[34].empId})</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[35].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[35].empId})</p>
+                  <hr className="my-1 border-gray-300" />
+                  <p className="text-xs leading-tight uppercase">{orgData.positions[36].name}</p>
+                  <p className="text-xs leading-tight uppercase">({orgData.positions[36].empId})</p>
                 </div>
               </div>
             </div>
@@ -1047,6 +1146,45 @@ const ManufacturingCable = () => {
           </div>
         </div>
       </div>
+
+      {showJobModal && selectedJob && (
+        <>
+          {loadingJobdesc ? (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading job description...</span>
+                </div>
+              </div>
+            </div>
+          ) : jobdescData ? (
+            <JobdescViewer
+              user={{
+                name: selectedJob.name,
+                noPNK: selectedJob.empId,
+                department: { name: jobdescData.division || 'N/A' },
+              }}
+              jobdesc={jobdescData}
+              viewOnly={true}
+              onClose={() => { setShowJobModal(false); setJobdescData(null); setSelectedJob(null); }}
+            />
+          ) : (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-[520px] max-w-[95%]">
+                <p className="font-semibold mb-2">Jobdesk Tidak Ditemukan</p>
+                <p className="text-sm text-gray-600">Tidak ada data jobdesk untuk {selectedJob?.name}</p>
+                <button
+                  onClick={() => { setShowJobModal(false); setSelectedJob(null); }}
+                  className="mt-3 px-4 py-2 bg-blue-600 text-white rounded"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -7,25 +7,25 @@ const router = express.Router();
 
 const getDepartmentApprovalPermission = (departmentName) => {
   const mapping = {
-    "Finance Department": "SO Bagian Finance Approval",
-    "HRGA & IT Department": "SO Bagian HRGA & IT Approval",
-    "Management Development": "SO Bagian Management Development Approval",
-    "Management Representative": "SO Bagian Management Representative Approval",
-    "Manufacturing Battery": "SO Bagian Manufacturing Battery Approval",
-    "Manufacturing Cable": "SO Bagian Manufacturing Cable Approval",
-    "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
-    "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
-    "MI & SHE": "SO Bagian MI & SHE Approval",
-    "PPIC": "SO Bagian PPIC Approval",
-    "Purchasing": "SO Bagian Purchasing Approval",
-    "QA Department": "SO Bagian QA Approval",
+    "Finance Department": "Manager Finance Approval",
+    "HRGA & IT Department": "Manager HRGA & IT Approval",
+    "Management Development": "Manager Management Development Approval",
+    "Management Representative": "Manager Management Representative Approval",
+    "Manufacturing Battery": "Manager Manufacturing Battery Approval",
+    "Manufacturing Cable": "Manager Manufacturing Cable Approval",
+    "Marketing Battery Department": "Manager Marketing Battery Approval",
+    "Marketing Engineering": "Manager Marketing Engineering Approval",
+    "MI & SHE": "Manager MI & SHE Approval",
+    "PPIC": "Manager PPIC Approval",
+    "Purchasing": "Manager Purchasing Approval",
+    "QA Department": "Manager QA Approval",
   };
   return mapping[departmentName] || null;
 };
 
 const isUserManager = (userPermissions) => {
   return userPermissions.some(
-    (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+    (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
   );
 };
 
@@ -38,7 +38,7 @@ router.get("/", auth, async (req, res) => {
     if (status) filter.status = status;
 
     const departmentApprovalPermissions = userPermissions.filter(
-      (p) => p.startsWith("SO Bagian") && p.endsWith("Approval")
+      (p) => p.startsWith("Manager") && p.endsWith("Approval")
     );
 
     const canSeeAllRequests = userPermissions.includes("Manage Users");
@@ -60,7 +60,7 @@ router.get("/", auth, async (req, res) => {
       } else if (hasAnyApprovalPermission) {
         const approvalDepartments = departmentApprovalPermissions
           .map((perm) => {
-            const match = perm.match(/SO Bagian (.+) Approval/);
+            const match = perm.match(/Manager (.+) Approval/);
             if (match) {
               const deptName = match[1];
               const deptMapping = {
@@ -192,7 +192,7 @@ router.post(
       const userPermissions = req.user.role?.permissions || [];
       const hasSoBagianRequest = userPermissions.includes("SO Bagian Request");
       const hasDepartmentApproval = userPermissions.some(
-        (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+        (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
       );
 
       if (!hasSoBagianRequest && !hasDepartmentApproval) {

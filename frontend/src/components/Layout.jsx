@@ -15,6 +15,7 @@ import {
   Key,
   FileText,
   GitPullRequest,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { authAPI } from "../services/api";
@@ -22,6 +23,7 @@ import { authAPI } from "../services/api";
 const Layout = ({ children, sidebarVisible = true }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [masterDataOpen, setMasterDataOpen] = useState(false);
+  const [changeRequestsOpen, setChangeRequestsOpen] = useState(false);
   const [organizationStructureOpen, setOrganizationStructureOpen] =
     useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -129,7 +131,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userPermissions?.includes("SO Changes Director Approval") ||
     userPermissions?.includes("SO Bagian Request") ||
     userPermissions?.some(
-      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
     );
 
   console.log("🔐 Layout SO Bagian Change Requests Check:", {
@@ -143,7 +145,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
     userPermissions?.includes("Manage Users") ||
     userPermissions?.includes("SO Changes Director Approval") ||
     userPermissions?.some(
-      (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
     );
 
   console.log("🔍 Layout Job Desc Request Permission Check:", {
@@ -151,6 +153,33 @@ const Layout = ({ children, sidebarVisible = true }) => {
     hasJobDescChangeRequestsAccess: hasJobDescChangeRequestsAccess,
     hasJobDescManagementAccess: hasJobdescAccess,
     hasDirectorPermission: userPermissions?.includes("SO Changes Director Approval"),
+    userPermissions: userPermissions,
+  });
+
+  const hasMatriksSkillAccess =
+    userPermissions?.includes("Manage Users") ||
+    userPermissions?.includes("Matriks Skill Editor") ||
+    userPermissions?.some(
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
+    )
+
+  console.log("🔍 Layout Matriks Skill Permission Check:", {
+    userName: user?.name,
+    hasMatriksSkillAccess: hasMatriksSkillAccess,
+    userPermissions: userPermissions,
+  });
+
+  const hasMatriksSkillChangeRequestsAccess =
+    userPermissions?.includes("SO Changes Director Approval") ||
+    userPermissions?.includes("Matriks Skill Editor") ||
+    userPermissions?.includes("Matriks Skill Request") ||
+    userPermissions?.some(
+      (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
+    );
+
+  console.log("🔐 Layout Matriks Skill Change Requests Check:", {
+    userName: user?.name,
+    hasMatriksSkillChangeRequestsAccess: hasMatriksSkillChangeRequestsAccess,
     userPermissions: userPermissions,
   });
 
@@ -175,7 +204,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
       userPermissions?.includes("SO Changes Director Approval") ||
       userPermissions?.includes("SO Changes President Director Approval") ||
       userPermissions?.some(
-        (perm) => perm.startsWith("SO Bagian") && perm.endsWith("Approval")
+        (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
       ),
     rawUserObject: user,
   });
@@ -220,30 +249,59 @@ const Layout = ({ children, sidebarVisible = true }) => {
         },
       ]
       : []),
-    ...(hasJobDescChangeRequestsAccess
+    ...(hasMatriksSkillAccess
       ? [
         {
-          name: "JobDesc Change Requests",
-          href: "/jobdesc-change-requests",
-          icon: GitPullRequest,
+          name: "Matriks Skill",
+          href: "/matriks-skill",
+          icon: ClipboardList,
         },
       ]
       : []),
-    ...(hasSOChangeRequestsAccess
+    ...(hasSOBagianChangeRequestsAccess || hasSOChangeRequestsAccess || hasJobDescChangeRequestsAccess || hasMatriksSkillChangeRequestsAccess
       ? [
         {
-          name: "SO Change Requests",
-          href: "/so-change-requests",
+          name: "Change Requests",
           icon: GitPullRequest,
-        },
-      ]
-      : []),
-    ...(hasSOBagianChangeRequestsAccess
-      ? [
-        {
-          name: "SO Bagian Change Requests",
-          href: "/so-bagian-change-requests",
-          icon: GitPullRequest,
+          hasChildren: true,
+          children: [
+            ...(hasSOBagianChangeRequestsAccess
+              ? [
+                {
+                  name: "SO Bagian Change Requests",
+                  href: "/so-bagian-change-requests",
+                  icon: GitPullRequest,
+                },
+              ]
+              : []),
+            ...(hasSOChangeRequestsAccess
+              ? [
+                {
+                  name: "SO Change Requests",
+                  href: "/so-change-requests",
+                  icon: GitPullRequest,
+                },
+              ]
+              : []),
+            ...(hasJobDescChangeRequestsAccess
+              ? [
+                {
+                  name: "JobDesc Change Requests",
+                  href: "/jobdesc-change-requests",
+                  icon: GitPullRequest,
+                },
+              ]
+              : []),
+            ...(hasMatriksSkillChangeRequestsAccess
+              ? [
+                {
+                  name: "Matriks Skill Change Requests",
+                  href: "/matriks-skill-change-requests",
+                  icon: GitPullRequest,
+                },
+              ]
+              : []),
+          ],
         },
       ]
       : []),
@@ -269,10 +327,10 @@ const Layout = ({ children, sidebarVisible = true }) => {
       {sidebarVisible && (
         <div
           className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0 transition duration-200 ease-in-out`}
+          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0 transition duration-200 ease-in-out flex flex-col h-full`}
         >
           {/* Logo */}
-          <div className="flex items-center h-16 px-4 bg-white border-b border-gray-200">
+          <div className="flex items-center h-16 px-4 bg-white border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <img
                 src="/images/dharmabaru.png"
@@ -283,7 +341,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="mt-8">
+          <nav className="mt-8 flex-1 overflow-y-auto pb-6">
             <div className="px-4 space-y-2">
               {navigation.map((item) => (
                 <div key={item.name}>
@@ -299,6 +357,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
                             setOrganizationStructureOpen(
                               !organizationStructureOpen
                             );
+                          } else if (item.name === "Change Requests") {
+                            setChangeRequestsOpen(!changeRequestsOpen);
                           }
                         }}
                         className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-left"
@@ -319,7 +379,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
                         </div>
                         {(item.name === "Master Data" && masterDataOpen) ||
                           (item.name === "Organization Structure DCI" &&
-                            organizationStructureOpen) ? (
+                            organizationStructureOpen) ||
+                          (item.name === "Change Requests" && changeRequestsOpen) ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
                           <ChevronRight className="w-4 h-4" />
@@ -327,7 +388,8 @@ const Layout = ({ children, sidebarVisible = true }) => {
                       </button>
                       {((item.name === "Master Data" && masterDataOpen) ||
                         (item.name === "Organization Structure DCI" &&
-                          organizationStructureOpen)) && (
+                          organizationStructureOpen) ||
+                        (item.name === "Change Requests" && changeRequestsOpen)) && (
                           <div className="ml-4 mt-2 space-y-1">
                             {item.children.map((child) => (
                               <NavLink

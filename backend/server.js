@@ -20,8 +20,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected to hr-digital database'))
-.catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected to hr-digital database'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -32,6 +32,7 @@ app.use('/api/members', require('./routes/members'));
 app.use('/api/so-change-requests', require('./routes/so-change-requests'));
 app.use('/api/so-bagian-change-requests', require('./routes/so-bagian-change-requests'));
 app.use('/api/jobdesc-change-requests', require('./routes/jobdesc-change-requests'));
+app.use('/api/matriks-skill-change-requests', require('./routes/matriks-skill-change-requests'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

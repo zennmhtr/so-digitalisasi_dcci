@@ -71,19 +71,19 @@ const JobdescManagement = () => {
     const userPermissions = user?.role?.permissions || [];
 
     const departmentPermissionMap = {
-      "Finance Department": "SO Bagian Finance Approval",
-      "HRGA & IT Department": "SO Bagian HRGA & IT Approval",
-      "Management Development": "SO Bagian Management Development Approval",
+      "Finance Department": "Manager Finance Approval",
+      "HRGA & IT Department": "Manager HRGA & IT Approval",
+      "Management Development": "Manager Management Development Approval",
       "Management Representative":
-        "SO Bagian Management Representative Approval",
-      "Manufacturing Battery": "SO Bagian Manufacturing Battery Approval",
-      "Manufacturing Cable": "SO Bagian Manufacturing Cable Approval",
-      "Marketing Battery Department": "SO Bagian Marketing Battery Approval",
-      "Marketing Engineering": "SO Bagian Marketing Engineering Approval",
-      "MI & SHE": "SO Bagian MI & SHE Approval",
-      PPIC: "SO Bagian PPIC Approval",
-      Purchasing: "SO Bagian Purchasing Approval",
-      "QA Department": "SO Bagian QA Approval",
+        "Manager Management Representative Approval",
+      "Manufacturing Battery": "Manager Manufacturing Battery Approval",
+      "Manufacturing Cable": "Manager Manufacturing Cable Approval",
+      "Marketing Battery Department": "Manager Marketing Battery Approval",
+      "Marketing Engineering": "Manager Marketing Engineering Approval",
+      "MI & SHE": "Manager MI & SHE Approval",
+      PPIC: "Manager PPIC Approval",
+      Purchasing: "Manager Purchasing Approval",
+      "QA Department": "Manager QA Approval",
     };
     const requiredPermission = departmentPermissionMap[departmentName];
 
@@ -205,7 +205,7 @@ const JobdescManagement = () => {
       console.error("Error loading department members:", err);
       setError(
         "Failed to load department members: " +
-          (err.response?.data?.message || err.message)
+        (err.response?.data?.message || err.message)
       );
     } finally {
       setLoading(false);
@@ -359,11 +359,10 @@ const JobdescManagement = () => {
               <div class="grid grid-cols-2 gap-4 text-xs">
                 <div class="text-left">
                   <span class="font-medium">Tanggal: </span>
-                  <span>${
-                    jobdesc?.tanggal
-                      ? new Date(jobdesc.tanggal).toLocaleDateString("id-ID")
-                      : new Date().toLocaleDateString("id-ID")
-                  }</span>
+                  <span>${jobdesc?.tanggal
+        ? new Date(jobdesc.tanggal).toLocaleDateString("id-ID")
+        : new Date().toLocaleDateString("id-ID")
+      }</span>
                 </div>
                 <div class="text-left">
                   <span class="font-medium">Revisi: </span>
@@ -419,10 +418,10 @@ const JobdescManagement = () => {
                   <span class="font-bold w-32">DEPARTMENT</span>
                   <span class="mr-2">:</span>
                   <span>${(
-                    jobdesc?.department?.name ||
-                    member?.department?.name ||
-                    "-"
-                  ).toUpperCase()}</span>
+        jobdesc?.department?.name ||
+        member?.department?.name ||
+        "-"
+      ).toUpperCase()}</span>
                 </div>
               </div>
               <div class="p-3">
@@ -443,13 +442,12 @@ const JobdescManagement = () => {
             <span class="text-xs ml-8">(Responsibilities berisi urutan tugas pemegang jabatan serta tugas-tugas yang dilaksanakannya - berkaitan dengan jabatan yang dipegangnya, bisa tugas harian atau tugas bekala)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
-            ${
-              jobdesc?.responsibilities && jobdesc.responsibilities.length > 0
-                ? jobdesc.responsibilities
-                    .map((responsibility) => `<li>${responsibility}</li>`)
-                    .join("")
-                : "<li>No responsibilities defined</li>"
-            }
+            ${jobdesc?.responsibilities && jobdesc.responsibilities.length > 0
+        ? jobdesc.responsibilities
+          .map((responsibility) => `<li>${responsibility}</li>`)
+          .join("")
+        : "<li>No responsibilities defined</li>"
+      }
           </ol>
         </div>
 
@@ -460,13 +458,12 @@ const JobdescManagement = () => {
             <span class="text-xs ml-8">(Accountabilities berisi wewenang yang diberikan kepada jabatan untuk dapat melaksanakan tugas dengan baik, dan dapat dievaluasi pencapaiannya)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
-            ${
-              jobdesc?.accountabilities && jobdesc.accountabilities.length > 0
-                ? jobdesc.accountabilities
-                    .map((accountability) => `<li>${accountability}</li>`)
-                    .join("")
-                : "<li>No accountabilities defined</li>"
-            }
+            ${jobdesc?.accountabilities && jobdesc.accountabilities.length > 0
+        ? jobdesc.accountabilities
+          .map((accountability) => `<li>${accountability}</li>`)
+          .join("")
+        : "<li>No accountabilities defined</li>"
+      }
           </ol>
         </div>
 
@@ -477,14 +474,13 @@ const JobdescManagement = () => {
             <span class="text-xs ml-8">(Interaksi berisi  bagian / dengan siapa saja yang bersangkutan berhubungan / bekerjasama untuk kelancaran tugas - tugasnya, baik didalam maupun diluar perusahaan)</span>
           </div>
           <ol class="list-decimal list-inside space-y-1 text-sm">
-            ${
-              jobdesc?.interactions?.internal &&
-              jobdesc.interactions.internal.length > 0
-                ? jobdesc.interactions.internal
-                    .map((interaction) => `<li>${interaction}</li>`)
-                    .join("")
-                : "<li>No interactions defined</li>"
-            }
+            ${jobdesc?.interactions?.internal &&
+        jobdesc.interactions.internal.length > 0
+        ? jobdesc.interactions.internal
+          .map((interaction) => `<li>${interaction}</li>`)
+          .join("")
+        : "<li>No interactions defined</li>"
+      }
           </ol>
         </div>
 
@@ -499,49 +495,47 @@ const JobdescManagement = () => {
             <div>
               <p class="font-bold text-sm mb-2">A. Competence Managerial :</p>
               <ol class="list-decimal list-inside space-y-1 text-sm">
-                ${
-                  jobdesc.competence?.managerial &&
-                  jobdesc.competence.managerial.length > 0
-                    ? jobdesc.competence.managerial
-                        .map((comp) => `<li>${comp}</li>`)
-                        .join("")
-                    : [
-                        "Teamwork",
-                        "Trouble Shooting",
-                        "Customer Satisfaction",
-                        "Cross Functional Capability",
-                        "Quality Focus",
-                        "Cost Efficiency",
-                        "Continuous Improvement",
-                        "Planning Monitoring",
-                        "Personal Integrity",
-                        "Drive for Result",
-                      ]
-                        .map((comp) => `<li>${comp}</li>`)
-                        .join("")
-                }
+                ${jobdesc.competence?.managerial &&
+        jobdesc.competence.managerial.length > 0
+        ? jobdesc.competence.managerial
+          .map((comp) => `<li>${comp}</li>`)
+          .join("")
+        : [
+          "Teamwork",
+          "Trouble Shooting",
+          "Customer Satisfaction",
+          "Cross Functional Capability",
+          "Quality Focus",
+          "Cost Efficiency",
+          "Continuous Improvement",
+          "Planning Monitoring",
+          "Personal Integrity",
+          "Drive for Result",
+        ]
+          .map((comp) => `<li>${comp}</li>`)
+          .join("")
+      }
               </ol>
             </div>
             <div>
               <p class="font-bold text-sm mb-2">B. Competence Skill :</p>
               <ol class="list-decimal list-inside space-y-1 text-sm">
-                ${
-                  jobdesc.competence?.skill &&
-                  jobdesc.competence.skill.length > 0
-                    ? jobdesc.competence.skill
-                        .map((comp) => `<li>${comp}</li>`)
-                        .join("")
-                    : [
-                        "Microsoft Office",
-                        "Komunikasi",
-                        "Report",
-                        "Administration",
-                        "SAP",
-                        "Oracle Plus",
-                      ]
-                        .map((comp) => `<li>${comp}</li>`)
-                        .join("")
-                }
+                ${jobdesc.competence?.skill &&
+        jobdesc.competence.skill.length > 0
+        ? jobdesc.competence.skill
+          .map((comp) => `<li>${comp}</li>`)
+          .join("")
+        : [
+          "Microsoft Office",
+          "Komunikasi",
+          "Report",
+          "Administration",
+          "SAP",
+          "Oracle Plus",
+        ]
+          .map((comp) => `<li>${comp}</li>`)
+          .join("")
+      }
               </ol>
             </div>
           </div>
@@ -564,23 +558,20 @@ const JobdescManagement = () => {
               <div class="flex">
                 <span class="w-44">Pendidikan</span>
                 <span class="mr-2">:</span>
-                <span>${
-                  jobdesc.jobSpecification?.education || "Minimal D3"
-                }</span>
+                <span>${jobdesc.jobSpecification?.education || "Minimal D3"
+      }</span>
               </div>
               <div class="flex">
                 <span class="w-44">Pendidikan Non Formal</span>
                 <span class="mr-2">:</span>
-                <span>${
-                  jobdesc.jobSpecification?.nonFormalEducation || "-"
-                }</span>
+                <span>${jobdesc.jobSpecification?.nonFormalEducation || "-"
+      }</span>
               </div>
               <div class="flex">
                 <span class="w-44">Pengalaman Kerja</span>
                 <span class="mr-2">:</span>
-                <span>${
-                  jobdesc.jobSpecification?.experience || "Min. 1 Tahun"
-                }</span>
+                <span>${jobdesc.jobSpecification?.experience || "Min. 1 Tahun"
+      }</span>
               </div>
             </div>
           </div>
@@ -811,8 +802,7 @@ const JobdescManagement = () => {
       const changeType = isUpdate ? "update" : "add";
 
       console.log(
-        `📄 Job Description ${
-          isUpdate ? "update" : "creation"
+        `📄 Job Description ${isUpdate ? "update" : "creation"
         } - sending to approval flow`
       );
 
@@ -820,10 +810,10 @@ const JobdescManagement = () => {
         title: isUpdate
           ? `Update Job Description for ${selectedMember.name}`
           : `New Job Description for ${selectedMember.name}`,
-        description: submitConfirmData.description, 
+        description: submitConfirmData.description,
         changeType: changeType,
         department: selectedDepartment,
-        priority: submitConfirmData.priority, 
+        priority: submitConfirmData.priority,
         proposedData: {
           jobDescData: {
             ...(isUpdate && { _id: pendingExistingJobdesc._id }),
@@ -880,20 +870,20 @@ const JobdescManagement = () => {
         },
         currentData: isUpdate
           ? {
-              jobDescData: {
-                _id: pendingExistingJobdesc._id,
-                division: pendingExistingJobdesc.division,
-                positionTitle: pendingExistingJobdesc.positionTitle,
-                reportsTo: pendingExistingJobdesc.reportsTo,
-                responsibilities: pendingExistingJobdesc.responsibilities,
-                accountabilities: pendingExistingJobdesc.accountabilities,
-                interactions: pendingExistingJobdesc.interactions,
-                competence: pendingExistingJobdesc.competence,
-                jobSpecification: pendingExistingJobdesc.jobSpecification,
-                tanggal: pendingExistingJobdesc.tanggal,
-                revisi: pendingExistingJobdesc.revisi,
-              },
-            }
+            jobDescData: {
+              _id: pendingExistingJobdesc._id,
+              division: pendingExistingJobdesc.division,
+              positionTitle: pendingExistingJobdesc.positionTitle,
+              reportsTo: pendingExistingJobdesc.reportsTo,
+              responsibilities: pendingExistingJobdesc.responsibilities,
+              accountabilities: pendingExistingJobdesc.accountabilities,
+              interactions: pendingExistingJobdesc.interactions,
+              competence: pendingExistingJobdesc.competence,
+              jobSpecification: pendingExistingJobdesc.jobSpecification,
+              tanggal: pendingExistingJobdesc.tanggal,
+              revisi: pendingExistingJobdesc.revisi,
+            },
+          }
           : null,
       };
 
