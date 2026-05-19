@@ -1205,7 +1205,7 @@ const Dashboard = () => {
   }, [organizationData]);
 
   const renderCodeButton = (item) => {
-    if (!item.empId) {
+    if (!item.id) {
       return <p className="text-[7.5px] font-bold">{item.code}</p>;
     }
 
@@ -1216,7 +1216,7 @@ const Dashboard = () => {
     const buttonColor = hasJobdesc
       ? "text-blue-600 hover:bg-blue-50"
       : "text-red-600 hover:bg-red-50";
-
+    console.log(item)
     return (
       <button
         className={`text-[7.5px] font-bold hover:underline focus:outline-none uppercase px-1 py-1 rounded transition-colors ${buttonColor}`}

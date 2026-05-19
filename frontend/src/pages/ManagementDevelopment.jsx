@@ -97,7 +97,7 @@ const ManagementDevelopment = () => {
       code: "MDO",
       head: "",
       empId: "",
-      effectiveDate: "30 September 2025",
+      effectiveDate: "16 Maret 2026",
     },
     positions: [
       {
@@ -397,7 +397,7 @@ const ManagementDevelopment = () => {
                   <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
                   <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                   <h3 className="text-lg font-semibold text-gray-600 mb-1">(MANAGEMENT DEVELOPMENT DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 30 September 2025</p>
+                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">

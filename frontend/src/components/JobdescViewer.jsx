@@ -10,6 +10,7 @@ const JobdescViewer = ({
   viewOnly = false,
   canDelete = false,
 }) => {
+
   if (!jobdesc) {
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -260,11 +261,10 @@ const JobdescViewer = ({
                 <button
                   onClick={onDelete}
                   disabled={!canDelete}
-                  className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                    canDelete
-                      ? "text-red-600 hover:bg-red-50 cursor-pointer"
-                      : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                  }`}
+                  className={`flex items-center px-3 py-2 rounded-lg transition-colors ${canDelete
+                    ? "text-red-600 hover:bg-red-50 cursor-pointer"
+                    : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                    }`}
                   title={
                     canDelete
                       ? "Delete Job Description"
@@ -330,15 +330,23 @@ const JobdescViewer = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div className="text-left">
-                    <span className="font-medium">Tanggal: </span>
+                    <span className="font-medium">Tanggal : </span>
                     <span>
                       {jobdesc?.tanggal
-                        ? new Date(jobdesc.tanggal).toLocaleDateString("id-ID")
-                        : new Date().toLocaleDateString("id-ID")}
+                        ? new Date(jobdesc.tanggal).toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })
+                        : new Date().toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
                     </span>
                   </div>
                   <div className="text-left">
-                    <span className="font-medium">Revisi: </span>
+                    <span className="font-medium">Revisi : </span>
                     <span>{jobdesc?.revisi || "0"}</span>
                   </div>
                 </div>
@@ -422,7 +430,7 @@ const JobdescViewer = ({
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.responsibilities &&
-              jobdesc.responsibilities.length > 0 ? (
+                jobdesc.responsibilities.length > 0 ? (
                 jobdesc.responsibilities.map((responsibility, index) => (
                   <li key={index}>{responsibility}</li>
                 ))
@@ -445,7 +453,7 @@ const JobdescViewer = ({
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.accountabilities &&
-              jobdesc.accountabilities.length > 0 ? (
+                jobdesc.accountabilities.length > 0 ? (
                 jobdesc.accountabilities.map((accountability, index) => (
                   <li key={index}>{accountability}</li>
                 ))
@@ -467,7 +475,7 @@ const JobdescViewer = ({
             </div>
             <ol className="list-decimal list-inside space-y-1 text-sm">
               {jobdesc?.interactions?.internal &&
-              jobdesc.interactions.internal.length > 0 ? (
+                jobdesc.interactions.internal.length > 0 ? (
                 jobdesc.interactions.internal.map((interaction, index) => (
                   <li key={index}>{interaction}</li>
                 ))
@@ -497,7 +505,7 @@ const JobdescViewer = ({
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   {jobdesc.competence?.managerial &&
-                  jobdesc.competence.managerial.length > 0 ? (
+                    jobdesc.competence.managerial.length > 0 ? (
                     jobdesc.competence.managerial.map((comp, index) => (
                       <li key={index}>{comp}</li>
                     ))
@@ -522,7 +530,7 @@ const JobdescViewer = ({
                 <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   {jobdesc.competence?.skill &&
-                  jobdesc.competence.skill.length > 0 ? (
+                    jobdesc.competence.skill.length > 0 ? (
                     jobdesc.competence.skill.map((skill, index) => (
                       <li key={index}>{skill}</li>
                     ))

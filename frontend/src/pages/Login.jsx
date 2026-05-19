@@ -127,7 +127,7 @@ const Login = () => {
           </form>
 
           <div className="text-center text-sm text-gray-500 mt-8">
-            © 2025 PT. Dharma Controlcable Indonesia. All Rights Reserved.
+            © 2026 PT. Dharma Controlcable Indonesia. All Rights Reserved.
           </div>
         </div>
       </div>

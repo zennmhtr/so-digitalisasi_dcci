@@ -25,6 +25,8 @@ const SoBagianEditor = () => {
   const [jobdescData, setJobdescData] = useState(null);
   const [loadingJobdesc, setLoadingJobdesc] = useState(false);
   const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
+  const [isPrinting, setIsPrinting] = useState(false);
+
 
   const openSubmitModal = () => {
     setShowSubmitModal(true);
@@ -188,7 +190,7 @@ const SoBagianEditor = () => {
           code: "FIN1.0",
           head: "YULIUS PERMATA",
           empId: "23220017",
-          effectiveDate: "30 September 2025",
+          effectiveDate: "16 Maret 2026",
         },
         positions: [
           {
@@ -299,7 +301,7 @@ const SoBagianEditor = () => {
           code: "MDO",
           head: "",
           empId: "",
-          effectiveDate: "30 September 2025",
+          effectiveDate: "16 Maret 2026",
         },
         positions: [
           {
@@ -1491,6 +1493,145 @@ const SoBagianEditor = () => {
     }
   };
 
+  const handlePrint = () => {
+    setIsPrinting(true);
+
+    setTimeout(() => {
+      const printContent = document.querySelector('.print-area');
+
+      if (!printContent) {
+        alert('Print area tidak ditemukan!');
+        setIsPrinting(false);
+        return;
+      }
+
+      // Clone element
+      const clone = printContent.cloneNode(true);
+
+      // Fungsi untuk copy computed styles ke inline styles
+      const copyStyles = (source, target) => {
+        const computed = window.getComputedStyle(source);
+        const styleProps = [
+          'display', 'position', 'top', 'left', 'right', 'bottom',
+          'width', 'height', 'min-width', 'max-width', 'min-height',
+          'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+          'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+          'border', 'border-top', 'border-bottom', 'border-left', 'border-right',
+          'border-width', 'border-style', 'border-color', 'border-radius',
+          'background', 'background-color',
+          'color', 'font-size', 'font-weight', 'font-family',
+          'text-align', 'text-decoration',
+          'flex', 'flex-direction', 'flex-wrap', 'flex-grow', 'flex-shrink',
+          'align-items', 'align-self', 'justify-content', 'justify-self',
+          'grid', 'grid-template-columns', 'grid-template-rows', 'gap',
+          'overflow', 'overflow-x', 'overflow-y',
+          'box-shadow', 'visibility', 'opacity',
+          'white-space', 'word-break', 'line-height',
+          'vertical-align',
+        ];
+
+        styleProps.forEach(prop => {
+          const value = computed.getPropertyValue(prop);
+          if (value) {
+            target.style.setProperty(prop, value, 'important');
+          }
+        });
+      };
+
+      // Apply computed styles ke semua elemen
+      const sourceElements = printContent.querySelectorAll('*');
+      const targetElements = clone.querySelectorAll('*');
+
+      copyStyles(printContent, clone);
+
+      sourceElements.forEach((el, i) => {
+        if (targetElements[i]) {
+          copyStyles(el, targetElements[i]);
+        }
+      });
+
+      // Fix overflow di clone
+      clone.style.setProperty('overflow', 'visible', 'important');
+      clone.style.setProperty('width', '100%', 'important');
+      clone.style.setProperty('border', 'none', 'important');
+      clone.style.setProperty('box-shadow', 'none', 'important');
+
+      // Fix semua overflow-x di dalam clone
+      clone.querySelectorAll('*').forEach(el => {
+        const overflow = window.getComputedStyle(el).overflow;
+        if (overflow === 'auto' || overflow === 'hidden' || overflow === 'scroll') {
+          el.style.setProperty('overflow', 'visible', 'important');
+        }
+      });
+
+      // Fix gambar logo agar tidak terlalu besar
+      clone.querySelectorAll('img').forEach(img => {
+        img.style.setProperty('max-width', '100%', 'important');
+        img.style.setProperty('max-height', '100%', 'important');
+        img.style.setProperty('object-fit', 'contain', 'important');
+      });
+
+      const printWindow = window.open('', '_blank');
+
+      if (!printWindow) {
+        alert('Popup diblokir! Izinkan popup untuk localhost.');
+        setIsPrinting(false);
+        return;
+      }
+
+      printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${selectedDepartment?.name || 'SO Bagian'}</title>
+  <style>
+    @page {
+      size: A3 landscape;
+      margin: 8mm;
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      box-sizing: border-box !important;
+    }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      width: 100% !important;
+    }
+    body > div {
+      width: 100% !important;
+      overflow: visible !important;
+    }
+    img {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain !important;
+    }
+    button {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  ${clone.outerHTML}
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }, 800);
+    };
+  <\/script>
+</body>
+</html>`);
+
+      printWindow.document.close();
+      setIsPrinting(false);
+    }, 500);
+  };
+
   const EditableField = ({
     value,
     onSave,
@@ -1573,8 +1714,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "management-representative") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -1592,17 +1733,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-sm font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
                     <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                      Effective Date : 16 June 2024
                     </p>
                   </div>
                 </div>
@@ -1876,8 +2017,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "hrga-it") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -1896,17 +2037,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -2405,8 +2546,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "management-development") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -2425,17 +2566,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -2715,8 +2856,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "manufactur-battery") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -2735,17 +2876,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       (MANUFACTURING BATTERY DEPARTMENT)
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -3485,8 +3626,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "purchasing") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -3505,17 +3646,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -4021,8 +4162,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "mi-she") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -4041,17 +4182,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -4436,8 +4577,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "manufacturing-cable") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -4455,17 +4596,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -5669,8 +5810,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "finance") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -5688,17 +5829,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -6108,8 +6249,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "marketing-battery") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -6127,17 +6268,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -6508,8 +6649,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "marketing-engineering") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -6527,17 +6668,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -7255,8 +7396,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "ppic") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -7274,17 +7415,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       ({dept.header.title})
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -8340,8 +8481,8 @@ const SoBagianEditor = () => {
 
     if (selectedDepartment.id === "qa") {
       return (
-        <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1000px] relative p-4">
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
             {/* Header Section */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
@@ -8360,17 +8501,17 @@ const SoBagianEditor = () => {
                   style={{ height: "160px" }}
                 >
                   <div>
-                    <h1 className="text-xs font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                       STRUKTUR ORGANISASI
                     </h1>
-                    <h2 className="text-xs font-semibold text-gray-700 mb-1">
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
-                    <h3 className="text-xs font-semibold text-gray-600 mb-1">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
                       (MANUFACTURING BATTERY DEPARTMENT)
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 30 September 2025
+                    <p className="text-sm text-gray-500">
+                      Effective Date : 16 Maret 2026
                     </p>
                   </div>
                 </div>
@@ -9033,7 +9174,7 @@ const SoBagianEditor = () => {
         ) : selectedDepartment && departmentData[selectedDepartment.id] ? (
           <div className="space-y-4">
             {/* Editor Toolbar */}
-            <div className="bg-white shadow-sm border rounded-lg p-4">
+            <div className="bg-white shadow-sm border rounded-lg p-4 no-print">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <button
@@ -9059,17 +9200,45 @@ const SoBagianEditor = () => {
                   </button>
                 </div>
 
-                {isEditMode && (
+                <div className="flex items-center gap-3">
+                  {/* Tombol Print */}
                   <button
-                    onClick={() => openSubmitModal()}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    onClick={handlePrint}
+                    disabled={isPrinting}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-60"
+                    title="Print / Simpan sebagai PDF"
                   >
-                    Submit for Approval
+                    {isPrinting ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Menyiapkan...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                          />
+                        </svg>
+                        Print / PDF
+                      </>
+                    )}
                   </button>
-                )}
+
+                  {isEditMode && (
+                    <button
+                      onClick={() => openSubmitModal()}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    >
+                      Submit for Approval
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Save confirmation */}
               {showSaveDialog && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-800 font-semibold">

@@ -511,7 +511,7 @@ const Ppic = () => {
                     (PPC & WAREHOUSE DEPARTMENT)
                   </h3>
                   <p className="text-md text-gray-500">
-                    Effective Date : 30 September 2025
+                    Effective Date : 16 Maret 2026
                   </p>
                 </div>
               </div>
