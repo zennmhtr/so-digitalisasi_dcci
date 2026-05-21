@@ -23,37 +23,287 @@ const DashboardEditorAdvanced = () => {
       setOrganizationData(JSON.parse(savedData));
     } else {
       const initialData = {
-        header: {
-          title: "ORGANIZATION STRUCTURE",
-          company: "PT DHARMA CONTROLCABLE INDONESIA",
-          effectiveDate: "08/09/2025"
+      header: {
+        title: "ORGANIZATION STRUCTURE",
+        company: "PT DHARMA CONTROLCABLE INDONESIA",
+        effectiveDate: "08/09/2025",
+        regNo: "08/10/2025",
+        preparedDate: "08/09/2025",
+        approvedDate: "08/09/2025",
+      },
+      signatures: {
+        preparedBy: {
+          name: "Diki Wahyudi",
+          date: "16/03/2026",
         },
-        commissioners: {
-          president: {
-            title: "PRESIDENT COMMISIONER",
-            name: "IRIANTO SANTOSO"
+        middleBy: {
+          title: "Bambang Wuryanto",
+          name: "Bambang Wuryanto",
+          date: "16/03/2026",
+        },
+        approvedBy: {
+          name: "Eko Maryanto",
+          date: "16/03/2026",
+        },
+      },
+      commissioners: {
+        president: {
+          title: "PRESIDENT COMMISIONER",
+          name: "IRIANTO SANTOSO",
+        },
+        commissioners: ["SUBAGIO", "HONG KUO MING", "LIAO CHIN HSIEN"],
+      },
+      structure: {
+        // Board of Directors - Column 1
+        bod: [
+          {
+            id: "bod-1",
+            code: "BOD1.0",
+            title: "PRESIDENT DIRECTOR",
+            name: "EKO MARYANTO",
+            empId: "23100235",
           },
-          commissioners: ["SUBAGIO", "HONG KUO MING", "LIAO CHIN HSIEN"]
-        },
-        structure: {
-          bod: [
-            { id: 'bod-1', code: 'BOD1.0', title: 'PRESIDENT DIRECTOR', name: 'EKO MARYANTO', empId: '23100235' },
-            { id: 'bod-2', code: 'BOD1.1', title: 'DIRECTOR', name: 'BAMBANG WURYANTO', empId: '23200038' }
-          ],
-          management: [
-            { id: 'mio-1', code: 'MIO1.0', title: 'MI & SHE (5R-SMK3-ISO 14001)', name: 'ELIATA DUMAR GINTING', empId: '23190806' }
-          ],
-          divisions: [
-            { id: 'div-1', label: 'CONTROLCABLE BUSINESS', type: 'business-label' }
-          ],
-          departments: [
-            { id: 'qa-1', code: 'QAC1.0', title: 'QA', name: 'M BAGUS SANTOSO', empId: '23220025' }
-          ],
-          sections: [
-            { id: 'prd-1', code: 'PRD1.0', title: 'CONTROLCABLE MANUFACTURE', name: 'KARNA SATIA SALIM*', empId: '23230114' }
-          ]
-        },
-        positions: {} 
+          {
+            id: "bod-2",
+            code: "BOD1.1",
+            title: "DIRECTOR",
+            name: "BAMBANG WURYANTO",
+            empId: "23200038",
+          },
+        ],
+        // Management Functions - Column 2
+        management: [
+          {
+            id: "mio-1",
+            code: "MIO1.0",
+            title: "MI & SHE (5R-SMK3-ISO 14001)",
+            name: "ELIATA DUMAR GINTING",
+            empId: "23190806",
+            clickable: true,
+            route: "/mi-she",
+          },
+          {
+            id: "mdo-1",
+            code: "MDO1.0",
+            title: "MANAGEMENT DEVELOPMENT/PDCA",
+            name: "WAHYU KARTIKO ADI",
+            empId: "23240005",
+            type: "combined",
+            clickable: true,
+            route: "/management-development",
+          },
+          {
+            id: "mro-1",
+            code: "MRO1.0",
+            title: "MANAGEMENT REPRESENTATIVE",
+            name: "SUGIYARTO*",
+            empId: "23600041",
+            clickable: true,
+            route: "/management-representative",
+          },
+          {
+            id: "cro-1",
+            code: "CRO1.0",
+            title: "CUSTOMER REPRESENTATIVE 2 WHEEL",
+            name: "SUMIYARTO*",
+            empId: "23030015",
+          },
+          {
+            id: "cro-2",
+            code: "CRO2.0",
+            title: "CUSTOMER REPRESENTATIVE 4 WHEEL",
+            name: "DWI PURWANTO*",
+            empId: "23030023",
+          },
+        ],
+        // Business Labels - Column 3
+        business: [
+          {
+            id: "bus-1",
+            label: "CONTROLCABLE OPERATION",
+            type: "business-label",
+          },
+          {
+            id: "bus-2",
+            label: "DC BATTERY BUSINESS",
+            type: "business-label"
+          },
+        ],
+        // Division Labels - Column 4
+        divisions: [
+          {
+            id: "mkt2-0",
+            code: "MKT2.0",
+            title: "MARKETING",
+            name: "DADANG AHMAD JUNAEDI",
+            empId: "11230640",
+          }
+        ],
+        // Department Head - Column 5
+        departments: [
+          {
+            id: "qa-1",
+            code: "QAC1.0",
+            title: "QUALITY ASSURANCE",
+            name: "M BAGUS SANTOSO",
+            empId: "23220025",
+            clickable: true,
+            route: "/qa-department",
+          },
+          {
+            id: "ppic-1",
+            code: "PPIC1.0",
+            title: "PPC & WAREHOUSE",
+            name: "DIKI WAHYUDI",
+            empId: "23060056",
+            clickable: true,
+            route: "/ppic",
+          },
+          {
+            id: "mkt-eng",
+            code: "ENG1.0",
+            title: "ENGINEERING",
+            name: "ANDREAS AGUNG S.",
+            empId: "23040119",
+            clickable: true,
+            route: "/marketing-engineering",
+          },
+          {
+            id: "mkt-2",
+            code: "MKT1.0",
+            title: "MARKETING",
+            name: "TBD",
+          },
+          {
+            id: "mkt-adv",
+            code: "MKT2.0",
+            title: "MARKETING ADV.",
+            name: "ANDREAS AGUNG S.",
+            empId: "23040119",
+            clickable: true,
+            route: "/marketing-battery-department",
+          },
+          {
+            id: "hrd-1",
+            code: "HRD1.0",
+            title: "HRDGA & IT",
+            name: "DIKI WAHYUDI*",
+            empId: "23060056",
+            clickable: true,
+            route: "/hrga-it-department",
+          },
+          {
+            id: "rnd-1",
+            code: "RND1.0",
+            title: "RND & BESS",
+            name: "RENDRA PRAMONO",
+            empId: "23200067",
+          },
+          {
+            id: "pch-1",
+            code: "PCH1.0",
+            title: "PURCHASING",
+            name: "DIKI WAHYUDI*",
+            empId: "23060056",
+            clickable: true,
+            route: "/purchasing",
+          },
+        ],
+        // Section Head / Engineering Product Leader - Column 6
+        sections: [
+          {
+            id: "prd-1",
+            code: "PRD1.0",
+            title: "MANUFACTURE CONTROLCABLE",
+            name: "KARNA SATIA SALIM*",
+            empId: "23230114",
+            clickable: true,
+            route: "/manufacturing-cable",
+          },
+          {
+            id: "eng1-1",
+            code: "ENG1.1",
+            title: "ENGINEERING",
+            name: "SUGIYARTO",
+            empId: "23060041"
+          },
+          {
+            id: "mkt1-1",
+            code: "MKT1.1",
+            title: "MARKETING",
+            name: "SAVITRI OCTAVIANI",
+            empId: "23130254"
+          },
+          {
+            id: "hrd1-1",
+            code: "HRD1.1",
+            title: "HRDGA & IT",
+            name: "THARISA ARRAHMA R.",
+            empId: "23230072"
+          },
+          {
+            id: "mkt2-1",
+            code: "MKT2.1",
+            title: "MARKETING DC BATTERY",
+            name: "CHRYSNA YULIAWAN**",
+            empId: "23240177"
+          },
+          {
+            id: "prd-2",
+            code: "PRD2.0",
+            title: "PRODUCTION & PME BATTERY",
+            name: "DIONISIUS AUGUSTO**",
+            empId: "23220105",
+            clickable: true,
+            route: "/manufactur-battery",
+          },
+          {
+            id: "qac2-0",
+            code: "QAC2.0",
+            title: "QA BATTERY",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "rnd1-1",
+            code: "RND1.1",
+            title: "AUX & POWER BATTERY ENGINEERING",
+            name: "BRIAN BUDI SANTOSO**",
+            empId: "23210077",
+          },
+          {
+            id: "rnd1-2",
+            code: "RND1.2",
+            title: "ESS ENGINEERING",
+            name: "RAIHAN RAMADHAN**",
+            empId: "23220104",
+          },
+          {
+            id: "rnd1-3",
+            code: "RND1.3",
+            title: "MICRO CONTROLLER ENGINEERING",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "mkt3.0",
+            code: "MKT3.0",
+            title: "MARKETING BESS",
+            name: "TBD",
+            empId: "-"
+          },
+          {
+            id: "fin-1",
+            code: "FIN1.0",
+            title: "FINANCE & ACCOUNTING",
+            name: "YULIUS PERMATA",
+            empId: "23220017",
+            clickable: true,
+            route: "/finance-department",
+          },
+        ],
+      },
+      positions: {}
       };
       
       setOrganizationData(initialData);

@@ -291,9 +291,8 @@ const JobdescForm = ({
                   onChange={(e) =>
                     handleInputChange("division", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.division ? "border-red-300" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.division ? "border-red-300" : "border-gray-300"
+                    }`}
                   placeholder="Enter division"
                 />
                 {errors.division && (
@@ -311,9 +310,8 @@ const JobdescForm = ({
                   onChange={(e) =>
                     handleInputChange("positionTitle", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.positionTitle ? "border-red-300" : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.positionTitle ? "border-red-300" : "border-gray-300"
+                    }`}
                   placeholder="Enter position title"
                 />
                 {errors.positionTitle && (
@@ -332,9 +330,8 @@ const JobdescForm = ({
                 type="text"
                 value={formData.reportsTo}
                 onChange={(e) => handleInputChange("reportsTo", e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.reportsTo ? "border-red-300" : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.reportsTo ? "border-red-300" : "border-gray-300"
+                  }`}
                 placeholder="Enter supervisor/manager name"
               />
               {errors.reportsTo && (
