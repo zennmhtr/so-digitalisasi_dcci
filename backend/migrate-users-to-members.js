@@ -10,7 +10,7 @@ require('dotenv').config();
 const migrateUsersToMembers = async () => {
   try {
     console.log('🔄 Starting migration: Users to Members');
-    
+
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
@@ -28,7 +28,7 @@ const migrateUsersToMembers = async () => {
     for (const user of users) {
       // Check if member already exists
       const existingMember = await Member.findOne({ user: user._id });
-      
+
       if (!existingMember) {
         // Create new member record
         const member = new Member({
@@ -46,7 +46,7 @@ const migrateUsersToMembers = async () => {
 
         // Update job descriptions to reference the new member
         const jobDescriptions = await JobDescription.find({ user: user._id });
-        
+
         for (const jobDesc of jobDescriptions) {
           jobDesc.member = member._id;
           await jobDesc.save();
