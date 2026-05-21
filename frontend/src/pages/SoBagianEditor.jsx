@@ -51,13 +51,11 @@ const SoBagianEditor = () => {
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
-
         const statusMap = {};
 
         allJobdesc.forEach(jd => {
           const jdNoPNK = (jd.memberNoPNK || "").trim();
           const jdName = (jd.memberName || "").trim().toUpperCase();
-
           if (jdNoPNK) statusMap[jdNoPNK] = true;
           if (jdName) statusMap[jdName] = true;
         })
@@ -75,95 +73,69 @@ const SoBagianEditor = () => {
     }
   }, [selectedDepartment]);
 
-  const onCodeClick = async (item) => {
-    setSelectedJob(item);
-    setShowJobModal(true);
-    setLoadingJobdesc(true);
-    setJobdescData(null);
+ const onCodeClick = async (item) => {
+  setSelectedJob(item);
+  setShowJobModal(true);
+  setLoadingJobdesc(true);
+  setJobdescData(null);
 
-    try {
-      console.log("🔍 Searching job description for:", {
-        name: item.name,
-        empId: item.empId,
-        title: item.title,
+  try {
+    const response = await fetch(
+      `http://localhost:3001/api/jobdescriptions`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      const allJobdesc = result.data || result;
+      const deptKeywords = {
+        "PPIC": ["PPIC", "PPC", "WAREHOUSE", "WHS", "DELIVERY", "PLANNING"],
+        "HRD":  ["HRD", "HRGA", "GA", "IT", "INFORMATION", "POD"],
+        "MFG":  ["MANUFACTURING", "MFG", "PRODUKSI"],
+        "PRD":  ["MANUFACTURING", "PRD", "CABLE"],
+        "QA":   ["QUALITY", "QA", "QC"],
+        "MKT":  ["MARKETING", "MKT", "SALES"],
+        "FIN":  ["FINANCE", "ACCOUNTING", "FIN", "SAP"],
+        "MR":   ["MR", "MANAGEMENT REPRESENTATIVE"],
+        "PUR":  ["PURCHASING", "PUR", "PROCUREMENT"],
+        "ENG":  ["ENGINEERING", "ENG"],
+      };
+
+      const foundJobdesc = allJobdesc.find((jd) => {
+        const jdNoPNK = (jd.memberNoPNK || "").trim();
+        const itemEmpId = (item.empId || "").trim();
+
+        if (!itemEmpId || itemEmpId === "-" || !jdNoPNK) return false;
+        if (jdNoPNK !== itemEmpId) return false;
+        if (item.code) {
+          const codePrefix = item.code.replace(/[\d.]/g, "").toUpperCase();
+          const keywords = deptKeywords[codePrefix];
+          if (keywords && keywords.length > 0) {
+            const posTitle = (jd.positionTitle || "").toUpperCase();
+            return keywords.some(kw => posTitle.includes(kw));
+          }
+        }
+
+        return true; // fallback jika prefix tidak dikenal
       });
 
-      const response = await fetch(
-        `http://localhost:3001/api/jobdescriptions`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("📦 API Response structure:", {
-          hasData: !!result.data,
-          isArray: Array.isArray(result.data),
-          dataLength: result.data?.length,
-        });
-
-        const allJobdesc = result.data || result;
-        console.log("📋 Total Job Descriptions:", allJobdesc.length);
-
-        const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || "").trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || "").trim();
-          const itemName = (item.name || "").trim().toUpperCase();
-          const itemEmpId = (item.empId || "").trim();
-
-          console.log("🔄 Comparing:", {
-            jdName,
-            jdNoPNK,
-            itemName,
-            itemEmpId,
-            nameMatch: jdName === itemName,
-            empIdMatch: jdNoPNK === itemEmpId,
-          });
-
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) {
-            console.log("✅ MATCH by empId!", jdNoPNK);
-            return true;
-          }
-
-          if (jdName && itemName && jdName === itemName) {
-            console.log("✅ MATCH by exact name!", jdName);
-            return true;
-          }
-
-          if (
-            jdName &&
-            itemName &&
-            (jdName.includes(itemName) || itemName.includes(jdName))
-          ) {
-            console.log("⚠️ PARTIAL MATCH by name!", { jdName, itemName });
-            return true;
-          }
-
-          return false;
-        });
-
-        if (foundJobdesc) {
-          console.log("✅ Job description found:", {
-            memberName: foundJobdesc.memberName,
-            memberNoPNK: foundJobdesc.memberNoPNK,
-            positionTitle: foundJobdesc.positionTitle,
-          });
-          setJobdescData(foundJobdesc);
-        } else {
-          console.log("❌ No job description found for:", item.name);
-        }
+      if (foundJobdesc) {
+        console.log("✅ Found:", foundJobdesc.positionTitle);
+        setJobdescData(foundJobdesc);
       } else {
-        console.error("❌ API response not ok:", response.status);
+        console.log("❌ Not found for:", item.name);
       }
-    } catch (error) {
-      console.error("❌ Error fetching job description:", error);
-    } finally {
-      setLoadingJobdesc(false);
     }
-  };
+  } catch (error) {
+    console.error("❌ Error:", error);
+  } finally {
+    setLoadingJobdesc(false);
+  }
+};
 
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
@@ -316,7 +288,7 @@ const SoBagianEditor = () => {
             code: "MDO2.0",
             title: "MANAGEMENT DEVELOPEMENT/PDCA",
             name: "WAHYU KARTIKO ADI",
-            empId: "23240175",
+            empId: "23240005",
           },
         ],
       },
@@ -7598,6 +7570,7 @@ const SoBagianEditor = () => {
                           name: dept.header.head,
                           empId: dept.header.empId,
                           title: dept.header.title,
+                          departmentOid: dept.header.departmentOid,
                         })}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">

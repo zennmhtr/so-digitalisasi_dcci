@@ -237,7 +237,7 @@ const DEPARTMENTS_DATA = [
             ],
             karyawan: [
                 { no: 1, npk: "23230114", nama: "KARNA SATIA SALIM", jabatan: "MANAGEMENT DEVELOPMENT/PDCA", bagian: "MANAGEMENT DEVELOPMENT", kompetensiValues: [2, 2, 2, 3, 3, 4], standarKompetensi: [1, 2, 4, 2], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
-                { no: 2, npk: "23240175", nama: "WAHYU KARTIKO ADI", jabatan: "MANAGEMENT DEVELOPMENT/PDCA", bagian: "MANAGEMENT DEVELOPMENT", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
+                { no: 2, npk: "23240005", nama: "WAHYU KARTIKO ADI", jabatan: "MANAGEMENT DEVELOPMENT/PDCA", bagian: "MANAGEMENT DEVELOPMENT", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
             ]
         }
     },

@@ -53,16 +53,23 @@ const HrgaIt = () => {
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
+
         const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
           const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
+
+          if (!itemEmpId || itemEmpId === '-' || !jdNoPNK) return false;
+          if (jdNoPNK !== itemEmpId) return false;
+
+          // Jika item punya departmentOid, gunakan untuk disambiguasi
+          if (item.departmentOid) {
+            const jdDeptOid = (jd.department?.$oid || '').trim();
+            return jdDeptOid === item.departmentOid;
+          }
+
+          return true;
         });
+
         if (foundJobdesc) setJobdescData(foundJobdesc);
       }
     } catch (error) {
@@ -94,9 +101,11 @@ const HrgaIt = () => {
   const defaultData = {
     header: {
       title: "HRGA & IT",
+      id: "hrd-1",
       code: "HRD1.0",
       head: "DIKI WAHYUDI*",
       empId: "23060056",
+      departmentOid: "690c1df801e848a06615dee9",
     },
     positions: [
       {
@@ -559,13 +568,13 @@ const HrgaIt = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">{orgData.header.title || ""}</p>
+                      <p className="text-sm font-semibold leading-tight">{orgData.header.title.code || ""}</p>
                     </div>
                   </div>
 
                   <div className="flex border-b border-gray-300 flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId })}
+                      {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId, departmentOid: orgData.header.departmentOid})}
                     </div>
                     <div className="p-3 flex-1 text-center flex flex-col justify-center">
                       <p className="text-sm font-semibold leading-tight">{orgData.header.head}</p>

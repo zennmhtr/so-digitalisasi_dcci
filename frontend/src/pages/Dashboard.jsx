@@ -261,16 +261,16 @@ const Dashboard = () => {
       signatures: {
         preparedBy: {
           name: "Diki Wahyudi",
-          date: "08/09/2025",
+          date: "16/03/2026",
         },
         middleBy: {
           title: "Bambang Wuryanto",
           name: "Bambang Wuryanto",
-          date: "08/09/2025",
+          date: "16/03/2026",
         },
         approvedBy: {
           name: "Eko Maryanto",
-          date: "08/09/2025",
+          date: "16/03/2026",
         },
       },
       commissioners: {
@@ -465,8 +465,8 @@ const Dashboard = () => {
             id: "hrd1-1",
             code: "HRD1.1",
             title: "HRDGA & IT",
-            name: "TBD",
-            empId: "-"
+            name: "THARISA ARRAHMA R.",
+            empId: "23230072"
           },
           {
             id: "mkt2-1",

@@ -112,7 +112,7 @@ const ManagementDevelopment = () => {
         code: "MDO2.0",
         title: "MANAGEMENT DEVELOPEMENT/PDCA",
         name: "WAHYU KARTIKO ADI",
-        empId: "23240175",
+        empId: "23240005",
       },
     ],
   };

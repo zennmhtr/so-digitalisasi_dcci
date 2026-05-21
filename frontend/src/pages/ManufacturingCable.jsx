@@ -94,9 +94,11 @@ const ManufacturingCable = () => {
   const defaultData = {
     header: {
       title: "CONTROLCABLE MANUFACTURE",
+      id: "prd-1",
       code: "PRD1.0",
       head: "KARNA SATIA SALIM*",
       empId: "23230114",
+      departmentOid: "690c183901e848a06615dd89",
     },
     positions: [
       {
@@ -771,7 +773,7 @@ const ManufacturingCable = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[100px] w-[180px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                  {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId })}
+                  {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId, departmentOid: orgData.header.departmentOid })}
                 </div>
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>

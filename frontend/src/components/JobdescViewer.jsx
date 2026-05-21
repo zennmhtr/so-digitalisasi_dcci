@@ -527,24 +527,16 @@ const JobdescViewer = ({
               </div>
 
               <div>
-                <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
-                <ol className="list-decimal list-inside space-y-1 text-sm">
-                  {jobdesc.competence?.skill &&
-                    jobdesc.competence.skill.length > 0 ? (
-                    jobdesc.competence.skill.map((skill, index) => (
-                      <li key={index}>{skill}</li>
-                    ))
-                  ) : (
-                    <>
-                      <li>Microsoft Office</li>
-                      <li>Komunikasi</li>
-                      <li>Negosiasi</li>
-                      <li>SAP</li>
-                      <li>Control Plan</li>
-                    </>
-                  )}
-                </ol>
-              </div>
+  <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
+  <ol className="list-decimal list-inside space-y-1 text-sm">
+    {jobdesc.competence?.skill
+      ?.filter(skill => skill.trim() !== "")
+      .map((skill, index) => (
+        <li key={index}>{skill}</li>
+      ))
+    }
+  </ol>
+</div>
             </div>
           </div>
 
