@@ -1,0 +1,264 @@
+[{
+  "_id": {
+    "$oid": "6909ab54834a902ebe5a8fc2"
+  },
+  "noPNK": "ADM001",
+  "name": "System Administrator",
+  "email": "admin@hr-digital.com",
+  "username": "admin",
+  "password": "$2a$10$MI48wK2VFJkqspJGYMt9GOcwJmVgye9vtWekKc7eidWoWCkld.WgG",
+  "role": {
+    "$oid": "6909ab53834a902ebe5a8fbd"
+  },
+  "department": {
+    "$oid": "6909ab53834a902ebe5a8fb7"
+  },
+  "status": "active",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-11-04T07:29:24.262Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-04T07:29:24.262Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "noPNK": "23200038",
+  "name": "Bambang Wuryanto",
+  "email": "bambang@dcci.com",
+  "username": "bambangwur",
+  "password": "$2a$10$vyF89DBjWG2lmitYAJnFoOCZ3el6L78kln0o6P2hFDJaMsyFCP2QW",
+  "role": {
+    "$oid": "6912948f79f4ad22c019d36e"
+  },
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2025-11-11T01:46:15.541Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T02:19:29.918Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "noPNK": "23060056",
+  "name": "Diki Wahyudi",
+  "email": "dikiwahyudi@dcci.com",
+  "username": "dikiwahyudi",
+  "password": "$2a$10$5OB5ijmPnU7wzYZiZTVIieWsVuxAaQ0o.yEsmtjhbPQcrgiSnhLc.",
+  "role": {
+    "$oid": "69362be14dc8d04c31081f8b"
+  },
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2025-11-20T07:14:17.620Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T02:20:51.168Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693279fcc4605c9ddd502a96"
+  },
+  "noPNK": "23220060",
+  "name": "Syifa Nur Mulyani",
+  "email": "syifa123@dcci.com",
+  "username": "syifaaa",
+  "password": "$2a$10$fjv6.nOB9V7QahC1P7KALeNUXYX9TcxMfcTns/I4yCy.h/l2D1yva",
+  "role": {
+    "$oid": "69327ba9c4605c9ddd502ac5"
+  },
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2025-12-05T06:21:48.414Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:16:11.759Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "693fbbcbcd3acff4599fc659"
+  },
+  "noPNK": "23230072",
+  "name": "Tharisa Arrahma Riandi",
+  "email": "tharisaarrahma@dcci.com",
+  "username": "tharisa",
+  "password": "$2a$10$mRrwkpYwEzWUC9aEFPw/4O8.fCDh71jBZK4TiK5hdfEfgXgPF67CW",
+  "role": {
+    "$oid": "693fbb7bcd3acff4599fc644"
+  },
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2025-12-15T07:42:03.247Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:15:20.281Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698ee115c30a8993fd2b05c8"
+  },
+  "noPNK": "23230017",
+  "name": "Rif'qi Fathah",
+  "email": "rif'qi@dcci.com",
+  "username": "rifqifathah",
+  "password": "$2a$10$AkQ0LjLY2jBz64PPMpUZDullWgGVzkCgwZl.1pVZroSVhUJvUZO82",
+  "role": {
+    "$oid": "69327ba9c4605c9ddd502ac5"
+  },
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-02-13T08:30:13.757Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:14:57.704Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69e840a5e7e844e2faf897a3"
+  },
+  "noPNK": "01010101",
+  "name": "Super Admin",
+  "email": "superadmin@dcci.com",
+  "username": "superadmin",
+  "password": "$2a$10$eqWxrnXIHBGeWrr6s8TuMe3Sh88MHO1VM4DOJIDQwYBoi/vuoRmsG",
+  "role": {
+    "$oid": "69e8405ee7e844e2faf8978e"
+  },
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-04-22T03:29:41.190Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T03:07:57.917Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "noPNK": "23220017",
+  "name": "Yulius Permata",
+  "email": "yulius@dcci.com",
+  "username": "yuliuspermata",
+  "password": "$2a$10$S/R3ky/wtN82BLbLXUvqauUR3QdMd9fPEeo0RxJQkjOYN.sjpN6nO",
+  "role": {
+    "$oid": "691ebf97e66ff7ee7cfe7342"
+  },
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-18T04:54:21.966Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T04:16:17.417Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bb6ba6947832b7c76cd73"
+  },
+  "noPNK": "23230114",
+  "name": "Karna Katia Salim",
+  "email": "karna@dcci.com",
+  "username": "karnakatiasalim",
+  "password": "$2a$10$Xi3rCaCwQ/B9Y45O9q/Hu.VmWDH1YHJlwinq2qGLQ8xdEDr6SVP1u",
+  "role": {
+    "$oid": "6a0bb67c6947832b7c76cd59"
+  },
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-19T01:02:50.770Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:15:42.095Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc79071d24a5c3e869757"
+  },
+  "noPNK": "23600041",
+  "name": "Sugiyarto",
+  "email": "sugiyarto@dcci.com",
+  "username": "sugiyarto",
+  "password": "$2a$10$a8xNnM5VQMEZS.x8VwzNwO1UhJ.u6ua1LXLZvzVZxp4EXpP/u0pmS",
+  "role": {
+    "$oid": "6914368089551508f4cd2ae1"
+  },
+  "department": {
+    "$oid": "690c180501e848a06615dd7f"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-19T02:14:40.598Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:14:40.598Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "noPNK": "23220105",
+  "name": "Dionisius Augusto",
+  "email": "dionaugusto@dcci.com",
+  "username": "dionaugus",
+  "password": "$2a$10$XvqjBu6.BXCm3x4c5P.SgeyBjX9ipNM3KUuyqCZompiEaPdNIKVsG",
+  "role": {
+    "$oid": "6a0c133371d24a5c3e86a652"
+  },
+  "department": {
+    "$oid": "690c182301e848a06615dd84"
+  },
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-19T07:36:01.085Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T07:37:31.402Z"
+  },
+  "__v": 0
+}]

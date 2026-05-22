@@ -125,7 +125,7 @@ const Dashboard = () => {
         const foundJobdesc = allJobdescs.find((jd) => {
           const jdName = (jd.memberName || "").trim().toUpperCase();
           const jdNoPNK = (jd.memberNoPNK || "").trim();
-          const itemName = (item.name || "").trim().toUpperCase();
+          const itemName = (item.name || "").replace(/\*+$/, "").trim().toUpperCase();
           const itemEmpId = (item.empId || "").trim();
 
           console.log("🔄 Comparing:", {
@@ -1543,12 +1543,41 @@ const Dashboard = () => {
         </>
       )}
 
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+
+
+        {/* Print Button - Only show if user has permission */}
+        {canPrint && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handlePrint}
+              className="no-print bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                />
+              </svg>
+              Print A3
+            </button>
+          </div>
+        )}
+      </div>
       {/* Organization Chart - Dynamic, synced with editor */}
       <div
         className="dashboard-print-container bg-white rounded-lg shadow-sm p-4 overflow-x-auto"
         ref={containerRef}
       >
-        // Dashboard.jsx
+        {/* Dashboard.jsx */}
         <StaticOrgChart
           organizationData={organizationData}
           onCodeClick={onCodeClick}

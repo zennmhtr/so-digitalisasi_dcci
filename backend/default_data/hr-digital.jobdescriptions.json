@@ -1,0 +1,1808 @@
+[{
+  "_id": {
+    "$oid": "6a0a8ed3855487f4495ab73b"
+  },
+  "user": {
+    "$oid": "68ecacb08f550c9c647138c6"
+  },
+  "memberName": "Diki Wahyudi",
+  "memberNoPNK": "23060056",
+  "memberEmail": "test@gmail.com",
+  "memberPosition": "Sect Head",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION",
+  "positionTitle": "HRD & GA SECT.HEAD",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD",
+  "responsibilities": [
+    "Membuat rencana activity tahunan Dept. HRD & GA",
+    "Membuat MPP tahunan",
+    "Membuat budgeting HRD & GA tahunan",
+    "Membuat IPP Target tim HRD & GA",
+    "Bersama dengan POD relook kebutuhan organisasi",
+    "Bersama dengan POD melakukan people review terhadap talent people dengan User dan BOD",
+    "Bersama team mengeksekusi rencana activity yang sudah ditetapkan",
+    "Membuat reporting bulanan mengenai pencapaian kinerja Dept. HRD & GA",
+    "Mengkoordinir proses penilaian kinerja tahunan seluruh karyawan",
+    "Menjaga hubungan industrial yang baik dengan karyawan, pemerintah, & lingkungan sekitar",
+    "Melakukan audit terhadap supplier yang berkaitan dengan HRD & GA",
+    "Melakukan review activity plan",
+    "Ikut melakukan program penghematan (CR Program) sesuai kebijakan perusahaan"
+  ],
+  "accountabilities": [
+    "Mengetahui data Kekaryawanan (Personalia)",
+    "Mengetahui dan mampu mengakses data Talent People",
+    "Mengetahui data PK (Penilaian Kinerja) karyawan",
+    "Mengetahui struktur organisasi"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Departement Head",
+      "All Department",
+      "SMA/SMK",
+      "Lingkungan"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Managing Change",
+      "Empowerment",
+      "Fostering Teamwork",
+      "Analysis and Decision Making",
+      "Planning & Controlling",
+      "Integrity & Ethics",
+      "Excellence",
+      "Compassion",
+      "Humility"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Recruitment & Selection",
+      "Training & Development",
+      "Performance Management",
+      "Talent Management ",
+      "DBHTP"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 25 Tahun",
+    "education": "Minimal S1",
+    "nonFormalEducation": "-",
+    "experience": "Min. 3 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "draft",
+  "createdBy": {
+    "$oid": "68e776aedb39fb4d0629929e"
+  },
+  "createdAt": {
+    "$date": "2026-05-18T07:46:45.607Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T01:55:37.462Z"
+  },
+  "__v": 0,
+  "member": {
+    "$oid": "68f59699b50b4d63687ef545"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0bc36671d24a5c3e869467"
+  },
+  "member": {
+    "$oid": "6a0a984ad909ffb81bf18ea1"
+  },
+  "user": null,
+  "memberName": "YULIUS PERMATA",
+  "memberNoPNK": "23220017",
+  "memberEmail": null,
+  "memberPosition": "Senior Staff",
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "FINANCE & ACCOUNTING SECT.HEAD\t\t\t",
+  "reportsTo": "DIRECTOR\t\t",
+  "responsibilities": [
+    "Melakukan supervisi & kordinasi atas kegiatan operasional keuangan\n",
+    "Bertanggung jawab terhadap saldo kas di bank, kas kecil dan surat berharga\n",
+    "Membuat planning arus kas mingguan secara triwulan\n",
+    "Mengontrol realisasi planning arus kas\n",
+    "Mengontrol efektifitas collection (tepat waktu)\n",
+    "Mengecek dan mengontrol delivery order dan invoice penjualan\t\t\t\t\t\t\t\n",
+    "Mengecek dan melakukan cash opname kas kecil\n",
+    "Mempersiapkan pembayaran ke supplier\t\t\t\t\t\t\t\t\n",
+    "Membuat laporan rekonsiliasi bank\n",
+    "Mengontrol akurasi dan update laporan pinjaman bank, SHL, dan affiliasi perusahaan\n",
+    "Mengontrol penyelesaian uang muka\n",
+    "Menjaga akurasi outstanding account payable dan account receivable\n",
+    "Membuat dan memperbaharui SOP Finance & Accounting\t\t\t\t\t\t\t\t\n",
+    "Melakukan penilaian performance staff\n",
+    "Melakukan kaderisasi di level bawahan\n",
+    "Melakukan improvement proses kegiatan operasionak Finance & Accounting\n",
+    "Menganalisa laporan keuangan\n",
+    "Menganalisa costing (variance) dan presentasi performance secara bulanan\n"
+  ],
+  "accountabilities": [
+    "Mengetahui saldo kas bank dan mutasi transaksi\n",
+    "Mengetahui data keuangan\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "All Department",
+      "Supplier",
+      "Customer",
+      "Bank dan Instansi keuangan lainnya",
+      "SUBCO Dharma Group"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Managing Change",
+      "Empowerment",
+      "Fostering Teamwork",
+      "Analysis and Decision Making",
+      "Planning & Controlling",
+      "Integrity & Ethics",
+      "Excellence",
+      "Compassion",
+      "Humility"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Cashflow Planning & Analysis",
+      "Computer",
+      "Communication",
+      "Tax Knowledge ",
+      "PSAK",
+      "Financial Statement",
+      "Bank Knowledge",
+      "5R"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 25 Tahun\n",
+    "education": "Min. S1 Akuntansi / Ekonomi\n",
+    "nonFormalEducation": "",
+    "experience": "Min. 3 Tahun\n",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:56:54.035Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:56:54.038Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:56:54.038Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc37171d24a5c3e869492"
+  },
+  "member": {
+    "$oid": "6a0a9875d909ffb81bf18eaa"
+  },
+  "user": null,
+  "memberName": "FAKHDARENI",
+  "memberNoPNK": "23060055",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "tanggal": {
+    "$date": "2026-05-19T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "FINANCE & ACCOUNTING STAFF\t\t\t",
+  "reportsTo": "FINANCE & ACCOUNTING SECT.HEAD\t\t",
+  "responsibilities": [
+    "Melakukan Supervisi & Koordinasi atas kegiatan accounting & masalah perpajakan. \n",
+    "Membuat laporan keuangan dengan akurat & tepat waktu.\n",
+    "Menganalisa costing (Variance) & presentasi performance secara bulanan.\n",
+    "Mengontrol laporan perpajakan bulanan tepat waktu & tertib administrasi sesuai peraturan perpajakan yang berlaku.\n",
+    "Mereview, mengecek dan mengverifikasi jurnal transaksi dan lampiran dokumen.\n",
+    "Mencocokan bukti penerimaan barang dengan daftar hutang.\t\t\t\t\t\t\t\n",
+    "Melakukan koordinasi pelaksanaan stock opname berkala (Inventory & Aktivita tetap)\n",
+    "Menjaga akurasi fisik aktivita tetap vs dengan list.\t\t\t\t\t\t\t\t\n",
+    "Melakukan improvement proses kegiatan accounting dept.\n",
+    "Melakukan cash opname kas kecil.\n",
+    "Menjaga akurasi saldo hutang-piutang trade dan lain-lain.\n",
+    "Memastikan pencatatan mutasi persediaan telah dilakukan sesuai prosedur dan akurat. \n",
+    "Memastikan pencatatan reject, scrapt telah dilakukan sesuai prosedur.\t\t\t\t\t\t\t\t\n",
+    "Pelaporan SPM tepat waktu dan akurat (PPN, PPh 21, PPh 22, PPh 23, PPh 25, PPh 26, PPh Psl 4 (2))\n",
+    "Memastikan faktur pajak & bukti potong yang diterima adalah asli/sah dan tanpa cacat.\n"
+  ],
+  "accountabilities": [
+    "Paraf Laporan Pajak Bulanan\n",
+    "Paraf Jurnal Transaksi\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department",
+      "Instansi Pajak ",
+      "Bank Indonesia ",
+      "Kantor Akuntan / Auditor",
+      "Afiliasi Company"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Managing Change",
+      "Empowerment",
+      "Fostering Teamwork",
+      "Analysis and Decision Making",
+      "Planning & Controlling",
+      "Integrity & Ethics",
+      "Excellence",
+      "Compassion",
+      "Humility"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "General Accounting & Cost Accounting ",
+      "PSAK (Pernyataan Standar Akuntansi Keuangan)",
+      "Tax Knowledge ",
+      "SAP-FICO",
+      "Computer Application",
+      "English Communication"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 25 Tahun\n",
+    "education": "Min. D3 Akuntansi (Manajemen)\n",
+    "nonFormalEducation": "",
+    "experience": "Min. 2 Tahun\n",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:57:05.339Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:57:05.340Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:57:05.340Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc37d71d24a5c3e8694bd"
+  },
+  "member": {
+    "$oid": "6a0a9881d909ffb81bf18eb3"
+  },
+  "user": null,
+  "memberName": "KHOIRUNNISA",
+  "memberNoPNK": "23170572",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION",
+  "positionTitle": "FINANCE & ACCOUNTING STAFF\t\t\t",
+  "reportsTo": "FINANCE & ACCOUNTING SECT.HEAD\t\t",
+  "responsibilities": [
+    "Melakukan Rekap BPB (Bukti Penerimaan Barang) dari PPIC\n",
+    "Membuat Invoice \n",
+    "Melakukan Input Sales\n",
+    "Menginput E-SPT Faktur Pajak Masukan dan Keluaran\n",
+    "Menginput Pembelian \n",
+    "Input memorial PPN & Reclass Purchase Accrued\t\t\t\t\t\t\t\n",
+    "Kontrol DO (Delivery Order)\n"
+  ],
+  "accountabilities": [
+    "Mengetahui Update Sales \n",
+    "Menggunakan Program E-SPT & GL \n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Team work",
+      "Trouble Shooting",
+      "Cross Functional Capability ",
+      "Customer Satisfication",
+      "Cost Efficiency ",
+      "Personal Integrity",
+      "Driver For Result "
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Computer",
+      "5R ",
+      "Pajak"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 22 Tahun\n",
+    "education": "SMK Akuntansi \n",
+    "nonFormalEducation": "",
+    "experience": "Min. 2 Tahun\n",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:57:17.479Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:57:17.480Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:57:17.480Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc38771d24a5c3e8694ea"
+  },
+  "member": {
+    "$oid": "6a0a9893d909ffb81bf18ebc"
+  },
+  "user": null,
+  "memberName": " SITI ROKHAYATI",
+  "memberNoPNK": "23120177",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "SAP STAFF\t\t\t",
+  "reportsTo": "FINANCE & ACCOUNTING SECT.HEAD\t\t",
+  "responsibilities": [
+    "Mengoperasikan dan memelihara sistem SAP sesuai kebutuhan bisnis\n",
+    "Melakukan input, monitoring, dan validasi data dalam sistem SAP\n",
+    "Memberikan dukungan (support) kepada user terkait penggunaan SAP\n",
+    "Mengidentifikasi dan menyelesaikan masalah (troubleshooting) pada sistem\n",
+    "Berkoordinasi dengan tim IT dan departemen terkait untuk pengembangan sistem\n",
+    "Menyusun laporan dari sistem SAP untuk kebutuhan operasional dan manajemen\t\t\t\t\t\t\t\n"
+  ],
+  "accountabilities": [
+    "Menginput dan memperbarui data di sistem SAP\n",
+    "Memvalidasi dan menolak data yang tidak sesuai\n",
+    "Berkoordinasi untuk penyelesaian kendala sistem\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Team work",
+      "Trouble Shooting",
+      "Cross Functional Capability ",
+      "Customer Satisfication",
+      "Cost Efficiency ",
+      "Personal Integrity",
+      "Driver For Result "
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Computer",
+      "5R",
+      "SAP"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 22 Tahun",
+    "education": "SMK Akuntansi",
+    "nonFormalEducation": "",
+    "experience": "Min. 2 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:57:27.972Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:57:27.974Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:57:27.974Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc39271d24a5c3e869515"
+  },
+  "member": {
+    "$oid": "6a0a98a0d909ffb81bf18ec5"
+  },
+  "user": null,
+  "memberName": "ANNISA NUR HANDAYANI",
+  "memberNoPNK": "23120198",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "SAP STAFF\t\t\t",
+  "reportsTo": "FINANCE & ACCOUNTING SECT.HEAD\t\t",
+  "responsibilities": [
+    "Mengoperasikan dan memelihara sistem SAP sesuai kebutuhan bisnis\n",
+    "Melakukan input, monitoring, dan validasi data dalam sistem SAP\n",
+    "Memberikan dukungan (support) kepada user terkait penggunaan SAP\n",
+    "Mengidentifikasi dan menyelesaikan masalah (troubleshooting) pada sistem\n",
+    "Berkoordinasi dengan tim IT dan departemen terkait untuk pengembangan sistem\n",
+    "Menyusun laporan dari sistem SAP untuk kebutuhan operasional dan manajemen\t\t\t\t\t\t\t\n"
+  ],
+  "accountabilities": [
+    "Menginput dan memperbarui data di sistem SAP\n",
+    "Memvalidasi dan menolak data yang tidak sesuai\n",
+    "Berkoordinasi untuk penyelesaian kendala sistem\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Team work",
+      "Trouble Shooting",
+      "Cross Functional Capability ",
+      "Customer Satisfication",
+      "Cost Efficiency ",
+      "Personal Integrity",
+      "Driver For Result "
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Computer",
+      "5R",
+      "SAP"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 22 Tahun",
+    "education": "SMK Akuntansi",
+    "nonFormalEducation": "",
+    "experience": "Min. 2 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0a9b7dd909ffb81bf18f1f"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:57:38.880Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:57:38.881Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:57:38.881Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc39d71d24a5c3e869540"
+  },
+  "member": {
+    "$oid": "69c62483c1e4b127bd3332c1"
+  },
+  "user": null,
+  "memberName": "VERONICA HANI M.",
+  "memberNoPNK": "23240206",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "POD STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Bersama-sama dengan user membuat perencanaan development karyawan \n",
+    "Menyusun bersama user terkait kebutuhan man power plan (MPP)\n",
+    "Mengusulkan strategi sourcing and selection guna memenuhi kebutuhan MPP\n",
+    "Menjalankan proses attract guna memenuhi kebutuhan MPP sesuai time line dan kebutuhan organisasi \n",
+    "Melakukan Proses People Review terhadap Talent People dengan User & BOD\n",
+    "Menjalankan dan memonitoring IDP guna menunjang proses career plan, development plan, dan succesion plan karyawan\n",
+    "Melakukan Proses Pengembangan karyawan baik melalui Off The Job Training maupun On The Job Training\t\t\t\t\t\t\t\t\n",
+    "Memfasilitasi proses assessment center di lingkungan perusahaan\n",
+    "Melakukan update/review terkait Struktur Organisasi & Jobdesc diseluruh fungsi sesuai dengan kebutuhan organisasi\n",
+    "Melaksanakan Performance plan, performance monitoring dan performance appraisal berjalan sesuai rencana \n",
+    "Memfasilitasi pelaksanaan Penilaian Kinerja Tahunan\n",
+    "Ikut melakukan program penghematan (CR program) sesuai kebijakan perusahaan \t\t\t\t\t\t\t\t\n",
+    "Melakukan dan memonitoring aktivitas culture di lingkungan perusahaan \n"
+  ],
+  "accountabilities": [
+    "Memiliki akses terkait data karyawan di level tertentu (sesuai kebijakan)\n",
+    "Mengetahui tool psikotes\n",
+    "Memberikan rekomendasi kepada atasan terkait MP specification untuk seluruh fungsi\n",
+    "Memberikan rekomendasi standar competency khususnya managerial competency untuk posisi tertentu\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Departement Head",
+      "Semua Departement",
+      "SMA/SMK",
+      "Lingkungan "
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Leads Courageously\t",
+      "Coach & Develop Others\t",
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfaction\t",
+      "Cross Functional Capability\t",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continuous Improvement\t",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result",
+      "Learning"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Recruitment & Selection",
+      "Training & Development",
+      "Performance Management",
+      "Talent Management ",
+      "DBHTP"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 22 Tahun",
+    "education": "Min. S1 Psikologi",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:57:49.746Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:57:49.748Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:57:49.748Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3aa71d24a5c3e86956b"
+  },
+  "member": {
+    "$oid": "69c623eec1e4b127bd33327f"
+  },
+  "user": null,
+  "memberName": "THARISA ARRAHMA",
+  "memberNoPNK": "23230072",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "HRD / PERSONALIA STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mengelola administrasi kekaryawanan menggunakan sistem HRIS\n",
+    "Menangani, memonitor, mengontrol dan membuat laporan jam kerja, lembur dan absensi karyawan \n",
+    "Melakukan perhitungan gaji karyawan sesuai dengan level golongan \n",
+    "Melakukan rekonsiliasi perhitungan pembayaran BPJS Kesehatan, BPJS Ketenagakerjaan, dan Dana pensiun\n",
+    "Melaksanakan aktifitas pengelolaan fasilitas dan benefit seluruh karyawan \t\t\t\t\t\t\t\t\t\n",
+    "Membuat laporan update data minus point & man power profile bulanan \t\t\t\t\t\t\t\t\n",
+    "Melakukan update data karyawan setiap awal  tahun\n",
+    "Melakukan proses recruitment & administrasi untuk karyawan gol 1-2\n",
+    "Memonitoring pemberian sanksi user terhadap pelanggaran ketidakdisiplinan karyawan \n",
+    "Menjalin hubungan industrial yang baik terutama dengan pihak internal (karyawan) dan eksternal\t\t\t\t\t\t\t\t\n",
+    "Menjalankan dan memonitoring IDP guna menunjang proses career plan, development plan, (Gol 1-2)\n",
+    "Melakukan support untuk assesment karyawan \n"
+  ],
+  "accountabilities": [
+    "Mengetahui data kekaryawanan kecuali gaji\n",
+    "Mengetahui data jumlah jam lembur karyawan \n",
+    "Mengetahui Fasben untuk level golongan 1-3\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Departement Head",
+      "Semua Departement",
+      "SMA / SMK",
+      "Lingkungan "
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Leads Courageously\t",
+      "Coach & Develop Others\t",
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfaction\t",
+      "Cross Functional Capability\t",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continuous Improvement\t",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result",
+      "Learning"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "HR for Non HR",
+      "Teknik Wawancara ",
+      "Master Budget ",
+      "Menguasai pilar TMS ",
+      "Microsoft Office"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 18 Tahun",
+    "education": "Min. SLTA",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:02.325Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:02.326Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:02.326Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3b471d24a5c3e869596"
+  },
+  "member": {
+    "$oid": "69c624d2c1e4b127bd3332ed"
+  },
+  "user": null,
+  "memberName": "ROZIQIN",
+  "memberNoPNK": "23070074",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "IT STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mengelola, mengembangkan dan mengevaluasi HCMS (Human Capital Management System)\n",
+    "Menyiapkan dan melakukan instalasi sistem \n",
+    "Menyusun spesifikasi, standard, programming sistem Human Capital \n",
+    "Melakukan integrasi aplikasi atau sistem HC di lingkungan internal perusahaan \n",
+    "Mengembangkan modul aplikasi HMCS sesuai kebutuhan user dan perusahaan serta bug fixing aplikasi \t\t\t\t\t\t\t\t\t\n",
+    "Mengelola database karyawan di system dan memastikan kekurasian informasi \t\t\t\t\t\t\t\t\n",
+    "Mengimplementasi sistem database (dashboard) yang terintegrasi\n",
+    "Menganalisa software yang tepat dan dapat dilakukan implementasi\t\t\t\t\t\t\t\t\n",
+    "Bertanggungjawab terhadap jaringan internet\n",
+    "Memonitoring pemakaian internet\t\t\t\t\t\t\t\t\n",
+    "Melakukan perawatan hardware dan software \t\t\t\t\t\t\t\t\n"
+  ],
+  "accountabilities": [
+    "Melakukan koordinasi dengan semua departement di perusahaan dan semua level hingga level CEO\n",
+    "Memutuskan solusi saat terjadinya trouble di sistem\n",
+    "Mengetahui data karyawan perusahaan \n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Semua Departement"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Leads Courageously\t",
+      "Coach & Develop Others\t",
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfaction\t",
+      "Cross Functional Capability\t",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continuous Improvement\t",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result",
+      "Learning"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Komputer ",
+      "Filling System",
+      "Negosiasi",
+      "English Communication "
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 24 Tahun",
+    "education": "Min. S1 Teknik Informatika",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:12.538Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:12.539Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:12.539Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3be71d24a5c3e8695c1"
+  },
+  "member": {
+    "$oid": "69c624f7c1e4b127bd333303"
+  },
+  "user": null,
+  "memberName": "FARHANSYAH A.L",
+  "memberNoPNK": "23220040",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "IT STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Menyiapkan dan melakukan instalasi sistem \n",
+    "Menganalisa software yang tepat dan dapat dilakukan implementasi\t\t\t\t\t\t\t\t\n",
+    "Bertanggungjawab terhadap jaringan internet\n",
+    "Memonitoring pemakaian internet\t\t\t\t\t\t\t\t\n",
+    "Melakukan perawatan hardware dan software \t\t\t\t\t\t\t\t\n"
+  ],
+  "accountabilities": [
+    "Melakukan koordinasi dengan semua departement di perusahaan dan semua level hingga level CEO\n",
+    "Memutuskan solusi saat terjadinya trouble di sistem\n",
+    "Mengetahui data karyawan perusahaan \n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Semua Departement"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Leads Courageously\t",
+      "Coach & Develop Others\t",
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfaction\t",
+      "Cross Functional Capability\t",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continuous Improvement\t",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result",
+      "Learning"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Komputer ",
+      "Filling System",
+      "Negosiasi",
+      "English Communication "
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 24 Tahun",
+    "education": "Min. S1 Teknik Informatika",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:22.512Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:22.513Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:22.513Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3c771d24a5c3e8695ec"
+  },
+  "member": {
+    "$oid": "69c62426c1e4b127bd333295"
+  },
+  "user": null,
+  "memberName": "SUPRIADI",
+  "memberNoPNK": "23120131",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "GA STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Melakukan pemeliharan Gedung, Fasilitas Kantor, & Fasilitas Umum\n",
+    "Mengatur pengelolaan pengambilan limbah B3 & Rumah tangga (Non B3) dengan pihak ke-3\n",
+    "Mendata & mengatur permintaan kendaraan operasional \n",
+    "Melakukan pengurusan perpanjangan surat-surat perizinan perusahaan (Domisili, KITAS, TDP, Lapor \n",
+    "Menjalin hubungan industrial yang baik dengan pemerintah & lingkungan sekitar \t\t\t\t\t\t\t\t\t\n",
+    "Mengatur dan mengawasi kinerja security, Driver, OB/OG \t\t\t\t\t\t\t\t\n",
+    "Melakukan pengecekan pemakaian Air, Listrik & Telepon\n"
+  ],
+  "accountabilities": [
+    "Mengetahui data aset perusahaan \n",
+    "Memiliki kewenangan dalam mengaudit supplier / vendor yang berhubungan dengan GA \n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Semua Departement",
+      "Lingkungan",
+      "Supplier"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Directiveness",
+      "Monitoring",
+      "Teamwork",
+      "Quality & Customer Focus\t",
+      "Continous Improvement\t",
+      "Personal Integrity",
+      "Drive For Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Komputer (Ms. Word, Ms. Excel, Ms. PowerPoint)",
+      "Filling System",
+      "Comunication Skill",
+      "TKTD & Safety",
+      "Pengetahuan regulasi pemerintah "
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 20 Tahun",
+    "education": "Min. SLTA",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:31.067Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:31.069Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:31.069Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3d171d24a5c3e869617"
+  },
+  "member": {
+    "$oid": "69c62455c1e4b127bd3332ab"
+  },
+  "user": null,
+  "memberName": "PARTINI LUPI",
+  "memberNoPNK": "23110116",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "GA STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mengkoordinir pembagian atribut kerja (Seragam & APD)\n",
+    "Mengorganisasikan kebutuhan dapur, ATK & P3K\n",
+    "Melakukan monitoring terhadap kinerja catering perusahaan \t\t\t\t\t\t\t\t\n",
+    "Mengatur dan mengawasi kinerja OB/OG \t\t\t\t\t\t\t\t\n"
+  ],
+  "accountabilities": [
+    "Mengetahui data aset perusahaan \n",
+    "Memiliki kewenangan dalam mengaudit supplier/vendor yang berhubungan dengan GA \n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Semua Departement",
+      "Supplier"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Directiveness",
+      "Monitoring",
+      "Teamwork",
+      "Quality & Customer Focus\t",
+      "Continous Improvement\t",
+      "Personal Integrity",
+      "Drive For Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Komputer (Ms. Word, Ms. Excel, Ms. PowerPoint)",
+      "Filling System",
+      "Comunication Skill",
+      "TKTD & Safety",
+      "Pengetahuan regulasi pemerintah "
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 20 Tahun",
+    "education": "Min. SLTA",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:41.621Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:41.622Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:41.622Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc3da71d24a5c3e869649"
+  },
+  "member": {
+    "$oid": "69c624a7c1e4b127bd3332d7"
+  },
+  "user": null,
+  "memberName": "MIMBARYANTO",
+  "memberNoPNK": "23120158",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "tanggal": {
+    "$date": "2026-05-19T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "INDUSTRIAL RELATION STAFF\t\t\t",
+  "reportsTo": "HRDGA & IT DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Memastikan kepatuhan terhadap peraturan perusahaan dan pemerintah terkait tenaga kerja\n",
+    "Melaksanakan pembinaan hubungan karyawan untuk menciptakan lingkungan kerja yang kondusif untuk semua pihak\n",
+    "Mengatasi dan mengantisipasi perselisihan yang melibatkan serikat pekerja, manajemen, karyawan atau pemerintah\t\t\t\t\t\t\t\t\t\n",
+    "Menindaklanjuti laporan terkait pelanggaran peraturan perusahaan bekerjasama dengan pihak-pihak terkait. \t\t\t\t\t\t\t\t\n",
+    "Membuat laporan kasus yang di selesaikan\n",
+    "Menjalin komunikasi antara pekerja dan manajemen guna membangun hubungan baik\n",
+    "Melaksanakan program perusahaan untuk memberi dukungan kepada para karyawan\n",
+    "Memastikan kontribusi bagi karyawan secara konsisten untuk menghindari konflik\n",
+    "Melindungi kepentingan, baik untuk manajemen maupun pekerja\n"
+  ],
+  "accountabilities": [
+    "Mengetahui Policy perusahaan\n",
+    "Menggunakan fasilitas perusahaan untuk menunjang pekerjaan\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Semua Departement",
+      "Lingkungan"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Leads Courageously\t",
+      "Coach & Develop Others\t",
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfaction\t",
+      "Cross Functional Capability\t",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continuous Improvement\t",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result",
+      "Learning"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Pengetahuan UU tenaga kerja",
+      "Microsoft Office",
+      "Perjanjian Kerja Bersama",
+      "Komunikasi"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 23 Tahun",
+    "education": "Min. S1",
+    "nonFormalEducation": "",
+    "experience": "Min. 3 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T01:58:50.982Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T01:58:50.984Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:58:50.984Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bc9d871d24a5c3e869811"
+  },
+  "member": {
+    "$oid": "6a0bc84a71d24a5c3e8697c7"
+  },
+  "user": null,
+  "memberName": "BOBI SAPUTRA",
+  "memberNoPNK": "23240175",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c180501e848a06615dd7f"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "MR STAFF\t\t\t",
+  "reportsTo": "MR SECT.HEAD\t\t",
+  "responsibilities": [
+    "Memastikan persyaratan pengendalian dokumen pelanggan terpenuhi\n",
+    "Memastikan semua dokumen dan rekaman dikendalikan sesuai prosedur pengendalian dokumen \n",
+    "Membuat list dokumen dan memastikan revisi terupdate yang digunakan \n",
+    "Melakukan pemetaan performance untuk pembuatan jadwal audit \n",
+    "Mempersiapkan internal audit lengkap dengan dokumen dan kebutuhan lainnya\n",
+    "Membuat form PICA dan klarifikasi form dengan auditor\n",
+    "Melakukan follow up PICA ke pada auditee\n",
+    "Membuat laporan audit \t\t\t\t\t\t\t\t\n",
+    "Membuat list PICA Eksternal dan melakukan verifikasi terhadap implementasi rencana perbaikan\n",
+    "Menjalankan 5R di area kerja\n",
+    "Menjalankan tugas yang lain yang diberikan oleh pimpinan untuk mendukung kelangsungan bisnis perusahaan \n"
+  ],
+  "accountabilities": [
+    "Membuat sistem pengendalian dokumen pelanggan sesuai kebijakan dan prosedur yang berlaku\n",
+    "Mendistribusikan dokumen pelanggan ke bagian terkait prosedur yang sudah ada \n",
+    "Mempunyai akses ke Ruangan Penyimpanan Drawing\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Customer",
+      "Semua Departement"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Managing Change",
+      "Empowerment",
+      "Fostering Teamwork",
+      "Analysis and Decision Making",
+      "Planning & Controlling",
+      "Integrity & Ethics",
+      "Excellence",
+      "Compassion",
+      "Humility"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Process & Product Knowledge",
+      "Komputer",
+      "Management Dokumentasi ",
+      "Sistem Management Mutu ISO 9001/IATF 16949",
+      "Sistem Management Lingkungan ISO 14001"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 20 Tahun",
+    "education": "Min SMU / SMK",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0bc79071d24a5c3e869757"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T02:24:24.317Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T02:24:24.319Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:24:24.319Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bcf7f71d24a5c3e869972"
+  },
+  "member": {
+    "$oid": "6a0bcec071d24a5c3e869939"
+  },
+  "user": null,
+  "memberName": "SUGIYARTO",
+  "memberNoPNK": "23600041",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c180501e848a06615dd7f"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "MR SECT.HEAD\t\t\t",
+  "reportsTo": "DIRECTOR\t\t",
+  "responsibilities": [
+    "Memastikan seluruh persyaratan pengendalian dokumen pelanggan dan internal dipenuhi dan berjalan efektif\n",
+    "Mengawasi pengendalian dokumen dan rekaman agar sesuai dengan prosedur yang berlaku\n",
+    "Memastikan daftar dokumen dan revisi yang digunakan selalu terupdate dan akurat\n",
+    "Mengkoordinasi pemetaan performance untuk penyusunan jadwal audit secara tepat waktu\n",
+    "Memimpin persiapan internal audit lengkap dengan seluruh dokumen dan kebutuhan pendukung\n",
+    "Mengawasi pembuatan form PICA dan klarifikasi bersama auditor\n",
+    "Memantau dan memastikan follow-up PICA dilakukan dengan efektif kepada auditee\n",
+    "Mengawasi pembuatan dan penyampaian laporan audit yang akurat dan tepat waktu\n",
+    "Mengontrol daftar PICA Eksternal serta melakukan verifikasi implementasi rencana perbaikan secara menyeluruh\n",
+    "Memastikan penerapan prinsip 5R berjalan optimal di seluruh area kerja\n",
+    "Mengelola dan mendistribusikan tugas yang diberikan pimpinan untuk memastikan kelangsungan bisnis perusahaan\n"
+  ],
+  "accountabilities": [
+    "Membuat sistem pengendalian dokumen pelanggan sesuai kebijakan dan prosedur yang berlaku\n",
+    "Mendistribusikan dokumen pelanggan ke bagian terkait prosedur yang sudah ada \n",
+    "Mempunyai akses ke Ruangan Penyimpanan Drawing\n"
+  ],
+  "interactions": {
+    "internal": [
+      "Direksi",
+      "Customer",
+      "Semua Departement"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Managing Change",
+      "Empowerment",
+      "Fostering Teamwork",
+      "Analysis and Decision Making",
+      "Planning & Controlling",
+      "Integrity & Ethics",
+      "Excellence",
+      "Compassion",
+      "Humility"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Process & Product Knowledge",
+      "Komputer",
+      "Management Dokumentasi ",
+      "Sistem Management Mutu ISO 9001/IATF 16949",
+      "Sistem Management Lingkungan ISO 14001"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 25 Tahun",
+    "education": "Min. S1",
+    "nonFormalEducation": "",
+    "experience": "Min. 3 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "6a0bc79071d24a5c3e869757"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T02:48:31.369Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T02:48:31.370Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:48:31.370Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bdb2c71d24a5c3e869db5"
+  },
+  "member": {
+    "$oid": "6a0aae9cd909ffb81bf191e2"
+  },
+  "user": null,
+  "memberName": "RIF'QI FATHAH",
+  "memberNoPNK": "23230017",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "CONTROLCABLE MATERIAL STAFF\t\t\t",
+  "reportsTo": "PURCHASING DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mencari dan menganalisa calon supplier yang sesuai dengan kebutuhan\n",
+    "Melakukan negosiasi harga sesuai dengan standar kualitas barang dan memastikan tanggal pengirimannya\n",
+    "Melakukan kordinasi dengan pihak supplier mengenai kelengkapan dokumen\n",
+    "Berkordinasi dengan user mengenai jadwal pegiriman barang dan jumlah yang akan diorder\n",
+    "Berkordinasi dengan pihak ketiga untuk pengaturan pengiriman barang (Part Impot)\n",
+    "Melakukan pemilihan/seleksi supplier sesuai dengan kriteria perusahaan\n",
+    "Bekerjasama dengan Departemen terkait untuk memastikan kelancaran operasional perusahaan\n",
+    "Pemenuhan persyaratan legal terkait dengan regulasi yang berkaitan dengan proses pembelian\n",
+    "Melakukan visit/audit supplier secara berkala atau sesuai dengan jadwal\n",
+    "Membuat laporan pembelian\n"
+  ],
+  "accountabilities": [
+    "Menggunakan fasilitas untuk menunjang pekerjaan\n",
+    "Pengajuan Supplier\n",
+    "Mengeluarkan PO dengan persetujuan samai dengan BOD\n",
+    "Melakukan Audit Supplier\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Departemen",
+      "Supplier / Vendor",
+      "Customer"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfication",
+      "Cross Functional Capability",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continious Improvement",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Microsoft Office",
+      "Komunikasi",
+      "Negosiasi",
+      "SAP",
+      "Control Plan"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 21 Tahun",
+    "education": "Min. D3",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6909ab54834a902ebe5a8fc2"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T03:38:20.394Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T03:38:20.396Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T03:38:20.396Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bdb3571d24a5c3e869de0"
+  },
+  "member": {
+    "$oid": "6a0aaeabd909ffb81bf191eb"
+  },
+  "user": null,
+  "memberName": " SYIFA NUR MULYANI",
+  "memberNoPNK": "23220060",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "GENERAL PARTS STAFF\t\t\t",
+  "reportsTo": "PURCHASING DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mencari dan menganalisa calon supplier yang sesuai dengan kebutuhan\n",
+    "Melakukan negosiasi harga sesuai dengan standar kualitas barang dan memastikan tanggal pengirimannya\n",
+    "Melakukan kordinasi dengan pihak supplier mengenai kelengkapan dokumen\n",
+    "Berkordinasi dengan user mengenai jadwal pegiriman barang dan jumlah yang akan diorder\n",
+    "Berkordinasi dengan pihak ketiga untuk pengaturan pengiriman barang (Part Impot)\n",
+    "Melakukan pemilihan/seleksi supplier sesuai dengan kriteria perusahaan\n",
+    "Bekerjasama dengan Departemen terkait untuk memastikan kelancaran operasional perusahaan\n",
+    "Pemenuhan persyaratan legal terkait dengan regulasi yang berkaitan dengan proses pembelian\n",
+    "Melakukan visit/audit supplier secara berkala atau sesuai dengan jadwal\n",
+    "Membuat laporan pembelian\n"
+  ],
+  "accountabilities": [
+    "Menggunakan fasilitas untuk menunjang pekerjaan\n",
+    "Pengajuan Supplier\n",
+    "Mengeluarkan PO dengan persetujuan samai dengan BOD\n",
+    "Melakukan Audit Supplier\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Departemen",
+      "Supplier/Vendor"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfication",
+      "Cross Functional Capability",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continious Improvement",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Microsoft Office",
+      "Komunikasi",
+      "Negosiasi",
+      "SAP",
+      "Membaca Drawing"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 21 Tahun",
+    "education": "Min. D3",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "6909ab54834a902ebe5a8fc2"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T03:38:29.790Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T03:38:29.792Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T03:38:29.792Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bdda871d24a5c3e869e4a"
+  },
+  "member": {
+    "$oid": "694364a70d3fc86c9ead02db"
+  },
+  "user": null,
+  "memberName": "MARCHELINO DWI PUTRANTO",
+  "memberNoPNK": "23250234",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "BATTERY PARTS STAFF\t\t\t",
+  "reportsTo": "PURCHASING DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mencari dan menganalisa calon supplier yang sesuai dengan kebutuhan\n",
+    "Melakukan negosiasi harga sesuai dengan standar kualitas barang dan memastikan tanggal pengirimannya\n",
+    "Melakukan kordinasi dengan pihak supplier mengenai kelengkapan dokumen\n",
+    "Berkordinasi dengan user mengenai jadwal pegiriman barang dan jumlah yang akan diorder\n",
+    "Berkordinasi dengan pihak ketiga untuk pengaturan pengiriman barang (Part Impot)\n",
+    "Melakukan pemilihan/seleksi supplier sesuai dengan kriteria perusahaan\n",
+    "Bekerjasama dengan Departemen terkait untuk memastikan kelancaran operasional perusahaan\n",
+    "Pemenuhan persyaratan legal terkait dengan regulasi yang berkaitan dengan proses pembelian\n",
+    "Melakukan visit/audit supplier secara berkala atau sesuai dengan jadwal\n",
+    "Membuat laporan pembelian\n"
+  ],
+  "accountabilities": [
+    "Menggunakan fasilitas untuk menunjang pekerjaan\n",
+    "Pengajuan Supplier\n",
+    "Mengeluarkan PO dengan persetujuan samai dengan BOD\n",
+    "Melakukan Audit Supplier\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department",
+      "Supplier/Vendor"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfication",
+      "Cross Functional Capability",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continious Improvement",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Microsoft Office",
+      "Komunikasi",
+      "Negosiasi",
+      "SAP",
+      "Control Plan"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 21 Tahun",
+    "education": "Min. D3",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "69e840a5e7e844e2faf897a3"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T03:48:56.012Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T03:48:56.014Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T03:48:56.014Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0bddb071d24a5c3e869e77"
+  },
+  "member": {
+    "$oid": "698ee17cc30a8993fd2b0610"
+  },
+  "user": null,
+  "memberName": "ELITRI SULISTYO",
+  "memberNoPNK": "23110112",
+  "memberEmail": null,
+  "memberPosition": "Staff",
+  "department": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "tanggal": {
+    "$date": "2026-03-27T00:00:00.000Z"
+  },
+  "revisi": "0",
+  "division": "ADMINISTRATION\t\t\t",
+  "positionTitle": "SUBCONT PROCESS STAFF\t\t\t",
+  "reportsTo": "PURCHASING DEPARTMENT HEAD\t\t",
+  "responsibilities": [
+    "Mencari dan menganalisa calon supplier yang sesuai dengan kebutuhan\n",
+    "Kordinasi dengan bagian terkait untuk persiapan pekerjaan di subcont\n",
+    "Melakukan kordinasi dengan pihak supplier mengenai kelengkapan dokumen\n",
+    "Berkordinasi dengan user mengenai jadwal pegiriman barang dan jumlah yang akan diorder\n",
+    "Melakukan pemilihan/seleksi supplier sesuai dengan kriteria perusahaan\n",
+    "Bekerjasama dengan Departemen terkait untuk memastikan kelancaran operasional perusahaan\n",
+    "Problem solving jika terdapat delay material yang berpengaruh ke subcont\n",
+    "Kordinasi dengan bagian terkait jika ditemukan barang No Good (NG)\n",
+    "Melakukan STO bulanan di area subcont\n",
+    "Pelaporan target dan kinerja di subcont \n"
+  ],
+  "accountabilities": [
+    "Menggunakan fasilitas untuk menunjang pekerjan\n",
+    "Pengajuan Supplier\n",
+    "Melakukan Audit Supplier\n"
+  ],
+  "interactions": {
+    "internal": [
+      "All Department",
+      "Supplier/Vendor"
+    ],
+    "external": []
+  },
+  "competence": {
+    "managerial": [
+      "Teamwork",
+      "Trouble Shooting",
+      "Customer Satisfication",
+      "Cross Functional Capability",
+      "Quality Focus",
+      "Cost Efficiency",
+      "Continious Improvement",
+      "Planning Monitoring",
+      "Personal Integrity",
+      "Drive for Result"
+    ],
+    "technical": [],
+    "behavioral": [],
+    "skill": [
+      "Microsoft Office",
+      "Komunikasi",
+      "Negosiasi",
+      "SAP",
+      "Control Plan"
+    ]
+  },
+  "jobSpecification": {
+    "age": "Min. 21 Tahun",
+    "education": "Min. D3",
+    "nonFormalEducation": "",
+    "experience": "Min. 1 Tahun",
+    "skills": [],
+    "certification": []
+  },
+  "status": "approved",
+  "createdBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "approvedBy": {
+    "$oid": "69e840a5e7e844e2faf897a3"
+  },
+  "approvedAt": {
+    "$date": "2026-05-19T03:49:04.971Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-19T03:49:04.973Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T03:49:04.973Z"
+  },
+  "__v": 0
+}]

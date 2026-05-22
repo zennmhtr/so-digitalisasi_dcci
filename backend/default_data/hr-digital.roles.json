@@ -1,0 +1,570 @@
+[{
+  "_id": {
+    "$oid": "6909ab53834a902ebe5a8fbd"
+  },
+  "name": "Super Admin",
+  "description": "Full system access with all permissions",
+  "permissions": [
+    "View Dashboard",
+    "Manage Users",
+    "Manage Roles",
+    "Manage Departments",
+    "System Configuration",
+    "View Reports",
+    "Export Data",
+    "Dashboard Editor",
+    "Dashboard Print",
+    "Approve SO Changes",
+    "View All SO Details",
+    "SO DCI Editor",
+    "Print SO",
+    "MI & SHE",
+    "PPIC",
+    "Marketing Engineering",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Purchasing SO",
+    "View QA SO",
+    "View PPIC SO",
+    "View Marketing Engineering SO",
+    "View Manufacturing Cable SO",
+    "View Management Rep SO",
+    "View HRGA & IT SO",
+    "Jobdesc Management",
+    "Finance Department",
+    "Management Development",
+    "Manufacturing Battery",
+    "Marketing Battery Department",
+    "Purchasing",
+    "QA Department",
+    "Manufacturing Cable",
+    "Management Representative",
+    "HRGA & IT Department",
+    "View Own SO Change Requests",
+    "SO Bagian Approval",
+    "SO Bagian HRGA & IT Approval",
+    "SO Bagian Editor"
+  ],
+  "active": true,
+  "__v": 21,
+  "createdAt": {
+    "$date": "2025-11-04T07:29:23.923Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-27T01:56:29.464Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6909ab53834a902ebe5a8fbe"
+  },
+  "name": "HR Admin",
+  "description": "HR department administrator with user management access",
+  "permissions": [
+    "View Dashboard",
+    "Manage Users",
+    "View Roles",
+    "View Departments",
+    "View Reports",
+    "Dashboard Editor",
+    "SO Bagian Editor",
+    "Dashboard Print",
+    "Approve SO Changes",
+    "View Own SO Change Requests"
+  ],
+  "active": true,
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-11-04T07:29:23.923Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-04T07:29:23.923Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6909ab53834a902ebe5a8fbf"
+  },
+  "name": "Department Manager",
+  "description": "Department-level manager with limited administrative access",
+  "permissions": [
+    "View Dashboard",
+    "View Users",
+    "View Reports",
+    "Approve SO Changes",
+    "View Own SO Change Requests",
+    "SO DCI Editor"
+  ],
+  "active": true,
+  "__v": 1,
+  "createdAt": {
+    "$date": "2025-11-04T07:29:23.923Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:56:34.350Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6909ab53834a902ebe5a8fc0"
+  },
+  "name": "Karyawan HRGA & IT",
+  "description": "Standard employee with basic access",
+  "permissions": [
+    "View Dashboard",
+    "SO DCI Editor",
+    "HRGA & IT Department",
+    "HRGA IT Department",
+    "SO Bagian Editor",
+    "SO Bagian Request",
+    "View HRGA & IT SO"
+  ],
+  "active": true,
+  "__v": 21,
+  "createdAt": {
+    "$date": "2025-11-04T07:29:23.923Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-20T07:09:30.800Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6909b8d056e80cbdf79cd976"
+  },
+  "name": "Karyawan Finance",
+  "description": "karyawan",
+  "permissions": [
+    "View Dashboard",
+    "SO DCI Editor",
+    "SO Bagian Request",
+    "Finance Department",
+    "View Finance SO",
+    "SO Bagian Editor"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-11-04T08:26:56.537Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-20T07:16:24.351Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6912948f79f4ad22c019d36e"
+  },
+  "name": "Director",
+  "description": "Director PT Dharma ControlCable Indonesia",
+  "permissions": [
+    "View Dashboard",
+    "Jobdesc Management",
+    "View All SO Details",
+    "Print SO",
+    "SO Changes First Approval",
+    "Approve SO Changes",
+    "Finance Department",
+    "Management Development",
+    "Manufacturing Battery",
+    "Marketing Battery Department",
+    "MI & SHE",
+    "Purchasing",
+    "QA Department",
+    "Marketing Engineering",
+    "PPIC",
+    "Manufacturing Cable",
+    "Management Representative",
+    "HRGA & IT Department",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Purchasing SO",
+    "View QA SO",
+    "View HRGA & IT SO",
+    "SO Changes Director Approval",
+    "View Management Dev SO",
+    "View Finance SO",
+    "View Management Rep SO",
+    "View Manufacturing Cable SO",
+    "View Marketing Engineering SO",
+    "View PPIC SO"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-11-11T01:42:39.535Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T05:03:05.240Z"
+  },
+  "__v": 8
+},
+{
+  "_id": {
+    "$oid": "6912968b79f4ad22c019d442"
+  },
+  "name": "President Director",
+  "description": "President Director PT. Dharma ControlCable Indonesia",
+  "permissions": [
+    "View Dashboard",
+    "Jobdesc Management",
+    "View All SO Details",
+    "Print SO",
+    "SO Changes Final Approval",
+    "Approve SO Changes",
+    "Finance Department",
+    "Management Development",
+    "Manufacturing Battery",
+    "HRGA & IT Department",
+    "Management Representative",
+    "Manufacturing Cable",
+    "Marketing Engineering",
+    "PPIC",
+    "QA Department",
+    "Marketing Battery Department",
+    "MI & SHE",
+    "Purchasing",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Purchasing SO",
+    "View QA SO",
+    "View PPIC SO",
+    "View Manufacturing Cable SO",
+    "View Marketing Engineering SO",
+    "View Management Rep SO",
+    "View HRGA & IT SO",
+    "SO Bagian Editor",
+    "SO Changes President Director Approval"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-11-11T01:51:07.194Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T05:01:39.195Z"
+  },
+  "__v": 3
+},
+{
+  "_id": {
+    "$oid": "6914368089551508f4cd2ae1"
+  },
+  "name": "Manager Representative",
+  "description": "Manager Representative Access",
+  "permissions": [
+    "View Dashboard",
+    "Jobdesc Management",
+    "SO Changes Final Approval",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View Purchasing SO",
+    "View MI & SHE SO",
+    "View QA SO",
+    "View PPIC SO",
+    "View Marketing Engineering SO",
+    "View HRGA & IT SO",
+    "View Management Rep SO",
+    "View Manufacturing Cable SO",
+    "View Own SO Change Requests",
+    "SO Changes President Director Approval",
+    "SO Bagian Request",
+    "SO Changes Director Approval",
+    "Manager Management Representative Approval",
+    "Job Desc Request",
+    "Management Representative"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-11-12T07:25:52.374Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T02:13:23.825Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "691ebf97e66ff7ee7cfe7342"
+  },
+  "name": "Manager Finance",
+  "description": "Manage Department Finance",
+  "permissions": [
+    "View Dashboard",
+    "SO DCI Editor",
+    "SO Bagian Editor",
+    "View Own SO Change Requests",
+    "SO Bagian Finance Approval",
+    "Finance Department",
+    "View Finance SO",
+    "Jobdesc Management",
+    "SO Bagian Request",
+    "Manager Finance Approval",
+    "Job Desc Request"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-11-20T07:13:27.556Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T04:55:46.469Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "69327ba9c4605c9ddd502ac5"
+  },
+  "name": "Staff Purchasing",
+  "description": "Staff Purchasing",
+  "permissions": [
+    "View Dashboard",
+    "SO Bagian Editor",
+    "View All SO Details",
+    "SO Bagian Request",
+    "Purchasing",
+    "View Purchasing SO",
+    "Job Desc Request",
+    "Print SO",
+    "Jobdesc Management",
+    "Matriks Skill Editor",
+    "View Own SO Change Requests",
+    "Manager Purchasing Approval"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-12-05T06:28:57.801Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T06:14:03.635Z"
+  },
+  "__v": 4
+},
+{
+  "_id": {
+    "$oid": "69362be14dc8d04c31081f8b"
+  },
+  "name": "Manager HRGA & IT",
+  "description": "Manage HRGA & IT Department",
+  "permissions": [
+    "View Dashboard",
+    "Jobdesc Management",
+    "View All SO Details",
+    "SO DCI Editor",
+    "Print SO",
+    "SO Bagian Editor",
+    "View Own SO Change Requests",
+    "View Purchasing SO",
+    "Purchasing",
+    "SO Bagian Purchasing Approval",
+    "HRGA & IT Department",
+    "SO Bagian HRGA & IT Approval",
+    "View HRGA & IT SO",
+    "SO Bagian PPIC Approval",
+    "View PPIC SO",
+    "PPIC",
+    "Matriks Skill Editor",
+    "Manager HRGA & IT Approval",
+    "Manager PPIC Approval",
+    "Manager Finance Approval",
+    "SO Bagian Request",
+    "Job Desc Request",
+    "Manage Departments",
+    "Manage Users",
+    "Manage Roles"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-12-08T01:37:37.558Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T03:27:47.400Z"
+  },
+  "__v": 6
+},
+{
+  "_id": {
+    "$oid": "693fbb7bcd3acff4599fc644"
+  },
+  "name": "Admin HR",
+  "description": "Admin HR",
+  "permissions": [
+    "View Dashboard",
+    "Manage Roles",
+    "Manage Users",
+    "Manage Departments",
+    "Print SO",
+    "Jobdesc Management",
+    "SO Bagian Editor",
+    "View All SO Details",
+    "SO Bagian Request",
+    "Job Desc Request",
+    "HRGA & IT Department",
+    "Management Representative",
+    "Manufacturing Cable",
+    "Marketing Engineering",
+    "PPIC",
+    "QA Department",
+    "Purchasing",
+    "MI & SHE",
+    "Marketing Battery Department",
+    "Manufacturing Battery",
+    "Management Development",
+    "Finance Department",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Purchasing SO",
+    "View QA SO",
+    "View PPIC SO",
+    "View Marketing Engineering SO",
+    "View Manufacturing Cable SO",
+    "View Management Rep SO",
+    "View HRGA & IT SO"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2025-12-15T07:40:43.862Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-15T07:40:43.862Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69e8405ee7e844e2faf8978e"
+  },
+  "name": "Admin System",
+  "description": "Can Access All Fitur",
+  "permissions": [
+    "View Dashboard",
+    "Manage Roles",
+    "Matriks Skill Editor",
+    "Manage Users",
+    "Manage Departments",
+    "SO DCI Editor",
+    "Print SO",
+    "Jobdesc Management",
+    "SO Bagian Editor",
+    "View All SO Details",
+    "SO Changes President Director Approval",
+    "SO Changes Director Approval",
+    "Manager HRGA & IT Approval",
+    "Manager Management Representative Approval",
+    "Manager Manufacturing Cable Approval",
+    "Manager Marketing Engineering Approval",
+    "Manager PPIC Approval",
+    "Manager QA Approval",
+    "Manager Finance Approval",
+    "Manager Management Development Approval",
+    "Manager Manufacturing Battery Approval",
+    "Manager Marketing Battery Approval",
+    "Manager MI & SHE Approval",
+    "Manager Purchasing Approval",
+    "HRGA & IT Department",
+    "Management Representative",
+    "Manufacturing Cable",
+    "Marketing Engineering",
+    "PPIC",
+    "QA Department",
+    "Finance Department",
+    "Management Development",
+    "Manufacturing Battery",
+    "Marketing Battery Department",
+    "MI & SHE",
+    "Purchasing",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Purchasing SO",
+    "View HRGA & IT SO",
+    "View Management Rep SO",
+    "View Manufacturing Cable SO",
+    "View Marketing Engineering SO",
+    "View PPIC SO",
+    "View QA SO",
+    "Job Desc Request",
+    "View Own SO Change Requests",
+    "SO Bagian Request"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-04-22T03:28:30.343Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-18T06:42:40.758Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6a0bb67c6947832b7c76cd59"
+  },
+  "name": "Manager MFG Cable",
+  "description": "Manage Manufacturing Cable",
+  "permissions": [
+    "View Dashboard",
+    "Manage Departments",
+    "Matriks Skill Editor",
+    "Jobdesc Management",
+    "SO Bagian Request",
+    "Manager Manufacturing Cable Approval",
+    "Job Desc Request",
+    "Manufacturing Cable",
+    "View Manufacturing Cable SO",
+    "View Own SO Change Requests",
+    "SO Changes President Director Approval",
+    "SO Changes Director Approval"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-05-19T01:01:48.086Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T07:28:40.952Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0c133371d24a5c3e86a652"
+  },
+  "name": "Manager MFG Battery",
+  "description": "Manage Manufacturing Battery Access",
+  "permissions": [
+    "View Dashboard",
+    "Manage Roles",
+    "Matriks Skill Editor",
+    "Manage Departments",
+    "Manage Users",
+    "Print SO",
+    "Jobdesc Management",
+    "SO Bagian Editor",
+    "View Own SO Change Requests",
+    "SO Bagian Request",
+    "Manager Manufacturing Battery Approval",
+    "Job Desc Request",
+    "Manufacturing Battery",
+    "View Manufacturing Battery SO"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-05-19T07:37:23.173Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T07:37:23.173Z"
+  },
+  "__v": 0
+}]

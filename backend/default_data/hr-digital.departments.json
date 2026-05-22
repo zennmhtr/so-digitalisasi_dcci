@@ -1,0 +1,180 @@
+[{
+  "_id": {
+    "$oid": "690c17e301e848a06615dd7a"
+  },
+  "code": "MD",
+  "name": "Management Development",
+  "description": "......",
+  "createdAt": {
+    "$date": "2025-11-06T03:37:07.781Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:37:07.781Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c180501e848a06615dd7f"
+  },
+  "code": "MR",
+  "name": "Management Representative",
+  "description": "....",
+  "createdAt": {
+    "$date": "2025-11-06T03:37:41.568Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:37:41.568Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c182301e848a06615dd84"
+  },
+  "code": "MB",
+  "name": "Manufacturing Battery",
+  "description": "......",
+  "createdAt": {
+    "$date": "2025-11-06T03:38:11.208Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:38:11.208Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "code": "MC",
+  "name": "Manufacturing Cable",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:38:33.914Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:38:33.914Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c185e01e848a06615dd8e"
+  },
+  "code": "MBD",
+  "name": "Marketing Battery Department",
+  "description": ".....",
+  "createdAt": {
+    "$date": "2025-11-06T03:39:10.700Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:39:10.700Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "code": "ME",
+  "name": "Marketing Engineering",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:39:44.360Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:39:44.360Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c190101e848a06615ddba"
+  },
+  "code": "MI & SHE",
+  "name": "MI & SHE",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:41:53.430Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T05:10:13.126Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "code": "PPIC",
+  "name": "PPIC",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:43:17.129Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T05:01:47.732Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c199501e848a06615ddc4"
+  },
+  "code": "PCH",
+  "name": "Purchasing",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:44:21.611Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T03:44:21.611Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "code": "QA DEPARTMENT",
+  "name": "QA Department",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T03:45:34.827Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T05:14:14.728Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c1d6701e848a06615dee0"
+  },
+  "code": "FIN",
+  "name": "Finance Department",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T04:00:39.538Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-06T04:55:07.289Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "690c1df801e848a06615dee9"
+  },
+  "code": "HRGA & IT ",
+  "name": "HRGA & IT Department",
+  "description": "...",
+  "createdAt": {
+    "$date": "2025-11-06T04:03:04.189Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T06:36:30.103Z"
+  },
+  "__v": 0
+}]

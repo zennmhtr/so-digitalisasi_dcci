@@ -2,6 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+/**
+ * StaticOrgChart - Read-only version of DraggableTraditionalLayout.
+ * Uses the EXACT same coordinate system as the editor, so positions sync perfectly.
+ * Nodes are absolutely positioned inside a `position: relative` container.
+ */
 const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus = {} }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -16,16 +21,22 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
 
   const getPos = (key, defaultX, defaultY) => {
     const p = organizationData?.positions?.[key];
-    return {
-      left: p?.x ?? defaultX,
-      top: p?.y ?? defaultY,
-    };
+    return { left: p?.x ?? defaultX, top: p?.y ?? defaultY };
   };
 
-  const CardWrapper = ({ posKey, defaultX, defaultY, style = {}, children }) => {
+  const getSize = (key, defaultW = 176, defaultH = 80) => {
+    const s = organizationData?.sizes?.[key];
+    return { width: s?.width ?? defaultW, height: s?.height ?? defaultH };
+  };
+
+  const CardWrapper = ({ posKey, defaultX, defaultY, defaultW, defaultH, style = {}, children }) => {
     const { left, top } = getPos(posKey, defaultX, defaultY);
+    const { width, height } = getSize(posKey, defaultW, defaultH);
     return (
-      <div className="absolute" style={{ left, top, zIndex: 5, ...style }}>
+      <div
+        className="absolute"
+        style={{ left, top, width, height, zIndex: 20, ...style }}
+      >
         {children}
       </div>
     );
@@ -42,6 +53,14 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
     }
   };
 
+  if (!organizationData?.structure) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
   // ── renderCodeButton ──────────────────────────────────────
   const renderCodeButton = (item) => {
     if (!item?.empId || item.empId === '-') {
@@ -55,7 +74,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
       : 'text-red-600 hover:bg-red-50';
     return (
       <button
-        className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors ${color}`}
+        className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors w-full h-full flex items-center justify-center cursor-pointer ${color}`}
         onClick={(e) => { e.stopPropagation(); onCodeClick && onCodeClick(item); }}
         title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
       >
@@ -64,110 +83,136 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
     );
   };
 
-  if (!organizationData?.structure) {
+  // Standard card renderer
+  const renderCard = (item, posKey, defaultX, defaultY) => {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
-      </div>
+      <CardWrapper key={posKey} posKey={posKey} defaultX={defaultX} defaultY={defaultY} defaultW={176} defaultH={80}>
+        <div
+          className={`bg-white border border-gray-400 rounded shadow-sm flex flex-col w-full h-full ${clickable(item)}`}
+          onClick={() => handleClick(item)}
+        >
+          <div className="flex flex-1">
+            <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
+              {renderCodeButton(item)}
+            </div>
+            <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center items-center overflow-hidden h-full">
+              <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
+              <hr className="my-1 border-gray-300 w-full" />
+              <p className="text-[8px] leading-tight break-words">{item.name}</p>
+              {item.empId && <p className="text-[8px] leading-tight">({item.empId})</p>}
+              {item.clickable && canViewSODetails && (
+                <p className="click-button no-print text-[7.5px] text-blue-600 mt-1 font-semibold">Click to view details →</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardWrapper>
     );
-  }
+  };
+
+  // ── SVG connections ────────────────────────────────────────────
+  const renderConnections = () => {
+    const conns = organizationData?.connections || [];
+    if (conns.length === 0) return null;
+
+    const getCenter = (key, edge) => {
+      const pos = organizationData?.positions?.[key];
+      if (!pos) return null;
+      const size = organizationData?.sizes?.[key] || { width: 176, height: 80 };
+      const cx = pos.x + size.width / 2;
+      if (edge === 'bottom') return { x: cx, y: pos.y + size.height };
+      if (edge === 'top') return { x: cx, y: pos.y };
+      return { x: cx, y: pos.y + size.height / 2 };
+    };
+
+    return (
+      <svg
+        className="absolute top-0 left-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 5, overflow: 'visible' }}
+      >
+        {conns.map(conn => {
+          const from = getCenter(conn.from, 'bottom');
+          const to = getCenter(conn.to, 'top');
+          if (!from || !to) return null;
+          return (
+            <line
+              key={conn.id}
+              x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+              stroke="#6b7280" strokeWidth="1.5"
+            />
+          );
+        })}
+      </svg>
+    );
+  };
 
   return (
     <div
       className="relative overflow-x-auto"
       style={{ minHeight: '2000px', minWidth: '1200px', backgroundColor: 'transparent' }}
     >
+      {renderConnections()}
+
       {/* ── Header ───────────────────────────────────────────── */}
-      <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none" style={{ zIndex: 50 }}>
+      <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
         <div className="flex justify-between items-center mb-4 pointer-events-auto">
           <div className="flex items-center">
             <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
-              <img
-                src="/logo/Logo DG New 2022.png"
-                alt="Dharma Group Logo"
-                className="w-full h-full object-contain"
-              />
+              <img src="/logo/Logo DG New 2022.png" alt="Dharma Group Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800 mb-1">
-                {organizationData.header?.title}
-              </h1>
-              <h2 className="text-lg font-semibold text-gray-700">
-                {organizationData.header?.company}
-              </h2>
-              <p className="text-sm text-gray-500">
-                Effective Date: {organizationData.header?.effectiveDate}
-              </p>
+              <h1 className="text-xl font-bold text-gray-800 mb-1">{organizationData.header?.title}</h1>
+              <h2 className="text-lg font-semibold text-gray-700">{organizationData.header?.company}</h2>
+              <p className="text-sm text-gray-500">Effective Date: {organizationData.header?.effectiveDate}</p>
             </div>
           </div>
-
           <div className="grid grid-cols-3 gap-4 border border-gray-400 p-4 bg-white">
             <div className="text-center border-r border-gray-400 pr-4">
               <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
               <div className="border-b border-gray-300 mx-auto w-20 mb-16" />
-              <p className="text-xs font-semibold underline mb-1">
-                {organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}
-              </p>
-              <p className="text-xs text-gray-500">
-                Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}
-              </p>
+              <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}</p>
+              <p className="text-xs text-gray-500">Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}</p>
             </div>
             <div className="text-center border-r border-gray-400 pr-4">
-              <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                {organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}
-              </p>
+              <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">{organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}</p>
               <div className="border-b border-gray-300 mx-auto w-20 mb-16" />
-              <p className="text-xs font-semibold underline mb-1">
-                {organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}
-              </p>
-              <p className="text-xs text-gray-500">
-                Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}
-              </p>
+              <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}</p>
+              <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
               <div className="border-b border-gray-300 mx-auto w-20 mb-16" />
-              <p className="text-xs font-semibold underline mb-1">
-                {organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}
-              </p>
-              <p className="text-xs text-gray-500">
-                Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}
-              </p>
+              <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}</p>
+              <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Commissioners Header ─────────────────────────────── */}
-      <CardWrapper posKey="commissioners-header" defaultX={400} defaultY={20}>
-        <div className="bg-blue-300 p-4 rounded text-center" style={{ width: '192px' }}>
-          <h3 className="font-bold text-sm text-white">BOARD OF COMMISSIONERS</h3>
+      {/* Commissioners */}
+      <CardWrapper posKey="commissioners-header" defaultX={400} defaultY={20} defaultW={192} defaultH={52}>
+        <div className="bg-blue-300 p-4 rounded text-center w-full h-full flex items-center justify-center">
+          <h3 className="font-bold text-sm text-white">{organizationData.uiLabels?.['commissioners-header'] || 'BOARD OF COMMISSIONERS'}</h3>
         </div>
       </CardWrapper>
 
-      {/* ── President Commissioner ───────────────────────────── */}
-      <CardWrapper posKey="president-commissioner" defaultX={250} defaultY={100} style={{ width: '192px' }}>
-        <div className="bg-white border border-gray-400 rounded shadow-sm w-full text-center min-h-[100px]">
-          <div className="p-2 bg-gray-100 border-b border-gray-300">
-            <p className="text-sm font-semibold">
-              {organizationData.commissioners?.president?.title || 'PRESIDENT COMMISIONER'}
-            </p>
+      <CardWrapper posKey="president-commissioner" defaultX={250} defaultY={100} defaultW={192} defaultH={100}>
+        <div className="bg-white border border-gray-400 rounded shadow-sm text-center w-full h-full flex flex-col">
+          <div className="p-2 bg-gray-100 border-b border-gray-300 flex-shrink-0">
+            <p className="text-sm font-semibold">{organizationData.commissioners?.president?.title || 'PRESIDENT COMMISIONER'}</p>
           </div>
-          <div className="p-4 flex items-center justify-center h-16">
-            <p className="text-xs font-medium">
-              {organizationData.commissioners?.president?.name || 'IRIANTO SANTOSO'}
-            </p>
+          <div className="p-4 flex-1 flex items-center justify-center">
+            <p className="text-xs font-medium">{organizationData.commissioners?.president?.name || 'IRIANTO SANTOSO'}</p>
           </div>
         </div>
       </CardWrapper>
 
-      {/* ── Commissioners List ───────────────────────────────── */}
-      <CardWrapper posKey="commissioners-list" defaultX={470} defaultY={100} style={{ width: '192px' }}>
-        <div className="bg-white border border-gray-400 p-4 rounded shadow-sm w-full text-center min-h-[100px] flex flex-col justify-center">
+      <CardWrapper posKey="commissioners-list" defaultX={470} defaultY={100} defaultW={192} defaultH={120}>
+        <div className="bg-white border border-gray-400 p-4 rounded shadow-sm text-center w-full h-full flex flex-col justify-center">
           <p className="text-sm font-semibold mb-3">COMMISSIONERS</p>
           {organizationData.commissioners?.commissioners?.map((name, index) => (
             <React.Fragment key={index}>
-              <hr className="my-1 border-gray-300" />
+              <hr className="my-1 border-gray-300 w-full" />
               <p className="text-xs mb-1">{name}</p>
             </React.Fragment>
           ))}
@@ -216,8 +261,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
           defaultY={320 + index * 90}
           style={{ width: '176px' }}
         >
-          <div
-            className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -227,43 +271,57 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
               <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
               <hr className="my-1 border-gray-300" />
               <p className="text-[8px] leading-tight break-words">{item.name}</p>
-              <p className="text-[8px] leading-tight">({item.empId})</p>
+              {item.empId && <p className="text-[8px] leading-tight">({item.empId})</p>}
+              {item.clickable && canViewSODetails && (
+                <p className="click-button no-print text-[7.5px] text-blue-600 mt-1 font-semibold">Click to view details →</p>
+              )}
             </div>
           </div>
         </CardWrapper>
       ))}
 
-      {/* ── Business Labels (Column 3) ───────────────────────── */}
-      {organizationData.structure?.business?.map((item, index) => (
-        <CardWrapper
-          key={item.id}
-          posKey={`business-${item.id}`}
-          defaultX={450}
-          defaultY={500 + index * 300}
-          style={{ width: '176px' }}
-        >
-          <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs min-h-[100px] flex items-center justify-center">
-            <span className="leading-tight">{item.label}</span>
-          </div>
-        </CardWrapper>
-      ))}
+      {/* ── Custom Added Headers ────────────────────────────── */}
+      {organizationData.structure?.headers?.map((item, i) => {
+        const posKey = `header-${item.id}`;
+        return (
+          <CardWrapper key={posKey} posKey={posKey} defaultX={50} defaultY={50} defaultW={176} defaultH={40}>
+            <div className="bg-blue-300 p-2 rounded text-center w-full h-full flex items-center justify-center">
+              <h3 className="font-bold text-xs text-white leading-tight">{item.title}</h3>
+            </div>
+          </CardWrapper>
+        );
+      })}
 
-      {/* ── Management Cards (Column 2) ──────────────────────── */}
-      {organizationData.structure?.management?.map((item, index) => {
-        const defaultYMap = {
-          'MIO1.0': 500, 'MDO1.0': 590, 'MRO1.0': 760,
-          'CRO1.0': 850, 'CRO2.0': 940,
-        };
-        const defaultY = defaultYMap[item.code] ?? 500 + index * 90;
+      {/* BOD */}
+      {organizationData.structure?.bod?.map((item, i) =>
+        renderCard(item, `bod-${item.id}-${i}`, 50, 320 + i * 90)
+      )}
 
+      {/* Business labels */}
+      {organizationData.structure?.business?.map((item, i) => {
+        const key = `business-${item.id}-${i}`;
+        return (
+          <CardWrapper key={key} posKey={key} defaultX={450} defaultY={500 + i * 300} defaultW={176} defaultH={100}>
+            <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs w-full h-full flex items-center justify-center">
+              <span className="leading-tight">{item.label}</span>
+            </div>
+          </CardWrapper>
+        );
+      })}
+
+      {/* Management */}
+      {organizationData.structure?.management?.map((item, i) => {
+        const yMap = { 'MIO1.0': 500, 'MDO1.0': 590, 'MRO1.0': 760, 'CRO1.0': 850, 'CRO2.0': 940 };
+        const dy = yMap[item.code] ?? 500 + i * 90;
         if (item.code === 'MDO2.0') return null;
 
         if (item.code === 'MDO1.0') {
           const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
+          const key = `management-${item.id}-${i}`;
           return (
-            <CardWrapper key={item.id} posKey={`management-${item.id}`} defaultX={250} defaultY={defaultY} style={{ width: '176px' }}>
+            <CardWrapper key={key} posKey={key} defaultX={250} defaultY={dy} defaultW={176} defaultH={170}>
               <div
-                className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] w-full ${mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors' : ''}`}
+                className={`bg-white border border-gray-400 rounded shadow-sm w-full h-full flex flex-col ${mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors' : ''}`}
                 onClick={() => mdo2?.clickable && mdo2?.route && canViewSODetails && navigate(mdo2.route)}
               >
                 <div className="flex flex-col h-full">
@@ -302,7 +360,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
         }
 
         return (
-          <CardWrapper key={item.id} posKey={`management-${item.id}`} defaultX={250} defaultY={defaultY} style={{ width: '176px' }}>
+          <CardWrapper key={item.id} posKey={`management-${item.id}`} defaultX={250} defaultY={dy} style={{ width: '176px' }}>
             <div
               className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
               onClick={() => handleClick(item)}
@@ -333,8 +391,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
           defaultY={650 + index * 100}
           style={{ width: '176px' }}
         >
-          <div
-            className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -419,7 +476,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
         );
       })}
 
-      {/* ── Legend ───────────────────────────────────────────── */}
+      {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-gray-50 p-4 rounded-lg border border-gray-400 max-w-sm z-30">
         <h4 className="font-bold text-sm mb-2">NOTE:</h4>
         <div className="text-xs space-y-1">
