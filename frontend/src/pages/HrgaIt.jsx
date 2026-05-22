@@ -104,8 +104,8 @@ const HrgaIt = () => {
       id: "hrd-1",
       code: "HRD1.0",
       head: "DIKI WAHYUDI*",
-      empId: "23060056",
-      departmentOid: "690c1df801e848a06615dee9",
+            departmentOid: "690c1df801e848a06615dee9",empId: "23060056",
+
     },
     positions: [
       {

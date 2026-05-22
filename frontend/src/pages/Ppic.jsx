@@ -200,8 +200,8 @@ const Ppic = () => {
         id: "ppic1-3-5",
         code: "PPIC1.3.5",
         title: "HASIL PRODUKGAS",
-        name: "RAGIL PAMUGKAS",
-        empId: "23120154",
+        name: "RAGIL PAMUNGKAS",
+        empId: "23120134",
       },
       {
         id: "ppic1-3-6",

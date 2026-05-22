@@ -41,6 +41,7 @@ const ManufacturingCable = () => {
   useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
 
   const onCodeClick = async (item) => {
+    console.log("item:", JSON.stringify(item));
     setSelectedJob(item);
     setShowJobModal(true);
     setLoadingJobdesc(true);
@@ -127,7 +128,7 @@ const ManufacturingCable = () => {
         code: "PRD1.1.1",
         title: "GROUP CO&CI",
         name: "AGUS PURWANTORO",
-        empId: "23120156",
+        empId: "23120139",
       },
       {
         id: "prd1-1-1",

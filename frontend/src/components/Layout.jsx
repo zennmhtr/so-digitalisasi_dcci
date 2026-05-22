@@ -444,7 +444,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
           }`}
       >
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px]">
+        <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px] z-[100]">
           {sidebarVisible && (
             <button
               className="text-gray-500 hover:text-gray-700 lg:hidden"

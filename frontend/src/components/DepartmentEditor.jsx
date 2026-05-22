@@ -235,7 +235,7 @@ const DepartmentEditor = () => {
               departments: [],
               sections: [
                 { id: 'mdo-1', code: 'MDO1.0', title: 'MANAGEMENT DEVELOPEMENT/PDCA', name: 'KARNA SATIA SALIM*', empId: '23230114' },
-                { id: 'mdo-2', code: 'MDO2.0', title: 'MANAGEMENT DEVELOPEMENT/PDCA', name: 'WAHYU KARTIKO ADI', empId: '23240175' }
+                { id: 'mdo-2', code: 'MDO2.0', title: 'MANAGEMENT DEVELOPEMENT/PDCA', name: 'WAHYU KARTIKO ADI', empId: '23240005' }
               ]
             }
           };

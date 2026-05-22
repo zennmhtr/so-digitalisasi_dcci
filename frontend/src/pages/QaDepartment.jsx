@@ -132,7 +132,7 @@ const QaDepartment = () => {
         code: "QAC1.1.5",
         title: "CLAIM & COMPLAIN",
         name: "CANDRA MAULANA",
-        empId: "23080082",
+        empId: "23230082",
       },
     ],
   };

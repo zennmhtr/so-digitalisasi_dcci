@@ -2,12 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-/**
- * StaticOrgChart - Read-only version of DraggableTraditionalLayout.
- * Uses the EXACT same coordinate system as the editor, so positions sync perfectly.
- * Nodes are absolutely positioned inside a `position: relative` container.
- */
-const StaticOrgChart = ({ organizationData }) => {
+const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus = {} }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -19,7 +14,6 @@ const StaticOrgChart = ({ organizationData }) => {
     return canViewSODetails;
   };
 
-  // Default positions (same defaults as DraggableTraditionalLayout)
   const getPos = (key, defaultX, defaultY) => {
     const p = organizationData?.positions?.[key];
     return {
@@ -31,10 +25,7 @@ const StaticOrgChart = ({ organizationData }) => {
   const CardWrapper = ({ posKey, defaultX, defaultY, style = {}, children }) => {
     const { left, top } = getPos(posKey, defaultX, defaultY);
     return (
-      <div
-        className="absolute"
-        style={{ left, top, zIndex: 20, ...style }}
-      >
+      <div className="absolute" style={{ left, top, zIndex: 5, ...style }}>
         {children}
       </div>
     );
@@ -51,6 +42,28 @@ const StaticOrgChart = ({ organizationData }) => {
     }
   };
 
+  // ── renderCodeButton ──────────────────────────────────────
+  const renderCodeButton = (item) => {
+    if (!item?.empId || item.empId === '-') {
+      return <p className="text-[8px] font-bold uppercase">{item?.code || ''}</p>;
+    }
+    const empId = (item.empId || '').trim();
+    const itemName = (item.name || '').trim().toUpperCase();
+    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[itemName];
+    const color = hasJobdesc
+      ? 'text-blue-600 hover:bg-blue-50'
+      : 'text-red-600 hover:bg-red-50';
+    return (
+      <button
+        className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors ${color}`}
+        onClick={(e) => { e.stopPropagation(); onCodeClick && onCodeClick(item); }}
+        title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
+      >
+        {item.code}
+      </button>
+    );
+  };
+
   if (!organizationData?.structure) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -61,11 +74,11 @@ const StaticOrgChart = ({ organizationData }) => {
 
   return (
     <div
-      className="relative bg-white overflow-x-auto"
-      style={{ minHeight: '2000px', minWidth: '1200px' }}
+      className="relative overflow-x-auto"
+      style={{ minHeight: '2000px', minWidth: '1200px', backgroundColor: 'transparent' }}
     >
       {/* ── Header ───────────────────────────────────────────── */}
-      <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
+      <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none" style={{ zIndex: 50 }}>
         <div className="flex justify-between items-center mb-4 pointer-events-auto">
           <div className="flex items-center">
             <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
@@ -203,11 +216,12 @@ const StaticOrgChart = ({ organizationData }) => {
           defaultY={320 + index * 90}
           style={{ width: '176px' }}
         >
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div
+            className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
-              <p className="text-[8px] font-bold">{item.code}</p>
+              {renderCodeButton(item)}
             </div>
             <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center overflow-hidden">
               <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
@@ -260,7 +274,7 @@ const StaticOrgChart = ({ organizationData }) => {
                   </div>
                   <div className="flex border-b border-gray-300 flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-10 flex items-center justify-center">
-                      <p className="text-[8px] font-bold">{item.code}</p>
+                      {renderCodeButton(item)}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <p className="text-[8px] leading-tight">{item.name}</p>
@@ -270,7 +284,7 @@ const StaticOrgChart = ({ organizationData }) => {
                   {mdo2 && (
                     <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-10 flex items-center justify-center">
-                        <p className="text-[8px] font-bold">{mdo2.code}</p>
+                        {renderCodeButton(mdo2)}
                       </div>
                       <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <p className="text-[8px] leading-tight">{mdo2.name}</p>
@@ -294,7 +308,7 @@ const StaticOrgChart = ({ organizationData }) => {
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
-                <p className="text-[8px] font-bold">{item.code}</p>
+                {renderCodeButton(item)}
               </div>
               <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center overflow-hidden">
                 <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
@@ -319,11 +333,12 @@ const StaticOrgChart = ({ organizationData }) => {
           defaultY={650 + index * 100}
           style={{ width: '176px' }}
         >
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div
+            className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
-              <p className="text-[8px] font-bold">{item.code}</p>
+              {renderCodeButton(item)}
             </div>
             <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center overflow-hidden">
               <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
@@ -352,7 +367,7 @@ const StaticOrgChart = ({ organizationData }) => {
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
-                <p className="text-[8px] font-bold">{item.code}</p>
+                {renderCodeButton(item)}
               </div>
               <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center overflow-hidden">
                 <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>
@@ -388,7 +403,7 @@ const StaticOrgChart = ({ organizationData }) => {
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
-                <p className="text-[8px] font-bold">{item.code}</p>
+                {renderCodeButton(item)}
               </div>
               <div className="p-2 flex-1 min-w-0 text-center flex flex-col justify-center overflow-hidden">
                 <p className="text-[8px] font-semibold mb-1 leading-tight break-words">{item.title}</p>

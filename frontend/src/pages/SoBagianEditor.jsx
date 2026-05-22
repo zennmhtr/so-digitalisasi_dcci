@@ -40,7 +40,7 @@ const SoBagianEditor = () => {
   const checkAllEmployeeJobdescStatus = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/jobdescriptions`,
+        `http://localhost:3001/api/jobdescriptions?limit=200`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -81,7 +81,7 @@ const SoBagianEditor = () => {
 
   try {
     const response = await fetch(
-      `http://localhost:3001/api/jobdescriptions`,
+      `http://localhost:3001/api/jobdescriptions?limit=200`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -96,7 +96,7 @@ const SoBagianEditor = () => {
         "PPIC": ["PPIC", "PPC", "WAREHOUSE", "WHS", "DELIVERY", "PLANNING"],
         "HRD":  ["HRD", "HRGA", "GA", "IT", "INFORMATION", "POD"],
         "MFG":  ["MANUFACTURING", "MFG", "PRODUKSI"],
-        "PRD":  ["MANUFACTURING", "PRD", "CABLE"],
+        "PRD":  ["MANUFACTURING", "PRODUCTION", "CONTROLCABLE", "ASSEMBLING", "PRD", "CO & CI", "ASSY", "PO", "QUALITY"],
         "QA":   ["QUALITY", "QA", "QC"],
         "MKT":  ["MARKETING", "MKT", "SALES"],
         "FIN":  ["FINANCE", "ACCOUNTING", "FIN", "SAP"],
@@ -546,7 +546,7 @@ const SoBagianEditor = () => {
             code: "PRD1.1.1",
             title: "GROUP CO&CI",
             name: "AGUS PURWANTORO",
-            empId: "23120156",
+            empId: "23120139",
           },
           {
             id: "prd1-1-1",
@@ -1088,8 +1088,8 @@ const SoBagianEditor = () => {
             id: "ppic1-3-5",
             code: "PPIC1.3.5",
             title: "HASIL PRODUKGAS",
-            name: "RAGIL PAMUGKAS",
-            empId: "23120154",
+            name: "RAGIL PAMUNGKAS",
+            empId: "23120134",
           },
           {
             id: "ppic1-3-6",
@@ -1191,7 +1191,7 @@ const SoBagianEditor = () => {
             code: "QAC1.1.5",
             title: "CLAIM & COMPLAIN",
             name: "CANDRA MAULANA",
-            empId: "23080082",
+            empId: "23230082",
           },
         ],
       },

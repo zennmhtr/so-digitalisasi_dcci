@@ -1543,116 +1543,17 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
-              <img
-                src="/logo/Logo DG New 2022.png"
-                alt="Dharma Group Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800 mb-1">
-                {organizationData.header.title}
-              </h1>
-              <h2 className="text-lg font-semibold text-gray-700">
-                {organizationData.header.company}
-              </h2>
-              <p className="text-sm text-gray-500">
-                Effective Date:{" "}
-                {organizationData?.header?.effectiveDate ||
-                  "Waiting Final Approval"}
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="grid grid-cols-3 gap-4 border border-gray-400 p-4 bg-white">
-              {/* Prepared By */}
-              <div className="text-center border-r border-gray-400 pr-4">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                  Prepared By :
-                </p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">
-                  {organizationData.signatures?.preparedBy?.name ||
-                    "Diki Wahyudi"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Prep Date:{" "}
-                  {organizationData?.signatures?.preparedBy?.date || "Pending"}
-                </p>
-              </div>
-
-              {/* Middle - Bambang Wuryanto */}
-              <div className="text-center border-r border-gray-400 pr-4">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                  Approved By:
-                </p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">
-                  {organizationData.signatures?.middleBy?.name ||
-                    "Bambang Wuryanto"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Prepared Date:{" "}
-                  {organizationData?.signatures?.middleBy?.date || "Pending"}
-                </p>
-              </div>
-
-              {/* Approved By */}
-              <div className="text-center">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                  Approved By :
-                </p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">
-                  {organizationData.signatures?.approvedBy?.name ||
-                    "Eko Maryanto"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Prepared Date:{" "}
-                  {organizationData?.signatures?.approvedBy?.date || "Pending"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Print Button - Only show if user has permission */}
-        {canPrint && (
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handlePrint}
-              className="no-print bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                />
-              </svg>
-              Print A3
-            </button>
-          </div>
-        )}
-      </div>
-
       {/* Organization Chart - Dynamic, synced with editor */}
       <div
         className="dashboard-print-container bg-white rounded-lg shadow-sm p-4 overflow-x-auto"
         ref={containerRef}
       >
-        <StaticOrgChart organizationData={organizationData} />
+        // Dashboard.jsx
+        <StaticOrgChart
+          organizationData={organizationData}
+          onCodeClick={onCodeClick}
+          employeeJobdescStatus={employeeJobdescStatus}
+        />
       </div>
     </div>
   );
