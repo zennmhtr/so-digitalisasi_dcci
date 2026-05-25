@@ -369,22 +369,62 @@ const AdvancedEditorCanvas = ({ organizationData, onDataChange, editorMode, onSt
   const renderConnections = () => {
     const conns = organizationData?.connections || [];
     if (conns.length === 0) return null;
+
+    const getClosestPoints = (key1, key2) => {
+      const pos1 = positions[key1];
+      const pos2 = positions[key2];
+      if (!pos1 || !pos2) return null;
+
+      const size1 = sizes[key1] || { width: 176, height: 80 };
+      const size2 = sizes[key2] || { width: 176, height: 80 };
+
+      const edges1 = [
+        { x: pos1.x + size1.width / 2, y: pos1.y }, // top
+        { x: pos1.x + size1.width / 2, y: pos1.y + size1.height }, // bottom
+        { x: pos1.x, y: pos1.y + size1.height / 2 }, // left
+        { x: pos1.x + size1.width, y: pos1.y + size1.height / 2 }, // right
+      ];
+      
+      const edges2 = [
+        { x: pos2.x + size2.width / 2, y: pos2.y }, // top
+        { x: pos2.x + size2.width / 2, y: pos2.y + size2.height }, // bottom
+        { x: pos2.x, y: pos2.y + size2.height / 2 }, // left
+        { x: pos2.x + size2.width, y: pos2.y + size2.height / 2 }, // right
+      ];
+
+      let minDist = Infinity;
+      let bestP1 = edges1[0];
+      let bestP2 = edges2[0];
+
+      for (const p1 of edges1) {
+        for (const p2 of edges2) {
+          const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+          if (dist < minDist) {
+            minDist = dist;
+            bestP1 = p1;
+            bestP2 = p2;
+          }
+        }
+      }
+
+      return { from: bestP1, to: bestP2 };
+    };
+
     return (
       <svg
         className="absolute top-0 left-0 w-full h-full pointer-events-none"
         style={{ zIndex: 5, overflow: 'visible' }}
       >
         {conns.map(conn => {
-          const from = getCardCenter(conn.from, 'bottom');
-          const to = getCardCenter(conn.to, 'top');
-          if (!from || !to) return null;
+          const pts = getClosestPoints(conn.from, conn.to);
+          if (!pts) return null;
           return (
             <line
               key={conn.id}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
+              x1={pts.from.x}
+              y1={pts.from.y}
+              x2={pts.to.x}
+              y2={pts.to.y}
               stroke={editorMode === 'delete' ? '#ef4444' : '#6b7280'}
               strokeWidth={editorMode === 'delete' ? 3 : 1.5}
               className={editorMode === 'delete' ? 'cursor-pointer' : ''}
