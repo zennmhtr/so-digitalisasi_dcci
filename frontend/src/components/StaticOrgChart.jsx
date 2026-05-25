@@ -115,14 +115,44 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
     const conns = organizationData?.connections || [];
     if (conns.length === 0) return null;
 
-    const getCenter = (key, edge) => {
-      const pos = organizationData?.positions?.[key];
-      if (!pos) return null;
-      const size = organizationData?.sizes?.[key] || { width: 176, height: 80 };
-      const cx = pos.x + size.width / 2;
-      if (edge === 'bottom') return { x: cx, y: pos.y + size.height };
-      if (edge === 'top') return { x: cx, y: pos.y };
-      return { x: cx, y: pos.y + size.height / 2 };
+    const getClosestPoints = (key1, key2) => {
+      const pos1 = organizationData?.positions?.[key1];
+      const pos2 = organizationData?.positions?.[key2];
+      if (!pos1 || !pos2) return null;
+
+      const size1 = organizationData?.sizes?.[key1] || { width: 176, height: 80 };
+      const size2 = organizationData?.sizes?.[key2] || { width: 176, height: 80 };
+
+      const edges1 = [
+        { x: pos1.x + size1.width / 2, y: pos1.y }, // top
+        { x: pos1.x + size1.width / 2, y: pos1.y + size1.height }, // bottom
+        { x: pos1.x, y: pos1.y + size1.height / 2 }, // left
+        { x: pos1.x + size1.width, y: pos1.y + size1.height / 2 }, // right
+      ];
+      
+      const edges2 = [
+        { x: pos2.x + size2.width / 2, y: pos2.y }, // top
+        { x: pos2.x + size2.width / 2, y: pos2.y + size2.height }, // bottom
+        { x: pos2.x, y: pos2.y + size2.height / 2 }, // left
+        { x: pos2.x + size2.width, y: pos2.y + size2.height / 2 }, // right
+      ];
+
+      let minDist = Infinity;
+      let bestP1 = edges1[0];
+      let bestP2 = edges2[0];
+
+      for (const p1 of edges1) {
+        for (const p2 of edges2) {
+          const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+          if (dist < minDist) {
+            minDist = dist;
+            bestP1 = p1;
+            bestP2 = p2;
+          }
+        }
+      }
+
+      return { from: bestP1, to: bestP2 };
     };
 
     return (
@@ -131,13 +161,12 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
         style={{ zIndex: 5, overflow: 'visible' }}
       >
         {conns.map(conn => {
-          const from = getCenter(conn.from, 'bottom');
-          const to = getCenter(conn.to, 'top');
-          if (!from || !to) return null;
+          const pts = getClosestPoints(conn.from, conn.to);
+          if (!pts) return null;
           return (
             <line
               key={conn.id}
-              x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+              x1={pts.from.x} y1={pts.from.y} x2={pts.to.x} y2={pts.to.y}
               stroke="#6b7280" strokeWidth="1.5"
             />
           );
@@ -292,10 +321,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
         );
       })}
 
-      {/* BOD */}
-      {organizationData.structure?.bod?.map((item, i) =>
-        renderCard(item, `bod-${item.id}-${i}`, 50, 320 + i * 90)
-      )}
+
 
       {/* Business labels */}
       {organizationData.structure?.business?.map((item, i) => {
