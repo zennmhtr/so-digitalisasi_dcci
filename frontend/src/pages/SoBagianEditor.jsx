@@ -96,13 +96,14 @@ const SoBagianEditor = () => {
         "PPIC": ["PPIC", "PPC", "WAREHOUSE", "WHS", "DELIVERY", "PLANNING"],
         "HRD":  ["HRD", "HRGA", "GA", "IT", "INFORMATION", "POD"],
         "MFG":  ["MANUFACTURING", "MFG", "PRODUKSI"],
-        "PRD":  ["MANUFACTURING", "PRODUCTION", "CONTROLCABLE", "ASSEMBLING", "PRD", "CO & CI", "ASSY", "PO", "QUALITY"],
-        "QA":   ["QUALITY", "QA", "QC"],
-        "MKT":  ["MARKETING", "MKT", "SALES"],
+        "PRD":  ["MANUFACTURING", "PRODUCTION", "CONTROLCABLE", "ASSEMBLING", "PRD", "CO & CI", "ASSY", "PO", "MAINTENANCE", "PROD", "QUALITY"],
+        "QA":   ["QUALITY", "QA", "QC", "NEW BUSINESS DEV. STAFF"],
+        "MKT":  ["MARKETING", "MKT", "SALES", "ENGINEERING", "NEW BUSINESS DEV. STAFF"],
         "FIN":  ["FINANCE", "ACCOUNTING", "FIN", "SAP"],
         "MR":   ["MR", "MANAGEMENT REPRESENTATIVE"],
         "PUR":  ["PURCHASING", "PUR", "PROCUREMENT"],
         "ENG":  ["ENGINEERING", "ENG"],
+        "ME":   ["DEV", "NEW BUSINESS DEV. STAFF", "ENG1.3"],
       };
 
       const foundJobdesc = allJobdesc.find((jd) => {

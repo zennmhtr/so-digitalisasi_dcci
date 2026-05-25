@@ -18,7 +18,7 @@ const MarketingEngineering = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -41,35 +41,104 @@ const MarketingEngineering = () => {
   useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
 
   const onCodeClick = async (item) => {
-    setSelectedJob(item);
-    setShowJobModal(true);
-    setLoadingJobdesc(true);
-    setJobdescData(null);
-    try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  setSelectedJob(item);
+  setShowJobModal(true);
+  setLoadingJobdesc(true);
+  setJobdescData(null);
+
+  try {
+    const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const allJobdesc = result.data || result;
+      const codeTitleKeywords = {
+        "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
+        "ENG1.2": ["PROCESS ENGINEERING", "ENG1.2"],
+        "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
+        "MKT1.1": ["SALES", "MARKETING CONTROLCABLE", "MKT1.1"],
+        "MKT1.2": ["MKT1.2"],
+        "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE"],
+        "HRD1.0":  ["HRDGA", "HRGA", "HRD1.0"],
+        "PCH1.0":  ["PROCUREMENT", "PURCHASING"],
+        "FIN1.0":  ["FINANCE", "ACCOUNTING"],
+      };
+
+      // Normalisasi: hapus *, **, spasi berlebih
+      const normalize = (str) =>
+        (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
+
+      // Normalisasi empId: hapus semua spasi
+      const normalizeId = (str) =>
+        (str || "").replace(/\s+/g, "").trim();
+
+      // Split format gabungan "A / B"
+      const splitCombined = (str) =>
+        (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+
+      const containsId = (haystack, needle) => {
+        if (!haystack || !needle) return false;
+        const needleClean = normalizeId(needle);
+        return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+      };
+
+      const itemCode = (item.code || "").trim().toUpperCase();
+      const itemEmpId = (item.empId || "").trim();
+      const itemName = normalize(item.name);
+
+      const foundJobdesc = allJobdesc.find((jd) => {
+        const jdNoPNK = (jd.memberNoPNK || "").trim();
+        const jdName = normalize(jd.memberName);
+        const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
+
+        // Cek empId match (termasuk format gabungan & spasi)
+        const empIdMatch =
+          itemEmpId &&
+          jdNoPNK &&
+          (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+            containsId(jdNoPNK, itemEmpId));
+
+        // Cek name match
+        const nameMatch =
+          itemName &&
+          jdName &&
+          (jdName === itemName ||
+            splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+        if (!empIdMatch && !nameMatch) return false;
+
+        // Jika ada code mapping, gunakan keyword positionTitle sebagai pembeda
+        const keywords = codeTitleKeywords[itemCode];
+        if (keywords && keywords.length > 0) {
+          const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
+          if (!titleMatch) {
+            console.log(`⏭️ Skip: empId/name match tapi positionTitle tidak cocok untuk ${itemCode}`, jdPositionTitle);
+            return false;
+          }
+          console.log(`✅ MATCH by code keyword [${itemCode}]:`, jdPositionTitle);
+          return true;
+        }
+
+        // Fallback: match by empId atau name saja
+        console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
+        return true;
       });
-      if (response.ok) {
-        const result = await response.json();
-        const allJobdesc = result.data || result;
-        const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
-          const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
-        });
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+
+      if (foundJobdesc) {
+        console.log("✅ Found:", foundJobdesc.positionTitle);
+        setJobdescData(foundJobdesc);
+      } else {
+        console.log("❌ Not found for:", item.name, item.code);
       }
-    } catch (error) {
-      console.error('Error fetching job description:', error);
-    } finally {
-      setLoadingJobdesc(false);
     }
-  };
+  } catch (error) {
+    console.error("❌ Error:", error);
+  } finally {
+    setLoadingJobdesc(false);
+  }
+};
 
   const renderCodeButton = (person) => {
     if (!person || !person.empId) {
@@ -175,6 +244,7 @@ const MarketingEngineering = () => {
         title: "PROCESS ENGINEERING CABLE",
         name: "DEDI SETIADI",
         empId: "23120143",
+
       },
       {
         id: "eng1-3",
@@ -182,6 +252,7 @@ const MarketingEngineering = () => {
         title: "NEW BUSINESS DEVELOPMENT",
         name: "ANNISA SETIYANING CHOIR*",
         empId: "23240228",
+        departmentOid: "690c188001e848a06615dd93",
       },
       {
         id: "eng1-3",
