@@ -35,7 +35,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
     return (
       <div
         className="absolute"
-        style={{ left, top, width, height, zIndex: 20, ...style }}
+        style={{ ...style, left, top, width, height, zIndex: 20 }}
       >
         {children}
       </div>
@@ -220,32 +220,32 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
       </CardWrapper>
 
       {/* ── Column Headers ───────────────────────────────────── */}
-      <CardWrapper posKey="header-bod" defaultX={50} defaultY={250}>
-        <div className="bg-blue-300 p-3 rounded text-center" style={{ width: '176px' }}>
-          <h3 className="font-bold text-xs text-white">BOARD OF DIRECTOR</h3>
+      <CardWrapper posKey="header-bod" defaultX={50} defaultY={250} defaultW={176} defaultH={40}>
+        <div className="bg-blue-300 p-2 rounded text-center w-full h-full flex items-center justify-center">
+          <h3 className="font-bold text-xs text-white leading-tight">BOARD OF DIRECTOR</h3>
         </div>
       </CardWrapper>
 
-      <CardWrapper posKey="header-management" defaultX={250} defaultY={250}>
-        <div className="p-3 rounded text-center" style={{ width: '176px' }}>
-          <h3 className="font-bold text-xs text-transparent">&nbsp;</h3>
+      <CardWrapper posKey="header-management" defaultX={250} defaultY={250} defaultW={176} defaultH={40}>
+        <div className="p-2 rounded text-center w-full h-full flex items-center justify-center">
+          <h3 className="font-bold text-xs text-transparent leading-tight">&nbsp;</h3>
         </div>
       </CardWrapper>
 
-      <CardWrapper posKey="header-division" defaultX={450} defaultY={250}>
-        <div className="bg-blue-300 p-3 rounded text-center" style={{ width: '176px' }}>
-          <h3 className="font-bold text-xs text-white">DIVISION HEAD</h3>
+      <CardWrapper posKey="header-division" defaultX={450} defaultY={250} defaultW={176} defaultH={40}>
+        <div className="bg-blue-300 p-2 rounded text-center w-full h-full flex items-center justify-center">
+          <h3 className="font-bold text-xs text-white leading-tight">DIVISION HEAD</h3>
         </div>
       </CardWrapper>
 
-      <CardWrapper posKey="header-department" defaultX={650} defaultY={250}>
-        <div className="bg-blue-300 p-3 rounded text-center" style={{ width: '176px' }}>
-          <h3 className="font-bold text-xs text-white">DEPARTMENT HEAD</h3>
+      <CardWrapper posKey="header-department" defaultX={650} defaultY={250} defaultW={176} defaultH={40}>
+        <div className="bg-blue-300 p-2 rounded text-center w-full h-full flex items-center justify-center">
+          <h3 className="font-bold text-xs text-white leading-tight">DEPARTMENT HEAD</h3>
         </div>
       </CardWrapper>
 
-      <CardWrapper posKey="header-section" defaultX={850} defaultY={250}>
-        <div className="bg-blue-300 p-3 rounded text-center" style={{ width: '200px' }}>
+      <CardWrapper posKey="header-section" defaultX={850} defaultY={250} defaultW={200} defaultH={40}>
+        <div className="bg-blue-300 p-2 rounded text-center w-full h-full flex items-center justify-center">
           <h3 className="font-bold text-xs text-white leading-tight">
             SECTION HEAD / ENGINEERING PRODUCT LEADER
           </h3>
@@ -261,7 +261,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
           defaultY={320 + index * 90}
           style={{ width: '176px' }}
         >
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -299,7 +299,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
 
       {/* Business labels */}
       {organizationData.structure?.business?.map((item, i) => {
-        const key = `business-${item.id}-${i}`;
+        const key = `business-${item.id}`;
         return (
           <CardWrapper key={key} posKey={key} defaultX={450} defaultY={500 + i * 300} defaultW={176} defaultH={100}>
             <div className="bg-gray-200 p-3 rounded text-center font-bold text-xs w-full h-full flex items-center justify-center">
@@ -317,7 +317,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
 
         if (item.code === 'MDO1.0') {
           const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
-          const key = `management-${item.id}-${i}`;
+          const key = `management-${item.id}`;
           return (
             <CardWrapper key={key} posKey={key} defaultX={250} defaultY={dy} defaultW={176} defaultH={170}>
               <div
@@ -362,7 +362,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
         return (
           <CardWrapper key={item.id} posKey={`management-${item.id}`} defaultX={250} defaultY={dy} style={{ width: '176px' }}>
             <div
-              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`}
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -391,7 +391,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
           defaultY={650 + index * 100}
           style={{ width: '176px' }}
         >
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`}
             onClick={() => handleClick(item)}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -420,7 +420,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
             style={{ width: '176px' }}
           >
             <div
-              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`}
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
@@ -456,7 +456,7 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
             style={{ width: '200px' }}
           >
             <div
-              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${clickable(item)}`}
+              className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`}
               onClick={() => handleClick(item)}
             >
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
