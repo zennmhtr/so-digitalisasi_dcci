@@ -38,10 +38,10 @@ const DashboardEditorAdvanced = () => {
       header: {
         title: "ORGANIZATION STRUCTURE",
         company: "PT DHARMA CONTROLCABLE INDONESIA",
-        effectiveDate: "08/09/2025",
-        regNo: "08/10/2025",
-        preparedDate: "08/09/2025",
-        approvedDate: "08/09/2025",
+        effectiveDate: "16/03/2026",
+        regNo: "16/03/2026",
+        preparedDate: "16/03/2026",
+        approvedDate: "16/03/2026",
       },
       signatures: {
         preparedBy: { name: "Diki Wahyudi", date: "16/03/2026" },

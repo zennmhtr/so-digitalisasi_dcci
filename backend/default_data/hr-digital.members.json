@@ -3,9 +3,9 @@
     "$oid": "68f59699b50b4d63687ef545"
   },
   "name": "DIKI WAHYUDI",
-  "position": "Dept Head",
+  "position": "Sect Head",
   "department": {
-    "$oid": "68ec835bf3c25ed73a2aaa85"
+    "$oid": "690c1df801e848a06615dee9"
   },
   "noPNK": "23060056",
   "email": "diki@dcci.com",
@@ -18,48 +18,6 @@
   },
   "updatedAt": {
     "$date": "2025-10-20T01:55:37.409Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "68f5d562e9ff71f60e50e08d"
-  },
-  "name": "RIFQI",
-  "position": "Staff",
-  "department": {
-    "$oid": "68ec835bf3c25ed73a2aaa85"
-  },
-  "noPNK": null,
-  "email": null,
-  "user": null,
-  "status": "active",
-  "createdAt": {
-    "$date": "2025-10-20T06:23:30.945Z"
-  },
-  "updatedAt": {
-    "$date": "2025-10-20T06:23:30.945Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "68fef7ba6a7158a16d1f62bc"
-  },
-  "name": "HANI",
-  "position": "Staff",
-  "department": {
-    "$oid": "68ec835bf3c25ed73a2aaa7c"
-  },
-  "noPNK": null,
-  "email": null,
-  "user": null,
-  "status": "active",
-  "createdAt": {
-    "$date": "2025-10-27T04:40:26.945Z"
-  },
-  "updatedAt": {
-    "$date": "2025-10-27T04:40:26.945Z"
   },
   "__v": 0
 },
@@ -886,7 +844,7 @@
   "_id": {
     "$oid": "6a0bb7b26947832b7c76ce28"
   },
-  "name": "KARNA KATIA SALIM",
+  "name": "KARNA SATIA SALIM",
   "position": "Manager",
   "department": {
     "$oid": "690c183901e848a06615dd89"
@@ -975,7 +933,7 @@
   "department": {
     "$oid": "690c183901e848a06615dd89"
   },
-  "noPNK": "23120156",
+  "noPNK": "23120139",
   "email": null,
   "user": null,
   "status": "active",
@@ -1068,6 +1026,1308 @@
   },
   "updatedAt": {
     "$date": "2026-05-19T02:45:20.237Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d61cf6c6f715fd8237057"
+  },
+  "name": "WAHYU KARTIKO ADI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c17e301e848a06615dd7a"
+  },
+  "noPNK": "23240005",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:25:03.559Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:25:03.559Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66976c6f715fd8237189"
+  },
+  "name": "ADE AKHMAD FAUZI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23090093",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:45:27.366Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:45:27.366Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66ad6c6f715fd8237196"
+  },
+  "name": "BUCHORI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120159",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:45:49.641Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:45:49.641Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66c56c6f715fd82371a3"
+  },
+  "name": "ANANG SUTAMTOMO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23080082",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:46:13.161Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:46:13.161Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66d26c6f715fd82371b0"
+  },
+  "name": "SETIYONO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23090090",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:46:26.808Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:46:26.808Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66f26c6f715fd82371be"
+  },
+  "name": "ERLI SULIANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23070073",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:46:58.441Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:46:58.441Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d66fe6c6f715fd82371cb"
+  },
+  "name": "EFRAIN TAMBUNAN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23110111",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:47:10.908Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:47:10.908Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d67116c6f715fd82371d8"
+  },
+  "name": "SUDARMANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120151",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:47:29.025Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:47:29.025Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d67206c6f715fd82371e5"
+  },
+  "name": "SRI NATIN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "231202130",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:47:44.200Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:47:44.200Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d672c6c6f715fd82371f2"
+  },
+  "name": "M. HAMAM MUCHLISIN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120174",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:47:56.352Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:47:56.352Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d67366c6f715fd82371ff"
+  },
+  "name": "SULASTRI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120190",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:48:06.345Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:48:06.345Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d67446c6f715fd823720c"
+  },
+  "name": "LAILA FITRIYAH",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120196",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:48:20.648Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:48:20.648Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d67506c6f715fd8237219"
+  },
+  "name": "SUPRIYANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120153",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:48:32.576Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:48:32.576Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d675a6c6f715fd8237226"
+  },
+  "name": "RAGIL PAMUGKAS",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c195501e848a06615ddbf"
+  },
+  "noPNK": "23120134",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-20T07:48:42.686Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T07:48:42.686Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e73a0ecf28842dcbdcc3f"
+  },
+  "name": "AJI BABAN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120156",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-19T01:08:43.863Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-19T01:08:43.863Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7ac0606243a824684263"
+  },
+  "name": "PIKI TAOFIK",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110117",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:23:44.495Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:23:44.495Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7ade606243a824684270"
+  },
+  "name": "DEDY IRWANSYAH",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120132",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:24:14.936Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:24:14.936Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7af0606243a82468427d"
+  },
+  "name": "AGUNG BASUKI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23070072",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:24:32.594Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:24:32.594Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b0b606243a82468428a"
+  },
+  "name": "YULIANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110122",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:24:59.901Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:24:59.901Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b1e606243a824684297"
+  },
+  "name": "SOPAN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110118",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:25:18.086Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:25:18.086Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b2e606243a8246842a4"
+  },
+  "name": "MUJIATI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120164",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:25:34.901Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:25:34.901Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b3d606243a8246842b1"
+  },
+  "name": "HIDAYATUL",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120165",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:25:49.836Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:25:49.836Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b62606243a8246842be"
+  },
+  "name": "TRI YULIANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110120",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:26:26.575Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:26:26.575Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b76606243a8246842cb"
+  },
+  "name": "AHMAD DAYU ZAINI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23180703",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:26:46.615Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:26:46.615Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7b85606243a8246842d8"
+  },
+  "name": "HANA OKTA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120155",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:27:01.526Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:27:01.526Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7ba5606243a8246842e5"
+  },
+  "name": "SUGIHARTO (COORD)",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120137",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:27:33.655Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:27:33.655Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7bbc606243a8246842f2"
+  },
+  "name": "CIPTO RAHMAD SASONO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23060047",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:27:56.031Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:27:56.031Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7bd2606243a8246842ff"
+  },
+  "name": "DENDI SETYAWAN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120146",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:28:18.799Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:28:18.799Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7bf0606243a82468430c"
+  },
+  "name": "HERI MOHAMMAD AFANDI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120138",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:28:48.896Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:28:48.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7c00606243a824684319"
+  },
+  "name": "INDRI NOVITA SARI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110113",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:29:04.725Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:29:04.725Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7c0d606243a824684326"
+  },
+  "name": "PARTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120140",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:29:17.337Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:29:17.337Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7c1b606243a824684333"
+  },
+  "name": "SOPANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23090091",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:29:31.473Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:29:31.473Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7c26606243a824684340"
+  },
+  "name": "WANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23110121",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:29:42.305Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:29:42.305Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e7f85606243a824684415"
+  },
+  "name": "JUPRI SAHALA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120154",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:44:05.802Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:44:05.802Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e8056606243a824684422"
+  },
+  "name": "ARIYANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120219",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:47:34.318Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:47:34.318Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e80d3606243a82468442f"
+  },
+  "name": "MAULANA MALIK IBRAHIM",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23220078",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:49:39.391Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:49:39.391Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e80e2606243a82468443c"
+  },
+  "name": "MOH. NURHIDAYAT",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120181",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:49:54.471Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:49:54.471Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e8105606243a824684449"
+  },
+  "name": "DWI WIDYASTUTI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120191",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:50:29.623Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:50:29.623Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e81be606243a824684456"
+  },
+  "name": "MELINDA SURYANI HASIBUAN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23230008",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:53:34.953Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:53:34.953Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e81cc606243a824684463"
+  },
+  "name": "RIRIN ERLINA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23120217",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:53:48.728Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:53:48.728Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0e81f5606243a824684470"
+  },
+  "name": "ANDI PUTRA M.S",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c183901e848a06615dd89"
+  },
+  "noPNK": "23230027",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-21T03:54:29.033Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T03:54:29.033Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffa832d762dcca29c4ffe"
+  },
+  "name": "ANDREAS AGUNG S.",
+  "position": "Dept Head",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23040119",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:41:07.284Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:41:07.284Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffa972d762dcca29c5007"
+  },
+  "name": "SAVITRI OCTAVIANI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23130254",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:41:27.677Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:41:27.677Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffaac2d762dcca29c5017"
+  },
+  "name": "SUGIYARTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23060041",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:41:48.560Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:41:48.560Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffaf22d762dcca29c5020"
+  },
+  "name": "RIKA TRI HARMELIA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23110101",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:42:58.838Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:42:58.838Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb062d762dcca29c5029"
+  },
+  "name": "KHANSA Z.H",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23230110",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:43:18.895Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:43:18.895Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb282d762dcca29c5032"
+  },
+  "name": "SUMIYARTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23030015",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:43:52.574Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:43:52.574Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb402d762dcca29c503b"
+  },
+  "name": "NUR DWI WAHYONO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23120160",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:44:16.374Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:44:16.374Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb522d762dcca29c5044"
+  },
+  "name": "ALIF PRIATNA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23190773",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:44:34.070Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:44:34.070Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb602d762dcca29c504d"
+  },
+  "name": "MUHAMMAD SYARIFUDIN",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23190727",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:44:48.727Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:44:48.727Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb742d762dcca29c5056"
+  },
+  "name": "AHMAD JAELANI SIDIK",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23240227",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:45:08.583Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:45:08.583Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb862d762dcca29c505f"
+  },
+  "name": "DEDI SETIADI",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23120143",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:45:26.918Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:45:26.918Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0ffb9e2d762dcca29c5068"
+  },
+  "name": "ANNISA SETIYANING CHOIR",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c188001e848a06615dd93"
+  },
+  "noPNK": "23240228",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-22T06:45:50.238Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T06:45:50.238Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a1410b10de7604d98ff15fa"
+  },
+  "name": "ELIATA DUMAR GINTING",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c190101e848a06615ddba"
+  },
+  "noPNK": "23190806",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-25T09:04:49.087Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-25T09:04:49.087Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a1410c70de7604d98ff1603"
+  },
+  "name": "AFKA FIKRI AIMAN (COORD)",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c190101e848a06615ddba"
+  },
+  "noPNK": "23230122",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-25T09:05:11.738Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-25T09:05:11.738Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a1410de0de7604d98ff160c"
+  },
+  "name": "TARJO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c190101e848a06615ddba"
+  },
+  "noPNK": "23090096",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-25T09:05:34.843Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-25T09:05:34.843Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a1410ef0de7604d98ff1615"
+  },
+  "name": "ZEL UWEYS A.A.A.A.S.A",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c190101e848a06615ddba"
+  },
+  "noPNK": "23120171",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-25T09:05:51.296Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-25T09:05:51.296Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a14fb7e86c4bf3daaea619b"
+  },
+  "name": "M. BAGUS SANTOSO",
+  "position": "Dept Head",
+  "department": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "noPNK": "23220025",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-26T01:46:38.671Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-26T01:46:38.671Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a14fb8f86c4bf3daaea61a4"
+  },
+  "name": "DWI PURWANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "noPNK": "23050023",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-26T01:46:55.489Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-26T01:46:55.489Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a14fe9f86c4bf3daaea6244"
+  },
+  "name": "SUCI PURWANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "noPNK": "23120149",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-26T01:59:59.704Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-26T01:59:59.704Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a14fead86c4bf3daaea624d"
+  },
+  "name": "NURDIANTO",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "noPNK": "23160477",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-26T02:00:13.083Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-26T02:00:13.083Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a14fec586c4bf3daaea6256"
+  },
+  "name": "CANDRA MAULANA",
+  "position": "Staff",
+  "department": {
+    "$oid": "690c19de01e848a06615ddc9"
+  },
+  "noPNK": "23230082",
+  "email": null,
+  "user": null,
+  "status": "active",
+  "createdAt": {
+    "$date": "2026-05-26T02:00:37.313Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-26T02:00:37.313Z"
   },
   "__v": 0
 }]

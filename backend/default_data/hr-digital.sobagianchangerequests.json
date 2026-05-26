@@ -10361,4 +10361,1270 @@
   "reviewedBy": {
     "$oid": "69e840a5e7e844e2faf897a3"
   }
+},
+{
+  "_id": {
+    "$oid": "6a0ebf28606243a8246856f6"
+  },
+  "title": "UPDATE MFG CABLE",
+  "description": "change name",
+  "requestedBy": {
+    "$oid": "69e840a5e7e844e2faf897a3"
+  },
+  "department": "Manufacturing Cable",
+  "changeType": "update",
+  "proposedData": {
+    "organizationData": {
+      "departmentId": "manufacturing-cable",
+      "structure": {
+        "header": {
+          "title": "CONTROLCABLE MANUFACTURE",
+          "code": "PRD1.0",
+          "head": "KARNA SATIA SALIM*",
+          "empId": "23230114"
+        },
+        "positions": [
+          {
+            "id": "prd1-1",
+            "code": "PRD1.1",
+            "title": "MANUFACTURING UNIT",
+            "name": "DADI ROSADI",
+            "empId": "23060049"
+          },
+          {
+            "id": "prd1-2",
+            "code": "PRD1.2",
+            "title": "ASSEMBLING UNIT",
+            "name": "M. SUGIARTO",
+            "empId": "23050024"
+          },
+          {
+            "id": "prd1-0-1",
+            "code": "PRD1.0.1",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "CHOIRUL AMIN",
+            "empId": "23110109"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AGUS PURWANTORO",
+            "empId": "23120139"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AJI BABAN",
+            "empId": "23120156"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "MAYAR SANTOSO",
+            "empId": "23090089"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "IWAN SUPRIYADI",
+            "empId": "23110114"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "PIKI TAOFIK",
+            "empId": "23110117"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "DEDY IRWANSYAH",
+            "empId": "23120132"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "AGUNG BASUKI",
+            "empId": "23070072"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "YULIANTO",
+            "empId": "23110122"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "SOPAN",
+            "empId": "23110118"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "MUJIATI",
+            "empId": "23120164"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "HIDAYATUL",
+            "empId": "23120165"
+          },
+          {
+            "id": "prd1-1-3",
+            "code": "PRD1.1.3",
+            "title": "CO&CI",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-4",
+            "code": "PRD1.1.4",
+            "title": "PO",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-5",
+            "code": "PRD1.1.5",
+            "title": "MAINTENANCE",
+            "name": "TRI YULIYANTO",
+            "empId": "23110120"
+          },
+          {
+            "id": "prd1-1-6",
+            "code": "PRD1.1.6",
+            "title": "MAINTENANCE",
+            "name": "AHMAD DAYU ZAINI",
+            "empId": "23180703"
+          },
+          {
+            "id": "prd1-1-7",
+            "code": "PRD1.1.7",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "HANA OKTA",
+            "empId": "23120155"
+          },
+          {
+            "id": "prd1-2-2",
+            "code": "PRD1.2.2",
+            "title": "ASSEMBLING",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-2-3",
+            "code": "PRD1.2.3",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUGIHARTO (COORD)",
+            "empId": "23120137"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "CIPTO RAHMAD SASONO",
+            "empId": "23060047"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "DENDI SETYAWAN",
+            "empId": "23120146"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "HERI MOHAMMAD AFANDI",
+            "empId": "23120138"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "INDRI NOVITA SARI",
+            "empId": "23110113",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "PARTO",
+            "empId": "23120140",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUPANTO",
+            "empId": "23090091",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "WANTO",
+            "empId": "23110121",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "JUPRI SAHALA",
+            "empId": "23120154",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "ARIYANTO",
+            "empId": "23120219",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "TEAM MEMBER",
+            "empId": "-",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-2",
+            "code": "PRD1.0.2",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MAULANA MALIK IBRAHIM",
+            "empId": "23220078",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-3",
+            "code": "PRD1.0.3",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MOH. NURHIDAYAT",
+            "empId": "23120181",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-4",
+            "code": "PRD1.0.4",
+            "title": "ADMINISTRATION",
+            "name": "DWI WIDYASTUTI",
+            "empId": "23120191",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-5",
+            "code": "PRD1.0.5",
+            "title": "ADMINISTRATION",
+            "name": "MELINDA SURYANI HASIBUAN",
+            "empId": "23230008",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-6",
+            "code": "PRD1.0.6",
+            "title": "ADMINISTRATION",
+            "name": "RIRIN ERLINA",
+            "empId": "23120217",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-7",
+            "code": "PRD1.0.7",
+            "title": "ADMINISTRATION",
+            "name": "ANDI PUTRA MALBA SYAGGAF",
+            "empId": "23230027",
+            "group": "TEAM MEMBER/ADMIN"
+          }
+        ]
+      },
+      "lastModified": "2026-05-21T08:15:36.452Z",
+      "modifiedBy": "Super Admin",
+      "signatures": {
+        "approvedBy": {
+          "date": "21/05/2026",
+          "_ts": "2026-05-21T08:16:58.251Z"
+        },
+        "preparedBy": {
+          "date": "21/05/2026",
+          "_ts": "2026-05-21T08:15:36.466Z"
+        }
+      },
+      "header": {
+        "effectiveDate": "21/05/2026",
+        "_effectiveDateTs": "2026-05-21T08:16:58.251Z"
+      }
+    }
+  },
+  "currentData": {
+    "organizationData": {
+      "departmentId": "manufacturing-cable",
+      "structure": {
+        "header": {
+          "title": "CONTROLCABLE MANUFACTURE",
+          "code": "PRD1.0",
+          "head": "KARNA SATIA SALIM*",
+          "empId": "23230114"
+        },
+        "positions": [
+          {
+            "id": "prd1-1",
+            "code": "PRD1.1",
+            "title": "MANUFACTURING UNIT",
+            "name": "DADI ROSADI",
+            "empId": "23060049"
+          },
+          {
+            "id": "prd1-2",
+            "code": "PRD1.2",
+            "title": "ASSEMBLING UNIT",
+            "name": "M. SUGIARTO",
+            "empId": "23050024"
+          },
+          {
+            "id": "prd1-0-1",
+            "code": "PRD1.0.1",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "CHOIRUL AMIN",
+            "empId": "23110109"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AGUS PURWANTORO",
+            "empId": "23120139"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AJI BABAN",
+            "empId": "23120156"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "MAYAR SANTOSO",
+            "empId": "23090089"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "IWAN SUPRIYADI",
+            "empId": "23110114"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "PIKI TAOFIK",
+            "empId": "23110117"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "DEDY IRWANSYAH",
+            "empId": "23120132"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "AGUNG BASUKI",
+            "empId": "23070072"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "YULIANTO",
+            "empId": "23110122"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "SOPAN",
+            "empId": "23110118"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "MUJIATI",
+            "empId": "23120164"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "HIDAYATUL",
+            "empId": "23120165"
+          },
+          {
+            "id": "prd1-1-3",
+            "code": "PRD1.1.3",
+            "title": "COMPONENT OUTER & COMPONENT INNER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-4",
+            "code": "PRD1.1.4",
+            "title": "PROSES OUTER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-5",
+            "code": "PRD1.1.5",
+            "title": "MAINTENANCE",
+            "name": "TRI YULIYANTO",
+            "empId": "23110120"
+          },
+          {
+            "id": "prd1-1-6",
+            "code": "PRD1.1.6",
+            "title": "MAINTENANCE",
+            "name": "AHMAD DAYU ZAINI",
+            "empId": "23180703"
+          },
+          {
+            "id": "prd1-1-7",
+            "code": "PRD1.1.7",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "HANA OKTA",
+            "empId": "23120155"
+          },
+          {
+            "id": "prd1-2-2",
+            "code": "PRD1.2.2",
+            "title": "ASSEMBLING",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-2-3",
+            "code": "PRD1.2.3",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUGIHARTO (COORD)",
+            "empId": "23120137"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "CIPTO RAHMAD SASONO",
+            "empId": "23060047"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "DENDI SETYAWAN",
+            "empId": "23120146"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "HERI MOHAMMAD AFANDI",
+            "empId": "23120138"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "INDRI NOVITA SARI",
+            "empId": "23110113",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "PARTO",
+            "empId": "23120140",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUPANTO",
+            "empId": "23090091",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "WANTO",
+            "empId": "23110121",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "JUPRI SAHALA",
+            "empId": "23120154",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "ARIYANTO",
+            "empId": "23120219",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "TEAM MEMBER",
+            "empId": "-",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-2",
+            "code": "PRD1.0.2",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MAULANA MALIK IBRAHIM",
+            "empId": "23220078",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-3",
+            "code": "PRD1.0.3",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MOH. NURHIDAYAT",
+            "empId": "23120181",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-4",
+            "code": "PRD1.0.4",
+            "title": "ADMINISTRATION",
+            "name": "DWI WIDYASTUTI",
+            "empId": "23120191",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-5",
+            "code": "PRD1.0.5",
+            "title": "ADMINISTRATION",
+            "name": "MELINDA SURYANI HASIBUAN",
+            "empId": "23230008",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-6",
+            "code": "PRD1.0.6",
+            "title": "ADMINISTRATION",
+            "name": "RIRIN ERLINA",
+            "empId": "23120217",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-7",
+            "code": "PRD1.0.7",
+            "title": "ADMINISTRATION",
+            "name": "ANDI PUTRA MALBA SYAGGAF",
+            "empId": "23230027",
+            "group": "TEAM MEMBER/ADMIN"
+          }
+        ]
+      }
+    }
+  },
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-21T08:15:36.466Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-21T08:15:36.467Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-21T08:16:58.278Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-21T08:16:58.251Z"
+  },
+  "approvedBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-21T08:16:58.251Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-21T08:16:58.251Z"
+  },
+  "reviewedBy": {
+    "$oid": "691ebfc9e66ff7ee7cfe7357"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0fb165a11eaf45107e5d5a"
+  },
+  "title": "Update Member ",
+  "description": "change title",
+  "requestedBy": {
+    "$oid": "69e840a5e7e844e2faf897a3"
+  },
+  "department": "Manufacturing Cable",
+  "changeType": "update",
+  "proposedData": {
+    "organizationData": {
+      "departmentId": "manufacturing-cable",
+      "structure": {
+        "header": {
+          "title": "CONTROLCABLE MANUFACTURE",
+          "code": "PRD1.0",
+          "head": "KARNA SATIA SALIM*",
+          "empId": "23230114"
+        },
+        "positions": [
+          {
+            "id": "prd1-1",
+            "code": "PRD1.1",
+            "title": "MANUFACTURING UNIT",
+            "name": "DADI ROSADI",
+            "empId": "23060049"
+          },
+          {
+            "id": "prd1-2",
+            "code": "PRD1.2",
+            "title": "ASSEMBLING UNIT",
+            "name": "M. SUGIARTO",
+            "empId": "23050024"
+          },
+          {
+            "id": "prd1-0-1",
+            "code": "PRD1.0.1",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "CHOIRUL AMIN",
+            "empId": "23110109"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AGUS PURWANTORO",
+            "empId": "23120139"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AJI BABAN",
+            "empId": "23120156"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "MAYAR SANTOSO",
+            "empId": "23090089"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "IWAN SUPRIYADI",
+            "empId": "23110114"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "PIKI TAOFIK",
+            "empId": "23110117"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "DEDY IRWANSYAH",
+            "empId": "23120132"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "AGUNG BASUKI",
+            "empId": "23070072"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "YULIANTO",
+            "empId": "23110122"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "SOPAN",
+            "empId": "23110118"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "MUJIATI",
+            "empId": "23120164"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "HIDAYATUL",
+            "empId": "23120165"
+          },
+          {
+            "id": "prd1-1-3",
+            "code": "PRD1.1.3",
+            "title": "CO&CI MEMBER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-4",
+            "code": "PRD1.1.4",
+            "title": "PO MEMBER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-5",
+            "code": "PRD1.1.5",
+            "title": "MAINTENANCE",
+            "name": "TRI YULIYANTO",
+            "empId": "23110120"
+          },
+          {
+            "id": "prd1-1-6",
+            "code": "PRD1.1.6",
+            "title": "MAINTENANCE",
+            "name": "AHMAD DAYU ZAINI",
+            "empId": "23180703"
+          },
+          {
+            "id": "prd1-1-7",
+            "code": "PRD1.1.7",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "HANA OKTA",
+            "empId": "23120155"
+          },
+          {
+            "id": "prd1-2-2",
+            "code": "PRD1.2.2",
+            "title": "ASSEMBLING",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-2-3",
+            "code": "PRD1.2.3",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUGIHARTO (COORD)",
+            "empId": "23120137"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "CIPTO RAHMAD SASONO",
+            "empId": "23060047"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "DENDI SETYAWAN",
+            "empId": "23120146"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "HERI MOHAMMAD AFANDI",
+            "empId": "23120138"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "INDRI NOVITA SARI",
+            "empId": "23110113",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "PARTO",
+            "empId": "23120140",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUPANTO",
+            "empId": "23090091",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "WANTO",
+            "empId": "23110121",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "JUPRI SAHALA",
+            "empId": "23120154",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "ARIYANTO",
+            "empId": "23120219",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "TEAM MEMBER",
+            "empId": "-",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-2",
+            "code": "PRD1.0.2",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MAULANA MALIK IBRAHIM",
+            "empId": "23220078",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-3",
+            "code": "PRD1.0.3",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MOH. NURHIDAYAT",
+            "empId": "23120181",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-4",
+            "code": "PRD1.0.4",
+            "title": "ADMINISTRATION",
+            "name": "DWI WIDYASTUTI",
+            "empId": "23120191",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-5",
+            "code": "PRD1.0.5",
+            "title": "ADMINISTRATION",
+            "name": "MELINDA SURYANI HASIBUAN",
+            "empId": "23230008",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-6",
+            "code": "PRD1.0.6",
+            "title": "ADMINISTRATION",
+            "name": "RIRIN ERLINA",
+            "empId": "23120217",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-7",
+            "code": "PRD1.0.7",
+            "title": "ADMINISTRATION",
+            "name": "ANDI PUTRA MALBA SYAGGAF",
+            "empId": "23230027",
+            "group": "TEAM MEMBER/ADMIN"
+          }
+        ]
+      },
+      "lastModified": "2026-05-22T01:29:09.145Z",
+      "modifiedBy": "Super Admin",
+      "signatures": {
+        "approvedBy": {
+          "date": "22/05/2026",
+          "_ts": "2026-05-22T01:31:14.716Z"
+        },
+        "preparedBy": {
+          "date": "22/05/2026",
+          "_ts": "2026-05-22T01:29:09.182Z"
+        }
+      },
+      "header": {
+        "effectiveDate": "22/05/2026",
+        "_effectiveDateTs": "2026-05-22T01:31:14.716Z"
+      }
+    }
+  },
+  "currentData": {
+    "organizationData": {
+      "departmentId": "manufacturing-cable",
+      "structure": {
+        "header": {
+          "title": "CONTROLCABLE MANUFACTURE",
+          "code": "PRD1.0",
+          "head": "KARNA SATIA SALIM*",
+          "empId": "23230114"
+        },
+        "positions": [
+          {
+            "id": "prd1-1",
+            "code": "PRD1.1",
+            "title": "MANUFACTURING UNIT",
+            "name": "DADI ROSADI",
+            "empId": "23060049"
+          },
+          {
+            "id": "prd1-2",
+            "code": "PRD1.2",
+            "title": "ASSEMBLING UNIT",
+            "name": "M. SUGIARTO",
+            "empId": "23050024"
+          },
+          {
+            "id": "prd1-0-1",
+            "code": "PRD1.0.1",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "CHOIRUL AMIN",
+            "empId": "23110109"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AGUS PURWANTORO",
+            "empId": "23120139"
+          },
+          {
+            "id": "prd1-1-1",
+            "code": "PRD1.1.1",
+            "title": "GROUP CO&CI",
+            "name": "AJI BABAN",
+            "empId": "23120156"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "MAYAR SANTOSO",
+            "empId": "23090089"
+          },
+          {
+            "id": "prd1-1-2",
+            "code": "PRD1.1.2",
+            "title": "GROUP PO",
+            "name": "IWAN SUPRIYADI",
+            "empId": "23110114"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "PIKI TAOFIK",
+            "empId": "23110117"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "DEDY IRWANSYAH",
+            "empId": "23120132"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "AGUNG BASUKI",
+            "empId": "23070072"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "YULIANTO",
+            "empId": "23110122"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "SOPAN",
+            "empId": "23110118"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "MUJIATI",
+            "empId": "23120164"
+          },
+          {
+            "id": "prd1-2-1",
+            "code": "PRD1.2.1",
+            "title": "GROUP ASSEMBLING",
+            "name": "HIDAYATUL",
+            "empId": "23120165"
+          },
+          {
+            "id": "prd1-1-3",
+            "code": "PRD1.1.3",
+            "title": "COMPONENT OUTER & COMPONENT INNER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-4",
+            "code": "PRD1.1.4",
+            "title": "PROSES OUTER",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-1-5",
+            "code": "PRD1.1.5",
+            "title": "MAINTENANCE",
+            "name": "TRI YULIYANTO",
+            "empId": "23110120"
+          },
+          {
+            "id": "prd1-1-6",
+            "code": "PRD1.1.6",
+            "title": "MAINTENANCE",
+            "name": "AHMAD DAYU ZAINI",
+            "empId": "23180703"
+          },
+          {
+            "id": "prd1-1-7",
+            "code": "PRD1.1.7",
+            "title": "PRODUCTION ENGINEERING",
+            "name": "HANA OKTA",
+            "empId": "23120155"
+          },
+          {
+            "id": "prd1-2-2",
+            "code": "PRD1.2.2",
+            "title": "ASSEMBLING",
+            "name": "TEAM MEMBER",
+            "empId": "-"
+          },
+          {
+            "id": "prd1-2-3",
+            "code": "PRD1.2.3",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUGIHARTO (COORD)",
+            "empId": "23120137"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "CIPTO RAHMAD SASONO",
+            "empId": "23060047"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "DENDI SETYAWAN",
+            "empId": "23120146"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "HERI MOHAMMAD AFANDI",
+            "empId": "23120138"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "INDRI NOVITA SARI",
+            "empId": "23110113",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "PARTO",
+            "empId": "23120140",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "SUPANTO",
+            "empId": "23090091",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "WANTO",
+            "empId": "23110121",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "JUPRI SAHALA",
+            "empId": "23120154",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "ARIYANTO",
+            "empId": "23120219",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-2-4",
+            "code": "PRD1.2.4",
+            "title": "QUALITY CONTROL PROCESS",
+            "name": "TEAM MEMBER",
+            "empId": "-",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-2",
+            "code": "PRD1.0.2",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MAULANA MALIK IBRAHIM",
+            "empId": "23220078",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-3",
+            "code": "PRD1.0.3",
+            "title": "QUALITY CONTROL INCOMING",
+            "name": "MOH. NURHIDAYAT",
+            "empId": "23120181",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-4",
+            "code": "PRD1.0.4",
+            "title": "ADMINISTRATION",
+            "name": "DWI WIDYASTUTI",
+            "empId": "23120191",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-5",
+            "code": "PRD1.0.5",
+            "title": "ADMINISTRATION",
+            "name": "MELINDA SURYANI HASIBUAN",
+            "empId": "23230008",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-6",
+            "code": "PRD1.0.6",
+            "title": "ADMINISTRATION",
+            "name": "RIRIN ERLINA",
+            "empId": "23120217",
+            "group": "TEAM MEMBER/ADMIN"
+          },
+          {
+            "id": "prd1-0-7",
+            "code": "PRD1.0.7",
+            "title": "ADMINISTRATION",
+            "name": "ANDI PUTRA MALBA SYAGGAF",
+            "empId": "23230027",
+            "group": "TEAM MEMBER/ADMIN"
+          }
+        ]
+      }
+    }
+  },
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-22T01:29:09.182Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-22T01:29:09.185Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T01:31:14.717Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-22T01:31:14.716Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-22T01:31:14.716Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-22T01:31:14.716Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
 }]

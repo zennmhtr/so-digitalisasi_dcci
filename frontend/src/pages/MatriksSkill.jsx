@@ -1193,34 +1193,44 @@ const MatriksSkill = () => {
     const [dataInitialized, setDataInitialized] = useState(false);
 
     useEffect(() => {
-        if (!user) return;
-
-        const loadApprovedData = async () => {
-            setDataLoading(true);
-            try {
-                const response = await api.get('/matriks-skill-change-requests/approved-data');
-                if (response.data.success && response.data.data.length > 0) {
-                    setDeptData((prev) => {
-                        const updated = { ...prev };
-                        response.data.data.forEach((item) => {
-                            if (item.deptId && item.matriksData) {
-                                updated[item.deptId] = item.matriksData;
+    if (!user) return;
+    const loadApprovedData = async () => {
+        setDataLoading(true);
+        try {
+            const response = await api.get('/matriks-skill-change-requests/approved-data');
+            if (response.data.success && response.data.data.length > 0) {
+                setDeptData((prev) => {
+                    const updated = { ...prev };
+                    response.data.data.forEach((item) => {
+                        if (item.deptId && item.matriksData) {
+                            // ✅ Ambil defaultData dari DEPARTMENTS_DATA
+                            const defaultDept = DEPARTMENTS_DATA.find(d => d.id === item.deptId);
+                            
+                            // ✅ Paksa header fields selalu dari kode (DEPARTMENTS_DATA)
+                            if (defaultDept) {
+                                item.matriksData.tglEfektif = defaultDept.matriksData.tglEfektif;
+                                item.matriksData.judul = defaultDept.matriksData.judul;
+                                item.matriksData.divisi = defaultDept.matriksData.divisi;
+                                item.matriksData.departemen = defaultDept.matriksData.departemen;
+                                item.matriksData.kompetensi = defaultDept.matriksData.kompetensi;
                             }
-                        });
-                        return updated;
+                            
+                            updated[item.deptId] = item.matriksData;
+                        }
                     });
-                }
-            } catch (error) {
-                console.error("[MatriksSkill] Gagal load approved data:", error?.response?.status, error?.message);
-            } finally {
-                setDataLoading(false);
-                setDataInitialized(true);
+                    return updated;
+                });
             }
-        };
+        } catch (error) {
+            console.error("[MatriksSkill] Gagal load approved data:", error?.response?.status, error?.message);
+        } finally {
+            setDataLoading(false);
+            setDataInitialized(true);
+        }
+    };
 
-        loadApprovedData();
-    }, [user]);
-
+    loadApprovedData();
+}, [user]);
     const handlePrint = () => {
         const oldStyle = document.getElementById("matriks-print-style");
         if (oldStyle) oldStyle.remove();

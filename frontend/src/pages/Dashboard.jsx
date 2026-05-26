@@ -384,7 +384,7 @@ const Dashboard = () => {
           {
             id: "bod-1",
             code: "BOD1.0",
-            title: "PRESIDENT DIRECTORrrr",
+            title: "PRESIDENT DIRECTOR",
             name: "EKO MARYANTO",
             empId: "23100235",
           },

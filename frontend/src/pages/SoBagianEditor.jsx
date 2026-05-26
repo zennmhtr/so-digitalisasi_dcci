@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { soBagianChangeRequestsAPI } from "../services/api";
 import JobdescViewer from "../components/JobdescViewer";
+import Swal from "sweetalert2";
 
 const SoBagianEditor = () => {
   const { user } = useAuth();
@@ -66,6 +67,8 @@ const SoBagianEditor = () => {
       console.error("Error fetching employee jobdesc status:", error);
     }
   };
+
+  
 
   useEffect(() => {
     if (selectedDepartment) {

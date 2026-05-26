@@ -66,31 +66,7 @@
     "$date": "2025-11-20T07:14:17.620Z"
   },
   "updatedAt": {
-    "$date": "2026-05-18T02:20:51.168Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "693279fcc4605c9ddd502a96"
-  },
-  "noPNK": "23220060",
-  "name": "Syifa Nur Mulyani",
-  "email": "syifa123@dcci.com",
-  "username": "syifaaa",
-  "password": "$2a$10$fjv6.nOB9V7QahC1P7KALeNUXYX9TcxMfcTns/I4yCy.h/l2D1yva",
-  "role": {
-    "$oid": "69327ba9c4605c9ddd502ac5"
-  },
-  "department": {
-    "$oid": "690c199501e848a06615ddc4"
-  },
-  "status": "active",
-  "createdAt": {
-    "$date": "2025-12-05T06:21:48.414Z"
-  },
-  "updatedAt": {
-    "$date": "2026-05-19T02:16:11.759Z"
+    "$date": "2026-05-20T03:57:31.748Z"
   },
   "__v": 0
 },
@@ -195,9 +171,9 @@
     "$oid": "6a0bb6ba6947832b7c76cd73"
   },
   "noPNK": "23230114",
-  "name": "Karna Katia Salim",
+  "name": "Karna Satia Salim",
   "email": "karna@dcci.com",
-  "username": "karnakatiasalim",
+  "username": "karnasatiasalim",
   "password": "$2a$10$Xi3rCaCwQ/B9Y45O9q/Hu.VmWDH1YHJlwinq2qGLQ8xdEDr6SVP1u",
   "role": {
     "$oid": "6a0bb67c6947832b7c76cd59"

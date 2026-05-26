@@ -1,187 +1,5 @@
 [{
   "_id": {
-    "$oid": "69327f25c4605c9ddd502b2a"
-  },
-  "title": "Syifa",
-  "description": "test",
-  "requestedBy": {
-    "$oid": "693279fcc4605c9ddd502a96"
-  },
-  "department": {
-    "$oid": "690c199501e848a06615ddc4"
-  },
-  "changeType": "create",
-  "proposedData": {
-    "department": "Purchasing",
-    "division": "ADMINISTRATION",
-    "positionTitle": "Staff",
-    "reportsTo": "PURCHASING DEPT HEAD",
-    "tanggal": "2025-12-05",
-    "revisi": "0",
-    "responsibilities": [
-      "Mencari dan menganalisa calon supplier yang sesuai dengan kebutuhan"
-    ],
-    "accountabilities": [
-      "Menggunakan fasilitas untuk menunjang pekerjaan"
-    ],
-    "interactions": {
-      "internal": [
-        "All Departments",
-        "Supplier/Vendor"
-      ],
-      "external": []
-    },
-    "competence": {
-      "managerial": [
-        "Teamwork",
-        "TroubleShooting"
-      ],
-      "technical": [],
-      "behavioral": [],
-      "skill": [
-        "Microsoft Office"
-      ]
-    },
-    "jobSpecification": {
-      "age": "21",
-      "education": "D3",
-      "nonFormalEducation": "-",
-      "experience": "1 Tahun",
-      "skills": [],
-      "certification": []
-    },
-    "member": "69327bedc4605c9ddd502b0b",
-    "user": null,
-    "memberName": "SYIFA NUR MULYANI",
-    "memberNoPNK": null,
-    "memberEmail": null,
-    "memberPosition": "Staff"
-  },
-  "currentData": null,
-  "status": "approved",
-  "priority": "medium",
-  "submittedAt": {
-    "$date": "2025-12-05T06:43:49.570Z"
-  },
-  "createdAt": {
-    "$date": "2025-12-05T06:43:49.572Z"
-  },
-  "updatedAt": {
-    "$date": "2025-12-05T06:47:21.199Z"
-  },
-  "__v": 0,
-  "approvedAt": {
-    "$date": "2025-12-05T06:47:21.198Z"
-  },
-  "approvedBy": {
-    "$oid": "6912956779f4ad22c019d3b4"
-  },
-  "firstApprovedAt": {
-    "$date": "2025-12-05T06:47:21.198Z"
-  },
-  "firstApprovedBy": {
-    "$oid": "6912956779f4ad22c019d3b4"
-  },
-  "reviewComments": "boleh",
-  "reviewedAt": {
-    "$date": "2025-12-05T06:47:21.198Z"
-  },
-  "reviewedBy": {
-    "$oid": "6912956779f4ad22c019d3b4"
-  }
-},
-{
-  "_id": {
-    "$oid": "69362b2b4dc8d04c31081f1e"
-  },
-  "title": "testttt",
-  "description": "test",
-  "requestedBy": {
-    "$oid": "693279fcc4605c9ddd502a96"
-  },
-  "department": {
-    "$oid": "690c199501e848a06615ddc4"
-  },
-  "changeType": "create",
-  "proposedData": {
-    "department": "Purchasing",
-    "division": "Purchasing",
-    "positionTitle": "Staff",
-    "reportsTo": "HRGA IT",
-    "tanggal": "2025-12-08",
-    "revisi": "0",
-    "responsibilities": [
-      "manage purchasing"
-    ],
-    "accountabilities": [
-      "blablabla"
-    ],
-    "interactions": {
-      "internal": [
-        "blablabla"
-      ],
-      "external": []
-    },
-    "competence": {
-      "managerial": [
-        "office"
-      ],
-      "technical": [],
-      "behavioral": [],
-      "skill": [
-        "ms office"
-      ]
-    },
-    "jobSpecification": {
-      "age": "21 tahun",
-      "education": "D3",
-      "nonFormalEducation": "-",
-      "experience": "1 tahun",
-      "skills": [],
-      "certification": []
-    },
-    "member": "69327bedc4605c9ddd502b0b",
-    "user": null,
-    "memberName": "SYIFA NUR MULYANI",
-    "memberNoPNK": null,
-    "memberEmail": null,
-    "memberPosition": "Staff"
-  },
-  "currentData": null,
-  "status": "approved",
-  "priority": "medium",
-  "submittedAt": {
-    "$date": "2025-12-08T01:34:35.313Z"
-  },
-  "createdAt": {
-    "$date": "2025-12-08T01:34:35.329Z"
-  },
-  "updatedAt": {
-    "$date": "2025-12-08T01:35:14.466Z"
-  },
-  "__v": 0,
-  "approvedAt": {
-    "$date": "2025-12-08T01:35:14.463Z"
-  },
-  "approvedBy": {
-    "$oid": "6909ab54834a902ebe5a8fc2"
-  },
-  "firstApprovedAt": {
-    "$date": "2025-12-08T01:35:14.463Z"
-  },
-  "firstApprovedBy": {
-    "$oid": "6909ab54834a902ebe5a8fc2"
-  },
-  "reviewComments": "yes",
-  "reviewedAt": {
-    "$date": "2025-12-08T01:35:14.463Z"
-  },
-  "reviewedBy": {
-    "$oid": "6909ab54834a902ebe5a8fc2"
-  }
-},
-{
-  "_id": {
     "$oid": "6938e23a96e10d1e4523326e"
   },
   "title": "Job Description Request - SYIFA NUR MULYANI",
@@ -12133,8 +11951,8 @@
       "departmentId": "690c182301e848a06615dd84",
       "departmentName": "Manufacturing Battery",
       "header": {
-        "effectiveDate": "19/05/2026",
-        "_effectiveDateTs": "2026-05-19T07:41:43.500Z"
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:28:44.479Z"
       },
       "signatures": {
         "preparedBy": {
@@ -12142,14 +11960,14 @@
           "_ts": "2026-05-19T07:41:43.500Z"
         },
         "approvedBy": {
-          "date": "",
-          "_ts": ""
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:28:44.479Z"
         }
       }
     }
   },
   "currentData": null,
-  "status": "pending",
+  "status": "approved",
   "priority": "medium",
   "submittedAt": {
     "$date": "2026-05-19T07:41:43.514Z"
@@ -12158,9 +11976,28 @@
     "$date": "2026-05-19T07:41:43.514Z"
   },
   "updatedAt": {
-    "$date": "2026-05-19T07:41:43.514Z"
+    "$date": "2026-05-20T01:28:44.498Z"
   },
-  "__v": 0
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:28:44.479Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:28:44.479Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:28:44.479Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
 },
 {
   "_id": {
@@ -12283,4 +12120,1088 @@
     "$date": "2026-05-19T07:49:01.569Z"
   },
   "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6a0d05a4e165a379dfae8276"
+  },
+  "title": "New Job Description for DIONISIUS AUGUSTO",
+  "description": "Job description creation request for DIONISIUS AUGUSTO (23220105) - Position: MANUFACTURING BATTERY SECT.HEAD\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e844ede7e844e2faf89867",
+      "user": null,
+      "memberName": "DIONISIUS AUGUSTO",
+      "memberNoPNK": "23220105",
+      "memberEmail": null,
+      "memberPosition": "Senior Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY SECT.HEAD\t\t\t",
+      "reportsTo": "DIRECTOR\t\t",
+      "responsibilities": [
+        "Mengawasi proses produksi baterai agar sesuai target kualitas, biaya, dan delivery\n",
+        "Mengontrol aktivitas Production Engineering untuk optimasi proses dan peningkatan efisiensi\n",
+        "Memastikan kegiatan maintenance (preventive & corrective) mesin/line produksi berjalan efektif\n",
+        "Mengawasi pelaksanaan Quality Control (QC) sesuai standar dan spesifikasi\n",
+        "Mengelola dan mengarahkan tim produksi, engineering, maintenance, dan QC\n",
+        "Melakukan monitoring performa line produksi serta analisis masalah (troubleshooting)\n",
+        "Mengkoordinasikan tindakan perbaikan dan continuous improvement\n",
+        "Memastikan penerapan SOP, K3, dan standar kualitas di area kerja\n",
+        "Menyusun laporan produksi, kualitas, maintenance, dan performa tim\n"
+      ],
+      "accountabilities": [
+        "Menggunakan fasilitas untuk menunjang pekerjaannya \n",
+        "Memberi instruksi kepada bawahan dan memberi sanksi lisan dan tertulis kepada bawahan\n",
+        "Mengusulkan, mengangkat, dan memberhentikan karyawan\n",
+        "Mengetahui status karyawan \n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Managing Change",
+          "Empowerment",
+          "Fostering Teamwork",
+          "Analysis and Decision Making",
+          "Planning & Controlling",
+          "Integrity & Ethics",
+          "Excellence",
+          "Compassion",
+          "Humility"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 23 Tahun\n",
+        "education": "Min. D3",
+        "nonFormalEducation": "",
+        "experience": "Min. 3 Tahun",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "DIONISIUS AUGUSTO",
+      "noPNK": "23220105",
+      "email": null,
+      "position": "Senior Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:19.912Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T00:51:48.686Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:19.912Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T00:51:48.710Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T00:51:48.712Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:29:19.913Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:29:19.912Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:29:19.912Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:29:19.912Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d06ede165a379dfae8292"
+  },
+  "title": "New Job Description for YEREMIA SOTYA",
+  "description": "Job description creation request for YEREMIA SOTYA (23230135) - Position: MANUFACTURING BATTERY STAFF\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84518e7e844e2faf89870",
+      "user": null,
+      "memberName": "YEREMIA SOTYA",
+      "memberNoPNK": "23230135",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY STAFF\t\t\t",
+      "reportsTo": "DIRECTOR\t\t",
+      "responsibilities": [
+        "Menjalankan proses produksi baterai sesuai SOP dan instruksi kerja\n",
+        "Mengoperasikan mesin/line produksi dengan benar dan aman\n",
+        "Melakukan pengecekan hasil produksi sesuai standar kualitas\n",
+        "Mencatat data produksi (output, defect, downtime)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar (autonomous maintenance)\n",
+        "Membantu penanganan masalah sederhana pada proses produksi\n",
+        "Menjaga kebersihan area kerja dan menerapkan standar K3\n",
+        "Berkoordinasi dengan tim untuk memastikan kelancaran produksi\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Leads Courageously\t\t",
+          "Coach & Develop Others\t\t",
+          "Teamwork",
+          "Trouble Shooting",
+          "Customer Satisfaction\t",
+          "Cross Functional Capability\t\t",
+          "Quality Focus",
+          "Cost Efficiency",
+          "Continuous Improvement\t\t",
+          "Planning Monitoring",
+          "Personal Integrity",
+          "Drive for Result",
+          "Learning"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 23 Tahun\n",
+        "education": "Min. D3\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 3 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "YEREMIA SOTYA",
+      "noPNK": "23230135",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:32.876Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T00:57:17.969Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:32.876Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T00:57:17.986Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T00:57:17.987Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:29:32.877Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:29:32.876Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:29:32.876Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:29:32.876Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d0d52e165a379dfae82ae"
+  },
+  "title": "New Job Description for ASEP AGUNG WIGUNA",
+  "description": "Job description creation request for ASEP AGUNG WIGUNA (23190805) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e8452be7e844e2faf89879",
+      "user": null,
+      "memberName": "ASEP AGUNG WIGUNA",
+      "memberNoPNK": "23190805",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi baterai sesuai SOP\n",
+        "Menjalankan proses produksi sesuai target output\n",
+        "Melakukan pengecekan visual dan kualitas produk\n",
+        "Mengisi dan mencatat data produksi harian\n",
+        "Menjaga kondisi mesin dan melakukan pengecekan dasar\n",
+        "Menjaga kebersihan area kerja dan mematuhi K3\n",
+        "Melaporkan masalah produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "ASEP AGUNG WIGUNA",
+      "noPNK": "23190805",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:42.521Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:24:34.956Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:42.521Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:24:34.974Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:24:34.974Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:29:42.522Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:29:42.521Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:29:42.521Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:29:42.521Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d0dfae165a379dfae82c3"
+  },
+  "title": "New Job Description for RIZAL GUNAWAN",
+  "description": "Job description creation request for RIZAL GUNAWAN (23230055) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84573e7e844e2faf8988b",
+      "user": null,
+      "memberName": "RIZAL GUNAWAN",
+      "memberNoPNK": "23230055",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi auxiliary battery (12V) sesuai SOP\n",
+        "Melakukan proses perakitan, pengisian, dan finishing baterai\n",
+        "Melakukan pengecekan kualitas (visual & basic test) produk\n",
+        "Mencatat data produksi (output, defect, dll.)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar\n",
+        "Menjaga kebersihan area kerja dan menerapkan K3\n",
+        "Melaporkan kendala produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "RIZAL GUNAWAN",
+      "noPNK": "23230055",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:51.325Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:27:22.843Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:51.325Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:27:22.860Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:27:22.860Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d109c6c5febe837db2530"
+  },
+  "title": "New Job Description for MUH. NANDER",
+  "description": "Job description creation request for MUH. NANDER (23120193) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84573e7e844e2faf8988b",
+      "user": null,
+      "memberName": "MUH.NANDER",
+      "memberNoPNK": "23120193",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi auxiliary battery (12V) sesuai SOP\n",
+        "Melakukan proses perakitan, pengisian, dan finishing baterai\n",
+        "Melakukan pengecekan kualitas (visual & basic test) produk\n",
+        "Mencatat data produksi (output, defect, dll.)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar\n",
+        "Menjaga kebersihan area kerja dan menerapkan K3\n",
+        "Melaporkan kendala produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "MUH. NANDER",
+      "noPNK": "23120193",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:51.325Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:27:22.843Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:51.325Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:28:22.860Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:28:22.860Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:29:51.325Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d11c46c5febe837db2532"
+  },
+  "title": "New Job Description for GANTIANTO",
+  "description": "Job description creation request for GANTIANTO (23120145) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84573e7e844e2faf8988b",
+      "user": null,
+      "memberName": "GANTIANTO",
+      "memberNoPNK": "23120145",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi auxiliary battery (12V) sesuai SOP\n",
+        "Melakukan proses perakitan, pengisian, dan finishing baterai\n",
+        "Melakukan pengecekan kualitas (visual & basic test) produk\n",
+        "Mencatat data produksi (output, defect, dll.)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar\n",
+        "Menjaga kebersihan area kerja dan menerapkan K3\n",
+        "Melaporkan kendala produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "GANTIANTO",
+      "noPNK": "23120145",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:51.325Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:27:22.843Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:51.325Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:29:22.860Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:29:22.860Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:30:51.325Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:30:51.325Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:30:51.325Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:30:51.325Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d14886c5febe837db2542"
+  },
+  "title": "New Job Description for TARMUDIN",
+  "description": "Job description creation request for TARMUDIN (23120184) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84573e7e844e2faf8988b",
+      "user": null,
+      "memberName": "TARMUDIN",
+      "memberNoPNK": "23120184",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi auxiliary battery (12V) sesuai SOP\n",
+        "Melakukan proses perakitan, pengisian, dan finishing baterai\n",
+        "Melakukan pengecekan kualitas (visual & basic test) produk\n",
+        "Mencatat data produksi (output, defect, dll.)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar\n",
+        "Menjaga kebersihan area kerja dan menerapkan K3\n",
+        "Melaporkan kendala produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "TARMUDIN",
+      "noPNK": "23120184",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:51.325Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:27:22.843Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:51.325Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:31:22.860Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:31:22.860Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:32:51.325Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:33:51.325Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:33:51.325Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:33:51.325Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a0d16d46c5febe837db2543"
+  },
+  "title": "New Job Description for DEDI SUKMA",
+  "description": "Job description creation request for DEDI SUKMA (23110110) - Position: MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+  "requestedBy": {
+    "$oid": "6a0c12e171d24a5c3e86a638"
+  },
+  "department": "Manufacturing Battery",
+  "changeType": "add",
+  "proposedData": {
+    "jobDescData": {
+      "member": "69e84573e7e844e2faf8988b",
+      "user": null,
+      "memberName": "DEDI SUKMA",
+      "memberNoPNK": "23110110",
+      "memberEmail": null,
+      "memberPosition": "Staff",
+      "department": "690c182301e848a06615dd84",
+      "tanggal": "2026-03-27",
+      "revisi": "0",
+      "division": "MANUFACTURING\t\t\t",
+      "positionTitle": "MANUFACTURING BATTERY TEAM MEMBER\t\t\t",
+      "reportsTo": "MANUFACTURING BATTERY SECT.HEAD\t\t",
+      "responsibilities": [
+        "Mengoperasikan mesin/line produksi auxiliary battery (12V) sesuai SOP\n",
+        "Melakukan proses perakitan, pengisian, dan finishing baterai\n",
+        "Melakukan pengecekan kualitas (visual & basic test) produk\n",
+        "Mencatat data produksi (output, defect, dll.)\n",
+        "Melakukan pengecekan kondisi mesin dan perawatan dasar\n",
+        "Menjaga kebersihan area kerja dan menerapkan K3\n",
+        "Melaporkan kendala produksi kepada atasan\n"
+      ],
+      "accountabilities": [
+        "Menjalankan produksi sesuai SOP, target output, dan kualitas\n",
+        "Memastikan hasil produk memenuhi standar kualitas dan safety\n",
+        "Menjaga kelancaran proses serta mendukung perbaikan produksi\n"
+      ],
+      "interactions": {
+        "internal": [
+          "Direksi",
+          "Departement Head",
+          "Semua Departement"
+        ],
+        "external": []
+      },
+      "competence": {
+        "managerial": [
+          "Directiveness",
+          "Monitoring",
+          "Teamwork",
+          "Quality & Customer Focus\t",
+          "Continous Improvement\t\t",
+          "Personal Integrity",
+          "Drive For Result"
+        ],
+        "technical": [],
+        "behavioral": [],
+        "skill": [
+          "Perencanaan & pengendalian produk\t\t\t",
+          "Line balancing & target output",
+          "Lean Manufacturing (5R, Kaizen)",
+          "Organize information",
+          "Time management & scheduling"
+        ]
+      },
+      "jobSpecification": {
+        "age": "Min. 17 Tahun\n",
+        "education": "Min. SMK\n",
+        "nonFormalEducation": "",
+        "experience": "Min. 1 Tahun\n",
+        "skills": [],
+        "certification": []
+      }
+    },
+    "memberInfo": {
+      "name": "DEDI SUKMA",
+      "noPNK": "23110110",
+      "email": null,
+      "position": "Staff"
+    },
+    "organizationData": {
+      "departmentId": "690c182301e848a06615dd84",
+      "departmentName": "Manufacturing Battery",
+      "header": {
+        "effectiveDate": "20/05/2026",
+        "_effectiveDateTs": "2026-05-20T01:29:51.325Z"
+      },
+      "signatures": {
+        "preparedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:27:22.843Z"
+        },
+        "approvedBy": {
+          "date": "20/05/2026",
+          "_ts": "2026-05-20T01:29:51.325Z"
+        }
+      }
+    }
+  },
+  "currentData": null,
+  "status": "approved",
+  "priority": "medium",
+  "submittedAt": {
+    "$date": "2026-05-20T01:32:22.860Z"
+  },
+  "createdAt": {
+    "$date": "2026-05-20T01:32:22.860Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-20T01:33:51.325Z"
+  },
+  "__v": 0,
+  "approvedAt": {
+    "$date": "2026-05-20T01:34:51.325Z"
+  },
+  "approvedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "firstApprovedAt": {
+    "$date": "2026-05-20T01:34:51.325Z"
+  },
+  "firstApprovedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  },
+  "reviewComments": "",
+  "reviewedAt": {
+    "$date": "2026-05-20T01:34:51.325Z"
+  },
+  "reviewedBy": {
+    "$oid": "6912956779f4ad22c019d3b4"
+  }
 }]

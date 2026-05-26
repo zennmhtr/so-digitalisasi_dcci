@@ -111,19 +111,19 @@ const DashboardEditor = () => {
       header: {
         title: "ORGANIZATION STRUCTURE",
         company: "PT DHARMA CONTROLCABLE INDONESIA",
-        effectiveDate: "08/09/2025",
-        regNo: "08/10/2025",
-        preparedDate: "08/09/2025",
-        approvedDate: "08/09/2025",
+        effectiveDate: "16/03/2026",
+        regNo: "16/03/2026",
+        preparedDate: "16/03/2026",
+        approvedDate: "16/03/2026",
       },
       signatures: {
-        preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
+        preparedBy: { name: "Diki Wahyudi", date: "16/03/2026" },
         middleBy: {
           title: "Bambang Wuryanto",
           name: "Bambang Wuryanto",
-          date: "08/09/2025",
+          date: "16/03/2026",
         },
-        approvedBy: { name: "Eko Maryanto", date: "08/09/2025" },
+        approvedBy: { name: "Eko Maryanto", date: "16/03/2026" },
       },
       commissioners: {
         president: { title: "PRESIDENT COMMISIONER", name: "IRIANTO SANTOSO" },

@@ -240,16 +240,36 @@
     "View Management Rep SO",
     "View HRGA & IT SO",
     "SO Bagian Editor",
-    "SO Changes President Director Approval"
+    "SO Changes President Director Approval",
+    "Manage Users",
+    "Manage Departments",
+    "Manage Roles",
+    "Matriks Skill Editor",
+    "SO DCI Editor",
+    "View Own SO Change Requests",
+    "SO Changes Director Approval",
+    "SO Bagian Request",
+    "Manager HRGA & IT Approval",
+    "Manager Finance Approval",
+    "Manager Management Development Approval",
+    "Manager Manufacturing Battery Approval",
+    "Manager Management Representative Approval",
+    "Manager Manufacturing Cable Approval",
+    "Manager Marketing Battery Approval",
+    "Manager MI & SHE Approval",
+    "Manager Marketing Engineering Approval",
+    "Manager PPIC Approval",
+    "Manager QA Approval",
+    "Manager Purchasing Approval"
   ],
   "active": true,
   "createdAt": {
     "$date": "2025-11-11T01:51:07.194Z"
   },
   "updatedAt": {
-    "$date": "2026-02-09T05:01:39.195Z"
+    "$date": "2026-05-26T04:24:37.246Z"
   },
-  "__v": 3
+  "__v": 4
 },
 {
   "_id": {
@@ -351,8 +371,8 @@
   "_id": {
     "$oid": "69362be14dc8d04c31081f8b"
   },
-  "name": "Manager HRGA & IT",
-  "description": "Manage HRGA & IT Department",
+  "name": "Manager HRGA & IT | PPIC | Purch",
+  "description": "Manage HRGA & IT, PPIC, and Purchasing Department Access",
   "permissions": [
     "View Dashboard",
     "Jobdesc Management",
@@ -373,21 +393,50 @@
     "Matriks Skill Editor",
     "Manager HRGA & IT Approval",
     "Manager PPIC Approval",
-    "Manager Finance Approval",
     "SO Bagian Request",
     "Job Desc Request",
     "Manage Departments",
     "Manage Users",
-    "Manage Roles"
+    "Manage Roles",
+    "Manager Purchasing Approval",
+    "SO Changes President Director Approval",
+    "SO Changes Director Approval",
+    "Manager Finance Approval",
+    "Manager Management Development Approval",
+    "Manager Management Representative Approval",
+    "Manager Marketing Engineering Approval",
+    "Manager Manufacturing Cable Approval",
+    "Manager Manufacturing Battery Approval",
+    "Manager Marketing Battery Approval",
+    "Manager MI & SHE Approval",
+    "Manager QA Approval",
+    "Management Representative",
+    "Manufacturing Cable",
+    "Marketing Engineering",
+    "Finance Department",
+    "Management Development",
+    "Manufacturing Battery",
+    "Marketing Battery Department",
+    "MI & SHE",
+    "QA Department",
+    "View Finance SO",
+    "View Management Dev SO",
+    "View Manufacturing Battery SO",
+    "View Marketing Battery SO",
+    "View MI & SHE SO",
+    "View Management Rep SO",
+    "View Manufacturing Cable SO",
+    "View Marketing Engineering SO",
+    "View QA SO"
   ],
   "active": true,
   "createdAt": {
     "$date": "2025-12-08T01:37:37.558Z"
   },
   "updatedAt": {
-    "$date": "2026-05-19T03:27:47.400Z"
+    "$date": "2026-05-26T04:25:59.501Z"
   },
-  "__v": 6
+  "__v": 8
 },
 {
   "_id": {
@@ -429,16 +478,33 @@
     "View Marketing Engineering SO",
     "View Manufacturing Cable SO",
     "View Management Rep SO",
-    "View HRGA & IT SO"
+    "View HRGA & IT SO",
+    "View Own SO Change Requests",
+    "SO Changes Director Approval",
+    "SO Changes President Director Approval",
+    "Manager HRGA & IT Approval",
+    "SO DCI Editor",
+    "Matriks Skill Editor",
+    "Manager Finance Approval",
+    "Manager Management Development Approval",
+    "Manager Manufacturing Battery Approval",
+    "Manager Management Representative Approval",
+    "Manager Manufacturing Cable Approval",
+    "Manager Marketing Engineering Approval",
+    "Manager Marketing Battery Approval",
+    "Manager MI & SHE Approval",
+    "Manager Purchasing Approval",
+    "Manager PPIC Approval",
+    "Manager QA Approval"
   ],
   "active": true,
   "createdAt": {
     "$date": "2025-12-15T07:40:43.862Z"
   },
   "updatedAt": {
-    "$date": "2025-12-15T07:40:43.862Z"
+    "$date": "2026-05-25T01:04:42.721Z"
   },
-  "__v": 0
+  "__v": 3
 },
 {
   "_id": {
@@ -526,16 +592,19 @@
     "View Manufacturing Cable SO",
     "View Own SO Change Requests",
     "SO Changes President Director Approval",
-    "SO Changes Director Approval"
+    "SO Changes Director Approval",
+    "Manager Management Development Approval",
+    "Management Development",
+    "View Management Dev SO"
   ],
   "active": true,
   "createdAt": {
     "$date": "2026-05-19T01:01:48.086Z"
   },
   "updatedAt": {
-    "$date": "2026-05-19T07:28:40.952Z"
+    "$date": "2026-05-20T07:21:52.642Z"
   },
-  "__v": 0
+  "__v": 1
 },
 {
   "_id": {
@@ -564,7 +633,35 @@
     "$date": "2026-05-19T07:37:23.173Z"
   },
   "updatedAt": {
-    "$date": "2026-05-19T07:37:23.173Z"
+    "$date": "2026-05-20T07:22:19.200Z"
   },
-  "__v": 0
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6a0fbecea11eaf45107e607d"
+  },
+  "name": "Marketing Battery Dept.",
+  "description": "Manage Access Marketing Battery Dept.",
+  "permissions": [
+    "View Dashboard",
+    "Matriks Skill Editor",
+    "Manage Users",
+    "SO DCI Editor",
+    "View Own SO Change Requests",
+    "SO Bagian Request",
+    "Manager Marketing Battery Approval",
+    "Job Desc Request",
+    "Marketing Battery Department",
+    "View Marketing Battery SO",
+    "SO Bagian Editor"
+  ],
+  "active": true,
+  "createdAt": {
+    "$date": "2026-05-22T02:26:22.683Z"
+  },
+  "updatedAt": {
+    "$date": "2026-05-22T02:47:52.474Z"
+  },
+  "__v": 2
 }]
