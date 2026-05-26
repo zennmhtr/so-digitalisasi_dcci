@@ -57,13 +57,9 @@ const MarketingEngineering = () => {
       const codeTitleKeywords = {
         "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
         "ENG1.2": ["PROCESS ENGINEERING", "ENG1.2"],
-        "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
+        "ENG1.3": ["NEW BUSINESS DEV", "BESS", "ENG1.3"],
         "MKT1.1": ["SALES", "MARKETING CONTROLCABLE", "MKT1.1"],
         "MKT1.2": ["MKT1.2"],
-        "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE"],
-        "HRD1.0":  ["HRDGA", "HRGA", "HRD1.0"],
-        "PCH1.0":  ["PROCUREMENT", "PURCHASING"],
-        "FIN1.0":  ["FINANCE", "ACCOUNTING"],
       };
 
       // Normalisasi: hapus *, **, spasi berlebih

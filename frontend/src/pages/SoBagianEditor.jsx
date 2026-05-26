@@ -92,43 +92,153 @@ const SoBagianEditor = () => {
     if (response.ok) {
       const result = await response.json();
       const allJobdesc = result.data || result;
-      const deptKeywords = {
-        "PPIC": ["PPIC", "PPC", "WAREHOUSE", "WHS", "DELIVERY", "PLANNING"],
-        "HRD":  ["HRD", "HRGA", "GA", "IT", "INFORMATION", "POD"],
-        "MFG":  ["MANUFACTURING", "MFG", "PRODUKSI"],
-        "PRD":  ["MANUFACTURING", "PRODUCTION", "CONTROLCABLE", "ASSEMBLING", "PRD", "CO & CI", "ASSY", "PO", "MAINTENANCE", "PROD", "QUALITY"],
-        "QA":   ["QUALITY", "QA", "QC", "NEW BUSINESS DEV. STAFF"],
-        "MKT":  ["MARKETING", "MKT", "SALES", "ENGINEERING", "NEW BUSINESS DEV. STAFF"],
-        "FIN":  ["FINANCE", "ACCOUNTING", "FIN", "SAP"],
-        "MR":   ["MR", "MANAGEMENT REPRESENTATIVE"],
-        "PUR":  ["PURCHASING", "PUR", "PROCUREMENT"],
-        "ENG":  ["ENGINEERING", "ENG"],
-        "ME":   ["DEV", "NEW BUSINESS DEV. STAFF", "ENG1.3"],
+      const codeTitleKeywords = {
+        "ENG1.0": ["ENGINEERING CABLE", "ENG1.0"],
+        "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
+        "ENG1.2": ["PROCESS ENG", "ENG1.2"],
+        "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
+        "MKT1.0": ["MARKETING CABLE", "SALES MARKETING", "MKT1.0"],
+        "MKT1.1": ["MARKETING CABLE", "MKT1.1"],
+        "MKT1.1.1": ["MARKETING", "MKT1.1.1"],
+        "MKT1.1.2": ["MARKETING", "MKT1.1.2"],
+        "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
+        "MKT2.0": ["MARKETING BATTERY", "MKT2.0"],
+        "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1"],
+        "MKT2.2": ["MARKETING", "MKT2.2"],
+        "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
+        "PPIC1.1": ["PPIC", "PPIC1.1"],
+        "PPIC1.2": ["PPIC", "AHM OES", "PPIC1.2"],
+        "PPIC1.3": ["WAREHOUSE", "PPIC1.3"],
+        "PPIC1.1.1": ["PPIC", "PPIC1.1.1"],
+        "PPIC1.1.2": ["PPIC", "MANIFEST", "PPIC1.1.2"],
+        "PPIC1.1.3": ["DELIVERY", "PPIC1.1.3"],
+        "PPIC1.2.1": ["PPIC", "PPIC1.2.1"],
+        "PPIC1.2.2": ["PPIC", "PPIC1.2.2"],
+        "PPIC1.3.1": ["WAREHOUSE", "PPIC1.3.1"],
+        "PPIC1.3.2": ["WAREHOUSE", "PPIC1.3.2"],
+        "PPIC1.3.3": ["MRP", "PPIC1.3.3"],
+        "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
+        "PPIC1.3.5": ["RM", "PPIC1.3.5"],
+        "HRD1.0": ["HRD", "HRD1.0"],
+        "HRD1.1": ["HRD", "PERSONALIA", "HRD1.1"],
+        "HRD2.0": ["POD"],
+        "GA1.1": ["GA", "GA1.1"],
+        "GA1.2": ["GA", "GA1.2"],
+        "GA1.3": ["INDUSTRIAL", "GA1.3"],
+        "IT1.1": ["IT", "IT1.1"],
+        "IT1.2": ["IT", "IT1.2"],
+        "FIN1.0": ["FINANCE", "ACCOUNTING", "FIN1.0"],
+        "FIN1.1": ["FINANCE", "ACCOUNTING", "FIN1.1"],
+        "FIN1.2": ["FINANCE"],
+        "FIN1.3": ["SAP STAFF"],
+        "FIN1.4": ["SAP STAFF"],
+        "PCH1.0": ["PROCUREMENT", "PURCHASING", "PCH1.0"],
+        "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
+        "PCH1.2": ["BATTERY", "PCH1.2"],
+        "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
+        "PCH1.4": ["SUBCONT", "PCH1.4"],
+        "QAC1.0": ["QUALITY ASSURANCE", "QA DEPT", "QAC1.0"],
+        "QAC1.1": ["QA", "QUALITY", "QAC1.1"],
+        "QAC1.1.1": ["QUALITY ASSURANCE", "QAC1.1.1"],
+        "QAC1.1.2": ["QA OPERATOR HEAD", "QAC1.1.2"],
+        "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
+        "QAC1.1.4": ["QA PROJECT", "QAC1.1.4"],
+        "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
+        "QAC2.0": ["QA BATTERY", "QAC2.0"],
+        "PRD1.0": ["PROD", "PRD1.0"],
+        "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1", "PRODUCTION"],
+        "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2", "ASSY"],
+        "PRD1.0.1": ["PRODUCTION", "PRD1.0.1"],
+        "PRD1.1.1": ["PRD1.1.1", "CO & CI"],
+        "PRD1.1.2": ["GROUP PO", "PRD1.1.2", "PO"],
+        "PRD1.2.1": ["GROUP ASSEMBLING", "PRD1.2.1", "ASSY"],
+        "PRD1.1.5": ["MAINTENANCE", "PRD1.1.5"],
+        "PRD1.1.6": ["MAINTENANCE", "PRD1.1.6"],
+        "PRD1.2.3": ["QUALITY", "PRD1.2.3"],
+        "PRD1.2.4": ["QUALITY", "PRD1.2.4"],
+        "PRD1.0.2": ["QUALITY CONTROL INCOMING", "PRD1.0.2"],
+        "PRD1.0.3": ["QUALITY CONTROL INCOMING", "PRD1.0.3"],
+        "PRD1.0.4": ["ADMINISTRATION", "PRD1.0.4"],
+        "PRD2.0": ["MANUFACTURING", "PME", "PRD2.0"],
+        "PRD2.1": ["MANUFACTURING", "PRD2.1"],
+        "PRD2.3": ["MANUFACTURING", "PRD2.3"],
+        "PRD3.0": ["BATTERY PME", "PRD3.0"],
+        "RND1.0": ["RND", "BESS", "RND1.0"],
+        "RND1.1": ["AUX", "POWER BATTERY ENGINEERING", "RND1.1"],
+        "RND1.2": ["ESS ENGINEERING", "RND1.2"],
+        "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
+        "MIO1.0": ["MI & SHE", "SHE", "MIO1.0"],
+        "MIO1.1": ["MANAGEMENT IMPROVEMENT", "MIO1.1"],
+        "MIO1.2": ["SHE", "MIO1.2"],
+        "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
+        "MDO2.0": ["MDO2.0"],
+        "MRO1.0": ["MR", "MRO1.0"],
+        "MRO1.1": ["MR STAFF"],
       };
+
+      const normalize = (str) =>
+        (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
+      const normalizeId = (str) =>
+        (str || "").replace(/\s+/g, "").trim();
+      const splitCombined = (str) =>
+        (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+      const containsId = (haystack, needle) => {
+        if (!haystack || !needle) return false;
+        const needleClean = normalizeId(needle);
+        return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+      };
+
+      const itemCode = (item.code || "").trim().toUpperCase();
+      const itemEmpId = (item.empId || "").trim();
+      const itemName = normalize(item.name);
+
+      console.log("🔍 Searching for:", { itemCode, itemEmpId, itemName });
 
       const foundJobdesc = allJobdesc.find((jd) => {
         const jdNoPNK = (jd.memberNoPNK || "").trim();
-        const itemEmpId = (item.empId || "").trim();
+        const jdName = normalize(jd.memberName);
+        const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
+        const empIdMatch =
+          itemEmpId &&
+          itemEmpId !== "-" &&
+          jdNoPNK &&
+          (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+            containsId(jdNoPNK, itemEmpId));
 
-        if (!itemEmpId || itemEmpId === "-" || !jdNoPNK) return false;
-        if (jdNoPNK !== itemEmpId) return false;
-        if (item.code) {
-          const codePrefix = item.code.replace(/[\d.]/g, "").toUpperCase();
-          const keywords = deptKeywords[codePrefix];
-          if (keywords && keywords.length > 0) {
-            const posTitle = (jd.positionTitle || "").toUpperCase();
-            return keywords.some(kw => posTitle.includes(kw));
+        const nameMatch =
+          itemName &&
+          jdName &&
+          (jdName === itemName ||
+            splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+        if (!empIdMatch && !nameMatch) return false;
+
+        const keywords = codeTitleKeywords[itemCode];
+        if (keywords && keywords.length > 0) {
+          const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
+          if (!titleMatch) {
+            console.log(`⏭️ Skip [${itemCode}]: positionTitle tidak cocok →`, jdPositionTitle);
+            return false;
           }
+          console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
+          return true;
         }
 
-        return true; // fallback jika prefix tidak dikenal
+        // 4. Fallback
+        console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
+        return true;
       });
 
       if (foundJobdesc) {
-        console.log("✅ Found:", foundJobdesc.positionTitle);
+        console.log("✅ Job description found:", {
+          memberName: foundJobdesc.memberName,
+          memberNoPNK: foundJobdesc.memberNoPNK,
+          positionTitle: foundJobdesc.positionTitle,
+        });
         setJobdescData(foundJobdesc);
       } else {
-        console.log("❌ Not found for:", item.name);
+        console.log("❌ Not found for:", { name: item.name, code: item.code, empId: item.empId });
+        console.log("💡 Available:", allJobdesc.map(jd => `${jd.memberName} (${jd.memberNoPNK}) - ${jd.positionTitle}`));
       }
     }
   } catch (error) {
@@ -1155,7 +1265,7 @@ const SoBagianEditor = () => {
         header: {
           title: "QA DEPARTMENT",
           code: "QAC1.0",
-          head: "M BAGUS SANTOSO",
+          head: "M. BAGUS SANTOSO",
           empId: "23220025",
         },
         positions: [
@@ -1171,7 +1281,7 @@ const SoBagianEditor = () => {
             code: "QAC1.1.2",
             title: "QUALITY ASSURANCE PROCESS",
             name: "SUCI PURWANTO",
-            empId: "23050023",
+            empId: "23120149",
           },
           {
             id: "qac1-1-3",
@@ -1185,7 +1295,7 @@ const SoBagianEditor = () => {
             code: "QAC1.1.4",
             title: "VENDOR MANAGEMENT",
             name: "SUCI PURWANTO*",
-            empId: "23050023",
+            empId: "23120149",
           },
           {
             id: "qac1-1-5",

@@ -18,7 +18,7 @@ const QaDepartment = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -46,7 +46,7 @@ const QaDepartment = () => {
     setLoadingJobdesc(true);
     setJobdescData(null);
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -111,7 +111,7 @@ const QaDepartment = () => {
         code: "QAC1.1.2",
         title: "QUALITY ASSURANCE PROCESS",
         name: "SUCI PURWANTO",
-        empId: "23050023",
+        empId: "23120149",
       },
       {
         id: "qac1-1-3",
@@ -125,7 +125,7 @@ const QaDepartment = () => {
         code: "QAC1.1.4",
         title: "VENDOR MANAGEMENT",
         name: "SUCI PURWANTO*",
-        empId: "23050023",
+        empId: "23120149",
       },
       {
         id: "qac1-1-5",

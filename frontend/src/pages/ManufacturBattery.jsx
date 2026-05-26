@@ -46,7 +46,7 @@ const ManufacturBattery = () => {
     setLoadingJobdesc(true);
     setJobdescData(null);
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {

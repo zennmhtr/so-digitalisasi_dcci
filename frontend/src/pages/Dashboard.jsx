@@ -95,22 +95,20 @@ const Dashboard = () => {
     if (response.ok) {
       const result = await response.json();
       const allJobdesc = result.data || result;
-
-      // Mapping LENGKAP: code → keyword positionTitle di database
       const codeTitleKeywords = {
         // Engineering
-        "ENG1.0": ["ENGINEERING CONTROLCABLE", "ENG1.0"],
-        "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
+        "ENG1.0": ["ENGINEERING", "ENG1.0"],
+        "ENG1.1": ["ENGINEERING", "QUALITY ENGINEERING", "ENG1.1"],
         "ENG1.2": ["PROCESS ENGINEERING", "ENG1.2"],
         "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
         // Marketing
         "MKT1.0": ["MARKETING ENGINEERING", "SALES MARKETING", "MKT1.0"],
-        "MKT1.1": ["SALES", "MARKETING CONTROLCABLE", "MKT1.1"],
+        "MKT1.1": ["SALES", "MARKETING", "MKT1.1"],
         "MKT1.1.1": ["MKT1.1.1"],
         "MKT1.1.2": ["MKT1.1.2"],
         "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
-        "MKT2.0": ["MARKETING BATTERY", "MKT2.0"],
-        "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1", "MARKETING"],
+        "MKT2.0": ["MARKETING BATTERY", "MKT2.0", "MARKETING"],
+        "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1", "MARKETING", "RND AUX"],
         "MKT2.2": ["ESS MARKETING", "MKT2.2"],
         // PPIC
         "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
@@ -502,7 +500,7 @@ const Dashboard = () => {
             name: "TBD",
           },
           {
-            id: "mkt-adv",
+            id: "mkt-2",
             code: "MKT2.0",
             title: "MARKETING ADV.",
             name: "ANDREAS AGUNG S.",
