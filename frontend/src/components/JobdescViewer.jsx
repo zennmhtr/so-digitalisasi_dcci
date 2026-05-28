@@ -553,28 +553,28 @@ const JobdescViewer = ({
               <div className="space-y-1">
                 <div className="flex">
                   <span className="w-44">Usia</span>
-                  <span className="mr-2">:</span>
+                  <span className="mr-2"> : </span>
                   <span>
                     {jobdesc.jobSpecification?.age || "Min. 21 Tahun"}
                   </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pendidikan</span>
-                  <span className="mr-2">:</span>
+                  <span className="mr-2"> : </span>
                   <span>
                     {jobdesc.jobSpecification?.education || "Minimal D3"}
                   </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pendidikan Non Formal</span>
-                  <span className="mr-2">:</span>
+                  <span className="mr-2"> : </span>
                   <span>
                     {jobdesc.jobSpecification?.nonFormalEducation || "-"}
                   </span>
                 </div>
                 <div className="flex">
                   <span className="w-44">Pengalaman Kerja</span>
-                  <span className="mr-2">:</span>
+                  <span className="mr-2"> : </span>
                   <span>
                     {jobdesc.jobSpecification?.experience || "Min. 1 Tahun"}
                   </span>

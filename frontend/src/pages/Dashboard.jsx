@@ -103,7 +103,7 @@ const Dashboard = () => {
         "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
         // Marketing
         "MKT1.0": ["MARKETING ENGINEERING", "SALES MARKETING", "MKT1.0"],
-        "MKT1.1": ["SALES", "MARKETING", "MKT1.1"],
+        "MKT1.1": ["MARKETING", "MKT1.1"],
         "MKT1.1.1": ["MKT1.1.1"],
         "MKT1.1.2": ["MKT1.1.2"],
         "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
@@ -156,7 +156,7 @@ const Dashboard = () => {
         "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
         "QAC2.0": ["QA BATTERY", "QAC2.0"],
         // Production Cable
-        "PRD1.0": ["CONTROLCABLE MANUFACTURE", "PRD1.0"],
+        "PRD1.0": ["PROD", "CONTROLCABLE MANUFACTURE", "PRD1.0"],
         "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1"],
         "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2"],
         "PRD1.0.1": ["PRODUCTION ENGINEERING", "PRD1.0.1"],

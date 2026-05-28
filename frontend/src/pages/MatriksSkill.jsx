@@ -4,6 +4,95 @@ import { useAuth } from "../contexts/AuthContext";
 import { matriksSkillChangeRequestsAPI } from "../services/api";
 import api from "../services/api";
 
+const DEPARTMENT_ICONS = {
+    "quality-assurance": (
+        // Checklist / magnifier
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    "management-representative": (
+        // Badge / shield
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+    ),
+    "finance": (
+        // Currency / money
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    "hrga-it": (
+        // Users / people
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    ),
+    "management-development": (
+        // Chart / growth
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+    ),
+    "manufactur-battery": (
+        // Battery
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M17 7h1a2 2 0 012 2v6a2 2 0 01-2 2h-1M3 7h14a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V9a2 2 0 012-2zm5 5h4" />
+        </svg>
+    ),
+    "manufacturing-cable": (
+        // Cable / link
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+    ),
+    "Marketing Battery": (
+        // Lightning / energy
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+    ),
+    "marketing-engineering": (
+        // Cog / gear
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    ),
+    "mi-she": (
+        // Shield check / safety
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v4m0 4h.01" />
+        </svg>
+    ),
+    "ppic": (
+        // Clipboard list / planning
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01" />
+        </svg>
+    ),
+    "purchasing": (
+        // Shopping cart / box
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+    ),
+};
+
 const DEPARTMENTS_DATA = [
     {
         id: "quality-assurance",
@@ -488,7 +577,7 @@ const DEPARTMENTS_DATA = [
     },
     {
         id: "mi-she",
-        name: "MI SHE",
+        name: "MI & SHE",
         color: "bg-yellow-500",
         borderColor: "#eaff00ff",
         iconColor: "#eaff00ff",
@@ -1193,44 +1282,44 @@ const MatriksSkill = () => {
     const [dataInitialized, setDataInitialized] = useState(false);
 
     useEffect(() => {
-    if (!user) return;
-    const loadApprovedData = async () => {
-        setDataLoading(true);
-        try {
-            const response = await api.get('/matriks-skill-change-requests/approved-data');
-            if (response.data.success && response.data.data.length > 0) {
-                setDeptData((prev) => {
-                    const updated = { ...prev };
-                    response.data.data.forEach((item) => {
-                        if (item.deptId && item.matriksData) {
-                            // ✅ Ambil defaultData dari DEPARTMENTS_DATA
-                            const defaultDept = DEPARTMENTS_DATA.find(d => d.id === item.deptId);
-                            
-                            // ✅ Paksa header fields selalu dari kode (DEPARTMENTS_DATA)
-                            if (defaultDept) {
-                                item.matriksData.tglEfektif = defaultDept.matriksData.tglEfektif;
-                                item.matriksData.judul = defaultDept.matriksData.judul;
-                                item.matriksData.divisi = defaultDept.matriksData.divisi;
-                                item.matriksData.departemen = defaultDept.matriksData.departemen;
-                                item.matriksData.kompetensi = defaultDept.matriksData.kompetensi;
-                            }
-                            
-                            updated[item.deptId] = item.matriksData;
-                        }
-                    });
-                    return updated;
-                });
-            }
-        } catch (error) {
-            console.error("[MatriksSkill] Gagal load approved data:", error?.response?.status, error?.message);
-        } finally {
-            setDataLoading(false);
-            setDataInitialized(true);
-        }
-    };
+        if (!user) return;
+        const loadApprovedData = async () => {
+            setDataLoading(true);
+            try {
+                const response = await api.get('/matriks-skill-change-requests/approved-data');
+                if (response.data.success && response.data.data.length > 0) {
+                    setDeptData((prev) => {
+                        const updated = { ...prev };
+                        response.data.data.forEach((item) => {
+                            if (item.deptId && item.matriksData) {
+                                // ✅ Ambil defaultData dari DEPARTMENTS_DATA
+                                const defaultDept = DEPARTMENTS_DATA.find(d => d.id === item.deptId);
 
-    loadApprovedData();
-}, [user]);
+                                // ✅ Paksa header fields selalu dari kode (DEPARTMENTS_DATA)
+                                if (defaultDept) {
+                                    item.matriksData.tglEfektif = defaultDept.matriksData.tglEfektif;
+                                    item.matriksData.judul = defaultDept.matriksData.judul;
+                                    item.matriksData.divisi = defaultDept.matriksData.divisi;
+                                    item.matriksData.departemen = defaultDept.matriksData.departemen;
+                                    item.matriksData.kompetensi = defaultDept.matriksData.kompetensi;
+                                }
+
+                                updated[item.deptId] = item.matriksData;
+                            }
+                        });
+                        return updated;
+                    });
+                }
+            } catch (error) {
+                console.error("[MatriksSkill] Gagal load approved data:", error?.response?.status, error?.message);
+            } finally {
+                setDataLoading(false);
+                setDataInitialized(true);
+            }
+        };
+
+        loadApprovedData();
+    }, [user]);
     const handlePrint = () => {
         const oldStyle = document.getElementById("matriks-print-style");
         if (oldStyle) oldStyle.remove();
@@ -1515,10 +1604,12 @@ const MatriksSkill = () => {
                         >
                             <div className="flex items-start gap-4">
                                 <div className="p-3 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: dept.iconColor }}>
-                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
+                                    {DEPARTMENT_ICONS[dept.id] ?? (
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between gap-2">
