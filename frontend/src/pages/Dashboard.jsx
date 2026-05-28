@@ -1341,7 +1341,7 @@ const Dashboard = () => {
     printStyle.innerHTML = `
   @media print {
     @page {
-      size: A3 portrait;
+      size: A3 landscape;
       margin: 5mm 8mm;
     }
 
@@ -1372,7 +1372,7 @@ const Dashboard = () => {
       overflow: visible !important;
       max-width: none !important;
       width: 100% !important;
-      transform: scale(0.75) !important;
+      transform: scale(0.5) !important;
       transform-origin: top center !important;
       margin: 0 auto !important;
       background: white !important;
@@ -1640,9 +1640,8 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-
+      {/* Header (Contains Print Button) */}
+      <div className="no-print bg-white rounded-lg shadow-sm p-4 mb-4">
 
         {/* Print Button - Only show if user has permission */}
         {canPrint && (

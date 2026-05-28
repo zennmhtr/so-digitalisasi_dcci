@@ -485,7 +485,6 @@ const AdvancedEditorCanvas = ({ organizationData, onDataChange, editorMode, onSt
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                markerEnd={isDeleteMode ? 'url(#arrow-red)' : 'url(#arrow-gray)'}
                 style={{ pointerEvents: 'none' }}
               />
               {/* Ikon X di tengah line saat delete mode */}
