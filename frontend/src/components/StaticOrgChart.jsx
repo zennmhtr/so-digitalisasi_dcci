@@ -73,13 +73,16 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
       ? 'text-blue-600 hover:bg-blue-50'
       : 'text-red-600 hover:bg-red-50';
     return (
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors w-full h-full flex items-center justify-center cursor-pointer ${color}`}
         onClick={(e) => { e.stopPropagation(); onCodeClick && onCodeClick(item); }}
+        onKeyDown={(e) => { if(e.key === 'Enter') { e.stopPropagation(); onCodeClick && onCodeClick(item); } }}
         title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
       >
         {item.code}
-      </button>
+      </div>
     );
   };
 
