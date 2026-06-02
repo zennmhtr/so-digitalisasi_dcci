@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import JobdescViewer from "../components/JobdescViewer";
 import StaticOrgChart from "../components/StaticOrgChart";
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import "../assets/print-styles.css";
 
 const Dashboard = () => {
@@ -1329,251 +1331,70 @@ const Dashboard = () => {
     );
   };
 
-  const handlePrint = () => {
-    const printContainer = document.querySelector(".dashboard-print-container");
-    if (!printContainer) return;
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-    const oldStyle = document.getElementById("dynamic-print-style");
-    if (oldStyle) oldStyle.remove();
+  const handleDownloadPDF = async () => {
+    const element = document.querySelector('.dashboard-print-container');
+    if (!element) return;
 
-    const printStyle = document.createElement("style");
-    printStyle.id = "dynamic-print-style";
-    printStyle.innerHTML = `
-  @media print {
-    @page {
-      size: A3 landscape;
-      margin: 5mm 8mm;
+    setIsGeneratingPDF(true);
+
+    try {
+      // Get the exact full scrollable boundaries of the component
+      const actualWidth = element.scrollWidth;
+      const actualHeight = element.scrollHeight;
+
+      const canvas = await html2canvas(element, {
+        width: actualWidth,
+        height: actualHeight,
+        windowWidth: actualWidth,
+        windowHeight: actualHeight,
+        scale: 2, // Keeps text ultra-sharp
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff', // Ensures canvas base layer is white
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('.dashboard-print-container');
+          if (clonedElement) {
+            // FORCE the background color and dimensions to map 100% of the scroll area
+            clonedElement.style.setProperty('background', '#ffffff', 'important');
+            clonedElement.style.setProperty('width', `${actualWidth}px`, 'important');
+            clonedElement.style.setProperty('height', `${actualHeight}px`, 'important');
+            clonedElement.style.setProperty('margin', '0', 'important');
+            clonedElement.style.setProperty('padding', '30px', 'important'); // Balanced spacing for clean borders
+            
+            // Ensure all parent node nodes in the clone don't restrict background colors
+            let parent = clonedElement.parentElement;
+            while (parent) {
+              parent.style.setProperty('background', '#ffffff', 'important');
+              parent.style.setProperty('overflow', 'visible', 'important');
+              parent = parent.parentElement;
+            }
+          }
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate final millimeter conversions adjusted for scale
+      const imgWidthMm = (canvas.width * 0.264583) / 2;
+      const imgHeightMm = (canvas.height * 0.264583) / 2;
+
+      const pdf = new jsPDF({
+        orientation: imgWidthMm > imgHeightMm ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [imgWidthMm, imgHeightMm] // Creates a perfect bounding-box document size
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
+      pdf.save('PT_DCCI_Organization_Structure_Perfect.pdf');
+
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
-
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
-      background: white !important;
-      height: 100% !important;
-      overflow: hidden !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
-    body::before, body::after {
-      display: none !important;
-      content: none !important;
-    }
-
-    .no-print, nav, .menu, .sidebar, button, header, footer, .click-button {
-      display: none !important;
-      visibility: hidden !important;
-    }
-
-    *::-webkit-scrollbar { display: none !important; }
-    * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
-
-    .dashboard-print-container {
-      overflow: visible !important;
-      max-width: none !important;
-      width: 100% !important;
-      transform: scale(0.5) !important;
-      transform-origin: top center !important;
-      margin: 0 auto !important;
-      background: white !important;
-      box-shadow: none !important;
-      border-radius: 0 !important;
-      padding: 4px !important;
-      page-break-inside: avoid !important;
-    }
-
-    .dashboard-print-container * {
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-      overflow: visible !important;
-    }
-
-    /* Font size - Tetap readable */
-    .dashboard-print-container .text-xs {
-      font-size: 8.5px !important;
-      line-height: 1.15 !important;
-    }
-
-    .dashboard-print-container .text-sm {
-      font-size: 9.5px !important;
-      line-height: 1.15 !important;
-    }
-
-    .dashboard-print-container .text-lg {
-      font-size: 12px !important;
-      line-height: 1.2 !important;
-    }
-
-    .dashboard-print-container .text-xl {
-      font-size: 14px !important;
-      line-height: 1.2 !important;
-    }
-
-    .dashboard-print-container .text-2xl {
-      font-size: 15.5px !important;
-      line-height: 1.25 !important;
-    }
-
-    /* Spacing ultra compact */
-    .dashboard-print-container .space-y-3 > * + * {
-      margin-top: 0.25rem !important;
-    }
-
-    .dashboard-print-container .space-y-4 > * + * {
-      margin-top: 0.35rem !important;
-    }
-
-    .dashboard-print-container .gap-4 {
-      gap: 0.35rem !important;
-    }
-
-    .dashboard-print-container .gap-6 {
-      gap: 0.5rem !important;
-    }
-
-    .dashboard-print-container .mb-4 {
-      margin-bottom: 0.4rem !important;
-    }
-
-    .dashboard-print-container .mb-6 {
-      margin-bottom: 0.55rem !important;
-    }
-
-    .dashboard-print-container .mb-8 {
-      margin-bottom: 0.7rem !important;
-    }
-
-    .dashboard-print-container .mt-8 {
-      margin-top: 0.6rem !important;
-    }
-
-    .dashboard-print-container .p-2 {
-      padding: 0.25rem !important;
-    }
-
-    .dashboard-print-container .p-3 {
-      padding: 0.35rem !important;
-    }
-
-    .dashboard-print-container .p-4 {
-      padding: 0.45rem !important;
-    }
-
-    .dashboard-print-container .p-6 {
-      padding: 0.6rem !important;
-    }
-
-    /* Box heights - scale 0.75 */
-    .dashboard-print-container .min-h-\\[80px\\] {
-      min-height: 56px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[100px\\] {
-      min-height: 70px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[110px\\] {
-      min-height: 77px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[120px\\] {
-      min-height: 84px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[130px\\] {
-      min-height: 91px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[150px\\] {
-      min-height: 105px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[170px\\] {
-      min-height: 119px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[180px\\] {
-      min-height: 126px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[190px\\] {
-      min-height: 133px !important;
-    }
-
-    .dashboard-print-container .min-h-\\[200px\\] {
-      min-height: 140px !important;
-    }
-
-    /* Grid columns */
-    .dashboard-print-container .grid-cols-6 {
-      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    }
-
-    .dashboard-print-container .grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    }
-
-    /* Width untuk code box */
-    .dashboard-print-container .w-12 {
-      width: 2.8rem !important;
-    }
-
-    .dashboard-print-container .w-14 {
-      width: 3.3rem !important;
-    }
-
-    /* Logo size */
-    .dashboard-print-container .w-24 {
-      width: 4.5rem !important;
-    }
-
-    .dashboard-print-container .h-24 {
-      height: 4.5rem !important;
-    }
-
-    /* Border styling */
-    .dashboard-print-container .border {
-      border-width: 0.8px !important;
-    }
-
-    .dashboard-print-container .border-2 {
-      border-width: 1.2px !important;
-    }
-
-    .dashboard-print-container .border-4 {
-      border-width: 1.8px !important;
-    }
-
-    /* Ensure colors print correctly */
-    .dashboard-print-container .bg-blue-300,
-    .dashboard-print-container .bg-gray-100,
-    .dashboard-print-container .bg-gray-200,
-    .dashboard-print-container .bg-gray-50,
-    .dashboard-print-container .bg-white {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
-    /* Legend box */
-    .dashboard-print-container .max-w-sm {
-      max-width: 17rem !important;
-    }
-
-    /* Hide print button */
-    .no-print {
-      display: none !important;
-    }
-  }
-  `;
-
-    document.head.appendChild(printStyle);
-
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        printStyle.remove();
-      }, 500);
-    }, 100);
   };
 
   // Loading state
@@ -1640,30 +1461,40 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Header (Contains Print Button) */}
+      {/* Header (Contains Download PDF Button) */}
       <div className="no-print bg-white rounded-lg shadow-sm p-4 mb-4">
 
-        {/* Print Button - Only show if user has permission */}
+        {/* Download PDF Button - Only show if user has permission */}
         {canPrint && (
           <div className="mt-4 flex justify-end">
             <button
-              onClick={handlePrint}
-              className="no-print bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="no-print bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-wait text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                />
-              </svg>
-              Print A3
+              {isGeneratingPDF ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  Download PDF (A3)
+                </>
+              )}
             </button>
           </div>
         )}
