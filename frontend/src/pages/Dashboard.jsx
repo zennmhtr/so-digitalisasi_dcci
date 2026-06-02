@@ -84,208 +84,210 @@ const Dashboard = () => {
   const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
 
   const onCodeClick = async (item) => {
-  setSelectedJob(item);
-  setShowJobModal(true);
-  setLoadingJobdesc(true);
-  setJobdescData(null);
+    setSelectedJob(item);
+    setShowJobModal(true);
+    setLoadingJobdesc(true);
+    setJobdescData(null);
 
-  try {
-    const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      const allJobdesc = result.data || result;
-      const codeTitleKeywords = {
-        // Engineering
-        "ENG1.0": ["ENGINEERING", "ENG1.0"],
-        "ENG1.1": ["ENGINEERING", "QUALITY ENGINEERING", "ENG1.1"],
-        "ENG1.2": ["PROCESS ENGINEERING", "ENG1.2"],
-        "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
-        // Marketing
-        "MKT1.0": ["MARKETING ENGINEERING", "SALES MARKETING", "MKT1.0"],
-        "MKT1.1": ["MARKETING", "MKT1.1"],
-        "MKT1.1.1": ["MKT1.1.1"],
-        "MKT1.1.2": ["MKT1.1.2"],
-        "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
-        "MKT2.0": ["MARKETING BATTERY", "MKT2.0", "MARKETING"],
-        "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1", "MARKETING", "RND AUX"],
-        "MKT2.2": ["ESS MARKETING", "MKT2.2"],
-        // PPIC
-        "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
-        "PPIC1.1": ["PPC CONTROLCABLE", "PPIC1.1"],
-        "PPIC1.2": ["BATTERY", "AHM OES", "PPIC1.2"],
-        "PPIC1.3": ["WHS CONTROLCABLE", "PPIC1.3"],
-        "PPIC1.3.1": ["CONTROLCABLE", "PPIC1.3.1"],
-        "PPIC1.1.1": ["PROD PLAN", "PPIC1.1.1"],
-        "PPIC1.1.2": ["DN", "MANIFEST", "PPIC1.1.2"],
-        "PPIC1.1.3": ["DELIVERY", "PPIC1.1.3"],
-        "PPIC1.2.1": ["BATTERY", "PPIC1.2.1"],
-        "PPIC1.2.2": ["BATTERY STAFF", "PPIC1.2.2"],
-        "PPIC1.3.2": ["SUPPLIER CONTROL", "PPIC1.3.2"],
-        "PPIC1.3.3": ["MRP", "PPIC1.3.3"],
-        "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
-        "PPIC1.3.5": ["HASIL PRODUKSI", "PPIC1.3.5"],
-        // HRD
-        "HRD1.0": ["HRDGA", "HRGA", "HRD DEPT", "HRD1.0", "HRD"],
-        "HRD1.1": ["HRD", "HRD1.1"],
-        "HRD2.0": ["HRD2.0"],
-        "GA1.1": ["GENERAL AFFAIR", "GA1.1"],
-        "GA1.2": ["GENERAL AFFAIR", "GA1.2"],
-        "GA1.3": ["GENERAL AFFAIR", "GA1.3"],
-        "IT1.1": ["INFORMATION TECHNOLOGY", "IT1.1"],
-        "IT1.2": ["INFORMATION TECHNOLOGY", "IT1.2"],
-        // Finance
-        "FIN1.0": ["FINANCE", "ACCOUNTING", "FIN1.0"],
-        "FIN1.1": ["FINANCE", "ACCOUNTING", "FIN1.1"],
-        "FIN1.2": ["FIN1.2"],
-        "FIN1.3": ["FIN1.3"],
-        "FIN1.4": ["FIN1.4"],
-        // Purchasing
-        "PCH1.0": ["PROCUREMENT", "PURCHASING", "PCH1.0"],
-        "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
-        "PCH1.2": ["BATTERY", "PCH1.2"],
-        "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
-        "PCH1.4": ["SUBCONT", "PCH1.4"],
-        // QA
-        "QAC1.0": ["QUALITY ASSURANCE", "QA DEPT", "QAC1.0"],
-        "QAC1.1": ["QA", "QUALITY", "QAC1.1"],
-        "QAC1.1.1": ["QUALITY ASSURANCE PROCESS", "QAC1.1.1"],
-        "QAC1.1.2": ["QAC1.1.2"],
-        "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
-        "QAC1.1.4": ["VENDOR MANAGEMENT", "QAC1.1.4"],
-        "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
-        "QAC2.0": ["QA BATTERY", "QAC2.0"],
-        // Production Cable
-        "PRD1.0": ["PROD", "CONTROLCABLE MANUFACTURE", "PRD1.0"],
-        "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1"],
-        "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2"],
-        "PRD1.0.1": ["PRODUCTION ENGINEERING", "PRD1.0.1"],
-        "PRD1.1.1": ["GROUP CO", "PRD1.1.1"],
-        "PRD1.1.2": ["GROUP PO", "PRD1.1.2"],
-        "PRD1.1.3": ["COMPONENT OUTER", "PRD1.1.3"],
-        "PRD1.1.4": ["PROSES OUTER", "PRD1.1.4"],
-        "PRD1.1.5": ["MAINTENANCE", "PRD1.1.5"],
-        "PRD1.1.6": ["MAINTENANCE", "PRD1.1.6"],
-        "PRD1.1.7": ["PRODUCTION ENGINEERING", "PRD1.1.7"],
-        "PRD1.2.1": ["GROUP ASSEMBLING", "PRD1.2.1"],
-        "PRD1.2.2": ["ASSEMBLING", "PRD1.2.2"],
-        "PRD1.2.3": ["QUALITY CONTROL PROCESS", "PRD1.2.3"],
-        "PRD1.2.4": ["QUALITY CONTROL PROCESS", "PRD1.2.4"],
-        "PRD1.0.2": ["QUALITY CONTROL INCOMING", "PRD1.0.2"],
-        "PRD1.0.3": ["QUALITY CONTROL INCOMING", "PRD1.0.3"],
-        "PRD1.0.4": ["ADMINISTRATION", "PRD1.0.4"],
-        // Production Battery
-        "PRD2.0": ["BATTERY PRODUCTION", "PME", "PRD2.0", "MANUFACTURING"],
-        "PRD2.1": ["BATTERY PRODUCTION", "PRD2.1"],
-        "PRD2.2": ["PRD2.2"],
-        "PRD2.3": ["QUALITY ASSURANCE", "PRD2.3"],
-        "PRD3.0": ["BATTERY PME", "PRD3.0"],
-        // RND
-        "RND1.0": ["RND", "BESS", "RND1.0"],
-        "RND1.1": ["AUX", "POWER BATTERY ENGINEERING", "RND1.1"],
-        "RND1.2": ["ESS ENGINEERING", "RND1.2"],
-        "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
-        // MI & SHE
-        "MIO1.0": ["MI", "SHE", "MIO1.0"],
-        "MIO1.1": ["MI", "MIO1.1"],
-        "MIO1.2": ["SHE", "MIO1.2"],
-        // Management
-        "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
-        "MDO2.0": ["MDO2.0"],
-        "MRO1.0": ["MANAGEMENT REPRESENTATIVE", "MRO1.0", "MR"],
-        "MRO1.1": ["MRO1.1"],
-        // BOD
-        "BOD1.0": ["PRESIDENT DIRECTOR", "BOD1.0"],
-        "BOD1.1": ["DIRECTOR", "BOD1.1"],
-      };
-
-      // Helper functions
-      const normalize = (str) =>
-        (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
-
-      const normalizeId = (str) =>
-        (str || "").replace(/\s+/g, "").trim();
-
-      const splitCombined = (str) =>
-        (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
-
-      const containsId = (haystack, needle) => {
-        if (!haystack || !needle) return false;
-        const needleClean = normalizeId(needle);
-        return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
-      };
-
-      const itemCode = (item.code || "").trim().toUpperCase();
-      const itemEmpId = (item.empId || "").trim();
-      const itemName = normalize(item.name);
-
-      console.log("🔍 Searching for:", { itemCode, itemEmpId, itemName });
-
-      const foundJobdesc = allJobdesc.find((jd) => {
-        const jdNoPNK = (jd.memberNoPNK || "").trim();
-        const jdName = normalize(jd.memberName);
-        const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
-
-        // 1. Cek empId match (exact atau format gabungan)
-        const empIdMatch =
-          itemEmpId &&
-          itemEmpId !== "-" &&
-          jdNoPNK &&
-          (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
-            containsId(jdNoPNK, itemEmpId));
-
-        // 2. Cek name match (exact atau format gabungan)
-        const nameMatch =
-          itemName &&
-          jdName &&
-          (jdName === itemName ||
-            splitCombined(jd.memberName).some(p => normalize(p) === itemName));
-
-        // Tidak ada match sama sekali → skip
-        if (!empIdMatch && !nameMatch) return false;
-
-        // 3. Gunakan codeTitleKeywords sebagai pembeda jika tersedia
-        const keywords = codeTitleKeywords[itemCode];
-        if (keywords && keywords.length > 0) {
-          const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
-          if (!titleMatch) {
-            console.log(`⏭️ Skip [${itemCode}]: positionTitle tidak cocok →`, jdPositionTitle);
-            return false;
-          }
-          console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
-          return true;
-        }
-
-        // 4. Fallback jika code tidak ada di mapping
-        console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
-        return true;
+    try {
+      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
 
-      if (foundJobdesc) {
-        console.log("✅ Job description found:", {
-          memberName: foundJobdesc.memberName,
-          memberNoPNK: foundJobdesc.memberNoPNK,
-          positionTitle: foundJobdesc.positionTitle,
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const codeTitleKeywords = {
+          // Engineering
+          "ENG1.0": ["ENGINEERING", "ENG1.0"],
+          "ENG1.1": ["ENGINEERING", "QUALITY ENGINEERING", "ENG1.1"],
+          "ENG1.2": ["PROCESS ENGINEERING", "ENG1.2"],
+          "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
+          // Marketing
+          "MKT1.0": ["MARKETING CABLE", "SALES MARKETING", "MKT1.0"],
+          "MKT1.1": ["MARKETING", "MKT1.1"],
+          "MKT1.1.1": ["MKT1.1.1"],
+          "MKT1.1.2": ["MKT1.1.2"],
+          "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
+          "MKT2.0": ["MARKETING BATTERY", "MKT2.0", "MARKETING"],
+          "MKT2.0": ["MARKETING CABLE", "MKT2.0", "MARKETING"],
+          "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1", "MARKETING", "RND AUX"],
+          "MKT2.2": ["ESS MARKETING", "MKT2.2"],
+          // PPIC
+          "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
+          "PPIC1.1": ["PPC CONTROLCABLE", "PPIC1.1"],
+          "PPIC1.2": ["BATTERY", "AHM OES", "PPIC1.2"],
+          "PPIC1.3": ["WHS CONTROLCABLE", "PPIC1.3"],
+          "PPIC1.3.1": ["CONTROLCABLE", "PPIC1.3.1"],
+          "PPIC1.1.1": ["PROD PLAN", "PPIC1.1.1"],
+          "PPIC1.1.2": ["DN", "MANIFEST", "PPIC1.1.2"],
+          "PPIC1.1.3": ["DELIVERY", "PPIC1.1.3"],
+          "PPIC1.2.1": ["BATTERY", "PPIC1.2.1"],
+          "PPIC1.2.2": ["BATTERY STAFF", "PPIC1.2.2"],
+          "PPIC1.3.2": ["SUPPLIER CONTROL", "PPIC1.3.2"],
+          "PPIC1.3.3": ["MRP", "PPIC1.3.3"],
+          "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
+          "PPIC1.3.5": ["HASIL PRODUKSI", "PPIC1.3.5"],
+          // HRD
+          "HRD1.0": ["HRDGA", "HRGA", "HRD DEPT", "HRD1.0", "HRD"],
+          "HRD1.1": ["HRD", "HRD1.1"],
+          "HRD2.0": ["HRD2.0"],
+          "GA1.1": ["GENERAL AFFAIR", "GA1.1"],
+          "GA1.2": ["GENERAL AFFAIR", "GA1.2"],
+          "GA1.3": ["GENERAL AFFAIR", "GA1.3"],
+          "IT1.1": ["INFORMATION TECHNOLOGY", "IT1.1"],
+          "IT1.2": ["INFORMATION TECHNOLOGY", "IT1.2"],
+          // Finance
+          "FIN1.0": ["FINANCE", "ACCOUNTING", "FIN1.0"],
+          "FIN1.1": ["FINANCE", "ACCOUNTING", "FIN1.1"],
+          "FIN1.2": ["FIN1.2"],
+          "FIN1.3": ["FIN1.3"],
+          "FIN1.4": ["FIN1.4"],
+          // Purchasing
+          "PCH1.0": ["PROCUREMENT", "PURCHASING", "PCH1.0"],
+          "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
+          "PCH1.2": ["BATTERY", "PCH1.2"],
+          "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
+          "PCH1.4": ["SUBCONT", "PCH1.4"],
+          // QA
+          "QAC1.0": ["QUALITY ASSURANCE", "QA DEPT", "QAC1.0"],
+          "QAC1.1": ["QA", "QUALITY", "QAC1.1"],
+          "QAC1.1.1": ["QUALITY ASSURANCE PROCESS", "QAC1.1.1"],
+          "QAC1.1.2": ["QAC1.1.2"],
+          "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
+          "QAC1.1.4": ["VENDOR MANAGEMENT", "QAC1.1.4"],
+          "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
+          "QAC2.0": ["QA BATTERY", "QAC2.0"],
+          "CR02.0": ["QA BATTERY", "CR02.0"],
+          // Production Cable
+          "PRD1.0": ["PROD", "CONTROLCABLE MANUFACTURE", "PRD1.0"],
+          "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1"],
+          "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2"],
+          "PRD1.0.1": ["PRODUCTION ENGINEERING", "PRD1.0.1"],
+          "PRD1.1.1": ["GROUP CO", "PRD1.1.1"],
+          "PRD1.1.2": ["GROUP PO", "PRD1.1.2"],
+          "PRD1.1.3": ["COMPONENT OUTER", "PRD1.1.3"],
+          "PRD1.1.4": ["PROSES OUTER", "PRD1.1.4"],
+          "PRD1.1.5": ["MAINTENANCE", "PRD1.1.5"],
+          "PRD1.1.6": ["MAINTENANCE", "PRD1.1.6"],
+          "PRD1.1.7": ["PRODUCTION ENGINEERING", "PRD1.1.7"],
+          "PRD1.2.1": ["GROUP ASSEMBLING", "PRD1.2.1"],
+          "PRD1.2.2": ["ASSEMBLING", "PRD1.2.2"],
+          "PRD1.2.3": ["QUALITY CONTROL PROCESS", "PRD1.2.3"],
+          "PRD1.2.4": ["QUALITY CONTROL PROCESS", "PRD1.2.4"],
+          "PRD1.0.2": ["QUALITY CONTROL INCOMING", "PRD1.0.2"],
+          "PRD1.0.3": ["QUALITY CONTROL INCOMING", "PRD1.0.3"],
+          "PRD1.0.4": ["ADMINISTRATION", "PRD1.0.4"],
+          // Production Battery
+          "PRD2.0": ["BATTERY PRODUCTION", "PME", "PRD2.0", "MANUFACTURING"],
+          "PRD2.1": ["BATTERY PRODUCTION", "PRD2.1"],
+          "PRD2.2": ["PRD2.2"],
+          "PRD2.3": ["QUALITY ASSURANCE", "PRD2.3"],
+          "PRD3.0": ["BATTERY PME", "PRD3.0"],
+          // RND
+          "RND1.0": ["RND", "BESS", "RND1.0"],
+          "RND1.1": ["AUX", "POWER BATTERY ENGINEERING", "RND1.1"],
+          "RND1.2": ["ESS ENGINEERING", "RND1.2"],
+          "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
+          // MI & SHE
+          "MIO1.0": ["MI", "SHE", "MIO1.0"],
+          "MIO1.1": ["MI", "MIO1.1"],
+          "MIO1.2": ["SHE", "MIO1.2"],
+          // Management
+          "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
+          "MDO2.0": ["MDO2.0"],
+          "MRO1.0": ["MANAGEMENT REPRESENTATIVE", "MRO1.0", "MR"],
+          "MRO1.1": ["MRO1.1"],
+          // BOD
+          "BOD1.0": ["PRESIDENT DIRECTOR", "BOD1.0"],
+          "BOD1.1": ["DIRECTOR", "BOD1.1"],
+        };
+
+        // Helper functions
+        const normalize = (str) =>
+          (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
+
+        const normalizeId = (str) =>
+          (str || "").replace(/\s+/g, "").trim();
+
+        const splitCombined = (str) =>
+          (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemCode = (item.code || "").trim().toUpperCase();
+        const itemEmpId = (item.empId || "").trim();
+        const itemName = normalize(item.name);
+
+        console.log("🔍 Searching for:", { itemCode, itemEmpId, itemName });
+
+        const foundJobdesc = allJobdesc.find((jd) => {
+          const jdNoPNK = (jd.memberNoPNK || "").trim();
+          const jdName = normalize(jd.memberName);
+          const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
+
+          // 1. Cek empId match (exact atau format gabungan)
+          const empIdMatch =
+            itemEmpId &&
+            itemEmpId !== "-" &&
+            jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId));
+
+          // 2. Cek name match (exact atau format gabungan)
+          const nameMatch =
+            itemName &&
+            jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+          // Tidak ada match sama sekali → skip
+          if (!empIdMatch && !nameMatch) return false;
+
+          // 3. Gunakan codeTitleKeywords sebagai pembeda jika tersedia
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
+            if (!titleMatch) {
+              console.log(`⏭️ Skip [${itemCode}]: positionTitle tidak cocok →`, jdPositionTitle);
+              return false;
+            }
+            console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
+            return true;
+          }
+
+          // 4. Fallback jika code tidak ada di mapping
+          console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
+          return true;
         });
-        setJobdescData(foundJobdesc);
-      } else {
-        console.log("❌ Not found for:", { name: item.name, code: item.code, empId: item.empId });
-        console.log("💡 Available:", allJobdesc.map(jd => `${jd.memberName} (${jd.memberNoPNK}) - ${jd.positionTitle}`));
+
+        if (foundJobdesc) {
+          console.log("✅ Job description found:", {
+            memberName: foundJobdesc.memberName,
+            memberNoPNK: foundJobdesc.memberNoPNK,
+            positionTitle: foundJobdesc.positionTitle,
+          });
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log("❌ Not found for:", { name: item.name, code: item.code, empId: item.empId });
+          console.log("💡 Available:", allJobdesc.map(jd => `${jd.memberName} (${jd.memberNoPNK}) - ${jd.positionTitle}`));
+        }
       }
+    } catch (error) {
+      console.error("❌ Error fetching job description:", error);
+    } finally {
+      setLoadingJobdesc(false);
     }
-  } catch (error) {
-    console.error("❌ Error fetching job description:", error);
-  } finally {
-    setLoadingJobdesc(false);
-  }
-};
+  };
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/jobdescriptions`,
+        `http://localhost:3001/api/jobdescriptions?limit=200`,  // ← tambah limit
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -300,12 +302,42 @@ const Dashboard = () => {
         const statusMap = {};
 
         allJobdesc.forEach(jd => {
+          // Simpan by empId (NoPNK) — bisa format gabungan "12345/67890"
           const jdNoPNK = (jd.memberNoPNK || "").trim();
-          const memberName = (jd.memberName || "").trim().toUpperCase();
+          if (jdNoPNK) {
+            // Simpan keseluruhan
+            statusMap[jdNoPNK] = true;
+            // Pecah jika format gabungan "12345/67890" atau "12345,67890"
+            jdNoPNK.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
 
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (memberName) statusMap[memberName] = true;
-        })
+          // Simpan by nama — normalisasi hapus *, ** dan extra spaces
+          const memberName = (jd.memberName || "")
+            .trim()
+            .toUpperCase()
+            .replace(/\*+/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (memberName) {
+            statusMap[memberName] = true;
+            // Pecah jika format gabungan "NAMA1/NAMA2"
+            memberName.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+        });
+
+        // Debug: cek apakah empId yang bermasalah ada di statusMap
+        const testIds = ["11230640", "23040119", "23060056", "23200067", "23220017"];
+        testIds.forEach(id => {
+          console.log(`statusMap["${id}"] =`, statusMap[id]);
+        });
+        console.log("Full statusMap keys:", Object.keys(statusMap));
+
         setEmployeeJobdescStatus(statusMap);
         console.log("✅ Employee jobdesc status:", statusMap);
       }
@@ -353,10 +385,10 @@ const Dashboard = () => {
       header: {
         title: "ORGANIZATION STRUCTURE",
         company: "PT DHARMA CONTROLCABLE INDONESIA",
-        effectiveDate: "08/09/2025",
-        regNo: "08/10/2025",
-        preparedDate: "08/09/2025",
-        approvedDate: "08/09/2025",
+        effectiveDate: "16/03/2026",
+        regNo: "16/03/2026",
+        preparedDate: "16/03/2026",
+        approvedDate: "16/03/2026",
       },
       signatures: {
         preparedBy: {
@@ -502,7 +534,7 @@ const Dashboard = () => {
             name: "TBD",
           },
           {
-            id: "mkt-2",
+            id: "mkt-2-adv",
             code: "MKT2.0",
             title: "MARKETING ADV.",
             name: "ANDREAS AGUNG S.",
@@ -1310,13 +1342,33 @@ const Dashboard = () => {
     }
 
     const empId = (item.empId || "").trim();
-    const itemName = (item.name || "").trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[itemName];
+
+    // Normalisasi nama: hapus *, **, extra spaces
+    const itemName = (item.name || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\*+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Cek by empId (bisa format gabungan)
+    const empIdMatch = empId && empId !== "-" && (
+      employeeJobdescStatus[empId] ||
+      empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    // Cek by nama
+    const nameMatch = itemName && (
+      employeeJobdescStatus[itemName] ||
+      itemName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const hasJobdesc = empIdMatch || nameMatch;
 
     const buttonColor = hasJobdesc
       ? "text-blue-600 hover:bg-blue-50"
       : "text-red-600 hover:bg-red-50";
-    console.log(item)
+
     return (
       <button
         className={`text-[7.5px] font-bold hover:underline focus:outline-none uppercase px-1 py-1 rounded transition-colors ${buttonColor}`}
@@ -1362,7 +1414,7 @@ const Dashboard = () => {
             clonedElement.style.setProperty('height', `${actualHeight}px`, 'important');
             clonedElement.style.setProperty('margin', '0', 'important');
             clonedElement.style.setProperty('padding', '30px', 'important'); // Balanced spacing for clean borders
-            
+
             // Ensure all parent node nodes in the clone don't restrict background colors
             let parent = clonedElement.parentElement;
             while (parent) {
@@ -1375,7 +1427,7 @@ const Dashboard = () => {
       });
 
       const imgData = canvas.toDataURL('image/png');
-      
+
       // Calculate final millimeter conversions adjusted for scale
       const imgWidthMm = (canvas.width * 0.264583) / 2;
       const imgHeightMm = (canvas.height * 0.264583) / 2;

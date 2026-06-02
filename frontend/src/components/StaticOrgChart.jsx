@@ -63,28 +63,57 @@ const StaticOrgChart = ({ organizationData, onCodeClick, employeeJobdescStatus =
 
   // ── renderCodeButton ──────────────────────────────────────
   const renderCodeButton = (item) => {
-    if (!item?.empId || item.empId === '-') {
-      return <p className="text-[8px] font-bold uppercase">{item?.code || ''}</p>;
-    }
-    const empId = (item.empId || '').trim();
-    const itemName = (item.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[itemName];
-    const color = hasJobdesc
-      ? 'text-blue-600 hover:bg-blue-50'
-      : 'text-red-600 hover:bg-red-50';
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors w-full h-full flex items-center justify-center cursor-pointer ${color}`}
-        onClick={(e) => { e.stopPropagation(); onCodeClick && onCodeClick(item); }}
-        onKeyDown={(e) => { if(e.key === 'Enter') { e.stopPropagation(); onCodeClick && onCodeClick(item); } }}
-        title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
-      >
-        {item.code}
-      </div>
-    );
-  };
+  const empId = (item?.empId || '').trim();
+  
+  // Normalisasi nama: hapus *, ** dan extra spaces
+  const itemName = (item?.name || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\*+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Jika tidak ada empId dan nama, tampilkan teks biasa
+  if (!empId && !itemName) {
+    return <p className="text-[8px] font-bold uppercase">{item?.code || ''}</p>;
+  }
+
+  // Cek by empId (termasuk format gabungan "12345/67890")
+  const empIdMatch = empId && empId !== '-' && (
+    employeeJobdescStatus[empId] ||
+    empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+  );
+
+  // Cek by nama (termasuk format gabungan "NAMA1/NAMA2")
+  const nameMatch = itemName && (
+    employeeJobdescStatus[itemName] ||
+    itemName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+  );
+
+  const hasJobdesc = empIdMatch || nameMatch;
+
+  // Jika empId adalah '-' atau kosong, tampilkan teks biasa (tidak bisa diklik)
+  if (!empId || empId === '-') {
+    return <p className="text-[8px] font-bold uppercase text-gray-500">{item?.code || ''}</p>;
+  }
+
+  const color = hasJobdesc
+    ? 'text-blue-600 hover:bg-blue-50'
+    : 'text-red-600 hover:bg-red-50';
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className={`text-[8px] font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors w-full h-full flex items-center justify-center cursor-pointer ${color}`}
+      onClick={(e) => { e.stopPropagation(); onCodeClick && onCodeClick(item); }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onCodeClick && onCodeClick(item); } }}
+      title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
+    >
+      {item.code}
+    </div>
+  );
+};
 
   // Standard card renderer
   const renderCard = (item, posKey, defaultX, defaultY) => {
