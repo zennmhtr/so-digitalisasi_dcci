@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import '../assets/print-styles.css';
 import JobdescViewer from '../components/JobdescViewer';
 
+const normalize = (str) =>
+  (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+
+const normalizeId = (str) =>
+  (str || '').replace(/[()]/g, '').replace(/\s+/g, '').trim();
+
+const splitCombined = (str) =>
+  (str || '').replace(/[()]/g, '').split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+
+const containsId = (haystack, needle) => {
+  if (!haystack || !needle) return false;
+  const needleClean = normalizeId(needle);
+  return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+};
+
 const MarketingBatteryDepartment = () => {
   const navigate = useNavigate();
   const [printSettings, setPrintSettings] = useState({
@@ -14,27 +29,68 @@ const MarketingBatteryDepartment = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobdescData, setJobdescData] = useState(null);
   const [loadingJobdesc, setLoadingJobdesc] = useState(false);
-  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
+  const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState(null);
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
         const statusMap = {};
-        allJobdesc.forEach(jd => {
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
+
+        allJobdesc.forEach((jd) => {
+          (jd.memberNoPNK || '')
+            .replace(/[()]/g, '')
+            .split(/[\/,\s]+/)
+            .map(p => p.trim()).filter(Boolean)
+            .forEach(id => { statusMap[id] = true; });
+
+          (jd.memberName || '')
+            .replace(/\*+/g, '')   
+            .replace(/[()]/g, '')  
+            .split(/[\/,]/)
+            .map(p => {
+              const n = normalize(p);  
+              if (n) {
+                statusMap[n] = true;
+                const withoutSuffix = n.replace(/\s+[A-Z]$/, '').trim();
+                if (withoutSuffix !== n) statusMap[withoutSuffix] = true;
+              }
+            });
+
+          // 3. Via field "member" (object atau array)  ← INI YANG MISSING
+          if (jd.member) {
+            const members = Array.isArray(jd.member) ? jd.member : [jd.member];
+            members.forEach(m => {
+              if (typeof m === 'object' && m !== null) {
+                // Coba semua kemungkinan field ID di dalam object member
+                const possibleIdFields = ['noPNK', 'npk', 'id', 'employeeId', 'empId', '_id', 'nip'];
+                possibleIdFields.forEach(field => {
+                  if (m[field]) statusMap[String(m[field]).trim()] = true;
+                });
+                // Juga register nama dari object member
+                if (m.name) statusMap[normalize(m.name)] = true;
+                if (m.nama) statusMap[normalize(m.nama)] = true;
+              } else if (typeof m === 'string') {
+                statusMap[m.trim()] = true;
+              }
+            });
+          }
+
+          // 4. Field alternatif lain
+          if (jd.noPNK) statusMap[String(jd.noPNK).trim()] = true;
+          if (jd.employeeId) statusMap[String(jd.employeeId).trim()] = true;
         });
-        setEmployeeJobdescStatus(statusMap);
+
+        console.log('✅ StatusMap loaded:', Object.keys(statusMap).length, 'keys');
+        setEmployeeJobdescStatus({ ...statusMap });
       }
     } catch (error) {
-      console.error('Error fetching employee jobdesc status:', error);
+      console.error('Error:', error);
+      setEmployeeJobdescStatus({});
     }
   };
 
@@ -45,24 +101,68 @@ const MarketingBatteryDepartment = () => {
     setShowJobModal(true);
     setLoadingJobdesc(true);
     setJobdescData(null);
+
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
+        if (allJobdesc.length > 0) {
+          console.log('📋 SAMPLE JOBDESC FIELDS:', Object.keys(allJobdesc[0]));
+          console.log('📋 SAMPLE JOBDESC DATA:', allJobdesc[0]);
+        }
+
+        const codeTitleKeywords = {
+          "MKT2.0": ["MARKETING BATTERY BESS DEPT", "MARKETING BATTERY"],
+          "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1"],
+          "MKT2.2": ["MARKETING BATTERY BESS SECT", "ESS MARKETING", "MKT2.2"],
+        };
+
+        const itemCode = (item.code || '').trim().toUpperCase();
+        const itemEmpId = (item.empId || '').replace(/[()]/g, '').trim();
+        const itemName = normalize((item.name || '').replace(/\*+/g, ''));
+
         const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
-          const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
+          const jdNoPNK = (jd.memberNoPNK || '').replace(/[()]/g, '').trim();
+          const jdName = normalize((jd.memberName || '').replace(/\*+/g, ''));
+          const jdPositionTitle = (jd.positionTitle || '').toUpperCase();
+
+          const empIdMatch =
+            itemEmpId && itemEmpId !== '-' && jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId) ||
+              containsId(itemEmpId, jdNoPNK));
+
+          const nameMatch =
+            itemName && jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p.replace(/\*+/g, '')) === itemName));
+
+          if (!empIdMatch && !nameMatch) return false;
+
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            return keywords.some(kw => jdPositionTitle.includes(kw));
+          }
+          return true;
         });
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+
+        if (foundJobdesc) {
+          setJobdescData(foundJobdesc);
+          setEmployeeJobdescStatus(prev => {
+            const updated = { ...(prev || {}) };
+            const empIds = itemEmpId.split(/[\/,\s]+/).map(id => id.trim()).filter(Boolean);
+            empIds.forEach(id => { updated[id] = true; });
+            updated[itemName] = true;
+            return updated;
+          });
+
+        } else {
+          console.log('❌ Not found for:', { name: item.name, code: item.code, empId: item.empId });
+        }
       }
     } catch (error) {
       console.error('Error fetching job description:', error);
@@ -75,10 +175,35 @@ const MarketingBatteryDepartment = () => {
     if (!person || !person.empId) {
       return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
     }
-    const empId = (person.empId || '').trim();
-    const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
-    const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+
+    if (employeeJobdescStatus === null) {
+      return (
+        <p className="text-xs font-bold uppercase text-gray-400">
+          {person.code}
+        </p>
+      );
+    }
+
+    const personName = normalize((person.name || '').replace(/\*+/g, ''));
+    const rawEmpId = (person.empId || '').replace(/[()]/g, '').trim();
+    const empIds = rawEmpId.split(/[\/,\s]+/).map(id => id.trim()).filter(Boolean);
+
+    console.log('🎨 RENDER:', person.code, {
+      empIds,
+      personName,
+      statusMapSize: Object.keys(employeeJobdescStatus).length,
+      empIdResults: empIds.map(id => `${id}=${employeeJobdescStatus[id]}`),
+      nameResult: `${personName}=${employeeJobdescStatus[personName]}`,
+    });
+
+    const hasJobdesc =
+      empIds.some(id => !!employeeJobdescStatus[id]) ||
+      !!employeeJobdescStatus[personName];
+
+    const buttonColor = hasJobdesc
+      ? 'text-blue-600 hover:bg-blue-50'
+      : 'text-red-600 hover:bg-red-50';
+
     return (
       <button
         className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
@@ -89,7 +214,6 @@ const MarketingBatteryDepartment = () => {
       </button>
     );
   };
-
 
   const defaultData = {
     header: {
@@ -317,17 +441,21 @@ const MarketingBatteryDepartment = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -423,8 +551,8 @@ const MarketingBatteryDepartment = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGAIT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -437,8 +565,8 @@ const MarketingBatteryDepartment = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
-                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -505,7 +633,7 @@ const MarketingBatteryDepartment = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.header.head}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
@@ -520,7 +648,7 @@ const MarketingBatteryDepartment = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[0].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                 </div>
               </div>
@@ -532,7 +660,7 @@ const MarketingBatteryDepartment = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[1].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                 </div>
               </div>

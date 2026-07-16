@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -95,6 +95,14 @@ export const soChangeRequestsAPI = {
   reject: (id, reviewComments) => api.put(`/so-change-requests/${id}/reject`, { reviewComments }),
   cancel: (id) => api.put(`/so-change-requests/${id}/cancel`),
   delete: (id) => api.delete(`/so-change-requests/${id}`),
+};
+
+export const soBagianDataAPI = {
+  get: (bagianId) => api.get(`/so-bagian-data/${bagianId}`),
+  getAll: () => api.get('/so-bagian-data'),
+  save: (bagianId, data) => api.put(`/so-bagian-data/${bagianId}`, data),
+  addBox: (bagianId, box) => api.post(`/so-bagian-data/${bagianId}/box`, box),
+  deleteBox: (bagianId, boxId) => api.delete(`/so-bagian-data/${bagianId}/box/${boxId}`),
 };
 
 export const soBagianChangeRequestsAPI = {

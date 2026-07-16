@@ -16,81 +16,157 @@ const ManufacturingCable = () => {
   const [loadingJobdesc, setLoadingJobdesc] = useState(false);
   const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
 
-  const checkAllEmployeeJobdescStatus = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allJobdesc = result.data || result;
-        const statusMap = {};
-        allJobdesc.forEach(jd => {
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
+ const checkAllEmployeeJobdescStatus = async () => {
+      try {
+        const response = await fetch(`/api/jobdescriptions?limit=200`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
-        setEmployeeJobdescStatus(statusMap);
+        if (response.ok) {
+          const result = await response.json();
+          const allJobdesc = result.data || result;
+          const statusMap = {};
+  
+          allJobdesc.forEach(jd => {
+            const jdNoPNK = (jd.memberNoPNK || '').trim();
+            if (jdNoPNK) {
+              statusMap[jdNoPNK] = true;
+              jdNoPNK.split(/[\/,]/).forEach(part => {
+                const p = part.trim();
+                if (p) statusMap[p] = true;
+              });
+            }
+  
+            const memberName = (jd.memberName || '')
+              .trim()
+              .toUpperCase()
+              .replace(/\*+/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            if (memberName) {
+              statusMap[memberName] = true;
+              memberName.split(/[\/,]/).forEach(part => {
+                const p = part.trim();
+                if (p) statusMap[p] = true;
+              });
+            }
+          });
+  
+          setEmployeeJobdescStatus(statusMap);
+        }
+      } catch (error) {
+        console.error('Error fetching employee jobdesc status:', error);
       }
-    } catch (error) {
-      console.error('Error fetching employee jobdesc status:', error);
-    }
-  };
-
-  useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
-
-  const onCodeClick = async (item) => {
-    console.log("item:", JSON.stringify(item));
-    setSelectedJob(item);
-    setShowJobModal(true);
-    setLoadingJobdesc(true);
-    setJobdescData(null);
-    try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const allJobdesc = result.data || result;
-        const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
+    };
+  
+    useEffect(() => { checkAllEmployeeJobdescStatus(); }, []);
+  
+    const onCodeClick = async (item) => {
+      setSelectedJob(item);
+      setShowJobModal(true);
+      setLoadingJobdesc(true);
+      setJobdescData(null);
+  
+      try {
+        const response = await fetch(`/api/jobdescriptions?limit=200`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+  
+        if (response.ok) {
+          const result = await response.json();
+          const allJobdesc = result.data || result;
+  
+          const normalize = (str) =>
+            (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+  
+          const normalizeId = (str) => (str || '').replace(/\s+/g, '').trim();
+  
+          const splitCombined = (str) =>
+            (str || '').split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+  
+          const containsId = (haystack, needle) => {
+            if (!haystack || !needle) return false;
+            const needleClean = normalizeId(needle);
+            return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+          };
+  
           const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
-        });
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+          const itemName = normalize(item.name);
+  
+          console.log('🔍 Ppic onCodeClick searching:', { itemEmpId, itemName });
+  
+          const foundJobdesc = allJobdesc.find((jd) => {
+            const jdNoPNK = (jd.memberNoPNK || '').trim();
+            const jdName = normalize(jd.memberName);
+            const empIdMatch =
+              itemEmpId &&
+              itemEmpId !== '-' &&
+              jdNoPNK &&
+              (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+                containsId(jdNoPNK, itemEmpId));
+  
+            const nameMatch =
+              itemName &&
+              jdName &&
+              (jdName === itemName ||
+                splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+  
+            return empIdMatch || nameMatch;
+          });
+  
+          if (foundJobdesc) {
+            console.log('✅ Found:', foundJobdesc.memberName, foundJobdesc.memberNoPNK);
+            setJobdescData(foundJobdesc);
+          } else {
+            console.log('❌ Not found for:', { name: item.name, empId: item.empId });
+            console.log('Available:', allJobdesc.map(jd =>
+              `${jd.memberName} (${jd.memberNoPNK})`
+            ));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching job description:', error);
+      } finally {
+        setLoadingJobdesc(false);
       }
-    } catch (error) {
-      console.error('Error fetching job description:', error);
-    } finally {
-      setLoadingJobdesc(false);
-    }
-  };
-
-  const renderCodeButton = (person) => {
-    if (!person || !person.empId) {
-      return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
-    }
-    const empId = (person.empId || '').trim();
-    const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
-    const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
-    return (
-      <button
-        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
-        onClick={(e) => { e.stopPropagation(); onCodeClick(person); }}
-        title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
-      >
-        {person.code}
-      </button>
-    );
-  };
-
+    };
+  
+    const renderCodeButton = (person) => {
+      if (!person || !person.empId) {
+        return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
+      }
+      const empId = (person.empId || '').trim();
+      const personName = (person.name || '')
+        .trim()
+        .toUpperCase()
+        .replace(/\*+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+  
+      if (!empId || empId === '-') {
+        return <p className="text-xs font-bold uppercase text-gray-500">{person?.code || ''}</p>;
+      }
+  
+      const empIdMatch = employeeJobdescStatus[empId] ||
+        empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()]);
+  
+      const nameMatch = personName && (
+        employeeJobdescStatus[personName] ||
+        personName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+      );
+  
+      const hasJobdesc = empIdMatch || nameMatch;
+      const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+  
+      return (
+        <button
+          className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
+          onClick={(e) => { e.stopPropagation(); onCodeClick(person); }}
+          title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
+        >
+          {person.code}
+        </button>
+      );
+    };
 
   const defaultData = {
     header: {
@@ -581,17 +657,21 @@ const ManufacturingCable = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -657,10 +737,10 @@ const ManufacturingCable = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(MANUFACTURING CABLE DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md fnt-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">(MANUFACTURING CABLE)</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -686,8 +766,8 @@ const ManufacturingCable = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGAIT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -700,8 +780,8 @@ const ManufacturingCable = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
-                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -779,7 +859,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.header.head}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
@@ -794,7 +874,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[0].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                 </div>
               </div>
@@ -807,7 +887,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[1].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[1].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                 </div>
               </div>
@@ -820,7 +900,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[2].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[2].empId})</p>
                 </div>
               </div>
@@ -835,10 +915,10 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[3].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[3].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[3].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[4].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[4].empId})</p>
                 </div>
               </div>
@@ -850,10 +930,10 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[5].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[5].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[5].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[5].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[6].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[6].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[6].empId})</p>
                 </div>
               </div>
@@ -866,25 +946,25 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[7].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[7].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[7].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[7].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[8].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[8].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[8].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[9].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[9].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[9].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[10].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[10].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[10].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[11].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[11].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[11].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[12].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[12].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[12].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[13].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[13].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[13].empId})</p>
                 </div>
               </div>
@@ -899,7 +979,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[14].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[14].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[14].name}</p>
                 </div>
               </div>
 
@@ -911,7 +991,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[15].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[15].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[15].name}</p>
                 </div>
               </div>
 
@@ -924,7 +1004,7 @@ const ManufacturingCable = () => {
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[16].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[16].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[16].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[16].empId})</p>
                   </div>
                 </div>
@@ -933,7 +1013,7 @@ const ManufacturingCable = () => {
                     {renderCodeButton(orgData.positions[17])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[17].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[17].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[17].empId})</p>
                   </div>
                 </div>
@@ -946,7 +1026,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[18].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[18].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[18].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[18].empId})</p>
                 </div>
               </div>
@@ -958,7 +1038,7 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[19].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[19].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[19].name}</p>
                 </div>
               </div>
 
@@ -972,7 +1052,7 @@ const ManufacturingCable = () => {
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[20].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[20].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[20].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[20].empId})</p>
                   </div>
                 </div>
@@ -981,7 +1061,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[21].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[21].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[21].empId})</p>
                   </div>
                 </div>
@@ -990,7 +1070,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[22].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[22].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[22].empId})</p>
                   </div>
                 </div>
@@ -1001,7 +1081,7 @@ const ManufacturingCable = () => {
                   </div>
 
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[23].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[23].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[23].empId})</p>
                   </div>
                 </div>
@@ -1010,7 +1090,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[24].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[24].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[24].empId})</p>
                   </div>
                 </div>
@@ -1019,7 +1099,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[25].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[25].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[25].empId})</p>
                   </div>
                 </div>
@@ -1027,7 +1107,7 @@ const ManufacturingCable = () => {
                   <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[26].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[26].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[26].empId})</p>
                   </div>
                 </div>
@@ -1036,7 +1116,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[27].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[27].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[27].empId})</p>
                   </div>
                 </div>
@@ -1045,7 +1125,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[28].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[28].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[28].empId})</p>
                   </div>
                 </div>
@@ -1054,7 +1134,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[29].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[29].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[29].empId})</p>
                   </div>
                 </div>
@@ -1063,7 +1143,7 @@ const ManufacturingCable = () => {
                     {/* Empty for alignment */}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center border-t border-gray-400">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[30].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[30].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[30].empId})</p>
                   </div>
                 </div>
@@ -1078,7 +1158,7 @@ const ManufacturingCable = () => {
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[31].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[31].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[31].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[31].empId})</p>
                   </div>
                 </div>
@@ -1087,7 +1167,7 @@ const ManufacturingCable = () => {
                     {renderCodeButton(orgData.positions[32])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[32].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[32].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[32].empId})</p>
                   </div>
                 </div>
@@ -1101,16 +1181,16 @@ const ManufacturingCable = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[33].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[33].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[33].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[33].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[34].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[34].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[34].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[35].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[35].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[35].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[36].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[36].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[36].empId})</p>
                 </div>
               </div>

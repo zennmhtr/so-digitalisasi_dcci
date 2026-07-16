@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Search, X } from "lucide-react";
 import { rolesAPI } from "../services/api";
+import Swal from 'sweetalert2';
 
 const RolePermission = () => {
   const [roles, setRoles] = useState([]);
@@ -132,10 +133,25 @@ const RolePermission = () => {
   };
 
   const handleDelete = async (roleId) => {
-    if (window.confirm("Are you sure you want to delete this role?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to delete this role?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       try {
         await rolesAPI.delete(roleId);
         fetchRoles();
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Role has been deleted successfully.',
+          icon: 'success',
+          timer: 4000,
+          showConfirmButton: false
+        });
       } catch (error) {
         console.error("Error deleting role:", error);
         alert("Error deleting role. Please try again.");
@@ -160,6 +176,13 @@ const RolePermission = () => {
         description: "",
         permissions: [],
         active: true,
+      });
+      Swal.fire({
+        title: editingRole ? 'Updated!' : 'Added!',
+        text: editingRole ? 'Role has been updated successfully.' : 'New role has been added successfully.',
+        icon: 'success',
+        timer: 4000,
+        showConfirmButton: false
       });
     } catch (error) {
       console.error("Error saving role:", error);

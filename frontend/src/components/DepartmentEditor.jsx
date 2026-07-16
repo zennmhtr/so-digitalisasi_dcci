@@ -24,7 +24,7 @@ const DepartmentEditor = () => {
       route: '/finance-department'
     },
     'hrga-it-department': {
-      name: 'HRGA & IT Department', 
+      name: 'HRGA & IT Department',
       title: 'HRDGA & IT DEPARTMENT',
       storageKey: 'hrga-it-department-data',
       route: '/hrga-it-department'
@@ -37,7 +37,7 @@ const DepartmentEditor = () => {
     },
     'manufacturing-cable': {
       name: 'Manufacturing Cable',
-      title: 'CONTROLCABLE MANUFACTURE DEPARTMENT', 
+      title: 'CONTROLCABLE MANUFACTURE DEPARTMENT',
       storageKey: 'manufacturing-cable-data',
       route: '/manufacturing-cable'
     },
@@ -50,7 +50,7 @@ const DepartmentEditor = () => {
     'marketing-engineering': {
       name: 'Marketing Engineering',
       title: 'MARKETING ENGINEERING DEPARTMENT',
-      storageKey: 'marketing-engineering-data', 
+      storageKey: 'marketing-engineering-data',
       route: '/marketing-engineering'
     },
     'management-development': {
@@ -97,7 +97,7 @@ const DepartmentEditor = () => {
     if (!currentDept) return;
 
     const getInitialData = () => {
-      switch(departmentId) {
+      switch (departmentId) {
         case 'manufactur-battery':
           return {
             header: {
@@ -155,7 +155,7 @@ const DepartmentEditor = () => {
             },
             signatures: {
               preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
-              middleBy: { title: "Bambang Wuryanto", name: "Bambang Wuryanto", date: "08/09/2025" },
+              middleBy: { title: "Checked By :", name: "Bambang Wuryanto", date: "08/09/2025" },
               approvedBy: { name: "Eko Maryanto", date: "08/09/2025" }
             },
             structure: {
@@ -206,7 +206,7 @@ const DepartmentEditor = () => {
             },
             signatures: {
               preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
-              middleBy: { title: "Bambang Wuryanto", name: "Bambang Wuryanto", date: "08/09/2025" },
+              middleBy: { title: "Checked By :", name: "Bambang Wuryanto", date: "08/09/2025" },
               approvedBy: { name: "Eko Maryanto", date: "08/09/2025" }
             },
             structure: {
@@ -248,7 +248,7 @@ const DepartmentEditor = () => {
             },
             signatures: {
               preparedBy: { name: "Diki Wahyudi", date: "08/09/2025" },
-              middleBy: { title: "Bambang Wuryanto", name: "Bambang Wuryanto", date: "08/09/2025" },
+              middleBy: { title: "Checked By :", name: "Bambang Wuryanto", date: "08/09/2025" },
               approvedBy: { name: "Eko Maryanto", date: "08/09/2025" }
             },
             structure: {
@@ -260,7 +260,7 @@ const DepartmentEditor = () => {
     };
 
     const initialData = getInitialData();
-    
+
     const savedData = localStorage.getItem(currentDept.storageKey);
     if (savedData) {
       try {
@@ -305,7 +305,7 @@ const DepartmentEditor = () => {
   const handleEdit = (category, id, field, value) => {
     setDepartmentData(prev => {
       const newData = JSON.parse(JSON.stringify(prev));
-      
+
       if (category === 'header') {
         newData.header[field] = value;
       } else if (category === 'signatures') {
@@ -318,7 +318,7 @@ const DepartmentEditor = () => {
           item[field] = value;
         }
       }
-      
+
       return newData;
     });
   };
@@ -330,18 +330,18 @@ const DepartmentEditor = () => {
         lastModified: new Date().toISOString(),
         modifiedBy: user?.name || user?.username
       };
-      
+
       localStorage.setItem(currentDept.storageKey, JSON.stringify(dataToSave));
-      
-      window.dispatchEvent(new CustomEvent(`${departmentId}-data-updated`, { 
-        detail: dataToSave 
+
+      window.dispatchEvent(new CustomEvent(`${departmentId}-data-updated`, {
+        detail: dataToSave
       }));
-      
+
       setShowSaveDialog(true);
       setTimeout(() => {
         setShowSaveDialog(false);
       }, 3000);
-      
+
       console.log(`✅ ${currentDept.name} data saved successfully`);
     } catch (error) {
       console.error('Error saving department data:', error);
@@ -396,22 +396,21 @@ const DepartmentEditor = () => {
     };
 
     return (
-      <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] ${className} ${
-        isEditMode ? 'ring-2 ring-blue-200' : ''
-      }`}>
+      <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full ${className} ${isEditMode ? 'ring-2 ring-blue-200' : ''
+        }`}>
         <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
           <p className="text-xs font-bold">
             {renderEditableField('code', item.code, 'CODE')}
           </p>
         </div>
         <div className="p-2 flex-1 text-center flex flex-col justify-center">
-          <p className="text-xs font-semibold mb-1 leading-tight">
+          <p className="text-xs font-semibold mb-1 leading-tight break-words whitespace-normal">
             {renderEditableField('title', item.title, 'Title')}
           </p>
           {(item.name || isEditMode) && (
             <>
               <hr className="my-1 border-gray-300" />
-              <p className="text-xs leading-tight">
+              <p className="text-xs leading-tight break-words whitespace-normal">
                 {renderEditableField('name', item.name, 'Name')}
               </p>
               {(item.empId || isEditMode) && (
@@ -439,17 +438,16 @@ const DepartmentEditor = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  isEditMode
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${isEditMode
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
               >
                 {isEditMode ? 'View Mode' : 'Edit Mode'}
               </button>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={saveLayout}
@@ -457,7 +455,7 @@ const DepartmentEditor = () => {
             >
               Save Changes
             </button>
-           
+
             <button
               onClick={() => navigate(currentDept.route)}
               className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -473,7 +471,7 @@ const DepartmentEditor = () => {
             </button>
           </div>
         </div>
-        
+
         {/* Save confirmation */}
         {showSaveDialog && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -491,9 +489,9 @@ const DepartmentEditor = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center">
             <div className="w-16 h-16 flex items-center justify-center mr-4 p-2">
-              <img 
-                src="/logo/Logo DG New 2022.png" 
-                alt="Dharma Group Logo" 
+              <img
+                src="/logo/Logo DG New 2022.png"
+                alt="Dharma Group Logo"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -530,7 +528,7 @@ const DepartmentEditor = () => {
         {/* Department Structure */}
         <div className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
+
             {/* Department Head */}
             {departmentData.structure.departments?.map((item) => (
               <div key={item.id} className="space-y-3">
@@ -630,7 +628,7 @@ const DepartmentEditor = () => {
                       className="bg-yellow-50 border rounded px-1 text-xs w-20 ml-1"
                     />
                   ) : (
-                    departmentData.signatures?.middleBy?.date || '08/09/2025' 
+                    departmentData.signatures?.middleBy?.date || '08/09/2025'
                   )}
                 </p>
               </div>

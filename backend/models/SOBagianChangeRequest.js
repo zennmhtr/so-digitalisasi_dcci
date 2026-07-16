@@ -98,6 +98,7 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    minimize: false,
   }
 );
 

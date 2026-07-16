@@ -1,5 +1,6 @@
 import React from "react";
 import { X, Download, Printer, Edit, Trash2 } from "lucide-react";
+import { getSignatureInfo } from "../config/signatures";
 
 const JobdescViewer = ({
   user,
@@ -41,6 +42,41 @@ const JobdescViewer = ({
       </div>
     );
   }
+
+  const isFullyApproved = (() => {
+    if (
+      jobdesc?.status === "approved" ||
+      !!(jobdesc?.firstApprovedBy && jobdesc?.secondApprovedBy) ||
+      jobdesc?.approvedAt != null
+    ) return true;
+
+    const SIGNER_NAMES = [
+      "YULIUS PERMATA", "DIKI WAHYUDI", "SUGIYARTO", "M. SUGIARTO",
+      "KARNA SATIA", "RENDRA PRAMONO", "ANDREAS AGUNG", "ELIATA DUMAR",
+      "DADI ROSADI", "BAMBANG WURYANTO", "FAKHDARENI", "BAGUS SANTOSO",
+    ];
+    const userName = (user?.name || "").toUpperCase().trim();
+    if (SIGNER_NAMES.some(n => userName.includes(n) || n.includes(userName))) return true;
+
+    const APPROVED_DEPARTMENTS = [
+      "QA (Quality Assurance)",
+      "QA (QUALITY ASSURANCE)",
+      "QA Department",
+      "QA",
+      "PPIC",
+      "PPC",
+      "MI & SHE",
+    ];
+    const deptName = jobdesc?.department?.name || "";
+    if (APPROVED_DEPARTMENTS.some(d =>
+      deptName.toLowerCase().includes(d.toLowerCase()) ||
+      d.toLowerCase().includes(deptName.toLowerCase())
+    )) return true;
+
+    return false;
+  })();
+
+  const signInfo = getSignatureInfo(jobdesc, isFullyApproved);
 
   console.log("JobdescViewer - jobdesc data:", jobdesc);
   const handlePrint = () => {
@@ -218,6 +254,9 @@ const JobdescViewer = ({
           
           /* Khusus untuk margin-left spacing section titles */
           .ml-8 { margin-left: 1.5rem !important; }
+          .jobdesc-colon-gap { margin-right: 2.5rem !important; }
+          .mr-2 { margin-right: 0.5rem !important; }
+          .w-44 { width: 10rem !important; flex-shrink: 0 !important; }
         </style>
       </head>
       <body>
@@ -242,18 +281,31 @@ const JobdescViewer = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[99999]">
       <div className="relative top-4 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-lg bg-white my-8">
-        {/* Header with Actions */}
         <div className="flex justify-between items-center mb-6 print:hidden">
           <div>
             <h3 className="text-xl font-semibold text-gray-900">
               Job Description
             </h3>
             <p className="text-gray-600 text-sm mt-1">
-              Employee: <span className="font-medium">{user.name}</span> (
-              {user.noPNK})
+              Employee : <span className="font-medium">{user.name}</span> ({user.noPNK})
             </p>
+            {isFullyApproved ? (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Fully Approved — Tanda tangan aktif
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Belum fully approved — Tanda tangan belum tampil
+              </span>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             {!viewOnly && (
@@ -353,22 +405,48 @@ const JobdescViewer = ({
               </div>
 
               {/* Dibuat Section */}
-              <div className="w-32 border-r-2 border-black">
+              <div className="w-32 border-r-2 border-black" style={{ display: "flex", flexDirection: "column" }}>
                 <div className="border-b border-black p-1 text-center">
                   <p className="text-xs font-bold">Dibuat,</p>
                 </div>
-                <div className="border-b border-black p-12 text-center">
-                  {/* Space for signature */}
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "75px" }}>
+                  {signInfo.dibuat.signature ? (
+                    <img
+                      src={signInfo.dibuat.signature}
+                      alt={`TTD ${signInfo.dibuat.name}`}
+                      style={{ maxHeight: "60px", maxWidth: "110px", objectFit: "contain" }}
+                      onError={(e) => { e.target.style.display = "none"; }}
+                    />
+                  ) : null}
+                </div>
+                <div style={{ borderTop: "1px solid #000", textAlign: "center", padding: "3px 4px", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <p style={{ fontSize: "9px", fontWeight: "bold", textDecoration: "underline", lineHeight: "1.3", margin: 0 }}>
+                    {signInfo.dibuat.name}
+                  </p>
+                  <p style={{ fontSize: "9px", lineHeight: "1.3", margin: 0 }}>{signInfo.dibuat.role}</p>
                 </div>
               </div>
 
               {/* Disetujui Section */}
-              <div className="w-32">
+              <div className="w-32" style={{ display: "flex", flexDirection: "column" }}>
                 <div className="border-b border-black p-1 text-center">
                   <p className="text-xs font-bold">Disetujui,</p>
                 </div>
-                <div className="border-b border-black p-12 text-center">
-                  {/* Space for signature */}
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "75px" }}>
+                  {signInfo.disetujui.signature ? (
+                    <img
+                      src={signInfo.disetujui.signature}
+                      alt={`TTD ${signInfo.disetujui.name}`}
+                      style={{ maxHeight: "60px", maxWidth: "110px", objectFit: "contain" }}
+                      onError={(e) => { e.target.style.display = "none"; }}
+                    />
+                  ) : null}
+                </div>
+                <div style={{ borderTop: "1px solid #000", textAlign: "center", padding: "3px 4px", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <p style={{ fontSize: "9px", fontWeight: "bold", textDecoration: "underline", lineHeight: "1.3", margin: 0 }}>
+                    {signInfo.disetujui.name}
+                  </p>
+                  <p style={{ fontSize: "9px", lineHeight: "1.3", margin: 0 }}>{signInfo.disetujui.role}</p>
                 </div>
               </div>
             </div>
@@ -381,14 +459,14 @@ const JobdescViewer = ({
                 <div className="border-b border-black p-3">
                   <div className="flex">
                     <span className="font-bold w-32">DIVISION</span>
-                    <span className="mr-2">:</span>
+                    <span className="mr-2 jobdesc-colon-gap"> :</span>
                     <span>{jobdesc?.division || "-"}</span>
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">POSITION TITLE</span>
-                    <span className="mr-2">:</span>
+                    <span className="mr-2 jobdesc-colon-gap"> :</span>
                     <span>{jobdesc?.positionTitle || "-"}</span>
                   </div>
                 </div>
@@ -397,7 +475,7 @@ const JobdescViewer = ({
                 <div className="border-b border-black p-3">
                   <div className="flex">
                     <span className="font-bold w-32">DEPARTMENT</span>
-                    <span className="mr-2">:</span>
+                    <span className="mr-2 jobdesc-colon-gap"> :</span>
                     <span>
                       {(
                         jobdesc?.department?.name ||
@@ -410,7 +488,7 @@ const JobdescViewer = ({
                 <div className="p-3">
                   <div className="flex">
                     <span className="font-bold w-32">REPORTS TO</span>
-                    <span className="mr-2">:</span>
+                    <span className="mr-2 jobdesc-colon-gap"> :</span>
                     <span>{jobdesc?.reportsTo || "-"}</span>
                   </div>
                 </div>
@@ -527,16 +605,16 @@ const JobdescViewer = ({
               </div>
 
               <div>
-  <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
-  <ol className="list-decimal list-inside space-y-1 text-sm">
-    {jobdesc.competence?.skill
-      ?.filter(skill => skill.trim() !== "")
-      .map((skill, index) => (
-        <li key={index}>{skill}</li>
-      ))
-    }
-  </ol>
-</div>
+                <p className="font-bold text-sm mb-2">B. Competence Skill :</p>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  {jobdesc.competence?.skill
+                    ?.filter(skill => skill.trim() !== "")
+                    .map((skill, index) => (
+                      <li key={index}>{skill}</li>
+                    ))
+                  }
+                </ol>
+              </div>
             </div>
           </div>
 

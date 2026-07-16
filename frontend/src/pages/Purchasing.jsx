@@ -18,7 +18,7 @@ const Purchasing = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -26,11 +26,15 @@ const Purchasing = () => {
         const allJobdesc = result.data || result;
         const statusMap = {};
         allJobdesc.forEach(jd => {
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
+          const jdNoPNK = (jd.memberNoPNK || '').replace(/[()]/g, '').trim();
           const jdName = (jd.memberName || '').trim().toUpperCase();
           if (jdNoPNK) statusMap[jdNoPNK] = true;
           if (jdName) statusMap[jdName] = true;
         });
+
+        console.log('StatusMap keys:', Object.keys(statusMap));
+        console.log('Elitri ada?', statusMap['23110112']);
+
         setEmployeeJobdescStatus(statusMap);
       }
     } catch (error) {
@@ -45,24 +49,71 @@ const Purchasing = () => {
     setShowJobModal(true);
     setLoadingJobdesc(true);
     setJobdescData(null);
+
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
+
+        const codeTitleKeywords = {
+          "PCH1.0": ["PURCHASING SECT. HEAD", "PCH1.0"],
+          "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
+          "PCH1.2": ["BATTERY", "PCH1.2"],
+          "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
+          "PCH1.4": ["SUBCONT PROCESS", "PCH1.4"],
+        };
+
+        const normalize = (str) =>
+          (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+        const normalizeId = (str) =>
+          (str || '').replace(/[()]/g, '').replace(/\s+/g, '').trim(); // ← tambah strip ()
+        const splitCombined = (str) =>
+          (str || '').replace(/[()]/g, '').split(/[\/,]/).map(p => p.trim()).filter(Boolean); // ← strip () dulu
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemCode = (item.code || '').trim().toUpperCase();
+        const itemEmpId = (item.empId || '').replace(/[()]/g, '').trim(); // ← strip ()
+        const itemName = normalize(item.name);
+
         const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
-          const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
+          const jdNoPNK = (jd.memberNoPNK || '').replace(/[()]/g, '').trim(); // ← strip ()
+          const jdName = normalize(jd.memberName);
+          const jdPositionTitle = (jd.positionTitle || '').toUpperCase();
+
+          const empIdMatch =
+            itemEmpId && itemEmpId !== '-' && jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId) ||
+              containsId(itemEmpId, jdNoPNK)); // ← cek dua arah
+
+          const nameMatch =
+            itemName && jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+          if (!empIdMatch && !nameMatch) return false;
+
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            return keywords.some(kw => jdPositionTitle.includes(kw));
+          }
+
+          return true;
         });
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+
+        if (foundJobdesc) {
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log('❌ Not found for:', { name: item.name, code: item.code, empId: item.empId });
+        }
       }
     } catch (error) {
       console.error('Error fetching job description:', error);
@@ -75,10 +126,21 @@ const Purchasing = () => {
     if (!person || !person.empId) {
       return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
     }
-    const empId = (person.empId || '').trim();
     const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
-    const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+    const empIds = (person.empId || '')
+      .replace(/[()]/g, '')
+      .split(/[\/,]/)
+      .map(id => id.trim())
+      .filter(Boolean);
+
+    const hasJobdesc =
+      empIds.some(id => employeeJobdescStatus[id]) ||
+      employeeJobdescStatus[personName];
+
+    const buttonColor = hasJobdesc
+      ? 'text-blue-600 hover:bg-blue-50'
+      : 'text-red-600 hover:bg-red-50';
+
     return (
       <button
         className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
@@ -89,7 +151,6 @@ const Purchasing = () => {
       </button>
     );
   };
-
 
   const defaultData = {
     header: {
@@ -103,7 +164,7 @@ const Purchasing = () => {
         id: "pch1-1",
         code: "PCH1.1",
         title: "CONTROLCABLE",
-        name: "RIF'QI FATHAH",
+        name: "RIFQI FATHAH",
         empId: "23230017",
       },
       {
@@ -330,17 +391,21 @@ const Purchasing = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -406,10 +471,10 @@ const Purchasing = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(PURCHASING DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-mdfont-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold-gray-600 mb-1">(PURCHASING DEPARTEMENT)</h3>
+                  <p className="text-stext-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -422,8 +487,8 @@ const Purchasing = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">DEPARTMENT HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI* / FAKHDARENI*</p>
+                          <p className="text-sm text-black leading-tight">SECTION HEAD</p>
                         </div>
                       </div>
                     </div>
@@ -436,8 +501,8 @@ const Purchasing = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGAIT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -523,8 +588,8 @@ const Purchasing = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.header.head}</p>
-                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -538,8 +603,8 @@ const Purchasing = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[0].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[0].name}</p>
-                  <p className="text-sm leading-tight">{orgData.positions[0].empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[0].empId}(</p>
                 </div>
               </div>
 
@@ -550,8 +615,8 @@ const Purchasing = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[1].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[1].name}</p>
-                  <p className="text-sm leading-tight">{orgData.positions[1].empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[1].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[1].empId}(</p>
                 </div>
               </div>
 
@@ -562,8 +627,8 @@ const Purchasing = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[2].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[2].name}</p>
-                  <p className="text-sm leading-tight">{orgData.positions[2].empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[2].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[2].empId})</p>
                 </div>
               </div>
 
@@ -574,8 +639,8 @@ const Purchasing = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[3].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[3].name}</p>
-                  <p className="text-sm leading-tight">{orgData.positions[3].empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[3].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[3].empId})</p>
                 </div>
               </div>
             </div>

@@ -19,6 +19,7 @@ import {
 } from "../services/api";
 import JobdescViewer from "../components/JobdescViewer";
 import JobdescForm from "../components/JobdescForm";
+import Swal from 'sweetalert2';
 
 const JobdescManagement = () => {
   const { user } = useAuth();
@@ -284,11 +285,15 @@ const JobdescManagement = () => {
   };
 
   const handleDeleteJobdesc = async (member) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete job description for ${member.name}?`
-      )
-    ) {
+    const confirmResult = await Swal.fire({
+      title: `Are you sure you want to delete job description for ${member.name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       try {
         const jobdesc = jobDescriptions[member.id];
         if (jobdesc) {
@@ -310,11 +315,15 @@ const JobdescManagement = () => {
   };
 
   const handleDeleteMember = async (member) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete member ${member.name}? This will also delete their job description.`
-      )
-    ) {
+    const confirmResult = await Swal.fire({
+      title: `Are you sure you want to delete member ${member.name}? This will also delete their job description.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       try {
         await membersAPI.delete(member.id);
 
@@ -895,8 +904,8 @@ const JobdescManagement = () => {
 
       if (response.data.success) {
         const successMessage = isUpdate
-          ? "✅ Job description update submitted for approval successfully!"
-          : "✅ Job description submitted for approval successfully!";
+          ? "Job description update submitted for approval successfully!"
+          : "Job description submitted for approval successfully!";
 
         alert(successMessage);
 
@@ -1058,8 +1067,15 @@ const JobdescManagement = () => {
               <div className="p-6 flex-1 overflow-y-auto">
                 {!selectedDepartment ? (
                   <div className="text-center py-12">
-                    <div className="text-gray-400 text-lg mb-2">👥</div>
-                    <p className="text-gray-500">
+                    <div className="mb-2 flex justify-center">
+                      <svg className="w-8 h-8" viewBox="0 0 26 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 21v-2a4 4 0 0 0-4-4H13a4 4 0 0 0-4 4v2" fill="#A78BFA" />
+                        <circle cx="17" cy="7" r="4" fill="#A78BFA" />
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="#3B82F6" />
+                        <circle cx="9" cy="7" r="4" fill="#3B82F6" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500 text-bold">
                       Select a department from the list
                     </p>
                     <p className="text-gray-400 text-sm mt-1">

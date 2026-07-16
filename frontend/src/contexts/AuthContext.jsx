@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:3001/api/auth/me', {
+      const response = await fetch('/api/auth/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const authStatus = localStorage.getItem('isAuthenticated');
     const userData = localStorage.getItem('user');
-    
+
     if (authStatus === 'true' && userData) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
@@ -72,7 +72,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     loading,
-    refreshUser
+    refreshUser,
+    userPermissions: user?.role?.permissions || user?.permissions || []
   };
 
   return (

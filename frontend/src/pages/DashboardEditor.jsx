@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { soChangeRequestsAPI } from "../services/api";
+import Swal from 'sweetalert2';
 
 const DashboardEditor = () => {
   const { user } = useAuth();
@@ -111,19 +112,19 @@ const DashboardEditor = () => {
       header: {
         title: "ORGANIZATION STRUCTURE",
         company: "PT DHARMA CONTROLCABLE INDONESIA",
-        effectiveDate: "16/03/2026",
-        regNo: "16/03/2026",
-        preparedDate: "16/03/2026",
-        approvedDate: "16/03/2026",
+        effectiveDate: "02/06/2026",
+        regNo: "02/06/2026",
+        preparedDate: "02/06/2026",
+        approvedDate: "02/06/2026",
       },
       signatures: {
-        preparedBy: { name: "Diki Wahyudi", date: "16/03/2026" },
+        preparedBy: { name: "Diki Wahyudi", date: "02/06/2026" },
         middleBy: {
           title: "Bambang Wuryanto",
           name: "Bambang Wuryanto",
-          date: "16/03/2026",
+          date: "02/06/2026",
         },
-        approvedBy: { name: "Eko Maryanto", date: "16/03/2026" },
+        approvedBy: { name: "Eko Maryanto", date: "02/06/2026" },
       },
       commissioners: {
         president: { title: "PRESIDENT COMMISIONER", name: "IRIANTO SANTOSO" },
@@ -148,23 +149,13 @@ const DashboardEditor = () => {
         ],
         management: [
           {
-            id: "mio-1",
-            code: "MIO1.0",
-            title: "MI & SHE (5R-SMK3-ISO 14001)",
-            name: "ELIATA DUMAR GINTING",
-            empId: "23190806",
-            clickable: true,
-            route: "/mi-she",
-          },
-          {
-            id: "mdo-1",
-            code: "MDO1.0",
-            title: "MANAGEMENT DEVELOPMENT/PDCA",
+            id: "md-1",
+            code: "MD1.0",
+            title: "MDEV, MI & SHE (5R-SMK3-ISO 14001)",
             name: "WAHYU KARTIKO ADI",
             empId: "23240005",
-            type: "combined",
             clickable: true,
-            route: "/management-development",
+            route: "/mi-she",
           },
           {
             id: "mro-1",
@@ -178,16 +169,23 @@ const DashboardEditor = () => {
           {
             id: "cro-1",
             code: "CRO1.0",
-            title: "CUSTOMER REPRESENTATIVE 2 WHEEL",
+            title: "CUSTOMER REPRESENTATIVE AHM",
             name: "SUMIYARTO*",
             empId: "23030015",
           },
           {
             id: "cro-2",
             code: "CRO2.0",
-            title: "CUSTOMER REPRESENTATIVE 4 WHEEL",
+            title: "CUSTOMER REPRESENTATIVE NON AHM",
             name: "DWI PURWANTO*",
             empId: "23030023",
+          },
+          {
+            id: "pac-1",
+            code: "PAC1.0",
+            title: "PLANT ACTIVITY",
+            name: "M BAGUS SANTOSO*",
+            empId: "23220025",
           },
         ],
         // Business Labels - Column 3
@@ -243,10 +241,11 @@ const DashboardEditor = () => {
             route: "/marketing-engineering",
           },
           {
-            id: "mkt-2",
-            code: "MKT2.0",
-            title: "MARKETING",
-            name: "TBD",
+            id: "PME-1",
+            code: "PME1.0",
+            title: "PE & MAINTENANCE",
+            name: "ANDREAS AGUNG S.*",
+            empId: "23040119",
           },
           {
             id: "mkt-eng",
@@ -312,8 +311,8 @@ const DashboardEditor = () => {
             id: "hrd1-1",
             code: "HRD1.1",
             title: "HRDGA & IT",
-            name: "TBD",
-            empId: "-"
+            name: "THARISA ARRAHMA R.",
+            empId: "23230072"
           },
           {
             id: "mkt2-1",
@@ -580,20 +579,18 @@ const DashboardEditor = () => {
       const response = await soChangeRequestsAPI.create(requestData);
 
       if (response.data.success) {
-        alert("✅ Change request submitted successfully!");
-        setShowSubmitModal(false);
-        setSubmitForm({
-          title: "",
-          description: "",
-          priority: "medium",
-          affectedSection: "departments",
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil!',
+          text: 'Change request submitted successfully!',
+          confirmButtonColor: '#16a34a',
+          timer: 2000,
+          showConfirmButton: false,
         });
-
-        setEditModeStartData(null);
-        setIsEditMode(false);
-
-        navigate("/so-change-requests");
+        setShowSubmitModal(false);
+        navigate("/so-bagian-change-requests");
       }
+      
     } catch (error) {
       console.error("❌ Error submitting change request:", error);
       alert(
@@ -602,12 +599,16 @@ const DashboardEditor = () => {
     }
   };
 
-  const resetLayout = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to reset all changes? This cannot be undone."
-      )
-    ) {
+  const resetLayout = async () => {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to reset all changes? This cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       localStorage.removeItem("dashboard-organization-data");
       window.location.reload();
     }
@@ -871,45 +872,10 @@ const DashboardEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      {/* Toolbar */}
       <div className="bg-white shadow-sm border rounded-lg p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-xl font-bold text-gray-800">SO DCI Editor</h1>
-
-            {/* Mode Toggle Buttons */}
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  const newEditMode = !isEditMode;
-                  setIsEditMode(newEditMode);
-                  setIsDrawingMode(false);
-
-                  if (newEditMode && organizationData) {
-                    console.log("🔒 ENTERING EDIT MODE - Taking snapshot");
-                    console.log(
-                      "📸 Current data before edit:",
-                      organizationData
-                    );
-
-                    const snapshot = JSON.parse(
-                      JSON.stringify(organizationData)
-                    );
-                    setEditModeStartData(snapshot);
-
-                    console.log("✅ Snapshot saved:", snapshot);
-                  } else if (!newEditMode) {
-                    console.log("🚪 EXITING EDIT MODE");
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${isEditMode
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-              >
-                {isEditMode ? "✏️ Edit Mode" : "👁️ View Mode"}
-              </button>
-            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -937,16 +903,24 @@ const DashboardEditor = () => {
 
             <button
               onClick={() => navigate("/so-change-requests")}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
               View Requests
             </button>
 
             <button
               onClick={() => navigate("/")}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
-              ← Back to Dashboard
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
             </button>
           </div>
         </div>
@@ -970,9 +944,12 @@ const DashboardEditor = () => {
             {!isEditMode && !isDrawingMode && (
               <button
                 onClick={() => navigate("/dashboard-editor-advanced")}
-                className="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+                className="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
               >
-                🚀 Try Advanced Editor Now
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 1024 1024" fill="currentColor">
+                  <path d="M848 359.3H627.7L825.8 109c4.1-5.3.4-13-6.3-13H436c-2.8 0-5.5 1.5-6.9 4L170 547.5c-3.1 5.3.7 12 6.9 12h174.4l-89.4 357.6c-1.9 7.8 7.5 13.3 13.3 7.7L853.5 373c5.2-4.9 1.7-13.7-5.5-13.7z" />
+                </svg>
+                Try Advanced Editor Now
               </button>
             )}
           </div>
@@ -1105,7 +1082,7 @@ const DashboardEditor = () => {
               {/* Middle - Bambang Wuryanto */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
-                  Approved By :
+                  Checked By :
                 </p>
                 <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
                 <p className="text-xs font-semibold underline mb-1">
@@ -1492,7 +1469,7 @@ const DashboardEditor = () => {
                               </p>
                               {item.clickable && !isEditMode && (
                                 <p className="text-xs text-blue-600 mt-1 font-semibold">
-                                  Click to view details →
+                                  Click to Matriks Skill →
                                 </p>
                               )}
                               {isEditMode && (

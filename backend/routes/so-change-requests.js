@@ -6,6 +6,26 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
+router.get("/latest-approved", auth, async (req, res) => {
+  try {
+    const latest = await SOChangeRequest.findOne({ status: "approved" })
+      .sort({ secondApprovedAt: -1 })
+      .select("proposedData secondApprovedAt");
+
+    if (!latest || !latest.proposedData?.organizationData) {
+      return res.json({ success: false, message: "No approved data found" });
+    }
+
+    return res.json({
+      success: true,
+      data: latest.proposedData,
+    });
+  } catch (error) {
+    console.error("Error fetching latest approved:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 router.get("/", auth, async (req, res) => {
   try {
     const { status, affectedSection } = req.query;
@@ -255,14 +275,17 @@ router.put(
         request.reviewComments = req.body.reviewComments || "";
         request.status = "waiting_second_approval";
 
+        const existingMiddleByDate = request.proposedData.organizationData.signatures.middleBy?.date;
+        const existingMiddleByTitle = request.proposedData.organizationData.signatures.middleBy?.title || "Director";
+        
         request.proposedData.organizationData.signatures.middleBy = {
-          title: "Director",
+          title: existingMiddleByTitle,
           name: "Bambang Wuryanto",
-          date: humanDate,
+          date: existingMiddleByDate || humanDate,
           _ts: now.toISOString(),
         };
 
-        console.log("✅ SET middleBy.date:", humanDate);
+        console.log("✅ SET middleBy.date:", request.proposedData.organizationData.signatures.middleBy.date);
 
         request.markModified("proposedData");
         await request.save();
@@ -307,18 +330,21 @@ router.put(
           (req.body.reviewComments || "");
         request.status = "approved";
 
+        const existingApprovedByDate = request.proposedData.organizationData.signatures.approvedBy?.date;
+
         request.proposedData.organizationData.signatures.approvedBy = {
           name: "Eko Maryanto",
-          date: humanDate,
+          date: existingApprovedByDate || humanDate,
           _ts: now.toISOString(),
         };
 
-        request.proposedData.organizationData.header.effectiveDate = humanDate;
+        const existingEffectiveDate = request.proposedData.organizationData.header?.effectiveDate;
+        request.proposedData.organizationData.header.effectiveDate = existingEffectiveDate || humanDate;
         request.proposedData.organizationData.header._effectiveDateTs =
           now.toISOString();
 
-        console.log("✅ SET approvedBy.date:", humanDate);
-        console.log("✅ SET effectiveDate:", humanDate);
+        console.log("✅ SET approvedBy.date:", request.proposedData.organizationData.signatures.approvedBy.date);
+        console.log("✅ SET effectiveDate:", request.proposedData.organizationData.header.effectiveDate);
 
         request.markModified("proposedData");
         await request.save();

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { matriksSkillChangeRequestsAPI } from "../services/api";
+import Swal from 'sweetalert2';
 
 const calcAveragePreview = (vals) => {
     const v = (vals || []).filter((x) => x !== null && x !== undefined);
@@ -110,7 +111,7 @@ const MatriksTableFullPreview = ({ proposedData, departmentName }) => {
                     ))}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
-                    {[["Divisi", divisi], ["Departemen", departemen], ["Tgl Efektif", tglEfektif]].map(([label, value], i) => (
+                    {[["Divisi", divisi], ["Departemen", departemen], ["Tanggal Efektif", tglEfektif]].map(([label, value], i) => (
                         <div key={i} style={{ padding: "6px 12px", borderRight: i < 2 ? "1px solid #9ca3af" : "none", fontSize: 12 }}>
                             <span style={{ fontWeight: 600, color: "#374151" }}>{label}</span>
                             <span style={{ color: "#6b7280" }}> : </span>
@@ -308,20 +309,20 @@ const MatriksSkillDetailModal = ({
                                     {request.firstApprovedBy && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <CheckCircle className="w-5 h-5 text-green-500" />
-                                            <span><strong>Manager Approval:</strong> {request.firstApprovedBy.name}</span>
+                                            <span><strong>Manager Approval :</strong> {request.firstApprovedBy.name}</span>
                                             {request.firstApprovedAt && <span className="text-gray-400">({formatDate(request.firstApprovedAt)})</span>}
                                         </div>
                                     )}
                                     {request.secondApprovedBy ? (
                                         <div className="flex items-center gap-2 text-sm">
                                             <CheckCircle className="w-5 h-5 text-green-500" />
-                                            <span><strong>Director Approval:</strong> {request.secondApprovedBy.name}</span>
+                                            <span><strong>Director Approval :</strong> {request.secondApprovedBy.name}</span>
                                             {request.secondApprovedAt && <span className="text-gray-400">({formatDate(request.secondApprovedAt)})</span>}
                                         </div>
                                     ) : request.status === "waiting_director_approval" ? (
                                         <div className="flex items-center gap-2 text-sm text-blue-600">
                                             <Clock className="w-5 h-5" />
-                                            <span><strong>Director Approval:</strong> Pending</span>
+                                            <span><strong>Director Approval :</strong> Pending</span>
                                         </div>
                                     ) : null}
                                 </div>
@@ -330,7 +331,7 @@ const MatriksSkillDetailModal = ({
 
                         {request.reviewComments && (
                             <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">Review Comments:</h4>
+                                <h4 className="font-semibold text-gray-900 mb-3">Review Comments :</h4>
                                 <div className={`border-l-4 p-4 rounded ${request.status === "rejected" ? "bg-red-50 border-red-500"
                                     : request.status === "revisi" ? "bg-orange-50 border-orange-500"
                                         : "bg-blue-50 border-blue-500"
@@ -349,9 +350,22 @@ const MatriksSkillDetailModal = ({
                                     <MessageSquare className="inline w-5 h-5 mr-2" />
                                     Review Comments:
                                 </label>
-                                <p className="text-sm text-gray-600 mb-2">
-                                    ✅ Optional for approval |{" "}
-                                    <span className="font-semibold text-red-600">⚠️ Required for rejection & revision</span>
+                                <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 flex-wrap">
+                                    <span className="flex items-center gap-1">
+                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Optional for approval
+                                    </span>
+                                    <span>|</span>
+                                    <span className="flex items-center gap-1">
+                                        <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                        </svg>
+                                        <span className="font-semibold text-red-600">Required for rejection</span>
+                                    </span>
                                 </p>
                                 <textarea
                                     value={reviewComments}
@@ -362,7 +376,13 @@ const MatriksSkillDetailModal = ({
                                     placeholder="Add your review comments... (Required for rejection/revision)"
                                 />
                                 {showValidationError && (
-                                    <p className="text-red-600 text-sm mt-1 font-semibold">⚠️ Comments are required!</p>
+                                    <p className="text-red-600 text-sm mt-1 font-semibold flex items-center gap-1">
+                                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                        </svg>
+                                        Comments are required!
+                                    </p>
                                 )}
                             </div>
                         )}
@@ -534,9 +554,17 @@ const MatriksSkillChangeRequests = () => {
             alert("You do not have permission to approve this request");
             return;
         }
-        if (!confirm("Are you sure you want to approve this request?")) return;
-
-        try {
+        const confirmResult = await Swal.fire({
+            title: "Are you sure you want to approve this request?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        });
+        if (!confirmResult.isConfirmed) {
+            return;
+        } try {
             setActionLoading(true);
             const response = await matriksSkillChangeRequestsAPI.approve(requestId, reviewComments);
             if (response.data.success) {
@@ -544,7 +572,7 @@ const MatriksSkillChangeRequests = () => {
                 if (updated.status === "approved") {
                     applyChangesToMatriks(updated);
                 } else if (updated.status === "waiting_director_approval") {
-                    alert("✅ First approval recorded. Waiting for Director approval.");
+                    alert("First approval recorded. Waiting for Director approval.");
                     setShowDetailModal(false);
                     setReviewComments("");
                     loadRequests();
@@ -567,15 +595,28 @@ const MatriksSkillChangeRequests = () => {
             alert("You do not have permission to revisi this request");
             return;
         }
-        const trimmed = reviewComments.trim();
-        if (!trimmed) {
-            setShowValidationError(true);
-            alert("⚠️ Please provide comments for revision.");
+        const trimmedComments = reviewComments.trim();
+        if (!trimmedComments) {
+            Swal.fire({
+                title: "Perhatian",
+                text: "Mohon isi komentar untuk revisi terlebih dahulu.",
+                icon: "warning",
+                confirmButtonColor: "#f59e0b",
+                confirmButtonText: "OK",
+            });
             return;
         }
-        if (!confirm("Are you sure you want to send this request for revision?")) return;
-
-        try {
+        const confirmResult = await Swal.fire({
+            title: "Are you sure you want to send this request for revision?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        });
+        if (!confirmResult.isConfirmed) {
+            return;
+        } try {
             setActionLoading(true);
             const response = await matriksSkillChangeRequestsAPI.revisi(requestId, trimmed);
             if (response.data.success) {
@@ -605,9 +646,17 @@ const MatriksSkillChangeRequests = () => {
             return;
         }
         setShowValidationError(false);
-        if (!confirm("Are you sure you want to reject this request?")) return;
-
-        try {
+        const confirmResult = await Swal.fire({
+            title: "Are you sure you want to reject this request?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        });
+        if (!confirmResult.isConfirmed) {
+            return;
+        } try {
             setActionLoading(true);
             const response = await matriksSkillChangeRequestsAPI.reject(requestId, trimmed);
             if (response.data.success) {
@@ -625,8 +674,17 @@ const MatriksSkillChangeRequests = () => {
     };
 
     const handleCancel = async (requestId) => {
-        if (!confirm("Are you sure you want to cancel this request?")) return;
-        try {
+        const confirmResult = await Swal.fire({
+            title: "Are you sure you want to cancel this request?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        });
+        if (!confirmResult.isConfirmed) {
+            return;
+        } try {
             setActionLoading(true);
             const response = await matriksSkillChangeRequestsAPI.cancel(requestId);
             if (response.data.success) {
@@ -651,7 +709,13 @@ const MatriksSkillChangeRequests = () => {
 
             const deptId = proposedData.deptId || proposedData.matriksData?.deptId;
             if (!deptId) {
-                alert(`✅ Matriks Skill change approved!\nDepartment: ${request.department}\nChanges will be reflected after the page refreshes.`);
+                Swal.fire({
+                    title: "Berhasil!",
+                    html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen:</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
+                    icon: "success",
+                    confirmButtonColor: "#16a34a",
+                    confirmButtonText: "OK",
+                });
                 setShowDetailModal(false);
                 setReviewComments("");
                 loadRequests();
@@ -669,13 +733,19 @@ const MatriksSkillChangeRequests = () => {
 
             window.dispatchEvent(new CustomEvent(`matriks-skill-${deptId}-updated`, { detail: dataToSave }));
 
-            alert(`✅ Changes approved and applied!\nDepartment: ${request.department}`);
+            Swal.fire({
+                title: "Berhasil!",
+                text: `Perubahan telah disetujui dan diterapkan untuk Departemen ${request.department}.`,
+                icon: "success",
+                confirmButtonColor: "#16a34a",
+                confirmButtonText: "OK",
+            });
             setShowDetailModal(false);
             setReviewComments("");
             loadRequests();
         } catch (error) {
             console.error("Error applying changes:", error);
-            alert(`⚠️ Changes approved but could not apply locally: ${error.message}`);
+            alert(`Warning: Changes approved but could not apply locally: ${error.message}`);
             setShowDetailModal(false);
             loadRequests();
         }
@@ -827,30 +897,59 @@ const MatriksSkillChangeRequests = () => {
                                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
 
                                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
-                                        <span>👤 <strong>{request.requestedBy?.name}</strong></span>
-                                        <span>🏢 {request.department}</span>
-                                        <span>🔄 {request.changeType}</span>
-                                        <span>🕐 {formatDate(request.createdAt)}</span>
+                                        <span className="flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                                            </svg>
+                                            <strong>{request.requestedBy?.name}</strong>
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            {request.department}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            {request.changeType}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {formatDate(request.createdAt)}
+                                        </span>
                                     </div>
 
                                     {request.status === "waiting_director_approval" && request.firstApprovedBy && (
                                         <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
                                             <CheckCircle className="w-3.5 h-3.5" />
-                                            Manager approved: {request.firstApprovedBy.name}
-                                            <span className="text-blue-400"> | 🕒 Waiting for Director Approval</span>
+                                            Manager approved : {request.firstApprovedBy.name}
+                                            <span className="text-blue-500 flex items-center gap-1">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Waiting for Director Approval
+                                            </span>
                                         </div>
                                     )}
 
                                     {request.approvedBy && (
                                         <div className="mt-2 text-xs text-gray-400">
-                                            <strong> Director approved:</strong> {request.approvedBy.name}
+                                            <strong> Director Approved :</strong> {request.approvedBy.name}
                                             {request.approvedAt && <> · {formatDate(request.approvedAt)}</>}
                                         </div>
                                     )}
 
                                     {request.reviewedBy && request.status !== "approved" && (
                                         <div className="mt-1 text-xs text-gray-400">
-                                            <strong>Reviewed by:</strong> {request.reviewedBy.name}
+                                            <strong>Reviewed by :</strong> {request.reviewedBy.name}
                                             {request.reviewedAt && <> · {formatDate(request.reviewedAt)}</>}
                                         </div>
                                     )}

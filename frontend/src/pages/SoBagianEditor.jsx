@@ -2,9 +2,151 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
-import { soBagianChangeRequestsAPI } from "../services/api";
+import { soBagianChangeRequestsAPI, soBagianDataAPI } from "../services/api";
 import JobdescViewer from "../components/JobdescViewer";
 import Swal from "sweetalert2";
+import { SIGNATURE_IMAGES, DEPARTMENT_SIGNER, DEFAULT_APPROVER } from "../config/signatures";
+
+const getSignatureByName = (name) => {
+  if (!name) return null;
+  const clean = name.replace(/\*\*/g, "").trim().toUpperCase();
+  const matchedKey = Object.keys(SIGNATURE_IMAGES).find(key =>
+    key.toUpperCase() === clean || clean.includes(key.toUpperCase()) || key.toUpperCase().includes(clean)
+  );
+  return matchedKey ? SIGNATURE_IMAGES[matchedKey] : null;
+};
+
+const departmentColumns = {
+  "finance": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"],
+  "hrga-it": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF LEVEL"],
+  "management-development": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"],
+  "management-representative": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"],
+  "manufactur-battery": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SENIOR ENGINEER", "ENGINEER", "TEAM MEMBER/TECHNICIAN"],
+  "manufacturing-cable": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF / UNIT HEAD", "GROUP HEAD", "TEAM MEMBER/ADMIN"],
+  "marketing-battery": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF/SPECIALIST"],
+  "marketing-engineering": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"],
+  "mi-she": ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF LEVEL"],
+  ppic: ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "UNIT HEAD/STAFF", "GROUP HEAD", "MEMBER"],
+  purchasing: ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF LEVEL"],
+  qa: ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "UNIT/STAFF LEVEL", "GROUP HEAD", "OPERATOR/ADMIN"],
+};
+
+const departmentGroups = {
+  "hrga-it": {
+    "SECTION HEAD": ["HRGA & IT DEPARTMENT"],
+    "STAFF LEVEL": ["HRD", "GENERAL AFFAIR & IND. RELATIONS", "INFORMATION TECHNOLOGY"],
+  },
+};
+
+const DraggablePositionBox = ({
+  posKey,
+  positions,
+  setPositions,
+  isEditMode,
+  defaultPos = { x: 0, y: 0 },
+  children,
+}) => {
+  const [dragging, setDragging] = useState(false);
+  const startRef = React.useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+
+  const pos = positions[posKey] || defaultPos;
+
+  const onMouseDown = (e) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    startRef.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
+    setDragging(true);
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e) => {
+      const dx = e.clientX - startRef.current.x;
+      const dy = e.clientY - startRef.current.y;
+      setPositions((prev) => ({
+        ...prev,
+        [posKey]: { x: startRef.current.posX + dx, y: startRef.current.posY + dy },
+      }));
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [dragging, posKey, setPositions]);
+
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        position: "absolute",
+        left: "50%",
+        top: pos.y,
+        transform: `translateX(calc(-50% + ${pos.x}px))`,
+        cursor: isEditMode ? "move" : "default",
+        zIndex: dragging ? 50 : 1,
+      }}
+      className={dragging ? "opacity-75 shadow-2xl" : ""}
+    >
+      {children}
+    </div>
+  );
+};
+
+const DraggableStack = ({ deptId, columnKey, boxPositions, setPositionsForDept, onDirty, isEditMode, minHeight = 600, gap = 16, children }) => {
+  const items = React.Children.toArray(children).filter(Boolean);
+  const itemRefs = React.useRef([]);
+  const [autoOffsets, setAutoOffsets] = useState([]);
+
+  useEffect(() => {
+    const measure = () => {
+      const heights = itemRefs.current.map((el) => (el ? el.offsetHeight : 0));
+      let cum = 0;
+      const offsets = heights.map((h) => {
+        const y = cum;
+        cum += h + gap;
+        return y;
+      });
+      setAutoOffsets(offsets);
+    };
+
+    const timer = setTimeout(measure, 50);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", measure);
+    };
+  }, [items.length, gap]);
+
+  const wrappedSetPositions = (updater) => {
+    setPositionsForDept(deptId)(updater);
+    if (onDirty) onDirty(deptId);
+  };
+
+  return (
+    <div className="relative w-full" style={{ minHeight }}>
+      {items.map((child, idx) => {
+        const posKey = `${columnKey}-${idx}`;
+        const defaultY = autoOffsets[idx] ?? idx * 150;
+        return (
+          <DraggablePositionBox
+            key={posKey}
+            posKey={posKey}
+            positions={boxPositions[deptId] || {}}
+            setPositions={wrappedSetPositions}
+            isEditMode={isEditMode}
+            defaultPos={{ x: 0, y: defaultY }}
+          >
+            <div ref={(el) => (itemRefs.current[idx] = el)}>{child}</div>
+          </DraggablePositionBox>
+        );
+      })}
+    </div>
+  );
+};
 
 const SoBagianEditor = () => {
   const { user } = useAuth();
@@ -13,6 +155,7 @@ const SoBagianEditor = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [departmentData, setDepartmentData] = useState({});
+  const [originalDepartmentData, setOriginalDepartmentData] = useState({});
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitForm, setSubmitForm] = useState({
@@ -28,6 +171,53 @@ const SoBagianEditor = () => {
   const [employeeJobdescStatus, setEmployeeJobdescStatus] = useState({});
   const [isPrinting, setIsPrinting] = useState(false);
 
+  const [showAddBoxModal, setShowAddBoxModal] = useState(false);
+  const [addBoxForm, setAddBoxForm] = useState({
+    column: "",
+    afterId: "",
+    groupKey: "",
+    title: "",
+    name: "",
+    empId: "",
+    code: "",
+  });
+
+  const [boxPositions, setBoxPositions] = useState({});
+
+  const setPositionsForDept = (deptId) => (updater) => {
+    setBoxPositions((prev) => ({
+      ...prev,
+      [deptId]: typeof updater === "function" ? updater(prev[deptId] || {}) : updater,
+    }));
+  };
+
+  const resetPositionsForDept = (deptId) => {
+    Swal.fire({
+      title: "Reset Layout?",
+      text: "Semua posisi box akan dikembalikan ke layout default. Perubahan ini perlu di-submit untuk approval.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#f97316",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Ya, Reset",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setBoxPositions((prev) => ({ ...prev, [deptId]: {} }));
+        setPositionsDirty((prev) => ({ ...prev, [deptId]: true }));
+      }
+    });
+  };
+
+  const [positionsDirty, setPositionsDirty] = useState({});
+
+  const setPositionsForDeptTracked = (deptId) => (updater) => {
+    setBoxPositions((prev) => ({
+      ...prev,
+      [deptId]: typeof updater === "function" ? updater(prev[deptId] || {}) : updater,
+    }));
+    setPositionsDirty((prev) => ({ ...prev, [deptId]: true }));
+  };
 
   const openSubmitModal = () => {
     setShowSubmitModal(true);
@@ -41,7 +231,7 @@ const SoBagianEditor = () => {
   const checkAllEmployeeJobdescStatus = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/jobdescriptions?limit=200`,
+        `/api/jobdescriptions?limit=200`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -56,19 +246,39 @@ const SoBagianEditor = () => {
 
         allJobdesc.forEach(jd => {
           const jdNoPNK = (jd.memberNoPNK || "").trim();
-          const jdName = (jd.memberName || "").trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
-        })
+          if (jdNoPNK) {
+            statusMap[jdNoPNK] = true;
+            jdNoPNK.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+
+          const memberName = (jd.memberName || "")
+            .trim()
+            .toUpperCase()
+            .replace(/\*+/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (memberName) {
+            statusMap[memberName] = true;
+            memberName.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+        });
+
         setEmployeeJobdescStatus(statusMap);
         console.log("✅ Employee Jobdesc Status:", statusMap);
+      } else {
+        console.error("❌ Failed to fetch jobdesc status, response not ok:", response.status);
       }
     } catch (error) {
       console.error("Error fetching employee jobdesc status:", error);
     }
   };
 
-  
 
   useEffect(() => {
     if (selectedDepartment) {
@@ -76,180 +286,179 @@ const SoBagianEditor = () => {
     }
   }, [selectedDepartment]);
 
- const onCodeClick = async (item) => {
-  setSelectedJob(item);
-  setShowJobModal(true);
-  setLoadingJobdesc(true);
-  setJobdescData(null);
+  const onCodeClick = async (item) => {
+    setSelectedJob(item);
+    setShowJobModal(true);
+    setLoadingJobdesc(true);
+    setJobdescData(null);
 
-  try {
-    const response = await fetch(
-      `http://localhost:3001/api/jobdescriptions?limit=200`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-
-    if (response.ok) {
-      const result = await response.json();
-      const allJobdesc = result.data || result;
-      const codeTitleKeywords = {
-        "ENG1.0": ["ENGINEERING CABLE", "ENG1.0"],
-        "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
-        "ENG1.2": ["PROCESS ENG", "ENG1.2"],
-        "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
-        "MKT1.0": ["MARKETING CABLE", "SALES MARKETING", "MKT1.0"],
-        "MKT1.1": ["MARKETING CABLE", "MKT1.1"],
-        "MKT1.1.1": ["MARKETING", "MKT1.1.1"],
-        "MKT1.1.2": ["MARKETING", "MKT1.1.2"],
-        "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
-        "MKT2.0": ["MARKETING BATTERY", "MKT2.0"],
-        "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1"],
-        "MKT2.2": ["MARKETING", "MKT2.2"],
-        "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
-        "PPIC1.1": ["PPIC", "PPIC1.1"],
-        "PPIC1.2": ["PPIC", "AHM OES", "PPIC1.2"],
-        "PPIC1.3": ["WAREHOUSE", "PPIC1.3"],
-        "PPIC1.1.1": ["PPIC", "PPIC1.1.1"],
-        "PPIC1.1.2": ["PPIC", "MANIFEST", "PPIC1.1.2"],
-        "PPIC1.1.3": ["DELIVERY", "PPIC1.1.3"],
-        "PPIC1.2.1": ["PPIC", "PPIC1.2.1"],
-        "PPIC1.2.2": ["PPIC", "PPIC1.2.2"],
-        "PPIC1.3.1": ["WAREHOUSE", "PPIC1.3.1"],
-        "PPIC1.3.2": ["WAREHOUSE", "PPIC1.3.2"],
-        "PPIC1.3.3": ["MRP", "PPIC1.3.3"],
-        "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
-        "PPIC1.3.5": ["RM", "PPIC1.3.5"],
-        "HRD1.0": ["HRD", "HRD1.0"],
-        "HRD1.1": ["HRD", "PERSONALIA", "HRD1.1"],
-        "HRD2.0": ["POD"],
-        "GA1.1": ["GA", "GA1.1"],
-        "GA1.2": ["GA", "GA1.2"],
-        "GA1.3": ["INDUSTRIAL", "GA1.3"],
-        "IT1.1": ["IT", "IT1.1"],
-        "IT1.2": ["IT", "IT1.2"],
-        "FIN1.0": ["FINANCE", "ACCOUNTING", "FIN1.0"],
-        "FIN1.1": ["FINANCE", "ACCOUNTING", "FIN1.1"],
-        "FIN1.2": ["FINANCE"],
-        "FIN1.3": ["SAP STAFF"],
-        "FIN1.4": ["SAP STAFF"],
-        "PCH1.0": ["PROCUREMENT", "PURCHASING", "PCH1.0"],
-        "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
-        "PCH1.2": ["BATTERY", "PCH1.2"],
-        "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
-        "PCH1.4": ["SUBCONT", "PCH1.4"],
-        "QAC1.0": ["QUALITY ASSURANCE", "QA DEPT", "QAC1.0"],
-        "QAC1.1": ["QA", "QUALITY", "QAC1.1"],
-        "QAC1.1.1": ["QUALITY ASSURANCE", "QAC1.1.1"],
-        "QAC1.1.2": ["QA OPERATOR HEAD", "QAC1.1.2"],
-        "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
-        "QAC1.1.4": ["QA PROJECT", "QAC1.1.4"],
-        "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
-        "QAC2.0": ["QA BATTERY", "QAC2.0"],
-        "PRD1.0": ["PROD", "PRD1.0"],
-        "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1", "PRODUCTION"],
-        "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2", "ASSY"],
-        "PRD1.0.1": ["PRODUCTION", "PRD1.0.1"],
-        "PRD1.1.1": ["PRD1.1.1", "CO & CI"],
-        "PRD1.1.2": ["GROUP PO", "PRD1.1.2", "PO"],
-        "PRD1.2.1": ["GROUP ASSEMBLING", "PRD1.2.1", "ASSY"],
-        "PRD1.1.5": ["MAINTENANCE", "PRD1.1.5"],
-        "PRD1.1.6": ["MAINTENANCE", "PRD1.1.6"],
-        "PRD1.2.3": ["QUALITY", "PRD1.2.3"],
-        "PRD1.2.4": ["QUALITY", "PRD1.2.4"],
-        "PRD1.0.2": ["QUALITY CONTROL INCOMING", "PRD1.0.2"],
-        "PRD1.0.3": ["QUALITY CONTROL INCOMING", "PRD1.0.3"],
-        "PRD1.0.4": ["ADMINISTRATION", "PRD1.0.4"],
-        "PRD2.0": ["MANUFACTURING", "PME", "PRD2.0"],
-        "PRD2.1": ["MANUFACTURING", "PRD2.1"],
-        "PRD2.3": ["MANUFACTURING", "PRD2.3"],
-        "PRD3.0": ["BATTERY PME", "PRD3.0"],
-        "RND1.0": ["RND", "BESS", "RND1.0"],
-        "RND1.1": ["AUX", "POWER BATTERY ENGINEERING", "RND1.1"],
-        "RND1.2": ["ESS ENGINEERING", "RND1.2"],
-        "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
-        "MIO1.0": ["MI & SHE", "SHE", "MIO1.0"],
-        "MIO1.1": ["MANAGEMENT IMPROVEMENT", "MIO1.1"],
-        "MIO1.2": ["SHE", "MIO1.2"],
-        "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
-        "MDO2.0": ["MDO2.0"],
-        "MRO1.0": ["MR", "MRO1.0"],
-        "MRO1.1": ["MR STAFF"],
-      };
-
-      const normalize = (str) =>
-        (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
-      const normalizeId = (str) =>
-        (str || "").replace(/\s+/g, "").trim();
-      const splitCombined = (str) =>
-        (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
-      const containsId = (haystack, needle) => {
-        if (!haystack || !needle) return false;
-        const needleClean = normalizeId(needle);
-        return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
-      };
-
-      const itemCode = (item.code || "").trim().toUpperCase();
-      const itemEmpId = (item.empId || "").trim();
-      const itemName = normalize(item.name);
-
-      console.log("🔍 Searching for:", { itemCode, itemEmpId, itemName });
-
-      const foundJobdesc = allJobdesc.find((jd) => {
-        const jdNoPNK = (jd.memberNoPNK || "").trim();
-        const jdName = normalize(jd.memberName);
-        const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
-        const empIdMatch =
-          itemEmpId &&
-          itemEmpId !== "-" &&
-          jdNoPNK &&
-          (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
-            containsId(jdNoPNK, itemEmpId));
-
-        const nameMatch =
-          itemName &&
-          jdName &&
-          (jdName === itemName ||
-            splitCombined(jd.memberName).some(p => normalize(p) === itemName));
-
-        if (!empIdMatch && !nameMatch) return false;
-
-        const keywords = codeTitleKeywords[itemCode];
-        if (keywords && keywords.length > 0) {
-          const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
-          if (!titleMatch) {
-            console.log(`⏭️ Skip [${itemCode}]: positionTitle tidak cocok →`, jdPositionTitle);
-            return false;
-          }
-          console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
-          return true;
+    try {
+      const response = await fetch(
+        `/api/jobdescriptions?limit=200`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
+      );
 
-        // 4. Fallback
-        console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
-        return true;
-      });
+      if (response.ok) {
+        const result = await response.json();
+        const allJobdesc = result.data || result;
+        const codeTitleKeywords = {
+          "ENG1.0": ["ENGINEERING CABLE", "ENG1.0"],
+          "ENG1.1": ["PRODUCT", "QUALITY ENGINEERING", "ENG1.1"],
+          "ENG1.2": ["PROCESS ENG", "ENG1.2"],
+          "ENG1.3": ["NEW BUSINESS", "BESS", "ENG1.3"],
+          "MKT1.0": ["MARKETING CABLE", "SALES MARKETING", "MKT1.0"],
+          "MKT1.1": ["MARKETING CABLE", "MKT1.1"],
+          "MKT1.1.1": ["MARKETING", "MKT1.1.1"],
+          "MKT1.1.2": ["MARKETING", "MKT1.1.2"],
+          "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
+          "MKT2.0": ["MARKETING BATTERY", "MKT2.0"],
+          "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1"],
+          "MKT2.2": ["MARKETING", "MKT2.2"],
+          "PPIC1.0": ["PPIC", "PPC", "WAREHOUSE", "PPIC1.0"],
+          "PPIC1.1": ["PPIC", "PPIC1.1"],
+          "PPIC1.2": ["PPIC", "AHM OES", "PPIC1.2"],
+          "PPIC1.3": ["WAREHOUSE", "PPIC1.3"],
+          "PPIC1.1.1": ["PPIC", "PPIC1.1.1"],
+          "PPIC1.1.2": ["PPIC", "MANIFEST", "PPIC1.1.2"],
+          "PPIC1.1.3": ["DELIVERY", "PPIC1.1.3"],
+          "PPIC1.2.1": ["PPIC", "PPIC1.2.1"],
+          "PPIC1.2.2": ["PPIC", "PPIC1.2.2"],
+          "PPIC1.3.1": ["WAREHOUSE", "PPIC1.3.1"],
+          "PPIC1.3.2": ["WAREHOUSE", "PPIC1.3.2"],
+          "PPIC1.3.3": ["MRP", "PPIC1.3.3"],
+          "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
+          "PPIC1.3.5": ["RM", "PPIC1.3.5"],
+          "HRD1.0": ["HRD", "HRD1.0"],
+          "HRD1.1": ["HRD", "PERSONALIA", "HRD1.1"],
+          "HRD2.0": ["POD"],
+          "GA1.1": ["GA", "GA1.1"],
+          "GA1.2": ["GA", "GA1.2"],
+          "GA1.3": ["INDUSTRIAL", "GA1.3"],
+          "IT1.1": ["IT", "IT1.1"],
+          "IT1.2": ["IT", "IT1.2"],
+          "FIN1.0": ["FINANCE", "ACCOUNTING", "FIN1.0"],
+          "FIN1.1": ["FINANCE", "ACCOUNTING", "FIN1.1"],
+          "FIN1.2": ["FINANCE"],
+          "FIN1.3": ["SAP STAFF"],
+          "FIN1.4": ["SAP STAFF"],
+          "PCH1.0": ["PROCUREMENT", "PURCHASING", "PCH1.0"],
+          "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
+          "PCH1.2": ["BATTERY", "PCH1.2"],
+          "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
+          "PCH1.4": ["SUBCONT", "PCH1.4"],
+          "QAC1.0": ["QUALITY ASSURANCE", "QA DEPT", "QAC1.0"],
+          "QAC1.1": ["QA", "QUALITY", "QAC1.1"],
+          "QAC1.1.1": ["QUALITY ASSURANCE", "QAC1.1.1"],
+          "QAC1.1.2": ["QA OPERATOR HEAD", "QAC1.1.2"],
+          "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
+          "QAC1.1.4": ["QA PROJECT", "QAC1.1.4"],
+          "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
+          "QAC2.0": ["QA BATTERY", "QAC2.0"],
+          "PRD1.0": ["PROD", "PRD1.0"],
+          "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1", "PRODUCTION"],
+          "PRD1.2": ["ASSEMBLING UNIT", "PRD1.2", "ASSY"],
+          "PRD1.0.1": ["PRODUCTION", "PRD1.0.1"],
+          "PRD1.1.1": ["PRD1.1.1", "CO & CI"],
+          "PRD1.1.2": ["GROUP PO", "PRD1.1.2", "PO"],
+          "PRD1.2.1": ["GROUP ASSEMBLING", "PRD1.2.1", "ASSY"],
+          "PRD1.1.5": ["MAINTENANCE", "PRD1.1.5"],
+          "PRD1.1.6": ["MAINTENANCE", "PRD1.1.6"],
+          "PRD1.2.3": ["QUALITY", "PRD1.2.3"],
+          "PRD1.2.4": ["QUALITY", "PRD1.2.4"],
+          "PRD1.0.2": ["QUALITY CONTROL INCOMING", "PRD1.0.2"],
+          "PRD1.0.3": ["QUALITY CONTROL INCOMING", "PRD1.0.3"],
+          "PRD1.0.4": ["ADMINISTRATION", "PRD1.0.4"],
+          "PRD2.0": ["MANUFACTURING", "PME", "PRD2.0"],
+          "PRD2.1": ["MANUFACTURING", "PRD2.1"],
+          "PRD2.3": ["MANUFACTURING", "PRD2.3"],
+          "PRD3.0": ["BATTERY PME", "PRD3.0"],
+          "RND1.0": ["RND", "BESS", "RND1.0"],
+          "RND1.1": ["AUX", "POWER BATTERY ENGINEERING", "RND1.1"],
+          "RND1.2": ["ESS ENGINEERING", "RND1.2"],
+          "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
+          "MIO1.0": ["MI & SHE", "SHE", "MIO1.0"],
+          "MIO1.1": ["MANAGEMENT IMPROVEMENT", "MIO1.1"],
+          "MIO1.2": ["SHE", "MIO1.2"],
+          "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
+          "MDO2.0": ["MDO2.0"],
+          "MRO1.0": ["MR", "MRO1.0"],
+          "MRO1.1": ["MR STAFF"],
+        };
 
-      if (foundJobdesc) {
-        console.log("✅ Job description found:", {
-          memberName: foundJobdesc.memberName,
-          memberNoPNK: foundJobdesc.memberNoPNK,
-          positionTitle: foundJobdesc.positionTitle,
+        const normalize = (str) =>
+          (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
+        const normalizeId = (str) =>
+          (str || "").replace(/\s+/g, "").trim();
+        const splitCombined = (str) =>
+          (str || "").split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemCode = (item.code || "").trim().toUpperCase();
+        const itemEmpId = (item.empId || "").trim();
+        const itemName = normalize(item.name);
+
+        console.log("🔍 Searching for:", { itemCode, itemEmpId, itemName });
+
+        const foundJobdesc = allJobdesc.find((jd) => {
+          const jdNoPNK = (jd.memberNoPNK || "").trim();
+          const jdName = normalize(jd.memberName);
+          const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
+          const empIdMatch =
+            itemEmpId &&
+            itemEmpId !== "-" &&
+            jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId));
+
+          const nameMatch =
+            itemName &&
+            jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+          if (!empIdMatch && !nameMatch) return false;
+
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
+            if (!titleMatch) {
+              console.log(`⏭️ Skip [${itemCode}]: positionTitle tidak cocok →`, jdPositionTitle);
+              return false;
+            }
+            console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
+            return true;
+          }
+
+          console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
+          return true;
         });
-        setJobdescData(foundJobdesc);
-      } else {
-        console.log("❌ Not found for:", { name: item.name, code: item.code, empId: item.empId });
-        console.log("💡 Available:", allJobdesc.map(jd => `${jd.memberName} (${jd.memberNoPNK}) - ${jd.positionTitle}`));
+
+        if (foundJobdesc) {
+          console.log("✅ Job description found:", {
+            memberName: foundJobdesc.memberName,
+            memberNoPNK: foundJobdesc.memberNoPNK,
+            positionTitle: foundJobdesc.positionTitle,
+          });
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log("❌ Not found for:", { name: item.name, code: item.code, empId: item.empId });
+          console.log("💡 Available:", allJobdesc.map(jd => `${jd.memberName} (${jd.memberNoPNK}) - ${jd.positionTitle}`));
+        }
       }
+    } catch (error) {
+      console.error("❌ Error:", error);
+    } finally {
+      setLoadingJobdesc(false);
     }
-  } catch (error) {
-    console.error("❌ Error:", error);
-  } finally {
-    setLoadingJobdesc(false);
-  }
-};
+  };
 
   const hasAccess = React.useMemo(() => {
     const userRole = user?.role;
@@ -267,7 +476,7 @@ const SoBagianEditor = () => {
   const departments = [
     {
       id: "finance",
-      name: "Finance Department",
+      name: "Finance",
       route: "/finance-department",
       color: "bg-blue-500",
       structure: {
@@ -277,42 +486,30 @@ const SoBagianEditor = () => {
           head: "YULIUS PERMATA",
           empId: "23220017",
           effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "YULIUS PERMATA",
+            title: "SECTION HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
-        positions: [
-          {
-            id: "fin-1",
-            code: "FIN1.1",
-            title: "FINANCE & ACCOUNTING",
-            name: "FAKHDARENI",
-            empId: "23060055",
-          },
-          {
-            id: "fin-2",
-            code: "FIN1.2",
-            title: "FINANCE & ACCOUNTING",
-            name: "KHOIRUNNISA",
-            empId: "23170572",
-          },
-          {
-            id: "fin-3",
-            code: "FIN1.3",
-            title: "FINANCE & ACCOUNTING",
-            name: "SITI ROKHAYATI",
-            empId: "23120177",
-          },
-          {
-            id: "fin-4",
-            code: "FIN1.4",
-            title: "FINANCE & ACCOUNTING",
-            name: "ANNISA NUR HANDAYANI",
-            empId: "23120198",
-          },
-        ],
+        positions: [],
       },
     },
     {
       id: "hrga-it",
-      name: "HRGA & IT Department",
+      name: "HRGA & IT",
       route: "/hrga-it",
       color: "bg-green-500",
       structure: {
@@ -320,15 +517,34 @@ const SoBagianEditor = () => {
           id: "hrd-1",
           title: "HRGA & IT",
           code: "HRD1.0",
-          head: "DIKI WAHYUDI *",
+          head: "DIKI WAHYUDI*",
           empId: "23060056",
+
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "DIKI WAHYUDI*",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRGA&IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
           {
             id: "hrd-2",
             code: "HRD2.0",
             title: "HRGA & IT",
-            name: "VERONICA HANI M. **",
+            name: "VERONICA HANI M.**",
             empId: "23240206",
           },
           {
@@ -388,23 +604,25 @@ const SoBagianEditor = () => {
           head: "",
           empId: "",
           effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "-",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA&IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
-        positions: [
-          {
-            id: "mdo-1",
-            code: "MDO1.0",
-            title: "MANAGEMENT DEVELOPEMENT/PDCA",
-            name: "KARNA SATIA SALIM*",
-            empId: "23230114",
-          },
-          {
-            id: "mdo-2",
-            code: "MDO2.0",
-            title: "MANAGEMENT DEVELOPEMENT/PDCA",
-            name: "WAHYU KARTIKO ADI",
-            empId: "23240005",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -418,16 +636,26 @@ const SoBagianEditor = () => {
           code: "MRO1.0",
           head: "SUGIYARTO*",
           empId: "23600041",
-        },
-        positions: [
-          {
-            id: "mro1-1",
-            code: "MRO1.1",
-            title: "MANAGEMENT REPRESENTATIVE",
-            name: "BOBI SAPUTRA",
-            empId: "23240175",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "SUGIYARTO*",
+            title: "SECTION HEAD"
           },
-        ],
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
+        },
+        positions: [],
       },
     },
     {
@@ -441,9 +669,26 @@ const SoBagianEditor = () => {
           code: "PRD2.0",
           head: "DIONISIUS AUGUSTO**",
           empId: "23220105",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "DIONISIUS AUGUSTO**",
+            title: "SENIOR ENGINEER"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
-          // ENGINEER
           {
             id: "prd-2-1",
             code: "PRD2.1",
@@ -460,7 +705,6 @@ const SoBagianEditor = () => {
             empId: "23190805",
             group: "ENGINEER",
           },
-          // ENGINEER - QA
           {
             id: "prd-2-3",
             code: "PRD2.3",
@@ -469,7 +713,6 @@ const SoBagianEditor = () => {
             empId: "23230091",
             group: "ENGINEER",
           },
-          // ENGINEER - PME
           {
             id: "prd-3-0",
             code: "PRD3.0",
@@ -478,7 +721,6 @@ const SoBagianEditor = () => {
             empId: "-",
             group: "ENGINEER",
           },
-          // TEAM MEMBER/TECHNICIAN - AUXILIARY BATTERY PRODUCT
           {
             id: "prd-2-1-1-1",
             code: "PRD2.1.1",
@@ -519,7 +761,6 @@ const SoBagianEditor = () => {
             empId: "23110110",
             group: "TEAM MEMBER/TECHNICIAN",
           },
-          // TEAM MEMBER/TECHNICIAN - BESS PRODUCT
           {
             id: "prd-2-1-2-1",
             code: "PRD2.1.2",
@@ -552,7 +793,6 @@ const SoBagianEditor = () => {
             empId: "23240229",
             group: "TEAM MEMBER/TECHNICIAN",
           },
-          // TEAM MEMBER/TECHNICIAN - BEV PRODUCT
           {
             id: "prd-2-1-3-1",
             code: "PRD2.1.3",
@@ -609,7 +849,6 @@ const SoBagianEditor = () => {
             empId: "23120199",
             group: "TEAM MEMBER/TECHNICIAN",
           },
-          // TEAM MEMBER/TECHNICIAN - QUALITY CHECK
           {
             id: "prd-2-3-1",
             code: "PRD2.3.1",
@@ -632,6 +871,24 @@ const SoBagianEditor = () => {
           code: "PRD1.0",
           head: "KARNA SATIA SALIM*",
           empId: "23230114",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "KARNA SATIA SALIM*",
+            title: "SECTION HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
           {
@@ -774,8 +1031,6 @@ const SoBagianEditor = () => {
             name: "TEAM MEMBER",
             empId: "-",
           },
-
-          //(Quality Control Process)
           {
             id: "prd1-2-3",
             code: "PRD1.2.3",
@@ -860,7 +1115,6 @@ const SoBagianEditor = () => {
             empId: "-",
             group: "TEAM MEMBER/ADMIN",
           },
-          // (QUALITY CONTROL INCOMING)
           {
             id: "prd1-0-2",
             code: "PRD1.0.2",
@@ -877,7 +1131,6 @@ const SoBagianEditor = () => {
             empId: "23120181",
             group: "TEAM MEMBER/ADMIN",
           },
-          // (ADMINISTRATION)
           {
             id: "prd1-0-4",
             code: "PRD1.0.4",
@@ -915,7 +1168,7 @@ const SoBagianEditor = () => {
     },
     {
       id: "marketing-battery",
-      name: "Marketing Battery Department",
+      name: "Marketing Battery",
       route: "/marketing-battery-department",
       color: "bg-pink-500",
       structure: {
@@ -924,23 +1177,26 @@ const SoBagianEditor = () => {
           code: "MKT2.0",
           head: "RENDRA PRAMONO",
           empId: "23200067",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "RENDRA PRAMONO",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
-        positions: [
-          {
-            id: "mkt2-1",
-            code: "MKT2.1",
-            title: "AUX & POWER BATTERY MARKETING",
-            name: "CHRYSNA YULIAWAN**",
-            empId: "23240177",
-          },
-          {
-            id: "mkt2-2",
-            code: "MKT2.2",
-            title: "ESS MARKETING",
-            name: "FERDINAND STEVANUS A**",
-            empId: "23220049",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -954,6 +1210,24 @@ const SoBagianEditor = () => {
           code: "MKT1.0",
           head: "ANDREAS AGUNG S.",
           empId: "23040119",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "ANDREAS AGUNG S.",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
           {
@@ -1061,37 +1335,26 @@ const SoBagianEditor = () => {
           code: "MIO1.0",
           head: "ELIATA DUMAR GINTING",
           empId: "23190806",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "ELIATA DUMAR GINTING",
+            title: "SECTION HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
-        positions: [
-          {
-            id: "mio1-1",
-            code: "MIO1.1",
-            title: "MI",
-            name: "BOBI SAPUTRA*",
-            empId: "23240175",
-          },
-          {
-            id: "mio1-2",
-            code: "MIO1.2",
-            title: "SHE(5R-SMK3-ISO 14001)",
-            name: "AFKA FIKRI AIMAN (COORD)",
-            empId: "23230122",
-          },
-          {
-            id: "mio1-2",
-            code: "MIO1.2",
-            title: "SHE(5R-SMK3-ISO 14001)",
-            name: "TARJO",
-            empId: "23090096",
-          },
-          {
-            id: "mio1-2",
-            code: "MIO1.2",
-            title: "SHE(5R-SMK3-ISO 14001)",
-            name: "ZEL UWEYS A.A.A.A.S.A",
-            empId: "23120171",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -1105,6 +1368,24 @@ const SoBagianEditor = () => {
           code: "PPIC1.0",
           head: "DIKI WAHYUDI*",
           empId: "23060056",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "DIKI WAHYUDI*",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
           {
@@ -1226,42 +1507,31 @@ const SoBagianEditor = () => {
           code: "PCH1.0",
           head: "DIKI WAHYUDI* / FAKHDARENI*",
           empId: "23060056 / 23060055",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "DIKI WAHYUDI* / FAKHDARENI*",
+            title: "SECTION HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "PRESIDENT DIRECTOR"
+          },
         },
-        positions: [
-          {
-            id: "pch1-1",
-            code: "PCH1.1",
-            title: "CONTROLCABLE",
-            name: "RIF'QI FATHAH",
-            empId: "23230017",
-          },
-          {
-            id: "pch1-2",
-            code: "PCH1.2",
-            title: "BATTERY",
-            name: "MARCHELINO DWI PUTRANTO",
-            empId: "23250234",
-          },
-          {
-            id: "pch1-3",
-            code: "PCH1.3",
-            title: "GENERAL & LEGAL",
-            name: "SYIFA NUR MULYANI",
-            empId: "23220060",
-          },
-          {
-            id: "pch1-4",
-            code: "PCH1.4",
-            title: "SUBCONT",
-            name: "ELITRI SULISTIYO",
-            empId: "23110112",
-          },
-        ],
+        positions: [],
       },
     },
     {
       id: "qa",
-      name: "QA Department",
+      name: "QA (Quality Assurance)",
       route: "/qa-department",
       color: "bg-rose-500",
       structure: {
@@ -1270,6 +1540,24 @@ const SoBagianEditor = () => {
           code: "QAC1.0",
           head: "M. BAGUS SANTOSO",
           empId: "23220025",
+          effectiveDate: "16 Maret 2026",
+          documentTitle: "STRUKTUR ORGANISASI",
+          companyName: "PT DHARMA CONTROLCABLE INDONESIA",
+
+          preparedBy: {
+            name: "M BAGUS SANTOSO",
+            title: "DEPARTMENT HEAD"
+          },
+
+          checkedBy: {
+            name: "DIKI WAHYUDI",
+            title: "HRDGA & IT DEPT. HEAD"
+          },
+
+          approvedBy: {
+            name: "BAMBANG WURYANTO",
+            title: "DIRECTOR"
+          },
         },
         positions: [
           {
@@ -1348,21 +1636,63 @@ const SoBagianEditor = () => {
 
   useEffect(() => {
     const initialData = {};
+    const originalData = {};
     departments.forEach((dept) => {
       const savedData = localStorage.getItem(`so-bagian-${dept.id}`);
       if (savedData) {
         try {
-          initialData[dept.id] = JSON.parse(savedData);
+          const parsed = JSON.parse(savedData);
+          initialData[dept.id] = parsed;
+          originalData[dept.id] = JSON.parse(JSON.stringify(parsed));
         } catch (error) {
-          console.error(`Error parsing saved data for ${dept.id}:`, error);
           initialData[dept.id] = dept.structure;
+          originalData[dept.id] = JSON.parse(JSON.stringify(dept.structure));
         }
       } else {
         initialData[dept.id] = dept.structure;
+        originalData[dept.id] = JSON.parse(JSON.stringify(dept.structure));
       }
     });
     setDepartmentData(initialData);
+    setOriginalDepartmentData(originalData);
   }, []);
+
+  useEffect(() => {
+    if (!selectedDepartment) return;
+    const deptId = selectedDepartment.id;
+    const loadBoxesFromServer = async () => {
+      try {
+        const res = await soBagianDataAPI.get(deptId);
+        const record = res.data?.data;
+        if (record?.positions) {
+          setBoxPositions((prev) => ({ ...prev, [deptId]: record.positions }));
+        }
+        if (record) {
+          setDepartmentData((prev) => {
+            const dept = prev[deptId];
+            if (!dept) return prev;
+            const nonCustomPositions = (dept.positions || []).filter((p) => !p.isCustom);
+            const dbBoxesMapped = (record.boxes || []).map((b) => ({
+              id: b.id,
+              code: b.code || "",
+              title: b.title || "",
+              name: b.name || "",
+              empId: b.empId || "",
+              column: b.column,
+              groupKey: b.parentId || null,
+              order: b.order || 0,
+              isCustom: true,
+            }));
+            const merged = [...nonCustomPositions, ...dbBoxesMapped];
+            return { ...prev, [deptId]: { ...dept, positions: merged } };
+          });
+        }
+      } catch (err) {
+        console.error("Gagal load posisi dari server:", err);
+      }
+    };
+    loadBoxesFromServer();
+  }, [selectedDepartment]);
 
   useEffect(() => {
     if (!selectedDepartment) return;
@@ -1376,7 +1706,7 @@ const SoBagianEditor = () => {
         [selectedDepartment.id]: event.detail,
       }));
 
-      alert("✅ SO Bagian has been updated with approved changes!");
+      alert("SO Bagian has been updated with approved changes!");
     };
 
     window.addEventListener(
@@ -1444,6 +1774,169 @@ const SoBagianEditor = () => {
     });
   };
 
+  const openAddBoxModal = () => {
+    const cols = departmentColumns[selectedDepartment.id] || [];
+    setAddBoxForm({
+      column: cols[cols.length - 1] || "",
+      afterId: "",
+      groupKey: "",
+      title: "",
+      name: "",
+      empId: "",
+      code: "",
+    });
+    setShowAddBoxModal(true);
+  };
+
+  const getCustomPositionsInColumn = (deptId, column) => {
+    const positions = departmentData[deptId]?.positions || [];
+    return positions.filter((p) => p.isCustom && p.column === column);
+  };
+
+  const syncCustomBoxesToServer = async (deptId, updatedPositions) => {
+    try {
+      const customBoxes = (updatedPositions || []).filter((p) => p.isCustom);
+      const deptMeta = departments.find((d) => d.id === deptId);
+      await soBagianDataAPI.save(deptId, {
+        bagianName: deptMeta?.name || deptId,
+        columns: departmentColumns[deptId] || [],
+        header: { effectiveDate: "", signatures: {} },
+        boxes: customBoxes.map((p) => ({
+          id: p.id,
+          code: p.code || "",
+          title: p.title || "",
+          name: p.name || "",
+          empId: p.empId || "",
+          column: p.column,
+          parentId: p.groupKey || null,
+          order: p.order || 0,
+        })),
+        positions: boxPositions[deptId] || {},
+      });
+    } catch (err) {
+      console.error("Gagal sync box ke server:", err);
+      throw err;
+    }
+  };
+
+  const handleAddBox = () => {
+    if (!addBoxForm.column) {
+      alert("Pilih kolom/header tujuan terlebih dahulu");
+      return;
+    }
+    if (!addBoxForm.title.trim() || !addBoxForm.name.trim()) {
+      alert("Title dan Name wajib diisi");
+      return;
+    }
+    const deptId = selectedDepartment.id;
+    const newId = `custom-${deptId}-${Date.now()}`;
+    const customInColumn = getCustomPositionsInColumn(deptId, addBoxForm.column);
+    let order = 0;
+    if (addBoxForm.afterId) {
+      const afterBox = customInColumn.find((p) => p.id === addBoxForm.afterId);
+      order = afterBox ? afterBox.order + 0.5 : customInColumn.length;
+    } else {
+      order = customInColumn.length > 0 ? Math.min(...customInColumn.map((p) => p.order)) - 1 : 0;
+    }
+    const newPosition = {
+      id: newId,
+      code: addBoxForm.code || "",
+      title: addBoxForm.title,
+      name: addBoxForm.name,
+      empId: addBoxForm.empId || "-",
+      column: addBoxForm.column,
+      groupKey: addBoxForm.groupKey || null,
+      order,
+      isCustom: true,
+      pendingAction: "add",
+    };
+
+    setDepartmentData((prev) => ({
+      ...prev,
+      [deptId]: {
+        ...prev[deptId],
+        positions: [...(prev[deptId].positions || []), newPosition],
+      },
+    }));
+    setShowAddBoxModal(false);
+    if (!isEditMode) setIsEditMode(true);
+  };
+
+  const handleRemoveCustomBox = async (deptId, posId) => {
+    const dept = departmentData[deptId];
+    const position = (dept.positions || []).find((p) => p.id === posId);
+    if (!position) return;
+
+    if (position.pendingAction === "add") {
+      if (position.pendingRequestId) {
+        try {
+          await soBagianChangeRequestsAPI.cancel(position.pendingRequestId);
+        } catch (err) {
+          console.error("Gagal membatalkan request add box:", err);
+        }
+      }
+      setDepartmentData((prev) => ({
+        ...prev,
+        [deptId]: {
+          ...prev[deptId],
+          positions: prev[deptId].positions.filter((p) => p.id !== posId),
+        },
+      }));
+      return;
+    }
+
+    setDepartmentData((prev) => {
+      const d = prev[deptId];
+      const positions = d.positions.map((p) =>
+        p.id === posId ? { ...p, pendingAction: "delete" } : p
+      );
+      return { ...prev, [deptId]: { ...d, positions } };
+    });
+  };
+
+  useEffect(() => {
+    if (!selectedDepartment) return;
+    const deptId = selectedDepartment.id;
+    const loadPendingBoxRequests = async () => {
+      try {
+        const res = await soBagianChangeRequestsAPI.getAll();
+        const allRequests = res.data?.data || res.data || [];
+        const relevant = allRequests.filter(
+          (r) =>
+            r.department === selectedDepartment.name &&
+            (r.changeType === "add" || r.changeType === "delete") &&
+            ["pending", "waiting_director_approval"].includes(r.status)
+        );
+
+        setDepartmentData((prev) => {
+          const dept = prev[deptId];
+          if (!dept) return prev;
+          let positions = [...(dept.positions || [])];
+
+          relevant.forEach((r) => {
+            if (r.changeType === "add" && r.proposedData?.boxData) {
+              const box = r.proposedData.boxData;
+              const alreadyThere = positions.some((p) => p.id === box.id);
+              if (!alreadyThere) {
+                positions.push({ ...box, isCustom: true, pendingAction: "add", pendingRequestId: r._id });
+              }
+            } else if (r.changeType === "delete" && r.currentData?.removedBox) {
+              const removedId = r.currentData.removedBox.id;
+              positions = positions.map((p) =>
+                p.id === removedId ? { ...p, pendingAction: "delete", pendingRequestId: r._id } : p
+              );
+            }
+          });
+
+          return { ...prev, [deptId]: { ...dept, positions } };
+        });
+      } catch (err) {
+        console.error("Gagal load pending box requests:", err);
+      }
+    };
+    loadPendingBoxRequests();
+  }, [selectedDepartment]);
+
   const saveDepartment = async (deptId) => {
     try {
       const dataToSave = {
@@ -1473,6 +1966,9 @@ const SoBagianEditor = () => {
   };
 
   const submitForApproval = async () => {
+    console.log('🔍 Original header:', JSON.stringify(originalDepartmentData[selectedDepartment.id]?.header));
+    console.log('🔍 Current header:', JSON.stringify(departmentData[selectedDepartment.id]?.header));
+    console.log('🔍 Are same?', JSON.stringify(originalDepartmentData[selectedDepartment.id]) === JSON.stringify(departmentData[selectedDepartment.id]));
     if (!submitForm.title.trim()) {
       alert("Please enter a title for this change request");
       return;
@@ -1488,31 +1984,8 @@ const SoBagianEditor = () => {
       const currentStructure = departmentData[selectedDepartment.id];
 
       console.log("Selected Department ID:", selectedDepartment.id);
-      const storageKey = `so-bagian-${selectedDepartment.id}`;
-      const savedDataRaw = localStorage.getItem(storageKey);
-      let originalStructure = null;
-
-      if (savedDataRaw) {
-        try {
-          originalStructure = JSON.parse(savedDataRaw);
-          console.log(
-            "📦 Found original data from localStorage:",
-            originalStructure
-          );
-        } catch (err) {
-          console.error("Error parsing original data:", err);
-        }
-      }
-
-      if (!originalStructure) {
-        const defaultDept = departments.find(
-          (d) => d.id === selectedDepartment.id
-        );
-        if (defaultDept && defaultDept.structure) {
-          originalStructure = defaultDept.structure;
-          console.log("📦 Using default department structure as original data");
-        }
-      }
+      const originalStructure = originalDepartmentData[selectedDepartment.id] ||
+        departments.find(d => d.id === selectedDepartment.id)?.structure || null;
 
       console.log("📤 Current structure data:", currentStructure);
       console.log("📤 Original structure data:", originalStructure);
@@ -1521,6 +1994,7 @@ const SoBagianEditor = () => {
       const dataToSubmit = {
         departmentId: selectedDepartment.id,
         structure: currentStructure,
+        positions: boxPositions[selectedDepartment.id] || {},
         lastModified: now.toISOString(),
         modifiedBy: user?.name || user?.username,
       };
@@ -1558,7 +2032,15 @@ const SoBagianEditor = () => {
       const response = await soBagianChangeRequestsAPI.create(requestData);
 
       if (response.data.success) {
-        alert("✅ Change request submitted successfully!");
+        await Swal.fire({
+          title: 'Berhasil!',
+          text: 'Change request submitted successfully!',
+          icon: 'success',
+          confirmButtonColor: '#16a34a',
+          confirmButtonText: 'OK',
+          timer: 2000,
+          showConfirmButton: false,
+        });
         setShowSubmitModal(false);
         navigate("/so-bagian-change-requests");
       }
@@ -1591,10 +2073,7 @@ const SoBagianEditor = () => {
         return;
       }
 
-      // Clone element
       const clone = printContent.cloneNode(true);
-
-      // Fungsi untuk copy computed styles ke inline styles
       const copyStyles = (source, target) => {
         const computed = window.getComputedStyle(source);
         const styleProps = [
@@ -1624,7 +2103,6 @@ const SoBagianEditor = () => {
         });
       };
 
-      // Apply computed styles ke semua elemen
       const sourceElements = printContent.querySelectorAll('*');
       const targetElements = clone.querySelectorAll('*');
 
@@ -1636,13 +2114,10 @@ const SoBagianEditor = () => {
         }
       });
 
-      // Fix overflow di clone
       clone.style.setProperty('overflow', 'visible', 'important');
       clone.style.setProperty('width', '100%', 'important');
       clone.style.setProperty('border', 'none', 'important');
       clone.style.setProperty('box-shadow', 'none', 'important');
-
-      // Fix semua overflow-x di dalam clone
       clone.querySelectorAll('*').forEach(el => {
         const overflow = window.getComputedStyle(el).overflow;
         if (overflow === 'auto' || overflow === 'hidden' || overflow === 'scroll') {
@@ -1650,7 +2125,6 @@ const SoBagianEditor = () => {
         }
       });
 
-      // Fix gambar logo agar tidak terlalu besar
       clone.querySelectorAll('img').forEach(img => {
         img.style.setProperty('max-width', '100%', 'important');
         img.style.setProperty('max-height', '100%', 'important');
@@ -1749,7 +2223,6 @@ const SoBagianEditor = () => {
         />
       );
     }
-
     return (
       <span
         onClick={() => isEditMode && setIsEditing(true)}
@@ -1771,8 +2244,24 @@ const SoBagianEditor = () => {
     }
 
     const empId = (person.empId || "").trim();
-    const personName = (person.name || "").trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+    const personName = (person.name || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\*+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const empIdMatch = empId && empId !== "-" && (
+      employeeJobdescStatus[empId] ||
+      empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const nameMatch = personName && (
+      employeeJobdescStatus[personName] ||
+      personName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const hasJobdesc = empIdMatch || nameMatch;
 
     const buttonColor = hasJobdesc
       ? "text-blue-600 hover:bg-blue-50"
@@ -1790,6 +2279,12 @@ const SoBagianEditor = () => {
         {person.code}
       </button>
     );
+  };
+
+  const renderHeaderSection = (deptId, dept) => {
+    const handleHeaderEdit = (field, value) => {
+      handleEdit(deptId, "header", null, field, value);
+    };
   };
 
   const renderDepartmentSpecificLayout = () => {
@@ -1814,80 +2309,146 @@ const SoBagianEditor = () => {
                     className="w-full h-full object-contain"
                   />
                 </div>
+
                 <div
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-sm font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "MANAGEMENT REPRESENTATIVE"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      Effective Date : 16 June 2024
+                    <p className="text-sm text-gray-500">
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-black underline leading-tight"></p>
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "SUGIYARTO*") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "SUGIYARTO*")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField
+                                value={dept.header.preparedByName || "SUGIYARTO*"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
+                            </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -1923,7 +2484,15 @@ const SoBagianEditor = () => {
               className="grid grid-cols-4 gap-4 relative org-grid"
               style={{ zIndex: 2 }}
             >
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mrep-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
@@ -1950,151 +2519,145 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              <div className="space-y-4 flex flex-col items-center"></div>
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mrep-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={
-                              dept.header?.title || "MANAGEMENT REPRESENTATIVE"
-                            }
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "MANAGEMENT REPRESENTATIVE"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mrep-col3-dept"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {(() => {
+                  const sectionHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MANAGEMENT REPRESENTATIVE DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "MANAGEMENT REPRESENTATIVE"}
+                            </p>
+                          </div>
+                        </div>
+                        {sectionHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "MRO1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mrep-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {(() => {
+                  const staffItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT REPRESENTATIVE" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              MANAGEMENT REPRESENTATIVE
+                            </p>
+                          </div>
+                        </div>
+                        {staffItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title ||
-                              "MANAGEMENT REPRESENTATIVE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("STAFF")}
+              </DraggableStack>
             </div>
           </div>
         </div>
@@ -2122,78 +2685,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "HRDGA & IT"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI*") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI*")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.preparedByName || "DIKI WAHYUDI*"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPARTEMENT HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "SECTION HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRDGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by - sama strukturnya */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              PRESIDENT DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -2262,335 +2888,193 @@ const SoBagianEditor = () => {
                 </div>
               </div>
 
-              {/* Kolom 2 - Department Head - Empty */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              {/* Kolom 2 - Department Head */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="hrga-it-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
               {/* Kolom 3 - Section Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.title || "HRGA IT"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "HRGA & IT"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="hrga-it-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={400}
+              >
+                {(() => {
+                  const sectionHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "HRGA & IT DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "HRGA & IT"}
+                            </p>
+                          </div>
+                        </div>
+                        {sectionHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-
-                    {/* DIKI WAHYUDI */}
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "HRD1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-
-                    {/* VERONICA HANI M. */}
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[0])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
               {/* Kolom 4 - Staff Level */}
-              <div className="space-y-4 flex flex-col items-center staff-cards">
-                {/* HRD Section */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[1]?.title || "HRD"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="hrga-it-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={800}
+              >
+                {(() => {
+                  const staffPositions = (dept.positions || []).filter(
+                    (p) => p.column === "STAFF LEVEL" && p.groupKey && p.pendingAction !== "delete"
+                  );
+                  const renderGroupCard = (groupKey, minHeightClass) => {
+                    const items = staffPositions
+                      .filter((p) => p.groupKey === groupKey)
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div key={groupKey} className={`bg-white border border-gray-400 rounded shadow-sm w-[280px]`}>
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <p className="text-sm font-semibold leading-tight">
+                                {groupKey}
+                              </p>
+                            </div>
+                          </div>
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    );
+                  };
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
+                  const groupDefs = [
+                    { key: "HRD", cls: "" },
+                    { key: "GENERAL AFFAIR & IND. RELATIONS", cls: "" },
+                    { key: "INFORMATION TECHNOLOGY", cls: "" },
+                  ];
+
+                  return groupDefs.map((g) => renderGroupCard(g.key, g.cls));
+                })()}
+                {(() => {
+                  const customBoxes = (departmentData["hrga-it"]?.positions || [])
+                    .filter((p) => p.isCustom && p.column === "STAFF LEVEL" && !p.groupKey && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return customBoxes.map((p) => (
+                    <div key={p.id} className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm flex min-h-[120px] w-[280px] relative" : "bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px] relative"}>
+                      {isEditMode && (
+                        <button
+                          onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                          title="Hapus"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      <div className={isEditMode ? "bg-purple-50 p-2 text-center border-r border-purple-300 w-20 flex items-center justify-center" : "bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center"}>
+                        {renderCodeButton(p)}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
+                          value={p.name}
+                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "name", value)}
+                          className="text-xs font-bold leading-tight"
                         />
                         <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
+                          value={`(${p.empId})`}
+                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "empId", value.replace(/[()]/g, ""))}
+                          className="text-xs font-bold leading-tight"
                         />
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* General Affair & Industrial Relations Section */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title ||
-                              "GENERAL AFFAIR & IND. RELATIONS"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {dept.positions?.slice(2, 5).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Information Technology Section */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[180px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold"></p>
-                      </div>
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[5]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[5]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[5]?.title ||
-                              "INFORMATION TECHNOLOGY"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(5, 7).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                  ));
+                })()}
+              </DraggableStack>
             </div>
 
             {/* Notes Section */}
@@ -2651,76 +3135,114 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "MANAGEMENT DEVELOPMENT"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
                           <div className="h-16"></div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-black underline leading-tight"></p>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField
+                                value={dept.header.preparedByName || ""}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
+                            </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPARTEMENT HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
                           <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRDGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by - sama strukturnya */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
                           <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -2759,7 +3281,15 @@ const SoBagianEditor = () => {
               style={{ zIndex: 2 }}
             >
               {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mdev-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
@@ -2787,120 +3317,97 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              {/* Kolom 2 - Department Head - Empty */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              {/* Kolom 2 - Department Head */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mdev-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 3 - Section Head - Empty */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              {/* Kolom 3 - Section Head */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mdev-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
               {/* Kolom 4 - Staff */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "MANAGEMENT DEVELOPMENT"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mdev-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={200}
+              >
+                {(() => {
+                  const staffItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT DEVELOPEMENT/PDCA" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              MANAGEMENT DEVELOPEMENT/PDCA
+                            </p>
+                          </div>
+                        </div>
+                        {staffItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[1])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("STAFF")}
+              </DraggableStack>
             </div>
 
             {/* Notes Section */}
@@ -2961,78 +3468,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      (MANUFACTURING BATTERY DEPARTMENT)
+                      (<EditableField
+                        value={dept.header.title || "MANUFACTURING BATTERY"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "DIONISIUS AUGUSTO**") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "DIONISIUS AUGUSTO**")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIONISIUS AUGUSTO
+                              <EditableField
+                                value={dept.header.preparedByName || "DIONISIUS AUGUSTO**"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              SENIOR ENGINEER
+                              <EditableField
+                                value={dept.header.preparedByRole || "SENIOR ENGINEER"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGAIT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              EKO MARYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              PRESIDENT DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -3078,8 +3648,16 @@ const SoBagianEditor = () => {
               style={{ zIndex: 2 }}
             >
               {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="manbat-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[230px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
                   </div>
@@ -3093,7 +3671,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[230px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.1</p>
                   </div>
@@ -3106,29 +3684,37 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              {/* Kolom 2 - Department Head (Empty) */}
+              {/* Kolom 2 - Department Head */}
               <div className="space-y-4 flex flex-col items-center">
-                {/* Kosong sesuai layout */}
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
               </div>
 
               {/* Kolom 3 - Senior Engineer */}
-              <div className="space-y-4 flex flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="manbat-col3-senior"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.header?.title || "BATTERY PRODUCTION & PME"}
+                            value={dept.header?.boxTitle || "BATTERY PRODUCTION & PME"}
                             onChange={(e) =>
                               handleEdit(
                                 selectedDepartment.id,
                                 "header",
                                 null,
-                                "title",
+                                "boxTitle",
                                 e.target.value
                               )
                             }
@@ -3137,7 +3723,7 @@ const SoBagianEditor = () => {
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "BATTERY PRODUCTION & PME"}
+                            {dept.header?.boxTitle || "BATTERY PRODUCTION & PME"}
                           </p>
                         )}
                       </div>
@@ -3182,11 +3768,20 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("SENIOR ENGINEER")}
+              </DraggableStack>
 
               {/* Kolom 4 - Engineer */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="manbat-col4-engineer"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={600}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3257,7 +3852,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3323,7 +3918,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3388,11 +3983,20 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("ENGINEER")}
+              </DraggableStack>
 
               {/* Kolom 5 - Team Member/Technician */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="manbat-col5-team"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={1400}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3463,7 +4067,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3534,7 +4138,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3605,7 +4209,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -3617,7 +4221,7 @@ const SoBagianEditor = () => {
                               handleEdit(
                                 selectedDepartment.id,
                                 "positions",
-                                dept.positions[1]?.id,
+                                dept.positions[20]?.id,
                                 "title",
                                 e.target.value
                               )
@@ -3670,7 +4274,8 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("TEAM MEMBER/TECHNICIAN")}
+              </DraggableStack>
             </div>
 
             {/* Notes Section */}
@@ -3731,78 +4336,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "PURCHASING"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI* / FAKHDARENI*") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI* / FAKHDARENI*")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "DIKI WAHYUDI* / FAKHDARENI*"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "SECTION HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by - sama strukturnya */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              EKO MARYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              PRESIDENT DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -3841,8 +4509,16 @@ const SoBagianEditor = () => {
               style={{ zIndex: 2 }}
             >
               {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="purch-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
                   </div>
@@ -3869,344 +4545,157 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              {/* Kolom 2 - Department Head - Empty */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              {/* Kolom 2 - Department Head */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="purch-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
               {/* Kolom 3 - Section Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.title || "PROCUREMENT & PURCHASING"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "PROCUREMENT & PURCHASING"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="purch-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={200}
+              >
+                {(() => {
+                  const sectionHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "PURCHASING DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "PROCUREMENT & PURCHASING"}
+                            </p>
+                          </div>
+                        </div>
+                        {sectionHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "PCH1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
               {/* Kolom 4 - Staff Level */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="purch-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={500}
+              >
+                {(() => {
+                  const groups = [
+                    { title: "CONTROLCABLE", key: "CONTROLCABLE" },
+                    { title: "BATTERY", key: "BATTERY" },
+                    { title: "GENERAL & LEGAL", key: "GENERAL & LEGAL" },
+                    { title: "SUBCONT", key: "SUBCONT" },
+                  ];
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
+                  const renderGroup = ({ title, key }) => {
+                    const items = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === key && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
+                            </div>
+                          </div>
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    );
+                  };
 
-                {/* BATTERY */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[1]?.title}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[1])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* GENERAL & LEGAL */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[2])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SUBCONT */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[3]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[3]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[3]?.title}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[3])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[3]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[3]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  return <>{groups.map(renderGroup)}</>;
+                })()}
+                {renderCustomBoxesInColumn("STAFF LEVEL")}
+              </DraggableStack>
             </div>
 
             {/* Notes Section */}
@@ -4250,7 +4739,6 @@ const SoBagianEditor = () => {
       return (
         <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
           <div className="min-w-[1400px] relative p-4">
-            {/* Header Section with borders */}
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -4264,83 +4752,145 @@ const SoBagianEditor = () => {
                   />
                 </div>
                 <div
-                  className="border-2 border-black p-4 text-center flex items-center flex-1 mr-1"
+                  className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "MI & SHE"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "ELIATA DUMAR GINTING") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "ELIATA DUMAR GINTING")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "ELIATA DUMAR GINTING"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "SECT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16">
-                            <div className="text-center">
-                              <p className="text-sm font-bold text-black underline leading-tight">
-                                EKO MARYANTO
-                              </p>
-                              <p className="text-sm text-black leading-tight">
-                                PRESIDENT DIRECTOR
-                              </p>
-                            </div>
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -4354,14 +4904,10 @@ const SoBagianEditor = () => {
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
               <div className="grid grid-cols-4 gap-4 mb-4">
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
@@ -4371,264 +4917,187 @@ const SoBagianEditor = () => {
                 </div>
               </div>
             </div>
-
-            {/* Content Grid */}
-            <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
-            >
-              {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
+            <div className="grid grid-cols-4 gap-4 relative org-grid" style={{ zIndex: 2 }}>
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mishe-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                    <p className="text-xs font-bold">BOD1.0</p>
                   </div>
-                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      PRESIDENT DIRECTOR
-                    </p>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-2 leading-tight break-words">PRESIDENT DIRECTOR</p>
                     <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">EKO MARYANTO</p>
-                    <p className="text-sm leading-tight">(23200235)</p>
+                    <p className="text-xs leading-tight break-words">EKO MARYANTO</p>
+                    <p className="text-xs leading-tight">(23200235)</p>
                   </div>
                 </div>
-
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                    <p className="text-xs font-bold">BOD1.1</p>
                   </div>
-                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      DIRECTOR
-                    </p>
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-2 leading-tight break-words">DIRECTOR</p>
                     <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
-                    <p className="text-sm leading-tight">(23200038)</p>
+                    <p className="text-xs leading-tight break-words">BAMBANG WURYANTO</p>
+                    <p className="text-xs leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              {/* Kolom 2 - Department Head - Empty */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mishe-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 3 - Section Head*/}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.title || "MI & SHE (5R-SMK3-ISO 14001)"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "MI & SHE (5R-SMK3-ISO 14001)"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "MIO1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Kolom 4 - Staff Level */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "MI"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[1]?.title ||
-                              "SHE (5R-SMK3-ISO 14001)"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {dept.positions?.slice(1, 4).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mishe-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={200}
+              >
+                {(() => {
+                  const sectionHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MI & SHE DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "MI & SHE (5R-SMK3-ISO 14001)"}
+                            </p>
+                          </div>
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
+                        {sectionHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                    </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
+
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mishe-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={500}
+              >
+                {(() => {
+                  const miItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "MI" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  const sheItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "SHE (5R-SMK3-ISO 14001)" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+
+                  const renderGroup = (title, items) => (
+                    <div key={title} className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
+                          </div>
+                        </div>
+                        {items.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+
+                  return [
+                    renderGroup("MI", miItems),
+                    renderGroup("SHE (5R-SMK3-ISO 14001)", sheItems),
+                  ];
+                })()}
+                {renderCustomBoxesInColumn("STAFF LEVEL")}
+              </DraggableStack>
             </div>
-
-            {/* Notes Section */}
             <div className="mt-8 border-2 border-black p-3 inline-block">
-              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
-                NOTE :
-              </h3>
+              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
               <div className="space-y-1 text-xs">
                 <div className="flex items-start">
                   <span className="w-12 font-semibold">( )</span>
@@ -4664,7 +5133,7 @@ const SoBagianEditor = () => {
     if (selectedDepartment.id === "manufacturing-cable") {
       return (
         <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1400px] relative p-4">
+          <div className="min-w-[1700px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -4681,78 +5150,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "MANUFACTURING CABLE"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "KARNA SATIA SALIM*") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "KARNA SATIA SALIM*")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "KARNA SATIA SALIM*"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "SECTION HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -4764,102 +5296,105 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-6 gap-2 mb-4">
+              <div className="grid grid-cols-6 gap-3 mb-4">
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    STAFF / UNIT HEAD
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">STAFF / UNIT HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    TEAM MEMBER/ADMIN
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">TEAM MEMBER/ADMIN</h3>
                 </div>
               </div>
             </div>
 
-            <div
-              className="grid grid-cols-6 gap-2 relative org-grid"
-              style={{ zIndex: 2 }}
-            >
-              <div className="space-y-4 flex flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+            <div className="grid grid-cols-6 gap-3 relative org-grid" style={{ zIndex: 2 }}>
+
+              {/* KOLOM 1 - BOARD OF DIRECTOR */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mancable-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                    <p className="text-xs font-bold">BOD1.0</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
+                    <p className="text-xs font-semibold mb-2 leading-tight break-words">
                       PRESIDENT DIRECTOR
                     </p>
                     <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">EKO MARYANTO</p>
-                    <p className="text-sm leading-tight">(23200235)</p>
+                    <p className="text-xs leading-tight break-words">EKO MARYANTO</p>
+                    <p className="text-xs leading-tight">(23200235)</p>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
+                    <p className="text-xs font-bold">BOD1.1</p>
                   </div>
-                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
+                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-xs font-semibold mb-2 leading-tight break-words">
                       DIRECTOR
                     </p>
                     <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
-                    <p className="text-sm leading-tight">(23200038)</p>
+                    <p className="text-xs leading-tight break-words">BAMBANG WURYANTO</p>
+                    <p className="text-xs leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              <div className="space-y-4 flex flex-col items-center"></div>
+              {/* KOLOM 2 - DEPARTMENT HEAD */}
+              <div className="space-y-4 flex flex-col items-center">{renderCustomBoxesInColumn("DEPARTMENT HEAD")}</div>
 
               {/* KOLOM 3 - SECTION HEAD */}
-              <div className="space-y-4 flex flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[190px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mancable-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.header?.title || "CONTROLCABLE MANUFACTURE"}
+                            value={dept.header?.boxTitle || "CONTROLCABLE MANUFACTURE"}
                             onChange={(e) =>
-                              handleEdit(selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Section Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "CONTROLCABLE MANUFACTURE"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.header?.boxTitle || "CONTROLCABLE MANUFACTURE"}
                           </p>
                         )}
                       </div>
                     </div>
                     <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                         {renderCodeButton({
                           code: "PRD1.0",
                           name: dept.header.head,
@@ -4867,240 +5402,99 @@ const SoBagianEditor = () => {
                           title: dept.header.title,
                         })}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.header.head}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "head", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-xs font-semibold leading-tight break-words text-center"
                         />
                         <EditableField
                           value={`(${dept.header.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
                           }
-                          className="text-sm leading-tight"
+                          className="text-xs leading-tight text-center"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
-              {/* KOLOM 4 - STAFF LEVEL */}
-              <div className="space-y-4 flex flex-col items-center staff cards">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
+              {/* KOLOM 4 - STAFF / UNIT HEAD */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mancable-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={420}
+              >
+                {[0, 1, 2].map((idx) => (
+                  <div key={idx} className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
+                    <div className="flex flex-col h-full">
+                      <div className="flex border-b border-gray-400">
+                        <div className="p-2 flex-1 text-center bg-gray-100">
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={dept.positions[idx]?.title || ""}
+                              onChange={(e) =>
+                                handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "title", e.target.value)
+                              }
+                              className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                              placeholder="Position Title"
+                            />
+                          ) : (
+                            <p className="text-xs font-semibold leading-tight break-words text-center">
+                              {dept.positions[idx]?.title || ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-1">
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                          {renderCodeButton(dept.positions[idx])}
+                        </div>
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                          <EditableField
+                            value={dept.positions[idx]?.name}
+                            onSave={(value) =>
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "MANUFACTURIN UNIT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
+                          <EditableField
+                            value={`(${dept.positions[idx]?.empId})`}
+                            onSave={(value) =>
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "empId", value.replace(/[()]/g, ""))
+                            }
+                            className="text-xs leading-tight text-center"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                ))}
+                {renderCustomBoxesInColumn("STAFF / UNIT HEAD")}
+              </DraggableStack>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[1]?.title || "ASSEMBLING UNIT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[2]?.title || "PRODUCTION ENGINEERING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[2])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Kolom 5 - Group Head*/}
-              {/* Group co&ci */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[220px] w-[180px]">
+              {/* KOLOM 5 - GROUP HEAD */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mancable-col5-group"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={900}
+              >
+                {/* GROUP CO & CI - positions 3-4 */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5109,61 +5503,37 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[3]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[3]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[3]?.title ||
-                              "GROUP CO & CI"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[3]?.title || "GROUP CO & CI"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(3, 5).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
@@ -5171,7 +5541,8 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[220px] w-[180px]">
+                {/* GROUP PO - positions 5-6 */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5180,61 +5551,37 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[5]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[5]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[5]?.title ||
-                              "GROUP PO"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[5]?.title || "GROUP PO"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(5, 7).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
@@ -5242,7 +5589,8 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[220px] w-[180px]">
+                {/* GROUP ASSEMBLING - positions 7-13 */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5251,72 +5599,58 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[7]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[7]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[7]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[7]?.title ||
-                              "GROUP ASSEMBLING"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[7]?.title || "GROUP ASSEMBLING"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(7, 14).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 6 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 6 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("GROUP HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 6 - Team member/admin */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+              {/* KOLOM 6 - TEAM MEMBER / ADMIN */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mancable-col6-team"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={1800}
+              >
+                {/* positions 14 - COMPONENT OUTER & INNER */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5325,63 +5659,44 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[14]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[14]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
                             {dept.positions[14]?.title || "COMPONENT OUTER & COMPONENT INNER"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[14])}
-                        </p>
+                    <div className="flex flex-1">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        {renderCodeButton(dept.positions[14])}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[14]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[14]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-xs font-semibold leading-tight break-words text-center"
                         />
                         <EditableField
                           value={`(${dept.positions[14]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[14]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "empId", value.replace(/[()]/g, ""))
                           }
-                          className="text-sm leading-tight"
+                          className="text-xs leading-tight text-center"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* position 15 - PROSES OUTER */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5390,63 +5705,44 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[15]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[15]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
                             {dept.positions[15]?.title || "PROSES OUTER"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[15])}
-                        </p>
+                    <div className="flex flex-1">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        {renderCodeButton(dept.positions[15])}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[15]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[15]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-xs font-semibold leading-tight break-words text-center"
                         />
                         <EditableField
                           value={`(${dept.positions[15]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[15]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "empId", value.replace(/[()]/g, ""))
                           }
-                          className="text-sm leading-tight"
+                          className="text-xs leading-tight text-center"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* positions 16-17 - MAINTENANCE */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5455,60 +5751,37 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[16]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[16]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[16]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[16]?.title ||
-                              "MAINTENANCE"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[16]?.title || "MAINTENANCE"}
                           </p>
                         )}
                       </div>
                     </div>
                     {dept.positions?.slice(16, 18).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
@@ -5516,7 +5789,8 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* position 18 - PRODUCTION ENGINEERING */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5525,63 +5799,44 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[18]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[18]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
                             {dept.positions[18]?.title || "PRODUCTION ENGINEERING"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[18])}
-                        </p>
+                    <div className="flex flex-1">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        {renderCodeButton(dept.positions[18])}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[18]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[18]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-xs font-semibold leading-tight break-words text-center"
                         />
                         <EditableField
                           value={`(${dept.positions[18]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[18]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "empId", value.replace(/[()]/g, ""))
                           }
-                          className="text-sm leading-tight"
+                          className="text-xs leading-tight text-center"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* position 19 */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5590,63 +5845,44 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[19]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[19]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
                             {dept.positions[19]?.title || "PRODUCTION ENGINEERING"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[19])}
-                        </p>
+                    <div className="flex flex-1">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                        {renderCodeButton(dept.positions[19])}
                       </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[19]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[19]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-xs font-semibold leading-tight break-words text-center"
                         />
                         <EditableField
                           value={`(${dept.positions[19]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[19]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "empId", value.replace(/[()]/g, ""))
                           }
-                          className="text-sm leading-tight"
+                          className="text-xs leading-tight text-center"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* positions 20-30 - QUALITY CONTROL PROCESS */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5655,60 +5891,37 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[20]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[20]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[20]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[20]?.title ||
-                              "QUALITY CONTROL PROCESS"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[20]?.title || "QUALITY CONTROL PROCESS"}
                           </p>
                         )}
                       </div>
                     </div>
                     {dept.positions?.slice(20, 31).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 10 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
@@ -5716,7 +5929,8 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* positions 31-32 - QUALITY CONTROL INCOMING */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5725,60 +5939,37 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[31]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[31]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[31]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[31]?.title ||
-                              "QUALITY CONTROL INCOMING"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[31]?.title || "QUALITY CONTROL INCOMING"}
                           </p>
                         )}
                       </div>
                     </div>
                     {dept.positions?.slice(31, 33).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
@@ -5786,7 +5977,8 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+                {/* positions 33-36 - ADMINISTRATION */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -5795,73 +5987,49 @@ const SoBagianEditor = () => {
                             type="text"
                             value={dept.positions[33]?.title || ""}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[33]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[33]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[33]?.title ||
-                              "ADMINISTRATION"}
+                          <p className="text-xs font-semibold leading-tight break-words text-center">
+                            {dept.positions[33]?.title || "ADMINISTRATION"}
                           </p>
                         )}
                       </div>
                     </div>
                     {dept.positions?.slice(33, 37).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 3 ? "border-b-0" : ""}`}>
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                           {renderCodeButton(staff)}
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-xs font-semibold leading-tight break-words text-center"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
-                            className="text-sm leading-tight"
+                            className="text-xs leading-tight text-center"
                           />
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("TEAM MEMBER/ADMIN")}
+              </DraggableStack>
             </div>
 
             <div className="mt-8 border-2 border-black p-3 inline-block">
-              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
-                NOTE :
-              </h3>
+              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
               <div className="space-y-1 text-xs">
                 <div className="flex items-start">
                   <span className="w-12 font-semibold">( )</span>
@@ -5914,78 +6082,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "FINANCE DEPARTMENT"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "YULIUS PERMATA") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "YULIUS PERMATA")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "YULIUS PERMATA"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "SECTION HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT.HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -6021,7 +6252,15 @@ const SoBagianEditor = () => {
               className="grid grid-cols-4 gap-4 relative org-grid"
               style={{ zIndex: 2 }}
             >
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="finance-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
@@ -6048,255 +6287,149 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
-              {/* Kolom 2 */}
-              <div className="space-y-4">
-                <div className="min-h-[20px]"></div>
-              </div>
+              {/* Kolom 2 - Department Head */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="finance-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 3 */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.title || "FINANCE & ACCOUNTING"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "FINANCE & ACCOUNTING"}
-                          </p>
-                        )}
+              {/* Kolom 3 - Section Head (FIN1.0, sekarang dari database) */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="finance-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                {(() => {
+                  const sectionHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "FINANCE DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "FINANCE & ACCOUNTING"}
+                            </p>
+                          </div>
+                        </div>
+                        {sectionHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "FIN1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={
-                              dept.positions[0]?.title || "FINANCE & ACCOUNTING"
-                            }
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "FINANCE & ACCOUNTING"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="finance-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                {(() => {
+                  const staffItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF" && p.groupKey === "FINANCE & ACCOUNTING" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              FINANCE & ACCOUNTING
+                            </p>
+                          </div>
+                        </div>
+                        {staffItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[1])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[2])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[3])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[3]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[3]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("STAFF")}
+              </DraggableStack>
             </div>
+
             <div className="mt-8 border-2 border-black p-3 inline-block">
               <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
                 NOTE :
@@ -6353,78 +6486,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "MARKETING BATTERY"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "RENDRA PRAMONO") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "RENDRA PRAMONO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "RENDRA PRAMONO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -6462,7 +6658,15 @@ const SoBagianEditor = () => {
               className="grid grid-cols-4 gap-4 relative org-grid"
               style={{ zIndex: 2 }}
             >
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mktbat-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
@@ -6489,214 +6693,146 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.title || "MARKETING"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "MARKETING"}
-                          </p>
-                        )}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mktbat-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {(() => {
+                  const deptHeadItems = (dept.positions || [])
+                    .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "MARKETING BATTERY DEPARTMENT" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  return (
+                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                              {dept.header?.boxTitle || "MARKETING"}
+                            </p>
+                          </div>
+                        </div>
+                        {deptHeadItems.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === deptHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "MKT2.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 3 - Section Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "AUX & POWER BATTERY MARKETING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {/* Kolom 3 - Section Head / Staff */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mktbat-col3-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={320}
+              >
+                {(() => {
+                  const auxItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "AUX & POWER BATTERY MARKETING" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
+                  const essItems = (dept.positions || [])
+                    .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "ESS MARKETING" && p.pendingAction !== "delete")
+                    .sort((a, b) => a.order - b.order);
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
+                  const renderGroup = (title, items) => (
+                    <div key={title} className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                      <div className="flex flex-col h-full">
+                        <div className="flex border-b border-gray-400">
+                          <div className="p-2 flex-1 text-center bg-gray-100">
+                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
+                          </div>
+                        </div>
+                        {items.map((staff, idx) => (
+                          <div
+                            key={staff.id}
+                            className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                          >
+                            {isEditMode && (
+                              <button
+                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                title="Hapus"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                              {renderCodeButton(staff)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={staff.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${staff.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                </div>
+                  );
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[1]?.title || "ESS MARKETING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  return (
+                    <>
+                      {renderGroup("AUX & POWER BATTERY MARKETING", auxItems)}
+                      {renderGroup("ESS MARKETING", essItems)}
+                    </>
+                  );
+                })()}
+                {renderCustomBoxesInColumn("STAFF/SPECIALIST")}
+              </DraggableStack>
             </div>
+
             <div className="mt-8 border-2 border-black p-3 inline-block">
               <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
                 NOTE :
@@ -6761,7 +6897,12 @@ const SoBagianEditor = () => {
                       PT DHARMA CONTROLCABLE INDONESIA
                     </h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
                       Effective Date : 16 Maret 2026
@@ -6770,61 +6911,117 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "ANDREAS AGUNG S.") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "ANDREAS AGUNG S.")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "ANDREAS AGUNG S."}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT.HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -6860,7 +7057,15 @@ const SoBagianEditor = () => {
               className="grid grid-cols-4 gap-4 relative org-grid"
               style={{ zIndex: 2 }}
             >
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mkteng-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
@@ -6887,24 +7092,32 @@ const SoBagianEditor = () => {
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mkteng-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.header?.title || "MARKETING"}
+                            value={dept.header?.boxTitle || "MARKETING"}
                             onChange={(e) =>
                               handleEdit(
                                 selectedDepartment.id,
                                 "header",
                                 null,
-                                "title",
+                                "boxTitle",
                                 e.target.value
                               )
                             }
@@ -6913,7 +7126,7 @@ const SoBagianEditor = () => {
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "MARKETING"}
+                            {dept.header?.boxTitle || "MARKETING"}
                           </p>
                         )}
                       </div>
@@ -6959,11 +7172,20 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
               {/* Kolom 3 - Section Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mkteng-col3-section"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={320}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[290px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7028,7 +7250,7 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7093,11 +7315,20 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("SECTION HEAD")}
+              </DraggableStack>
 
               {/* Kolom 4 - Staff */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="mkteng-col4-staff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={1200}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7167,7 +7398,7 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7232,7 +7463,8 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7302,7 +7534,7 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7372,7 +7604,7 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[280px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
@@ -7442,8 +7674,10 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("STAFF")}
+              </DraggableStack>
             </div>
+
             <div className="mt-8 border-2 border-black p-3 inline-block">
               <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
                 NOTE :
@@ -7483,7 +7717,7 @@ const SoBagianEditor = () => {
     if (selectedDepartment.id === "ppic") {
       return (
         <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
-          <div className="min-w-[1400px] relative p-4">
+          <div className="min-w-[1700px] relative p-4">
             <div className="mb-4 border-2 border-black p-3">
               <div className="flex items-start gap-2">
                 <div
@@ -7500,78 +7734,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      ({dept.header.title})
+                      (<EditableField
+                        value={dept.header.title || "PPIC"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI*") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "DIKI WAHYUDI*")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              {dept.header.head}
+                              <EditableField
+                                value={dept.header.preparedByName || "DIKI WAHYUDI*"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DEPT. HEAD
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -7582,25 +7879,20 @@ const SoBagianEditor = () => {
               </div>
             </div>
 
-            <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-6 gap-2 mb-4">
+            {/* Column Headers */}
+            <div className="mb-4 relative" style={{ zIndex: 2 }}>
+              <div className="grid grid-cols-6 gap-3 mb-4">
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    UNIT HEAD/STAFF
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">UNIT HEAD/STAFF</h3>
                 </div>
                 <div className="bg-blue-300 p-3 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
@@ -7611,106 +7903,95 @@ const SoBagianEditor = () => {
               </div>
             </div>
 
-            <div
-              className="grid grid-cols-6 gap-2 relative org-grid"
-              style={{ zIndex: 2 }}
-            >
-              <div className="space-y-4 flex flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
+            {/* Content Grid */}
+            <div className="grid grid-cols-6 gap-3 relative org-grid" style={{ zIndex: 2 }}>
+              {/* Kolom 1 - Board of Director */}
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="ppic-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[235px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
                   </div>
-                  <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      PRESIDENT DIRECTOR
-                    </p>
-                    <hr className="my-2 border-gray-300" />
+                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                    <p className="text-sm font-semibold mb-1 leading-tight">PRESIDENT DIRECTOR</p>
+                    <hr className="my-1 border-gray-300" />
                     <p className="text-sm leading-tight">EKO MARYANTO</p>
                     <p className="text-sm leading-tight">(23200235)</p>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[180px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[235px]">
+                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.1</p>
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      DIRECTOR
-                    </p>
-                    <hr className="my-2 border-gray-300" />
+                    <p className="text-sm font-semibold mb-1 leading-tight">DIRECTOR</p>
+                    <hr className="my-1 border-gray-300" />
                     <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="ppic-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
                   <div className="flex flex-col h-full">
-                    {/* Header */}
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.header?.title || "PPIC"}
+                            value={dept.header?.boxTitle || "PPIC"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Section Title"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "PPIC"}
+                          <p className="text-sm font-semibold leading-tight">
+                            {dept.header?.boxTitle || "PPIC"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    {/* DIKI WAHYUDI */}
-                    <div className="flex border-b border-gray-300 flex-1">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                         {renderCodeButton({
                           code: "PPIC1.0",
                           name: dept.header.head,
                           empId: dept.header.empId,
                           title: dept.header.title,
-                          departmentOid: dept.header.departmentOid,
                         })}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.header.head}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "head", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.header.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -7718,71 +7999,58 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+              </DraggableStack>
 
-              {/* Kolom 3 - Section Head */}
-              <div className="space-y-4 flex flex-col items-center"></div>
+              {/* Kolom 3 - Section Head (kosong) */}
+              <div className="space-y-3 flex flex-col items-center"></div>
 
               {/* Kolom 4 - Unit Head/Staff */}
-              <div className="space-y-4 flex-flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="ppic-col4-unitstaff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={400}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[0]?.title || ""}
+                            value={dept.positions[0]?.title || "PPC CONTROLCABLE"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[0]?.title || "PPC CONTROLCABLE"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
+                        {renderCodeButton(dept.positions[0])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[0]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[0]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -7790,64 +8058,43 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[1]?.title || ""}
+                            value={dept.positions[1]?.title || "BATTERY & AHM OES"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[1]?.title || "BATTERY & AHM OES"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
+                        {renderCodeButton(dept.positions[1])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[1]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[1]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -7855,64 +8102,43 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[2]?.title || ""}
+                            value={dept.positions[2]?.title || "WHS CONTROLCABLE"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[2]?.title || "WHS CONTROLCABLE"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[2])}
-                        </p>
+                        {renderCodeButton(dept.positions[2])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[2]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[2]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -7920,68 +8146,55 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("UNIT HEAD/STAFF")}
+              </DraggableStack>
 
               {/* Kolom 5 - Group Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="ppic-col5-grouphead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[3]?.title || ""}
+                            value={dept.positions[3]?.title || "CONTROLCABLE"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[3]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[3]?.title || "CONTROLCABLE"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[3])}
-                        </p>
+                        {renderCodeButton(dept.positions[3])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[3]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[3]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -7989,68 +8202,55 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("GROUP HEAD")}
+              </DraggableStack>
 
               {/* Kolom 6 - Member */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="ppic-col6-member"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={1300}
+              >
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[4]?.title || ""}
+                            value={dept.positions[4]?.title || "PROD PLAN"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[4]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[4]?.title || "PROD PLAN"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[4])}
-                        </p>
+                        {renderCodeButton(dept.positions[4])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[4]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[4]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8058,64 +8258,43 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[5]?.title || ""}
+                            value={dept.positions[5]?.title || "DN/MANIFEST"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[5]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[5]?.title || "DM/MANIFEST"}
+                          <p className="text-sm font-semibold leading-tight">
+                            {dept.positions[5]?.title || "DN/MANIFEST"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[5])}
-                        </p>
+                        {renderCodeButton(dept.positions[5])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[5]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[5]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[5]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[5]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8123,40 +8302,31 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[6]?.title || ""}
+                            value={dept.positions[6]?.title || "DELIVERY"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[6]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[6]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[6]?.title ||
-                              "DELIVERY"}
+                            {dept.positions[6]?.title || "DELIVERY"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(6, 8).map((staff, i) => (
                       <div
                         key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
+                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
                       >
                         <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                           {renderCodeButton(staff)}
@@ -8165,26 +8335,14 @@ const SoBagianEditor = () => {
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-sm font-semibold leading-tight break-words"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
                             className="text-sm leading-tight"
                           />
@@ -8193,40 +8351,31 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[8]?.title || ""}
+                            value={dept.positions[8]?.title || "BATTERY"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[8]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[8]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[8]?.title ||
-                              "BATTERY"}
+                            {dept.positions[8]?.title || "BATTERY"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(8, 10).map((staff, i) => (
                       <div
                         key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
+                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
                       >
                         <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                           {renderCodeButton(staff)}
@@ -8235,26 +8384,14 @@ const SoBagianEditor = () => {
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-sm font-semibold leading-tight break-words"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
                             className="text-sm leading-tight"
                           />
@@ -8263,64 +8400,43 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[10]?.title || ""}
+                            value={dept.positions[10]?.title || "SUPPLIER CONTROL"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[10]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[10]?.title || "SUPPLIER CONTROL"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[10])}
-                        </p>
+                        {renderCodeButton(dept.positions[10])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[10]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[10]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[10]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[10]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8328,64 +8444,43 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[11]?.title || ""}
+                            value={dept.positions[11]?.title || "MRP"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[11]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                          <p className="text-sm font-semibold leading-tight">
                             {dept.positions[11]?.title || "MRP"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[11])}
-                        </p>
+                        {renderCodeButton(dept.positions[11])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[11]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[11]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[11]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[11]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8393,40 +8488,31 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[12]?.title || ""}
+                            value={dept.positions[12]?.title || "RM & OHP"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[12]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[12]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[12]?.title ||
-                              "RM & OHP"}
+                            {dept.positions[12]?.title || "RM & OHP"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     {dept.positions?.slice(12, 14).map((staff, i) => (
                       <div
                         key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
+                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
                       >
                         <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                           {renderCodeButton(staff)}
@@ -8435,26 +8521,14 @@ const SoBagianEditor = () => {
                           <EditableField
                             value={staff.name}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
                             }
-                            className="text-sm font-semibold leading-tight"
+                            className="text-sm font-semibold leading-tight break-words"
                           />
                           <EditableField
                             value={`(${staff.empId})`}
                             onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
+                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
                             }
                             className="text-sm leading-tight"
                           />
@@ -8463,64 +8537,43 @@ const SoBagianEditor = () => {
                     ))}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[180px]">
+
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[14]?.title || ""}
+                            value={dept.positions[14]?.title || "HASIL PRODUKSI"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[14]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "title", e.target.value)
                             }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
+                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                           />
                         ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[14]?.title || "SUPPLY"}
+                          <p className="text-sm font-semibold leading-tight">
+                            {dept.positions[14]?.title || "HASIL PRODUKSI"}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[14])}
-                        </p>
+                        {renderCodeButton(dept.positions[14])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[14]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[14]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "name", value)
                           }
-                          className="text-sm font-semibold leading-tight"
+                          className="text-sm font-semibold leading-tight break-words"
                         />
                         <EditableField
                           value={`(${dept.positions[14]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[14]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8528,12 +8581,13 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("MEMBER")}
+              </DraggableStack>
             </div>
+
+            {/* Notes Section */}
             <div className="mt-8 border-2 border-black p-3 inline-block">
-              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">
-                NOTE :
-              </h3>
+              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
               <div className="space-y-1 text-xs">
                 <div className="flex items-start">
                   <span className="w-12 font-semibold">( )</span>
@@ -8561,6 +8615,7 @@ const SoBagianEditor = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       );
@@ -8587,78 +8642,141 @@ const SoBagianEditor = () => {
                   className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1"
                   style={{ height: "160px" }}
                 >
-                  <div>
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
-                      STRUKTUR ORGANISASI
-                    </h1>
-                    <h2 className="text-base font-semibold text-gray-700 mb-1">
-                      PT DHARMA CONTROLCABLE INDONESIA
-                    </h2>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
                     <h3 className="text-sm font-semibold text-gray-600 mb-1">
-                      (MANUFACTURING BATTERY DEPARTMENT)
+                      (<EditableField
+                        value={dept.header.title || "QA DEPARTMENT"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "title", value)
+                        }
+                      />)
                     </h3>
                     <p className="text-sm text-gray-500">
-                      Effective Date : 16 Maret 2026
+                      Effective Date :{" "}
+                      <EditableField
+                        value={dept.header.effectiveDate || "16 Maret 2026"}
+                        onSave={(value) =>
+                          handleEdit(selectedDepartment.id, "header", null, "effectiveDate", value)
+                        }
+                      />
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex space-x-1">
+                    {/* Prepared by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Prepared by:
-                          </p>
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center ">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "M BAGUS SANTOSO") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "M BAGUS SANTOSO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              M BAGUS SANTOSO
+                              <EditableField
+                                value={dept.header.preparedByName || "M BAGUS SANTOSO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
+                                }
+                              />
                             </p>
-                            <p className="text-sm text-black leading-tight ">
-                              DEPARTMENT HEAD
+                            <p className="text-sm text-black leading-tight">
+                              <EditableField
+                                value={dept.header.preparedByRole || "DEPT. HEAD"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "preparedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Checked by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Checked by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              DIKI WAHYUDI
+                              <EditableField
+                                value={dept.header.checkedByName || "BAMBANG WURYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              HRGA&IT DEPT. HEAD
+                              <EditableField
+                                value={dept.header.checkedByRole || "DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "checkedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Approved by */}
                     <div className="text-center">
                       <div className="w-60 h-40 border border-black bg-white">
                         <div className="p-2 border-b border-black bg-white">
-                          <p className="text-sm font-bold text-black">
-                            Approved by :
-                          </p>
+                          <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
-                          <div className="text-center">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
-                              BAMBANG WURYANTO
+                              <EditableField
+                                value={dept.header.approvedByName || "EKO MARYANTO"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByName", value)
+                                }
+                              />
                             </p>
                             <p className="text-sm text-black leading-tight">
-                              DIRECTOR
+                              <EditableField
+                                value={dept.header.approvedByRole || "PRESIDENT DIRECTOR"}
+                                onSave={(value) =>
+                                  handleEdit(selectedDepartment.id, "header", null, "approvedByRole", value)
+                                }
+                              />
                             </p>
                           </div>
                         </div>
@@ -8669,49 +8787,45 @@ const SoBagianEditor = () => {
               </div>
             </div>
 
+            {/* Column Headers */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
               <div className="grid grid-cols-5 gap-2 mb-4">
                 <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
                 </div>
                 <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    UNIT/STAFF LEVEL
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">UNIT/STAFF LEVEL</h3>
                 </div>
                 <div className="bg-blue-300 p-2 rounded text-center border border-black">
                   <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
                 </div>
                 <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    OPERATOR/ADMIN
-                  </h3>
+                  <h3 className="font-bold text-xs text-black">OPERATOR/ADMIN</h3>
                 </div>
               </div>
             </div>
 
             {/* Content Grid */}
-            <div
-              className="grid grid-cols-5 gap-2 relative org-grid"
-              style={{ zIndex: 2 }}
-            >
+            <div className="grid grid-cols-5 gap-2 relative org-grid" style={{ zIndex: 2 }}>
               {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="qa-col1-bod"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={280}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
                     <p className="text-sm font-bold">BOD1.0</p>
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      PRESIDENT DIRECTOR
-                    </p>
+                    <p className="text-sm font-semibold mb-2 leading-tight">PRESIDENT DIRECTOR</p>
                     <hr className="my-2 border-gray-300" />
                     <p className="text-sm leading-tight">EKO MARYANTO</p>
                     <p className="text-sm leading-tight">(23200235)</p>
@@ -8723,47 +8837,45 @@ const SoBagianEditor = () => {
                     <p className="text-sm font-bold">BOD1.1</p>
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight">
-                      DIRECTOR
-                    </p>
+                    <p className="text-sm font-semibold mb-2 leading-tight">DIRECTOR</p>
                     <hr className="my-2 border-gray-300" />
                     <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
                     <p className="text-sm leading-tight">(23200038)</p>
                   </div>
                 </div>
-              </div>
+              </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <div className="space-y-4 flex flex-col items-center">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="qa-col2-depthead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
                 <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
                   <div className="flex flex-col h-full">
-                    {/* Header */}
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.header?.title || "QUALITY ASSURANCE"}
+                            value={dept.header?.boxTitle || "QUALITY ASSURANCE"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Section Title"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.title || "QUALITY ASSURANCE"}
+                            {dept.header?.boxTitle || "QUALITY ASSURANCE"}
                           </p>
                         )}
                       </div>
                     </div>
-
                     <div className="flex border-b border-gray-300 flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                         {renderCodeButton({
@@ -8777,26 +8889,14 @@ const SoBagianEditor = () => {
                         <EditableField
                           value={dept.header.head}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "head", value)
                           }
                           className="text-sm font-semibold leading-tight"
                         />
                         <EditableField
                           value={`(${dept.header.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8804,26 +8904,30 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("DEPARTMENT HEAD", "220px")}
+              </DraggableStack>
 
               {/* Kolom 3 - Unit/Staff Level */}
-              <div className="space-y-4 flex flex-col">
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="qa-col3-unitstaff"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                {/* LAB & KALIBRASI - positions[0] */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[220px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[0]?.title || ""}
+                            value={dept.positions[0]?.title || "LAB & KALIBRASI"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "title", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
@@ -8835,36 +8939,22 @@ const SoBagianEditor = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
+                        {renderCodeButton(dept.positions[0])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[0]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "name", value)
                           }
                           className="text-sm font-semibold leading-tight"
                         />
                         <EditableField
                           value={`(${dept.positions[0]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -8872,137 +8962,72 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+                {renderCustomBoxesInColumn("UNIT/STAFF LEVEL", "220px")}
+              </DraggableStack>
 
               {/* Kolom 4 - Group Head */}
-              <div className="space-y-4 flex flex-col items-center"></div>
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="qa-col4-grouphead"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={160}
+              >
+                <div className="[&_.w-\[220px\]]:!w-[280px]">
+                  {renderCustomBoxesInColumn("GROUP HEAD", "220px")}
+                </div>
+              </DraggableStack>
 
               {/* Kolom 5 - Operator/Admin */}
-              <div className="space-y-4 flex-col items-center staff-cards">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+              <DraggableStack
+                deptId={selectedDepartment.id}
+                columnKey="qa-col5-operator"
+                boxPositions={boxPositions}
+                setPositionsForDept={setPositionsForDept}
+                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                isEditMode={isEditMode}
+                minHeight={550}
+              >
+                {/* QUALITY ASSURANCE PROCESS - positions[1] */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm w-[220px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
                       <div className="p-2 flex-1 text-center bg-gray-100">
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[1]?.title || ""}
+                            value={dept.positions[1]?.title || "QUALITY ASSURANCE PROCESS"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[1]?.title ||
-                              "QUALITY ASSURANCE PROCESS"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "title", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title || "LAB & KALIBRASI"}
+                            {dept.positions[1]?.title || "QUALITY ASSURANCE PROCESS"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[2])}
-                        </p>
+                        {renderCodeButton(dept.positions[1])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
-                          value={dept.positions[2]?.name}
+                          value={dept.positions[1]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "name", value)
                           }
                           className="text-sm font-semibold leading-tight"
                         />
                         <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
+                          value={`(${dept.positions[1]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -9011,6 +9036,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
+                {/* QA OPERATOR HEAD - positions[2] */}
                 <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
@@ -9018,15 +9044,55 @@ const SoBagianEditor = () => {
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[3]?.title || ""}
+                            value={dept.positions[2]?.title || "QA OPERATOR HEAD"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[3]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "title", e.target.value)
+                            }
+                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                            placeholder="Position Title"
+                          />
+                        ) : (
+                          <p className="text-sm font-semibold leading-tight">
+                            {dept.positions[2]?.title || "QA OPERATOR HEAD"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-1">
+                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                        {renderCodeButton(dept.positions[2])}
+                      </div>
+                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                        <EditableField
+                          value={dept.positions[2]?.name}
+                          onSave={(value) =>
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "name", value)
+                          }
+                          className="text-sm font-semibold leading-tight"
+                        />
+                        <EditableField
+                          value={`(${dept.positions[2]?.empId})`}
+                          onSave={(value) =>
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "empId", value.replace(/[()]/g, ""))
+                          }
+                          className="text-sm leading-tight"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* VENDOR MANAGEMENT - positions[3] */}
+                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
+                  <div className="flex flex-col h-full">
+                    <div className="flex border-b border-gray-400">
+                      <div className="p-2 flex-1 text-center bg-gray-100">
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={dept.positions[3]?.title || "VENDOR MANAGEMENT"}
+                            onChange={(e) =>
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
@@ -9038,36 +9104,22 @@ const SoBagianEditor = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[3])}
-                        </p>
+                        {renderCodeButton(dept.positions[3])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[3]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "name", value)
                           }
                           className="text-sm font-semibold leading-tight"
                         />
                         <EditableField
                           value={`(${dept.positions[3]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -9076,6 +9128,7 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
+                {/* CLAIM & COMPLAIN - positions[4] */}
                 <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
                   <div className="flex flex-col h-full">
                     <div className="flex border-b border-gray-400">
@@ -9083,56 +9136,36 @@ const SoBagianEditor = () => {
                         {isEditMode ? (
                           <input
                             type="text"
-                            value={dept.positions[4]?.title || ""}
+                            value={dept.positions[4]?.title || "CLAIM & COMPLAIN"}
                             onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[4]?.id,
-                                "title",
-                                e.target.value
-                              )
+                              handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "title", e.target.value)
                             }
                             className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
                             placeholder="Position Title"
                           />
                         ) : (
                           <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[4]?.title || "LAB & KALIBRASI"}
+                            {dept.positions[4]?.title || "CLAIM & COMPLAIN"}
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-1 border-b-0">
+                    <div className="flex flex-1">
                       <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[4])}
-                        </p>
+                        {renderCodeButton(dept.positions[4])}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
                         <EditableField
                           value={dept.positions[4]?.name}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "name",
-                              value
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "name", value)
                           }
                           className="text-sm font-semibold leading-tight"
                         />
                         <EditableField
                           value={`(${dept.positions[4]?.empId})`}
                           onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
+                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "empId", value.replace(/[()]/g, ""))
                           }
                           className="text-sm leading-tight"
                         />
@@ -9140,12 +9173,166 @@ const SoBagianEditor = () => {
                     </div>
                   </div>
                 </div>
+                {renderCustomBoxesInColumn("OPERATOR/ADMIN", "220px")}
+              </DraggableStack>
+            </div>
+
+            {/* Notes Section */}
+            <div className="mt-8 border-2 border-black p-3 inline-block">
+              <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">( )</span>
+                  <span>: CONCURRE</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">**</span>
+                  <span>: ACTING</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">( INC )</span>
+                  <span>: INCUMBENT</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">TBR</span>
+                  <span>: TO BE RECRUIT</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">TBD</span>
+                  <span>: TO BE DEVELOP</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="w-12 font-semibold">COORD</span>
+                  <span>: COORDINATOR</span>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       );
     }
+  };
+
+  const renderCustomBoxesInColumn = (column, width = "280px") => {
+    if (!selectedDepartment || !departmentData[selectedDepartment.id]) return null;
+    const dept = departmentData[selectedDepartment.id];
+    const customBoxes = (dept.positions || [])
+      .filter((p) => p.isCustom && p.column === column && !p.groupKey)
+      .sort((a, b) => a.order - b.order);
+    if (customBoxes.length === 0) return null;
+    return customBoxes.map((p) => (
+      <div
+        key={p.id}
+        className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm min-h-[120px] relative" : "bg-white border border-gray-400 rounded shadow-sm min-h-[120px] relative"}
+        style={{ width }}
+      >
+        {p.pendingAction && (
+          <span className={`absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white z-20 ${p.pendingAction === "delete" ? "bg-red-500" : "bg-amber-500"}`}>
+            {p.pendingAction === "delete" ? "Menunggu Hapus" : "Pending Approval"}
+          </span>
+        )}
+        {isEditMode && (
+          <button
+            onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
+            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+            title="Remove"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        <div className="flex flex-col h-full">
+          <div className="flex border-b border-gray-400">
+            <div className="p-2 flex-1 text-center bg-gray-100">
+              <p className="text-sm font-semibold leading-tight">{p.title}</p>
+            </div>
+          </div>
+          {/* Baris bawah: Kode di kiri, Nama + NPK di kanan */}
+          <div className="flex flex-1">
+            <div className={isEditMode ? "bg-purple-50 p-2 text-center border-r border-purple-300 w-20 flex items-center justify-center" : "bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center"}>
+              {renderCodeButton(p)}
+            </div>
+            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+              <EditableField
+                value={p.name}
+                onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "name", value)}
+                className="text-sm font-semibold leading-tight"
+              />
+              <EditableField
+                value={`(${p.empId})`}
+                onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "empId", value.replace(/[()]/g, ""))}
+                className="text-sm leading-tight"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
+  const renderAdditionalPositions = () => {
+    if (!selectedDepartment || !departmentData[selectedDepartment.id]) return null;
+    const dept = departmentData[selectedDepartment.id];
+    const customPositions = (dept.positions || []).filter((p) => p.isCustom);
+    if (customPositions.length === 0) return null;
+
+    const grouped = {};
+    customPositions.forEach((p) => {
+      if (!grouped[p.column]) grouped[p.column] = [];
+      grouped[p.column].push(p);
+    });
+
+    return (
+      <div className="p-4 border-t-4 border-purple-300 mt-2">
+        <h3 className="text-sm font-bold text-purple-700 mb-3">ADDITIONAL POSITIONS (Pending/Custom)</h3>
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(grouped).map(([column, items]) => (
+            <div key={column} className="flex-1 min-w-[260px]">
+              <div className="bg-purple-200 text-center text-xs font-bold py-2 rounded border border-black mb-2">
+                {column}
+              </div>
+              <div className="space-y-2">
+                {items
+                  .sort((a, b) => a.order - b.order)
+                  .map((p) => (
+                    <div key={p.id} className="bg-white border border-purple-300 rounded shadow-sm flex relative">
+                      {isEditMode && (
+                        <button
+                          onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+                          title="Remove"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      <div className="bg-gray-100 p-2 text-center border-r border-purple-300 w-20 flex items-center justify-center">
+                        {renderCodeButton(p)}
+                      </div>
+                      <div className="p-3 flex-1 text-center">
+                        <EditableField
+                          value={p.name}
+                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "name", value)}
+                          className="text-sm font-semibold leading-tight"
+                        />
+                        <EditableField
+                          value={`(${p.empId})`}
+                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "empId", value.replace(/[()]/g, ""))}
+                          className="text-sm leading-tight block"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">{p.title}</p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -9203,10 +9390,8 @@ const SoBagianEditor = () => {
         {!selectedDepartment ? (
           <div>
             <div className="mb-6">
-              <h1 className="text-xs font-bold text-gray-800 mb-1">
-                SO Bagian
-              </h1>
-              <p className="text-gray-600">
+              <h1 className="text-2xl font-bold text-gray-900">SO Bagian</h1>
+              <p className="text-gray-500 mt-1 text-sm">
                 Edit struktur organisasi untuk semua departemen
               </p>
             </div>
@@ -9224,6 +9409,13 @@ const SoBagianEditor = () => {
                   onClick={() => {
                     setSelectedDepartment(dept);
                     setSidebarVisible(false);
+                    const defaultDept = departments.find(d => d.id === dept.id);
+                    setOriginalDepartmentData(prev => ({
+                      ...prev,
+                      [dept.id]: JSON.parse(JSON.stringify(
+                        departmentData[dept.id] || defaultDept?.structure
+                      ))
+                    }));
                   }}
                   className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-left"
                 >
@@ -9269,21 +9461,51 @@ const SoBagianEditor = () => {
                       setSelectedDepartment(null);
                       setSidebarVisible(true);
                     }}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
                   >
-                    ← Back to Selection
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Main Dashboard
                   </button>
+
                   <h2 className="text-xl font-semibold">
                     {selectedDepartment.name}
                   </h2>
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${isEditMode
-                      ? "bg-green-600 hover:bg-green-700 text-white"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2
+                      ${isEditMode
+                        ? "bg-green-600 hover:bg-green-700 text-white"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
                       }`}
                   >
-                    {isEditMode ? "View Mode" : "Edit Mode"}
+                    {isEditMode ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Mode
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View Mode
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -9317,9 +9539,46 @@ const SoBagianEditor = () => {
 
                   {isEditMode && (
                     <button
-                      onClick={() => openSubmitModal()}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      onClick={openAddBoxModal}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Box
+                    </button>
+                  )}
+
+                  {isEditMode && (
+                    <button
+                      onClick={() => resetPositionsForDept(selectedDepartment.id)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Reset Layout
+                    </button>
+                  )}
+
+                  {isEditMode && (
+                    <button
+                      onClick={() => openSubmitModal()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
                       Submit for Approval
                     </button>
                   )}
@@ -9328,8 +9587,11 @@ const SoBagianEditor = () => {
 
               {showSaveDialog && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-green-800 font-semibold">
-                    ✅ Changes saved successfully!
+                  <p className="text-green-800 font-semibold flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Changes saved successfully!
                   </p>
                   <p className="text-green-700 text-sm mt-1">
                     Department page will reflect these changes immediately.
@@ -9424,7 +9686,6 @@ const SoBagianEditor = () => {
                   </select>
                 </div>
 
-                {/* ✅ Important Notice */}
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -9449,7 +9710,6 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                {/* ✅ Buttons DIPINDAHKAN KE SINI - DALAM SPACE-Y-4 */}
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     onClick={() => setShowSubmitModal(false)}
@@ -9477,6 +9737,80 @@ const SoBagianEditor = () => {
                     Submit
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddBoxModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+              <h2 className="text-lg font-bold mb-4">Tambah Box Baru</h2>
+
+              <div className="space-y-3">
+                {/* Kolom/Header — DINAMIS berdasarkan departmentColumns[dept.id], bukan hardcode */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Header / Kolom</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm mt-1"
+                    value={addBoxForm.column}
+                    onChange={e => setAddBoxForm(f => ({ ...f, column: e.target.value, afterId: "" }))}
+                  >
+                    {(departmentColumns[selectedDepartment.id] || []).map(col => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {(departmentGroups[selectedDepartment.id]?.[addBoxForm.column] || []).length > 0 && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 uppercase">Gabung ke Grup (opsional)</label>
+                    <select
+                      className="w-full border rounded-md px-3 py-2 text-sm mt-1"
+                      value={addBoxForm.groupKey}
+                      onChange={e => setAddBoxForm(f => ({ ...f, groupKey: e.target.value }))}
+                    >
+                      <option value="">-- Box Terpisah --</option>
+                      {(departmentGroups[selectedDepartment.id]?.[addBoxForm.column] || []).map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {/* "Setelah siapa" — DINAMIS dari box custom yang sudah ada di kolom itu */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Tambahkan Setelah</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm mt-1"
+                    value={addBoxForm.afterId}
+                    onChange={e => setAddBoxForm(f => ({ ...f, afterId: e.target.value }))}
+                  >
+                    <option value="">-- Paling atas / awal kolom --</option>
+                    {getCustomPositionsInColumn(selectedDepartment.id, addBoxForm.column)
+                      .sort((a, b) => a.order - b.order)
+                      .map(p => (
+                        <option key={p.id} value={p.id}>{p.name} — {p.title}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <input placeholder="Code (contoh: HRD1.5)" value={addBoxForm.code}
+                  onChange={e => setAddBoxForm(f => ({ ...f, code: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+                <input placeholder="Title *" value={addBoxForm.title}
+                  onChange={e => setAddBoxForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+                <input placeholder="Nama *" value={addBoxForm.name}
+                  onChange={e => setAddBoxForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+                <input placeholder="Employee ID" value={addBoxForm.empId}
+                  onChange={e => setAddBoxForm(f => ({ ...f, empId: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+              </div>
+
+              <div className="flex gap-2 mt-5">
+                <button onClick={handleAddBox} className="flex-1 bg-blue-500 text-white rounded-md py-2">Tambah</button>
+                <button onClick={() => setShowAddBoxModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
               </div>
             </div>
           </div>

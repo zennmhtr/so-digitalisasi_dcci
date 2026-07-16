@@ -18,19 +18,39 @@ const Ppic = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
         const statusMap = {};
+
         allJobdesc.forEach(jd => {
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
+          if (jdNoPNK) {
+            statusMap[jdNoPNK] = true;
+            jdNoPNK.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+
+          const memberName = (jd.memberName || '')
+            .trim()
+            .toUpperCase()
+            .replace(/\*+/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (memberName) {
+            statusMap[memberName] = true;
+            memberName.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
         });
+
         setEmployeeJobdescStatus(statusMap);
       }
     } catch (error) {
@@ -45,28 +65,71 @@ const Ppic = () => {
     setShowJobModal(true);
     setLoadingJobdesc(true);
     setJobdescData(null);
+
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
 
+        const codeTitleKeywords = {
+          "PCH1.0": ["PURCHASING SECT. HEAD", "PCH1.0"],
+          "PCH1.1": ["CONTROLCABLE", "PCH1.1"],
+          "PCH1.2": ["BATTERY", "PCH1.2"],
+          "PCH1.3": ["GENERAL", "LEGAL", "PCH1.3"],
+          "PCH1.4": ["SUBCONT PROCESS", "PCH1.4"],
+        };
+
+        const normalize = (str) =>
+          (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+        const normalizeId = (str) =>
+          (str || '').replace(/[()]/g, '').replace(/\s+/g, '').trim();
+        const splitCombined = (str) =>
+          (str || '').replace(/[()]/g, '').split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemCode = (item.code || '').trim().toUpperCase();
+        const itemEmpId = (item.empId || '').replace(/[()]/g, '').trim();
+        const itemName = normalize(item.name);
+
         const foundJobdesc = allJobdesc.find((jd) => {
-          const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemEmpId = (item.empId || '').trim();
-          if (!itemEmpId || itemEmpId === '-' || !jdNoPNK) return false;
-          if (jdNoPNK !== itemEmpId) return false;
-          if (item.departmentOid) {
-            const jdDeptOid = (jd.department?.$oid || '').trim();
-            return jdDeptOid === item.departmentOid;
+          const jdNoPNK = (jd.memberNoPNK || '').replace(/[()]/g, '').trim();
+          const jdName = normalize(jd.memberName);
+          const jdPositionTitle = (jd.positionTitle || '').toUpperCase();
+
+          const empIdMatch =
+            itemEmpId && itemEmpId !== '-' && jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId) ||
+              containsId(itemEmpId, jdNoPNK)); // ← cek dua arah
+
+          const nameMatch =
+            itemName && jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+          if (!empIdMatch && !nameMatch) return false;
+
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            return keywords.some(kw => jdPositionTitle.includes(kw));
           }
 
           return true;
         });
 
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+        if (foundJobdesc) {
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log('❌ Not found for:', { name: item.name, code: item.code, empId: item.empId });
+        }
       }
     } catch (error) {
       console.error('Error fetching job description:', error);
@@ -79,10 +142,34 @@ const Ppic = () => {
     if (!person || !person.empId) {
       return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
     }
-    const empId = (person.empId || '').trim();
-    const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+
+    const rawEmpId = (person.empId || '').trim();
+    const personName = (person.name || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\*+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!rawEmpId || rawEmpId === '-') {
+      return <p className="text-xs font-bold uppercase text-gray-500">{person?.code || ''}</p>;
+    }
+
+    // Strip kurung sebelum cek statusMap
+    const cleanEmpId = rawEmpId.replace(/[()]/g, '');
+
+    const empIdMatch =
+      employeeJobdescStatus[cleanEmpId] ||
+      cleanEmpId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()]);
+
+    const nameMatch = personName && (
+      employeeJobdescStatus[personName] ||
+      personName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const hasJobdesc = empIdMatch || nameMatch;
     const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+
     return (
       <button
         className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
@@ -100,7 +187,7 @@ const Ppic = () => {
       title: "PPIC",
       id: "ppic-1",
       code: "PPIC1.0",
-      head: "DIKI WAHYUDI*",
+      head: "DIKI WAHYUDI",
       empId: "23060056",
       departmentOid: "690c195501e848a06615ddbf",
     },
@@ -166,7 +253,7 @@ const Ppic = () => {
         code: "PPIC1.2.1",
         title: "BATTERY",
         name: "SRI NATIN",
-        empId: "231202130",
+        empId: "23120213",
       },
       {
         id: "ppic1-2-2",
@@ -413,18 +500,22 @@ const Ppic = () => {
       {/* Back Button and Print Button */}
       <div className="mb-4 flex justify-between print:hidden">
         <button
-          onClick={() => navigate("/")}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          onClick={() => navigate('/')}
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -487,7 +578,6 @@ const Ppic = () => {
         </div>
       )}
 
-      {/* HRGA-IT Department Organization Chart */}
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
         <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
           {/* Header Section with borders */}
@@ -508,16 +598,16 @@ const Ppic = () => {
                 style={{ height: "160px" }}
               >
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h1 className="text-md font-bold text-gray-800 mb-2">
                     STRUKTUR ORGANISASI
                   </h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">
                     PT DHARMA CONTROLCABLE INDONESIA
                   </h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">
-                    (PPC & WAREHOUSE DEPARTMENT)
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">
+                    (PPIC & WAREHOUSE DEPARTMENT)
                   </h3>
-                  <p className="text-md text-gray-500">
+                  <p className="text-s text-gray-500">
                     Effective Date : 16 Maret 2026
                   </p>
                 </div>
@@ -555,10 +645,10 @@ const Ppic = () => {
                         <div className="h-16"></div>
                         <div className="text-center">
                           <p className="text-sm font-bold text-black underline leading-tight">
-                            DIKI WAHYUDI
+                            BAMBANG WURYANTO
                           </p>
                           <p className="text-sm text-black leading-tight">
-                            HRGAIT DEPT. HEAD
+                            DIRECTOR
                           </p>
                         </div>
                       </div>
@@ -666,8 +756,8 @@ const Ppic = () => {
                     {orgData.header.title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.header.head}</p>
-                  <p className="text-xs leading-tight">{orgData.header.empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.header.head}</p>
+                  <p className="text-xs leading-tight">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -688,12 +778,11 @@ const Ppic = () => {
                     {orgData.positions[0].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[0].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[0].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[0].empId})</p>
                 </div>
               </div>
 
-              <div className="min-h-[200px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   {renderCodeButton(orgData.positions[1])}
@@ -703,12 +792,11 @@ const Ppic = () => {
                     {orgData.positions[1].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[1].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[1].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[1].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[1].empId})</p>
                 </div>
               </div>
 
-              <div className="min-h-[40px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   {renderCodeButton(orgData.positions[2])}
@@ -718,15 +806,14 @@ const Ppic = () => {
                     {orgData.positions[2].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[2].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[2].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[2].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[2].empId})</p>
                 </div>
               </div>
             </div>
 
             {/* Kolom 5 - Group Head */}
             <div className="space-y-3 flex flex-col items-center">
-              <div className="min-h-[475px]"></div>
               <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-[190px]">
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-16 flex items-center justify-center">
                   {renderCodeButton(orgData.positions[3])}
@@ -736,8 +823,8 @@ const Ppic = () => {
                     {orgData.positions[3].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[3].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[3].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[3].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[3].empId})</p>
                 </div>
               </div>
             </div>
@@ -753,8 +840,8 @@ const Ppic = () => {
                     {orgData.positions[4].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[4].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[4].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[4].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[4].empId})</p>
                 </div>
               </div>
 
@@ -767,8 +854,8 @@ const Ppic = () => {
                     {orgData.positions[5].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[5].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[5].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[5].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[5].empId})</p>
                 </div>
               </div>
 
@@ -779,14 +866,12 @@ const Ppic = () => {
                       {renderCodeButton(orgData.positions[6])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <div className="bg-gray-100 p-1 mb-1">
                         <p className="text-xs font-semibold leading-tight">
                           {orgData.positions[6].title}
                         </p>
-                      </div>
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">{orgData.positions[6].name}</p>
-                      <p className="text-xs leading-tight">{orgData.positions[6].empId}</p>
+                      <p className="text-xs font-bold leading-tight">{orgData.positions[6].name}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[6].empId})</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
@@ -795,8 +880,8 @@ const Ppic = () => {
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">{orgData.positions[7].name}</p>
-                      <p className="text-xs leading-tight">{orgData.positions[7].empId}</p>
+                      <p className="text-xs font-bold leading-tight">{orgData.positions[7].name}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[7].empId})</p>
                     </div>
                   </div>
                 </div>
@@ -809,14 +894,12 @@ const Ppic = () => {
                       {renderCodeButton(orgData.positions[8])}
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                      <div className="bg-gray-100 p-1 mb-1">
                         <p className="text-xs font-semibold leading-tight">
                           {orgData.positions[8].title}
                         </p>
-                      </div>
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">{orgData.positions[8].name}</p>
-                      <p className="text-xs leading-tight">{orgData.positions[8].empId}</p>
+                      <p className="text-xs font-bold leading-tight">{orgData.positions[8].name}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[8].empId})</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
@@ -825,10 +908,10 @@ const Ppic = () => {
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">
+                      <p className="text-xs font-bold leading-tight">
                         {orgData.positions[9].name}
                       </p>
-                      <p className="text-xs leading-tight">{orgData.positions[9].empId}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[9].empId})</p>
                     </div>
                   </div>
                 </div>
@@ -843,8 +926,8 @@ const Ppic = () => {
                     {orgData.positions[10].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[10].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[10].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[10].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[10].empId})</p>
                 </div>
               </div>
 
@@ -857,8 +940,8 @@ const Ppic = () => {
                     {orgData.positions[11].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[11].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[11].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[11].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[11].empId})</p>
                 </div>
               </div>
 
@@ -875,8 +958,8 @@ const Ppic = () => {
                         </p>
                       </div>
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">{orgData.positions[12].name}</p>
-                      <p className="text-xs leading-tight">{orgData.positions[12].empId}</p>
+                      <p className="text-xs font-bold leading-tight">{orgData.positions[12].name}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[12].empId})</p>
                     </div>
                   </div>
                   <div className="flex flex-1">
@@ -885,8 +968,8 @@ const Ppic = () => {
                     </div>
                     <div className="p-2 flex-1 text-center flex flex-col justify-center">
                       <hr className="my-1 border-gray-300" />
-                      <p className="text-xs leading-tight">{orgData.positions[13].name}</p>
-                      <p className="text-xs leading-tight">{orgData.positions[13].empId}</p>
+                      <p className="text-xs font-bold leading-tight">{orgData.positions[13].name}</p>
+                      <p className="text-xs leading-tight">({orgData.positions[13].empId})</p>
                     </div>
                   </div>
                 </div>
@@ -901,8 +984,8 @@ const Ppic = () => {
                     {orgData.positions[14].title}
                   </p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight">{orgData.positions[14].name}</p>
-                  <p className="text-xs leading-tight">{orgData.positions[14].empId}</p>
+                  <p className="text-xs font-bold leading-tight">{orgData.positions[14].name}</p>
+                  <p className="text-xs leading-tight">({orgData.positions[14].empId})</p>
                 </div>
               </div>
             </div>

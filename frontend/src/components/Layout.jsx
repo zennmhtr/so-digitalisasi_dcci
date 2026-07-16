@@ -444,7 +444,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
           }`}
       >
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px] z-[100]">
+        <header className="flex items-center justify-between px-6 py-6 bg-white shadow-sm border-b relative min-h-[80px] z-[30]">
           {sidebarVisible && (
             <button
               className="text-gray-500 hover:text-gray-700 lg:hidden"
@@ -492,7 +492,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
 
             {/* Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="fixed top-20 right-4 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[999]">
+              <div className="fixed top-20 right-4 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[40]">
                 {/* Profile Header */}
                 <div className="px-4 py-3 border-b border-gray-100">
                   <div className="flex items-center space-x-3">

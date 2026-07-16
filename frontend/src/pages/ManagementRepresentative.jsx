@@ -18,7 +18,7 @@ const ManagementRepresentative = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -46,7 +46,7 @@ const ManagementRepresentative = () => {
     setLoadingJobdesc(true);
     setJobdescData(null);
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -309,17 +309,21 @@ const ManagementRepresentative = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -369,7 +373,7 @@ const ManagementRepresentative = () => {
         </div>
       )}
 
-      {/* HRGA-IT Department Organization Chart */}
+      {/* Management Representative Department Organization Chart */}
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black print-container print:overflow-visible print:rounded-none print:shadow-none">
         <div className="min-w-[1000px] relative p-4 print:min-w-0 print:p-0">
 
@@ -385,10 +389,10 @@ const ManagementRepresentative = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(MANAGEMENT REPRESENTATIVE DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">({orgData.header.title})</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -415,8 +419,8 @@ const ManagementRepresentative = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGAIT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -429,8 +433,8 @@ const ManagementRepresentative = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
-                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -502,7 +506,7 @@ const ManagementRepresentative = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.header.head}</p>
                   <p className="text-sm leading-tight">{orgData.header.empId}</p>
                 </div>
               </div>
@@ -517,7 +521,7 @@ const ManagementRepresentative = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.positions[0]?.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[0]?.name}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[0]?.name}</p>
                   <p className="text-sm leading-tight">{orgData.positions[0]?.empId}</p>
                 </div>
               </div>

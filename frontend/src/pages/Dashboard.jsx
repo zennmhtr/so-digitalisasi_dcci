@@ -90,7 +90,7 @@ const Dashboard = () => {
     setJobdescData(null);
 
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
 
@@ -109,8 +109,7 @@ const Dashboard = () => {
           "MKT1.1.1": ["MKT1.1.1"],
           "MKT1.1.2": ["MKT1.1.2"],
           "MKT1.1.3": ["CUSTOMER REPRESENTATIVE", "MKT1.1.3"],
-          "MKT2.0": ["MARKETING BATTERY", "MKT2.0", "MARKETING"],
-          "MKT2.0": ["MARKETING CABLE", "MKT2.0", "MARKETING"],
+          "MKT2.0": ["MARKETING BATTERY", "MKT2.0", "MARKETING CABLE"],
           "MKT2.1": ["AUX", "POWER BATTERY MARKETING", "MKT2.1", "MARKETING", "RND AUX"],
           "MKT2.2": ["ESS MARKETING", "MKT2.2"],
           // PPIC
@@ -190,7 +189,7 @@ const Dashboard = () => {
           "RND1.2": ["ESS ENGINEERING", "RND1.2"],
           "RND1.3": ["MICRO CONTROLLER", "RND1.3"],
           // MI & SHE
-          "MIO1.0": ["MI", "SHE", "MIO1.0"],
+          "MD1.0": ["MI", "SHE", "MD1.0"],
           "MIO1.1": ["MI", "MIO1.1"],
           "MIO1.2": ["SHE", "MIO1.2"],
           // Management
@@ -203,7 +202,6 @@ const Dashboard = () => {
           "BOD1.1": ["DIRECTOR", "BOD1.1"],
         };
 
-        // Helper functions
         const normalize = (str) =>
           (str || "").trim().toUpperCase().replace(/\*+/g, "").replace(/\s+/g, " ").trim();
 
@@ -229,8 +227,6 @@ const Dashboard = () => {
           const jdNoPNK = (jd.memberNoPNK || "").trim();
           const jdName = normalize(jd.memberName);
           const jdPositionTitle = (jd.positionTitle || "").toUpperCase();
-
-          // 1. Cek empId match (exact atau format gabungan)
           const empIdMatch =
             itemEmpId &&
             itemEmpId !== "-" &&
@@ -238,17 +234,14 @@ const Dashboard = () => {
             (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
               containsId(jdNoPNK, itemEmpId));
 
-          // 2. Cek name match (exact atau format gabungan)
           const nameMatch =
             itemName &&
             jdName &&
             (jdName === itemName ||
               splitCombined(jd.memberName).some(p => normalize(p) === itemName));
 
-          // Tidak ada match sama sekali → skip
           if (!empIdMatch && !nameMatch) return false;
 
-          // 3. Gunakan codeTitleKeywords sebagai pembeda jika tersedia
           const keywords = codeTitleKeywords[itemCode];
           if (keywords && keywords.length > 0) {
             const titleMatch = keywords.some(kw => jdPositionTitle.includes(kw));
@@ -259,8 +252,6 @@ const Dashboard = () => {
             console.log(`✅ MATCH [${itemCode}]:`, jdPositionTitle);
             return true;
           }
-
-          // 4. Fallback jika code tidak ada di mapping
           console.log(`✅ MATCH fallback:`, jd.memberName, jdNoPNK);
           return true;
         });
@@ -287,7 +278,7 @@ const Dashboard = () => {
   const checkAllEmployeeJobdescStatus = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/jobdescriptions?limit=200`,  // ← tambah limit
+        `/api/jobdescriptions?limit=200`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -302,19 +293,15 @@ const Dashboard = () => {
         const statusMap = {};
 
         allJobdesc.forEach(jd => {
-          // Simpan by empId (NoPNK) — bisa format gabungan "12345/67890"
           const jdNoPNK = (jd.memberNoPNK || "").trim();
           if (jdNoPNK) {
-            // Simpan keseluruhan
             statusMap[jdNoPNK] = true;
-            // Pecah jika format gabungan "12345/67890" atau "12345,67890"
             jdNoPNK.split(/[\/,]/).forEach(part => {
               const p = part.trim();
               if (p) statusMap[p] = true;
             });
           }
 
-          // Simpan by nama — normalisasi hapus *, ** dan extra spaces
           const memberName = (jd.memberName || "")
             .trim()
             .toUpperCase()
@@ -323,7 +310,6 @@ const Dashboard = () => {
             .trim();
           if (memberName) {
             statusMap[memberName] = true;
-            // Pecah jika format gabungan "NAMA1/NAMA2"
             memberName.split(/[\/,]/).forEach(part => {
               const p = part.trim();
               if (p) statusMap[p] = true;
@@ -385,24 +371,24 @@ const Dashboard = () => {
       header: {
         title: "ORGANIZATION STRUCTURE",
         company: "PT DHARMA CONTROLCABLE INDONESIA",
-        effectiveDate: "16/03/2026",
-        regNo: "16/03/2026",
-        preparedDate: "16/03/2026",
-        approvedDate: "16/03/2026",
+        effectiveDate: "02/06/2026",
+        regNo: "02/06/2026",
+        preparedDate: "02/06/2026",
+        approvedDate: "02/06/2026",
       },
       signatures: {
         preparedBy: {
           name: "Diki Wahyudi",
-          date: "16/03/2026",
+          date: "02/06/2026",
         },
         middleBy: {
           title: "Bambang Wuryanto",
           name: "Bambang Wuryanto",
-          date: "16/03/2026",
+          date: "02/06/2026",
         },
         approvedBy: {
           name: "Eko Maryanto",
-          date: "16/03/2026",
+          date: "02/06/2026",
         },
       },
       commissioners: {
@@ -413,14 +399,13 @@ const Dashboard = () => {
         commissioners: ["SUBAGIO", "HONG KUO MING", "LIAO CHIN HSIEN"],
       },
       structure: {
-        // Board of Directors - Column 1
         bod: [
           {
             id: "bod-1",
             code: "BOD1.0",
             title: "PRESIDENT DIRECTOR",
             name: "EKO MARYANTO",
-            empId: "23100235",
+            empId: "23200235",
           },
           {
             id: "bod-2",
@@ -430,75 +415,55 @@ const Dashboard = () => {
             empId: "23200038",
           },
         ],
-        // Management Functions - Column 2
         management: [
-          {
-            id: "mio-1",
-            code: "MIO1.0",
-            title: "MI & SHE (5R-SMK3-ISO 14001)",
-            name: "ELIATA DUMAR GINTING",
-            empId: "23190806",
-            clickable: true,
-            route: "/mi-she",
-          },
-          {
-            id: "mdo-1",
-            code: "MDO1.0",
-            title: "MANAGEMENT DEVELOPMENT/PDCA",
-            name: "WAHYU KARTIKO ADI",
-            empId: "23240005",
-            type: "combined",
-            clickable: true,
-            route: "/management-development",
-          },
           {
             id: "mro-1",
             code: "MRO1.0",
             title: "MANAGEMENT REPRESENTATIVE",
             name: "SUGIYARTO*",
-            empId: "23600041",
+            empId: "23060041",
             clickable: true,
             route: "/management-representative",
           },
           {
             id: "cro-1",
             code: "CRO1.0",
-            title: "CUSTOMER REPRESENTATIVE 2 WHEEL",
+            title: "CUSTOMER REPRESENTATIVE AHM",
             name: "SUMIYARTO*",
             empId: "23030015",
           },
           {
             id: "cro-2",
             code: "CRO2.0",
-            title: "CUSTOMER REPRESENTATIVE 4 WHEEL",
+            title: "CUSTOMER REPRESENTATIVE NON AHM",
             name: "DWI PURWANTO*",
-            empId: "23030023",
-          },
-        ],
-        // Business Labels - Column 3
-        business: [
-          {
-            id: "bus-1",
-            label: "CONTROLCABLE OPERATION",
-            type: "business-label",
+            empId: "23050023",
           },
           {
-            id: "bus-2",
-            label: "DC BATTERY BUSINESS",
-            type: "business-label"
+            id: "pac-1",
+            code: "PAC1.0",
+            title: "PLANT ACTIVITY",
+            name: "M BAGUS SANTOSO*",
+            empId: "23220025",
+            clickable: true,
           },
         ],
-        // Division Labels - Column 4
         divisions: [
           {
             id: "mkt2-0",
             code: "MKT2.0",
-            title: "MARKETING",
-            name: "DADANG AHMAD JUNAEDI",
+            title: "BUSINESS DEVELOPMENT",
+            name: "DADANG AHMAD DJUNAEDI",
             empId: "11230640",
-          }
+          },
+          {
+            id: "bus-dev-2",
+            code: "BUS-DEV2.0",
+            title: "BUSINESS DEVELOPMENT",
+            name: "DADANG AHMAD DJUNAEDI",
+            empId: "",
+          },
         ],
-        // Department Head - Column 5
         departments: [
           {
             id: "qa-1",
@@ -512,7 +477,7 @@ const Dashboard = () => {
           {
             id: "ppic-1",
             code: "PPIC1.0",
-            title: "PPC & WAREHOUSE",
+            title: "PPIC & WAREHOUSE",
             name: "DIKI WAHYUDI",
             empId: "23060056",
             clickable: true,
@@ -522,25 +487,24 @@ const Dashboard = () => {
             id: "mkt-1",
             code: "ENG1.0",
             title: "ENGINEERING",
-            name: "ANDREAS AGUNG S.",
+            name: "ANDREAS AGUNG S.*",
             empId: "23040119",
             clickable: true,
             route: "/marketing-engineering",
           },
           {
-            id: "mkt-2",
-            code: "MKT1.0",
-            title: "MARKETING",
-            name: "TBD",
+            id: "PME-1",
+            code: "PME1.0",
+            title: "PE & MAINTENANCE",
+            name: "ANDREAS AGUNG S.*",
+            empId: "23040119",
           },
           {
-            id: "mkt-2-adv",
-            code: "MKT2.0",
-            title: "MARKETING ADV.",
-            name: "ANDREAS AGUNG S.",
+            id: "mkt-1-adv",
+            code: "MKT1.0",
+            title: "MARKETING ADV",
+            name: "ANDREAS AGUNG S.*",
             empId: "23040119",
-            clickable: true,
-            route: "/marketing-battery-department",
           },
           {
             id: "hrd-1",
@@ -568,13 +532,14 @@ const Dashboard = () => {
             route: "/purchasing",
           },
         ],
-        // Section Head / Engineering Product Leader - Column 6
+
+        // SECTIONS
         sections: [
           {
             id: "prd-1",
             code: "PRD1.0",
             title: "MANUFACTURE CONTROLCABLE",
-            name: "KARNA SATIA SALIM*",
+            name: "KARNA SATIA SALIM**",
             empId: "23230114",
             clickable: true,
             route: "/manufacturing-cable",
@@ -584,28 +549,28 @@ const Dashboard = () => {
             code: "ENG1.1",
             title: "ENGINEERING",
             name: "SUGIYARTO",
-            empId: "23060041"
+            empId: "23060041",
           },
           {
             id: "mkt1-1",
             code: "MKT1.1",
             title: "MARKETING",
             name: "SAVITRI OCTAVIANI",
-            empId: "23130254"
+            empId: "23130254",
           },
           {
             id: "hrd1-1",
             code: "HRD1.1",
             title: "HRDGA & IT",
             name: "THARISA ARRAHMA R.",
-            empId: "23230072"
+            empId: "23230072",
           },
           {
             id: "mkt2-1",
             code: "MKT2.1",
             title: "MARKETING DC BATTERY",
             name: "CHRYSNA YULIAWAN**",
-            empId: "23240177"
+            empId: "23240177",
           },
           {
             id: "prd-2",
@@ -621,7 +586,7 @@ const Dashboard = () => {
             code: "QAC2.0",
             title: "QA BATTERY",
             name: "TBD",
-            empId: "-"
+            empId: "-",
           },
           {
             id: "rnd1-1",
@@ -642,14 +607,14 @@ const Dashboard = () => {
             code: "RND1.3",
             title: "MICRO CONTROLLER ENGINEERING",
             name: "TBD",
-            empId: "-"
+            empId: "-",
           },
           {
             id: "mkt3.0",
             code: "MKT3.0",
             title: "MARKETING BESS",
             name: "TBD",
-            empId: "-"
+            empId: "-",
           },
           {
             id: "fin-1",
@@ -664,71 +629,214 @@ const Dashboard = () => {
       },
     };
 
-    const savedData = localStorage.getItem("dashboard-organization-data");
-    if (savedData) {
+    const fetchApprovedData = async () => {
       try {
-        const parsedData = JSON.parse(savedData);
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const res = await fetch("/api/so-change-requests/latest-approved", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        const result = await res.json();
+        if (result.success && result.data?.organizationData) {
+          localStorage.setItem("dashboard-organization-data", JSON.stringify(result.data.organizationData));
+          return result.data.organizationData;
+        }
+        return null;
+      } catch (err) { return null; }
+    };
 
-        if (parsedData?.structure?.management) {
-          parsedData.structure.management = parsedData.structure.management.filter(
-            (m) => m.code !== "MDO2.0"
-          );
-          const mdo1 = parsedData.structure.management.find((m) => m.code === "MDO1.0");
-          if (mdo1 && mdo1.name && mdo1.name.toUpperCase().includes("KARINA")) {
-            mdo1.name = "WAHYU KARTIKO ADI";
-            mdo1.empId = "23240005";
-          }
-          if (mdo1) {
-            mdo1.clickable = true;
-            mdo1.route = "/management-development";
-          }
+    const mergeClickableRoutes = (data) => {
+      if (!data?.structure) return data;
+      const merged = { ...data, structure: { ...data.structure } };
 
-          // Sync: tambahkan item dari initialData yang belum ada di localStorage (berdasarkan id)
-          initialData.structure.management.forEach((initItem) => {
-            const exists = parsedData.structure.management.find((m) => m.id === initItem.id);
-            if (!exists) {
-              parsedData.structure.management.push(initItem);
+      const mergeArr = (arr, initArr) =>
+        (arr || []).map(item => {
+          const init = (initArr || []).find(i => i.id === item.id);
+          if (!init) return item;
+          return {
+            ...item,
+            clickable: init.clickable ?? item.clickable,
+            route: init.route ?? item.route,
+          };
+        });
+
+      merged.structure.departments = mergeArr(
+        data.structure.departments,
+        initialData.structure.departments
+      );
+      merged.structure.sections = mergeArr(
+        data.structure.sections,
+        initialData.structure.sections
+      );
+      merged.structure.management = mergeArr(
+        data.structure.management,
+        initialData.structure.management
+      );
+
+      return merged;
+    };
+
+    const fetchOrganizationData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const res = await fetch("/api/organization-data", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.success ? result.data : null;
+      } catch { return null; }
+    };
+
+    const saveOrganizationDataToServer = async (data) => {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch("/api/organization-data", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ data }),
+        });
+      } catch (err) { console.error("saveToServer error:", err); }
+    };
+
+    const loadData = async () => {
+      const approvedData = await fetchApprovedData();
+      if (approvedData) {
+        const merged = mergeClickableRoutes(approvedData);
+        setOrganizationData(approvedData);
+        await saveOrganizationDataToServer(approvedData);
+        return;
+      }
+
+      const serverData = await fetchOrganizationData();
+      if (serverData) {
+        const merged = mergeClickableRoutes(serverData);
+        setOrganizationData(serverData);
+        localStorage.setItem("dashboard-organization-data", JSON.stringify(serverData));
+        return;
+      }
+
+      const savedData = localStorage.getItem("dashboard-organization-data");
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+
+          if (parsedData?.structure?.management) {
+            parsedData.structure.management = parsedData.structure.management.filter(
+              (m) => m.id !== "md-1"
+            );
+            parsedData.structure.management = parsedData.structure.management.filter(
+              (m) => m.code !== "MDO2.0"
+            );
+            const mdo1 = parsedData.structure.management.find((m) => m.code === "MDO1.0");
+            if (mdo1 && mdo1.name && mdo1.name.toUpperCase().includes("KARINA")) {
+              mdo1.name = "WAHYU KARTIKO ADI";
+              mdo1.empId = "23240005";
             }
-          });
+            if (mdo1) {
+              mdo1.clickable = true;
+              mdo1.route = "/management-development";
+            }
+
+            initialData.structure.management.forEach((initItem) => {
+              const exists = parsedData.structure.management.find((m) => m.id === initItem.id);
+              if (!exists) {
+                parsedData.structure.management.push(initItem);
+              }
+            });
+          }
+
+          if (!parsedData.structure.divisions || parsedData.structure.divisions.length === 0) {
+            parsedData.structure.divisions = initialData.structure.divisions;
+          } else {
+            const mkt2 = parsedData.structure.divisions.find((d) => d.code === "MKT2.0");
+            if (!mkt2) {
+              parsedData.structure.divisions.push(...initialData.structure.divisions);
+            } else if (mkt2.name !== "DADANG AHMAD DJUNAEDI" || mkt2.title !== "BUSINESS DEVELOPMENT" || mkt2.empId !== "11230640") {
+              mkt2.name = "DADANG AHMAD DJUNAEDI";
+              mkt2.title = "BUSINESS DEVELOPMENT";
+              mkt2.empId = "11230640";
+            }
+
+            const busDev2 = parsedData.structure.divisions.find((d) => d.code === "MKT2.0");
+            if (!busDev2) {
+              const newBusDev2 = initialData.structure.divisions.find((d) => d.code === "MKT2.0");
+              if (newBusDev2) {
+                parsedData.structure.divisions.push(newBusDev2);
+              }
+            }
+          }
+
+          if (!parsedData.structure.departments || parsedData.structure.departments.length === 0) {
+            parsedData.structure.departments = initialData.structure.departments;
+          } else {
+            if (parsedData.structure.departments) {
+              parsedData.structure.departments = parsedData.structure.departments.map(dept => {
+                const initDept = initialData.structure.departments.find(d => d.id === dept.id);
+                if (initDept) {
+                  return {
+                    ...dept,
+                    clickable: initDept.clickable ?? dept.clickable,
+                    route: initDept.route ?? dept.route,
+                  };
+                }
+                return dept;
+              });
+            }
+
+            if (parsedData.structure.sections) {
+              parsedData.structure.sections = parsedData.structure.sections.map(sec => {
+                const initSec = initialData.structure.sections.find(s => s.id === sec.id);
+                if (initSec) {
+                  return {
+                    ...sec,
+                    clickable: initSec.clickable ?? sec.clickable,
+                    route: initSec.route ?? sec.route,
+                  };
+                }
+                return sec;
+              });
+            }
+            const eng2 = parsedData.structure.departments.find((d) => d.code === "ENG2.0");
+            if (!eng2) {
+              const newEng2 = initialData.structure.departments.find((d) => d.code === "ENG2.0");
+              if (newEng2) {
+                parsedData.structure.departments.push(newEng2);
+              }
+            }
+          }
+
+          if (!parsedData.structure.sections || parsedData.structure.sections.length === 0) {
+            parsedData.structure.sections = initialData.structure.sections;
+          }
+          if (!parsedData.commissioners) {
+            parsedData.commissioners = initialData.commissioners;
+          }
 
           localStorage.setItem("dashboard-organization-data", JSON.stringify(parsedData));
+          setOrganizationData(parsedData);
+          await saveOrganizationDataToServer(parsedData);
+        } catch (error) {
+          console.error("Error parsing saved data:", error);
+          setOrganizationData(initialData);
         }
-
-        if (parsedData?.structure?.divisions) {
-          const mkt2 = parsedData.structure.divisions.find((d) => d.code === "MKT2.0");
-          if (mkt2 && mkt2.name !== "DADANG AHMAD JUNAEDI") {
-            mkt2.name = "DADANG AHMAD JUNAEDI";
-            mkt2.empId = "11230640";
-            localStorage.setItem("dashboard-organization-data", JSON.stringify(parsedData));
-          }
-        }
-
-        // Only fall back to initialData for departments/sections if they are missing entirely
-        if (!parsedData.structure.departments || parsedData.structure.departments.length === 0) {
-          parsedData.structure.departments = initialData.structure.departments;
-        }
-        if (!parsedData.structure.sections || parsedData.structure.sections.length === 0) {
-          parsedData.structure.sections = initialData.structure.sections;
-        }
-        localStorage.setItem("dashboard-organization-data", JSON.stringify(parsedData));
-
-        setOrganizationData(parsedData);
-      } catch (error) {
-        console.error("Error parsing saved data:", error);
+      } else {
         setOrganizationData(initialData);
       }
-    } else {
-      setOrganizationData(initialData);
-    }
 
-    const savedLayout = localStorage.getItem("dashboard-editor-layout");
-    if (savedLayout) {
-      try {
-        setCustomLayout(JSON.parse(savedLayout));
-      } catch (error) {
-        console.error("Error parsing layout data:", error);
+      const savedLayout = localStorage.getItem("dashboard-editor-layout");
+      if (savedLayout) {
+        try {
+          setCustomLayout(JSON.parse(savedLayout));
+        } catch (error) {
+          console.error("Error parsing layout data:", error);
+        }
       }
-    }
+    };
+
+    loadData();
 
     const handleStorageChange = (e) => {
       if (e.key === "dashboard-organization-data" && e.newValue) {
@@ -748,6 +856,15 @@ const Dashboard = () => {
       }
     };
 
+    const pollInterval = setInterval(async () => {
+      const serverData = await fetchOrganizationData();
+      if (serverData) {
+        const merged = mergeClickableRoutes(serverData);
+        setOrganizationData(serverData);
+        localStorage.setItem("dashboard-organization-data", JSON.stringify(serverData));
+      }
+    }, 30000);
+
     window.addEventListener("storage", handleStorageChange);
 
     const handleCustomUpdate = (e) => {
@@ -757,10 +874,10 @@ const Dashboard = () => {
     window.addEventListener("dashboard-data-updated", handleCustomUpdate);
 
     return () => {
+      clearInterval(pollInterval);
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("dashboard-data-updated", handleCustomUpdate);
     };
-
   }, []);
 
   useEffect(() => {
@@ -769,7 +886,7 @@ const Dashboard = () => {
     }
   }, [organizationData]);
 
-  // Hitung posisi garis penghubung bod-2 u2192 fin-1
+  // Hitung posisi garis penghubung bod-2 -> fin-1
   useEffect(() => {
     const updateConnector = () => {
       if (!bod2Ref.current || !fin1Ref.current || !gridRef.current) return;
@@ -794,7 +911,6 @@ const Dashboard = () => {
     };
   }, [organizationData]);
 
-  // Hitung posisi garis penghubung bod-2 -> pch-1
   useEffect(() => {
     const updateConnector2 = () => {
       if (!bod2Ref.current || !pch1Ref.current || !gridRef.current) return;
@@ -823,12 +939,10 @@ const Dashboard = () => {
       const gridRect = gridRef.current.getBoundingClientRect();
       const bod1Rect = bod1Ref.current.getBoundingClientRect();
       const bus1Rect = bus1Ref.current.getBoundingClientRect();
-      // Dari kanan tengah bod-1, lurus horizontal ke kiri tengah bus-1
       const startX = bod1Rect.right - gridRect.left;
       const startY = bod1Rect.top + bod1Rect.height / 2 - gridRect.top;
       const endX = bus1Rect.left - gridRect.left;
       const endY = bus1Rect.top + bus1Rect.height / 2 - gridRect.top;
-      // Garis lurus horizontal dari kanan bod-1 ke kiri bus-1
       const path = `M ${startX} ${startY} L ${endX} ${endY}`;
       setConnectorPath3(path);
     };
@@ -840,14 +954,12 @@ const Dashboard = () => {
     };
   }, [organizationData]);
 
-  // Garis Director -> MI & SHE
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !mio1Ref.current || !gridRef.current) return;
       const g = gridRef.current.getBoundingClientRect();
       const bod2 = bod2Ref.current.getBoundingClientRect();
       const mio1 = mio1Ref.current.getBoundingClientRect();
-      // Dari bawah tengah bod-2, turun vertikal, lalu belok kanan ke mio-1
       const vx = bod2.left + bod2.width / 2 - g.left;
       const vy = bod2.bottom - g.top;
       const endY = mio1.top + mio1.height / 2 - g.top;
@@ -859,14 +971,12 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> Management Development
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !mdo1Ref.current || !gridRef.current) return;
       const g = gridRef.current.getBoundingClientRect();
       const bod2 = bod2Ref.current.getBoundingClientRect();
       const mdo1 = mdo1Ref.current.getBoundingClientRect();
-      // Dari bawah tengah bod-2, turun vertikal, lalu belok kanan ke mdo-1
       const vx = bod2.left + bod2.width / 2 - g.left;
       const vy = bod2.bottom - g.top;
       const endY = mdo1.top + mdo1.height / 2 - g.top;
@@ -878,7 +988,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> Management Representative
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !mro1Ref.current || !gridRef.current) return;
@@ -896,7 +1005,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> Customer Representative AHM (cro-1)
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !cro1Ref.current || !gridRef.current) return;
@@ -914,7 +1022,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> Customer Representative 4 Wheel (cro-2)
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !cro2Ref.current || !gridRef.current) return;
@@ -932,7 +1039,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> DC Battery Business (bus-2)
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !bus2Ref.current || !gridRef.current) return;
@@ -950,7 +1056,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis DC Battery Business (bus-2) -> Business Development (mkt2-0)
   useEffect(() => {
     const update = () => {
       if (!bus2Ref.current || !mkt2_0Ref.current || !gridRef.current) return;
@@ -968,7 +1073,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Business Development (mkt2-0) -> Marketing DC Battery (mkt2-1)
   useEffect(() => {
     const update = () => {
       if (!mkt2_0Ref.current || !mkt2_1Ref.current || !gridRef.current) return;
@@ -986,7 +1090,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari tengah garis (mkt2-0 -> mkt2-1) turun ke Production & PME Battery (prd-2)
   useEffect(() => {
     const update = () => {
       if (!mkt2_0Ref.current || !mkt2_1Ref.current || !prd2Ref.current || !gridRef.current) return;
@@ -994,12 +1097,10 @@ const Dashboard = () => {
       const mkt2_0 = mkt2_0Ref.current.getBoundingClientRect();
       const mkt2_1 = mkt2_1Ref.current.getBoundingClientRect();
       const prd2 = prd2Ref.current.getBoundingClientRect();
-      // Titik cabang = tengah antara mkt2_0 kanan dan mkt2_1 kiri
       const lineStartX = mkt2_0.right - g.left;
       const lineEndX = mkt2_1.left - g.left;
       const branchX = lineStartX + (lineEndX - lineStartX) / 2;
       const branchY = mkt2_0.top + mkt2_0.height / 2 - g.top;
-      // Turun ke kiri tengah prd-2
       const prd2EndY = prd2.top + prd2.height / 2 - g.top;
       const prd2EndX = prd2.left - g.left;
       setConnectorPath20(`M ${branchX} ${branchY} L ${branchX} ${prd2EndY} L ${prd2EndX} ${prd2EndY}`);
@@ -1009,7 +1110,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama turun ke QA Battery (qac2-0)
   useEffect(() => {
     const update = () => {
       if (!mkt2_0Ref.current || !mkt2_1Ref.current || !qac2Ref.current || !gridRef.current) return;
@@ -1030,7 +1130,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis RND & BESS (rnd-1) -> AUX & POWER BATTERY ENGINEERING (rnd1-1)
   useEffect(() => {
     const update = () => {
       if (!rnd1Ref.current || !rnd1_1Ref.current || !gridRef.current) return;
@@ -1048,7 +1147,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari tengah garis (rnd1 -> rnd1-1) turun ke ESS ENGINEERING (rnd1-2)
   useEffect(() => {
     const update = () => {
       if (!rnd1Ref.current || !rnd1_1Ref.current || !rnd1_2Ref.current || !gridRef.current) return;
@@ -1069,7 +1167,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama turun ke MICRO CONTROLLER ENGINEERING (rnd1-3)
   useEffect(() => {
     const update = () => {
       if (!rnd1Ref.current || !rnd1_1Ref.current || !rnd1_3Ref.current || !gridRef.current) return;
@@ -1090,7 +1187,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama turun ke MARKETING BESS (mkt3.0)
   useEffect(() => {
     const update = () => {
       if (!rnd1Ref.current || !rnd1_1Ref.current || !mkt3Ref.current || !gridRef.current) return;
@@ -1111,7 +1207,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis putus-putus dari MARKETING ADV. ke tengah garis penghubung mkt-2 -> mkt1-1
   useEffect(() => {
     const update = () => {
       if (!mkt2Ref.current || !mkt1Ref.current || !mkt2AdvRef.current || !gridRef.current) return;
@@ -1119,15 +1214,12 @@ const Dashboard = () => {
       const mkt2 = mkt2Ref.current.getBoundingClientRect();
       const mkt1 = mkt1Ref.current.getBoundingClientRect();
       const mktAdv = mkt2AdvRef.current.getBoundingClientRect();
-      // Titik tengah garis horizontal mkt-2 -> mkt1-1
       const lineStartX = mkt2.right - g.left;
       const lineEndX = mkt1.left - g.left;
       const midX = lineStartX + (lineEndX - lineStartX) / 2;
       const midY = mkt2.top + mkt2.height / 2 - g.top;
-      // Titik awal: kanan tengah kotak MARKETING ADV.
       const advStartX = mktAdv.right - g.left;
       const advStartY = mktAdv.top + mktAdv.height / 2 - g.top;
-      // Path: dari kanan kotak MARKETING ADV., belok ke kanan sampai midX, lalu naik ke midY
       setConnectorPathMktAdv(`M ${advStartX} ${advStartY} L ${midX} ${advStartY} L ${midX} ${midY}`);
     };
     const t = setTimeout(update, 150);
@@ -1135,7 +1227,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari tengah garis (bod1 -> bus1) turun ke HRDGA & IT (hrd-1)
   useEffect(() => {
     const update = () => {
       if (!bod1Ref.current || !bus1Ref.current || !hrd1Ref.current || !gridRef.current) return;
@@ -1145,7 +1236,6 @@ const Dashboard = () => {
       const hrd1 = hrd1Ref.current.getBoundingClientRect();
       const lineStartX = bod1.right - g.left;
       const lineEndX = bus1.left - g.left;
-      // Geser branchX lebih ke kanan (97% mendekati bus1) agar tidak menimpa kotak lain
       const branchX = lineStartX + (lineEndX - lineStartX) * 0.97;
       const branchY = bod1.top + bod1.height / 2 - g.top;
       const endY = hrd1.top + hrd1.height / 2 - g.top;
@@ -1157,7 +1247,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis HRDGA & IT (hrd-1) -> HRDGA & IT (hrd1-1)
   useEffect(() => {
     const update = () => {
       if (!hrd1Ref.current || !hrd1_1Ref.current || !gridRef.current) return;
@@ -1175,7 +1264,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Director -> RND & BESS (rnd-1)
   useEffect(() => {
     const update = () => {
       if (!bod2Ref.current || !rnd1Ref.current || !gridRef.current) return;
@@ -1193,15 +1281,12 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis Controlcable Operation (bus-1) -> Manufacture Controlcable (prd-1)
-  // dengan cabang turun ke Quality Assurance (qa-1)
   useEffect(() => {
     const update = () => {
       if (!bus1Ref.current || !prd1Ref.current || !gridRef.current) return;
       const g = gridRef.current.getBoundingClientRect();
       const bus1 = bus1Ref.current.getBoundingClientRect();
       const prd1 = prd1Ref.current.getBoundingClientRect();
-      // Garis horizontal dari kanan tengah bus-1 ke kiri tengah prd-1
       const startX = bus1.right - g.left;
       const startY = bus1.top + bus1.height / 2 - g.top;
       const endX = prd1.left - g.left;
@@ -1212,7 +1297,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik tengah garis horizontal (bus-1->prd-1) turun ke Quality Assurance (qa-1)
   useEffect(() => {
     const update = () => {
       if (!bus1Ref.current || !prd1Ref.current || !qa1Ref.current || !gridRef.current) return;
@@ -1220,12 +1304,10 @@ const Dashboard = () => {
       const bus1 = bus1Ref.current.getBoundingClientRect();
       const prd1 = prd1Ref.current.getBoundingClientRect();
       const qa1 = qa1Ref.current.getBoundingClientRect();
-      // Titik cabang = 30% dari kanan bus-1 ke kiri prd-1, pada Y garis horizontal
       const startX = bus1.right - g.left;
       const endX = prd1.left - g.left;
       const branchX = startX + (endX - startX) * 0.3;
       const branchY = bus1.top + bus1.height / 2 - g.top;
-      // Turun dari titik cabang ke kiri tengah qa-1
       const qa1EndY = qa1.top + qa1.height / 2 - g.top;
       const qa1EndX = qa1.left - g.left;
       setConnectorPath12(`M ${branchX} ${branchY} L ${branchX} ${qa1EndY} L ${qa1EndX} ${qa1EndY}`);
@@ -1235,7 +1317,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama (bus-1->prd-1) turun ke PPC & Warehouse (ppic-1)
   useEffect(() => {
     const update = () => {
       if (!bus1Ref.current || !prd1Ref.current || !ppic1Ref.current || !gridRef.current) return;
@@ -1243,12 +1324,10 @@ const Dashboard = () => {
       const bus1 = bus1Ref.current.getBoundingClientRect();
       const prd1 = prd1Ref.current.getBoundingClientRect();
       const ppic1 = ppic1Ref.current.getBoundingClientRect();
-      // Titik cabang sama persis dengan cabang qa-1 (30% dari kanan bus-1 ke kiri prd-1)
       const startX = bus1.right - g.left;
       const endX = prd1.left - g.left;
       const branchX = startX + (endX - startX) * 0.3;
       const branchY = bus1.top + bus1.height / 2 - g.top;
-      // Turun dari titik cabang ke kiri tengah ppic-1
       const ppic1EndY = ppic1.top + ppic1.height / 2 - g.top;
       const ppic1EndX = ppic1.left - g.left;
       setConnectorPath13(`M ${branchX} ${branchY} L ${branchX} ${ppic1EndY} L ${ppic1EndX} ${ppic1EndY}`);
@@ -1258,7 +1337,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama (bus-1->prd-1) turun ke Engineering (mkt-eng)
   useEffect(() => {
     const update = () => {
       if (!bus1Ref.current || !prd1Ref.current || !mktEngRef.current || !gridRef.current) return;
@@ -1279,7 +1357,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis penghubung ENG1.0 (mkt-eng/ENGINEERING) -> ENG1.1 (eng1-1/ENGINEERING)
   useEffect(() => {
     const update = () => {
       if (!mktEngRef.current || !eng1Ref.current || !gridRef.current) return;
@@ -1297,7 +1374,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Garis penghubung MKT1.0 (mkt-2/MARKETING) -> MKT1.1 (mkt1-1/MARKETING)
   useEffect(() => {
     const update = () => {
       if (!mkt2Ref.current || !mkt1Ref.current || !gridRef.current) return;
@@ -1315,7 +1391,6 @@ const Dashboard = () => {
     return () => { clearTimeout(t); window.removeEventListener("resize", update); };
   }, [organizationData]);
 
-  // Cabang dari titik yang sama (bus-1->prd-1) turun ke Marketing (mkt-2)
   useEffect(() => {
     const update = () => {
       if (!bus1Ref.current || !prd1Ref.current || !mkt2Ref.current || !gridRef.current) return;
@@ -1340,10 +1415,7 @@ const Dashboard = () => {
     if (!item.id) {
       return <p className="text-[7.5px] font-bold">{item.code}</p>;
     }
-
     const empId = (item.empId || "").trim();
-
-    // Normalisasi nama: hapus *, **, extra spaces
     const itemName = (item.name || "")
       .trim()
       .toUpperCase()
@@ -1351,13 +1423,11 @@ const Dashboard = () => {
       .replace(/\s+/g, " ")
       .trim();
 
-    // Cek by empId (bisa format gabungan)
     const empIdMatch = empId && empId !== "-" && (
       employeeJobdescStatus[empId] ||
       empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
     );
 
-    // Cek by nama
     const nameMatch = itemName && (
       employeeJobdescStatus[itemName] ||
       itemName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
@@ -1369,14 +1439,39 @@ const Dashboard = () => {
       ? "text-blue-600 hover:bg-blue-50"
       : "text-red-600 hover:bg-red-50";
 
+    const handleClick = (e) => {
+      e.stopPropagation();
+
+      console.log('🔍 handleClick:', {
+        name: item.name,
+        empId: item.empId,
+        clickable: item.clickable,
+        route: item.route
+      });
+
+      if (item.clickable && item.route) {
+        if (canViewDepartmentSO(item.route)) {
+          navigate(item.route);
+        } else {
+          alert("Anda tidak memiliki akses ke halaman ini.");
+        }
+        return;
+      }
+
+      onCodeClick(item);
+    };
+
     return (
       <button
         className={`text-[7.5px] font-bold hover:underline focus:outline-none uppercase px-1 py-1 rounded transition-colors ${buttonColor}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onCodeClick(item);
-        }}
-        title={hasJobdesc ? "Klik untuk melihat job description" : "Belum memiliki job description"}
+        onClick={handleClick}
+        title={
+          item.clickable
+            ? "Klik untuk melihat detail departemen"
+            : hasJobdesc
+              ? "Klik untuk melihat job description"
+              : "Belum memiliki job description"
+        }
       >
         {item.code}
       </button>
@@ -1388,58 +1483,76 @@ const Dashboard = () => {
   const handleDownloadPDF = async () => {
     const element = document.querySelector('.dashboard-print-container');
     if (!element) return;
-
     setIsGeneratingPDF(true);
 
     try {
-      // Get the exact full scrollable boundaries of the component
+      element.style.overflow = 'visible';
+      await new Promise(r => setTimeout(r, 400));
+
       const actualWidth = element.scrollWidth;
       const actualHeight = element.scrollHeight;
 
       const canvas = await html2canvas(element, {
-        width: actualWidth,
-        height: actualHeight,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
         windowWidth: actualWidth,
         windowHeight: actualHeight,
-        scale: 2, // Keeps text ultra-sharp
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff', // Ensures canvas base layer is white
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('.dashboard-print-container');
-          if (clonedElement) {
-            // FORCE the background color and dimensions to map 100% of the scroll area
-            clonedElement.style.setProperty('background', '#ffffff', 'important');
-            clonedElement.style.setProperty('width', `${actualWidth}px`, 'important');
-            clonedElement.style.setProperty('height', `${actualHeight}px`, 'important');
-            clonedElement.style.setProperty('margin', '0', 'important');
-            clonedElement.style.setProperty('padding', '30px', 'important'); // Balanced spacing for clean borders
+        width: actualWidth,
+        height: actualHeight,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        onclone: (_clonedDoc, clonedEl) => {
+          clonedEl.style.cssText = `
+          width: ${actualWidth}px !important;
+          height: ${actualHeight}px !important;
+          overflow: visible !important;
+          background: #ffffff !important;
+          padding: 16px !important;
+          margin: 0 !important;
+          position: relative !important;
+          transform: none !important;
+        `;
 
-            // Ensure all parent node nodes in the clone don't restrict background colors
-            let parent = clonedElement.parentElement;
-            while (parent) {
-              parent.style.setProperty('background', '#ffffff', 'important');
-              parent.style.setProperty('overflow', 'visible', 'important');
-              parent = parent.parentElement;
+          clonedEl.querySelectorAll('*').forEach(el => {
+            const cs = window.getComputedStyle(el);
+            if (['hidden', 'auto', 'scroll'].includes(cs.overflow)) el.style.overflow = 'visible';
+            if (['hidden', 'auto', 'scroll'].includes(cs.overflowX)) el.style.overflowX = 'visible';
+            if (['hidden', 'auto', 'scroll'].includes(cs.overflowY)) el.style.overflowY = 'visible';
+          });
+
+          clonedEl.querySelectorAll('*').forEach(el => {
+            const cs = window.getComputedStyle(el);
+            if (cs.display === 'flex' || cs.display === 'inline-flex') {
+              el.style.flexShrink = '0';
+              el.style.flexWrap = 'nowrap';
             }
-          }
+          });
+
+          clonedEl.querySelectorAll('svg').forEach(svg => {
+            svg.style.overflow = 'visible';
+          });
         }
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      element.style.overflow = 'auto';
 
-      // Calculate final millimeter conversions adjusted for scale
-      const imgWidthMm = (canvas.width * 0.264583) / 2;
-      const imgHeightMm = (canvas.height * 0.264583) / 2;
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidthMm = (canvas.width / 2) * 0.264583;
+      const imgHeightMm = (canvas.height / 2) * 0.264583;
 
       const pdf = new jsPDF({
         orientation: imgWidthMm > imgHeightMm ? 'landscape' : 'portrait',
         unit: 'mm',
-        format: [imgWidthMm, imgHeightMm] // Creates a perfect bounding-box document size
+        format: [imgWidthMm, imgHeightMm],
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
-      pdf.save('PT_DCCI_Organization_Structure_Perfect.pdf');
+      pdf.save('PT DCCI - Organization Structure.pdf');
 
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -1449,7 +1562,6 @@ const Dashboard = () => {
     }
   };
 
-  // Loading state
   if (!organizationData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1513,10 +1625,7 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Header (Contains Download PDF Button) */}
       <div className="no-print bg-white rounded-lg shadow-sm p-4 mb-4">
-
-        {/* Download PDF Button - Only show if user has permission */}
         {canPrint && (
           <div className="mt-4 flex justify-end">
             <button
@@ -1551,7 +1660,6 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-      {/* Organization Chart - Dynamic, synced with editor */}
       <div
         className="dashboard-print-container bg-white rounded-lg shadow-sm p-4 overflow-x-auto"
         ref={containerRef}

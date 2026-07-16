@@ -18,19 +18,39 @@ const MiShe = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
         const statusMap = {};
+
         allJobdesc.forEach(jd => {
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
+          if (jdNoPNK) {
+            statusMap[jdNoPNK] = true;
+            jdNoPNK.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+
+          const memberName = (jd.memberName || '')
+            .trim()
+            .toUpperCase()
+            .replace(/\*+/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (memberName) {
+            statusMap[memberName] = true;
+            memberName.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
         });
+
         setEmployeeJobdescStatus(statusMap);
       }
     } catch (error) {
@@ -45,24 +65,81 @@ const MiShe = () => {
     setShowJobModal(true);
     setLoadingJobdesc(true);
     setJobdescData(null);
+
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
-        const foundJobdesc = allJobdesc.find((jd) => {
-          const jdName = (jd.memberName || '').trim().toUpperCase();
+        const bobiEntries = allJobdesc.filter(jd => (jd.memberName || '').toUpperCase().includes('BOBI'));
+        console.log('🎯 BOBI entries:', JSON.stringify(bobiEntries, null, 2));
+
+        const normalize = (str) =>
+          (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+
+        const normalizeId = (str) => (str || '').replace(/\s+/g, '').trim();
+
+        const splitCombined = (str) =>
+          (str || '').split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemEmpId = (item.empId || '').trim();
+        const itemName = normalize(item.name);
+
+        console.log('🔍 Ppic onCodeClick searching:', { itemEmpId, itemName });
+
+        const matchedJobdescs = allJobdesc.filter((jd) => {
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemName = (item.name || '').trim().toUpperCase();
-          const itemEmpId = (item.empId || '').trim();
-          if (itemEmpId && jdNoPNK && jdNoPNK === itemEmpId) return true;
-          if (jdName && itemName && jdName === itemName) return true;
-          if (jdName && itemName && (jdName.includes(itemName) || itemName.includes(jdName))) return true;
-          return false;
+          const jdName = normalize(jd.memberName);
+          const empIdMatch =
+            itemEmpId &&
+            itemEmpId !== '-' &&
+            jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId));
+          const nameMatch =
+            itemName &&
+            jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+          return empIdMatch || nameMatch;
         });
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+
+        console.log('🔍 All matches:', matchedJobdescs.map(jd => ({
+          name: jd.memberName,
+          department: jd.department,
+          division: jd.division,
+          noPNK: jd.memberNoPNK
+        })));
+
+        const EXCLUDE_DEPT = ['MANAGEMENT REPRESENTATIVE', 'ADMINISTRATION'];
+        const filtered = matchedJobdescs.filter(jd => {
+          const deptRaw = jd.department || jd.division || '';
+          const dept = (typeof deptRaw === 'string' ? deptRaw :
+            (typeof deptRaw === 'object' ? (deptRaw.name || JSON.stringify(deptRaw)) : String(deptRaw))
+          ).toUpperCase();
+          return !EXCLUDE_DEPT.some(k => dept.includes(k));
+        });
+
+        const foundJobdesc = (filtered.length > 0 ? filtered : matchedJobdescs)[0];
+
+        if (foundJobdesc) {
+          console.log('✅ Found:', foundJobdesc.memberName, foundJobdesc.memberNoPNK);
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log('❌ Not found for:', { name: item.name, empId: item.empId });
+          console.log('Available:', allJobdesc.map(jd =>
+            `${jd.memberName} (${jd.memberNoPNK})`
+          ));
+        }
       }
     } catch (error) {
       console.error('Error fetching job description:', error);
@@ -76,9 +153,28 @@ const MiShe = () => {
       return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
     }
     const empId = (person.empId || '').trim();
-    const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+    const personName = (person.name || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\*+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!empId || empId === '-') {
+      return <p className="text-xs font-bold uppercase text-gray-500">{person?.code || ''}</p>;
+    }
+
+    const empIdMatch = employeeJobdescStatus[empId] ||
+      empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()]);
+
+    const nameMatch = personName && (
+      employeeJobdescStatus[personName] ||
+      personName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const hasJobdesc = empIdMatch || nameMatch;
     const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+
     return (
       <button
         className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
@@ -331,17 +427,21 @@ const MiShe = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -409,10 +509,10 @@ const MiShe = () => {
 
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">(PT DHARMA CONTROLCABLE INDONESIA)</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(MANAGEMENT IMPROVEMENT & SHE DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">(PT DHARMA CONTROLCABLE INDONESIA)</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">(MANAGEMENT IMPROVEMENT & SHE DEPARTMENT)</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -439,8 +539,8 @@ const MiShe = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRDGA&IT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -453,8 +553,8 @@ const MiShe = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
-                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -526,8 +626,8 @@ const MiShe = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight">{orgData.header.title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.header.head}</p>
-                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -541,8 +641,8 @@ const MiShe = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">{orgData.positions[0].title}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.positions[0].name}</p>
-                  <p className="text-sm leading-tight">{orgData.positions[0].empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.positions[0].name}</p>
+                  <p className="text-sm leading-tight">({orgData.positions[0].empId})</p>
                 </div>
               </div>
 
@@ -562,7 +662,7 @@ const MiShe = () => {
                         {renderCodeButton(staff)}
                       </div>
                       <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <p className="text-sm leading-tight">{staff?.name}</p>
+                        <p className="text-sm font-bold leading-tight">{staff?.name}</p>
                         <p className="text-sm leading-tight">({staff?.empId})</p>
                       </div>
                     </div>

@@ -19,19 +19,39 @@ const HrgaIt = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
         const statusMap = {};
+
         allJobdesc.forEach(jd => {
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const jdName = (jd.memberName || '').trim().toUpperCase();
-          if (jdNoPNK) statusMap[jdNoPNK] = true;
-          if (jdName) statusMap[jdName] = true;
+          if (jdNoPNK) {
+            statusMap[jdNoPNK] = true;
+            jdNoPNK.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
+
+          const memberName = (jd.memberName || '')
+            .trim()
+            .toUpperCase()
+            .replace(/\*+/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (memberName) {
+            statusMap[memberName] = true;
+            memberName.split(/[\/,]/).forEach(part => {
+              const p = part.trim();
+              if (p) statusMap[p] = true;
+            });
+          }
         });
+
         setEmployeeJobdescStatus(statusMap);
       }
     } catch (error) {
@@ -46,31 +66,71 @@ const HrgaIt = () => {
     setShowJobModal(true);
     setLoadingJobdesc(true);
     setJobdescData(null);
+
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+
       if (response.ok) {
         const result = await response.json();
         const allJobdesc = result.data || result;
+        const codeTitleKeywords = {
+          "HRD1.0": ["HRDGA", "HRGA", "HRD DEPT", "HRD1.0", "HRD"],
+          "HRD2.0": ["HRD2.0", "POD"],
+          "HRD1.1": ["HRD", "PERSONALIA", "HRD1.1"],
+          "GA1.1": ["GA STAFF", "GA1.1"],
+          "GA1.2": ["GA STAFF", "GA1.2"],
+          "GA1.3": ["INDUSTRIAL", "GA1.3"],
+          "IT1.1": ["IT STAFF", "IT1.1"],
+          "IT1.2": ["IT STAFF", "IT1.2"],
+        };
+
+        const normalize = (str) =>
+          (str || '').trim().toUpperCase().replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+        const normalizeId = (str) => (str || '').replace(/\s+/g, '').trim();
+        const splitCombined = (str) =>
+          (str || '').split(/[\/,]/).map(p => p.trim()).filter(Boolean);
+        const containsId = (haystack, needle) => {
+          if (!haystack || !needle) return false;
+          const needleClean = normalizeId(needle);
+          return splitCombined(haystack).some(p => normalizeId(p) === needleClean);
+        };
+
+        const itemCode = (item.code || '').trim().toUpperCase();
+        const itemEmpId = (item.empId || '').trim();
+        const itemName = normalize(item.name);
 
         const foundJobdesc = allJobdesc.find((jd) => {
           const jdNoPNK = (jd.memberNoPNK || '').trim();
-          const itemEmpId = (item.empId || '').trim();
+          const jdName = normalize(jd.memberName);
+          const jdPositionTitle = (jd.positionTitle || '').toUpperCase();
 
-          if (!itemEmpId || itemEmpId === '-' || !jdNoPNK) return false;
-          if (jdNoPNK !== itemEmpId) return false;
+          const empIdMatch =
+            itemEmpId && itemEmpId !== '-' && jdNoPNK &&
+            (normalizeId(jdNoPNK) === normalizeId(itemEmpId) ||
+              containsId(jdNoPNK, itemEmpId));
 
-          // Jika item punya departmentOid, gunakan untuk disambiguasi
-          if (item.departmentOid) {
-            const jdDeptOid = (jd.department?.$oid || '').trim();
-            return jdDeptOid === item.departmentOid;
+          const nameMatch =
+            itemName && jdName &&
+            (jdName === itemName ||
+              splitCombined(jd.memberName).some(p => normalize(p) === itemName));
+
+          if (!empIdMatch && !nameMatch) return false;
+
+          const keywords = codeTitleKeywords[itemCode];
+          if (keywords && keywords.length > 0) {
+            return keywords.some(kw => jdPositionTitle.includes(kw));
           }
 
           return true;
         });
 
-        if (foundJobdesc) setJobdescData(foundJobdesc);
+        if (foundJobdesc) {
+          setJobdescData(foundJobdesc);
+        } else {
+          console.log('❌ Not found for:', { name: item.name, code: item.code, empId: item.empId });
+        }
       }
     } catch (error) {
       console.error('Error fetching job description:', error);
@@ -81,15 +141,34 @@ const HrgaIt = () => {
 
   const renderCodeButton = (person) => {
     if (!person || !person.empId) {
-      return <p className="text-sm font-bold">{person?.code || ''}</p>;
+      return <p className="text-xs font-bold uppercase">{person?.code || ''}</p>;
     }
     const empId = (person.empId || '').trim();
-    const personName = (person.name || '').trim().toUpperCase();
-    const hasJobdesc = employeeJobdescStatus[empId] || employeeJobdescStatus[personName];
+    const personName = (person.name || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\*+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!empId || empId === '-') {
+      return <p className="text-xs font-bold uppercase text-gray-500">{person?.code || ''}</p>;
+    }
+
+    const empIdMatch = employeeJobdescStatus[empId] ||
+      empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()]);
+
+    const nameMatch = personName && (
+      employeeJobdescStatus[personName] ||
+      personName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
+    );
+
+    const hasJobdesc = empIdMatch || nameMatch;
     const buttonColor = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
+
     return (
       <button
-        className={`text-sm font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
+        className={`text-xs font-bold hover:underline focus:outline-none uppercase px-1 py-0.5 rounded transition-colors print:hidden ${buttonColor}`}
         onClick={(e) => { e.stopPropagation(); onCodeClick(person); }}
         title={hasJobdesc ? 'Klik untuk melihat job description' : 'Belum memiliki job description'}
       >
@@ -391,17 +470,21 @@ const HrgaIt = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -454,10 +537,10 @@ const HrgaIt = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">({orgData.header.title})</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">({orgData.header.title})</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -484,8 +567,8 @@ const HrgaIt = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGA&IT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -498,8 +581,8 @@ const HrgaIt = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
-                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm text-black leading-tight">PRESIDENT DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -568,13 +651,20 @@ const HrgaIt = () => {
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">
                     <div className="p-2 flex-1 text-center bg-gray-100">
-                      <p className="text-sm font-semibold leading-tight">{orgData.header.title.code || ""}</p>
+                      <p className="text-sm font-semibold leading-tight">
+                        {orgData.header.title || ""}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex border-b border-gray-300 flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                      {renderCodeButton({ code: orgData.header.code, name: orgData.header.head, empId: orgData.header.empId, departmentOid: orgData.header.departmentOid})}
+                      {renderCodeButton({
+                        code: orgData.header.code,
+                        name: orgData.header.head,
+                        empId: orgData.header.empId,
+                        departmentOid: orgData.header.departmentOid
+                      })}
                     </div>
                     <div className="p-3 flex-1 text-center flex flex-col justify-center">
                       <p className="text-sm font-semibold leading-tight">{orgData.header.head}</p>
@@ -591,13 +681,13 @@ const HrgaIt = () => {
                       <p className="text-sm leading-tight">({orgData.positions[0]?.empId})</p>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
 
             {/* Column 4 - Staff */}
             <div className="space-y-4 flex flex-col items-center">
-              {/* HRD */}
               <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[290px]">
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-400">

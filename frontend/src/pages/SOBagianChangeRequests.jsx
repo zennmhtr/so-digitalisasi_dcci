@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { soBagianChangeRequestsAPI } from "../services/api";
+import Swal from 'sweetalert2';
 
 const SOBagianPreview = ({ proposedData, currentData }) => {
   const [showDebug, setShowDebug] = useState(false);
@@ -102,26 +103,40 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       totalOldPositions: oldPositions.length,
     };
 
-    if (!oldStructure || oldPositions.length === 0) {
+    if (!oldStructure) {
       console.log("⚠️ No old structure data - showing all as new");
       return summary;
     }
 
+    // ✅ FIX: Cek header changes dulu, SEBELUM cek oldPositions
     if (newHeader && oldHeader) {
-      if (newHeader.head !== oldHeader.head) {
-        summary.headerChanges.push({
-          field: "Department Head",
-          old: oldHeader.head || "-",
-          new: newHeader.head || "-",
-        });
-      }
-      if (newHeader.empId !== oldHeader.empId) {
-        summary.headerChanges.push({
-          field: "Employee ID",
-          old: oldHeader.empId || "-",
-          new: newHeader.empId || "-",
-        });
-      }
+      // Cek semua kemungkinan field nama header
+      const headerFields = [
+        { key: "head", label: "Kepala Departemen" },
+        { key: "empId", label: "Employee ID" },
+        { key: "name", label: "Nama Header" },
+        { key: "title", label: "Title" },
+        { key: "department", label: "Department" },
+        { key: "unitName", label: "Unit Name" },
+        { key: "sectionName", label: "Section Name" },
+      ];
+
+      headerFields.forEach(({ key, label }) => {
+        const oldVal = (oldHeader[key] || "").toString().trim();
+        const newVal = (newHeader[key] || "").toString().trim();
+        if (oldVal !== newVal) {
+          summary.headerChanges.push({
+            field: label,
+            old: oldHeader[key] || "-",
+            new: newHeader[key] || "-",
+          });
+        }
+      });
+    }
+
+    // ✅ FIX: Jika tidak ada posisi lama, skip position comparison saja
+    if (oldPositions.length === 0) {
+      return summary;
     }
 
     const oldPositionsMap = new Map();
@@ -291,9 +306,12 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       {/* Header Changes */}
       {changeSummary.headerChanges.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            <FileText className="w-5 h-5 text-orange-600" />
-            📝 Header Changes
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Header Changes
           </h3>
           <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
             <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
@@ -339,8 +357,11 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       {changeSummary.positionChanges.modified.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            ✏️ Modified Positions ({changeSummary.positionChanges.modified.length})
+            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Modified Positions ({changeSummary.positionChanges.modified.length})
           </h3>
           <div className="grid grid-cols-1 gap-4">
             {changeSummary.positionChanges.modified.map((change, idx) => (
@@ -355,8 +376,12 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       {/* Added Positions */}
       {changeSummary.positionChanges.added.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ✅ New Positions ({changeSummary.positionChanges.added.length})
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            New Positions ({changeSummary.positionChanges.added.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {changeSummary.positionChanges.added.map((position, idx) => (
@@ -372,8 +397,12 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       {/* Removed Positions */}
       {changeSummary.positionChanges.removed.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ❌ Removed Positions ({changeSummary.positionChanges.removed.length})
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Removed Positions ({changeSummary.positionChanges.removed.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {changeSummary.positionChanges.removed.map((position, idx) => (
@@ -544,7 +573,7 @@ const SOBagianDetailModal = ({
               {(request.firstApprovedBy || request.secondApprovedBy) && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">
-                    Approval Progress:
+                    Approval Progress :
                   </h4>
                   <div className="space-y-2">
                     {request.firstApprovedBy && (
@@ -565,7 +594,7 @@ const SOBagianDetailModal = ({
                       <div className="flex items-center gap-2 text-sm">
                         <CheckCircle className="w-5 h-5 text-green-500" />
                         <span>
-                          <strong>Director Approval:</strong>{" "}
+                          <strong>Director Approval :</strong>{" "}
                           {request.secondApprovedBy.name}
                         </span>
                         {request.secondApprovedAt && (
@@ -589,7 +618,7 @@ const SOBagianDetailModal = ({
               {request.reviewComments && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">
-                    Review Comments:
+                    Review Comments :
                   </h4>
                   <div
                     className={`border-l-4 p-4 ${request.status === "rejected"
@@ -621,10 +650,21 @@ const SOBagianDetailModal = ({
                       <MessageSquare className="inline w-5 h-5 mr-2" />
                       Review Comments:
                     </label>
-                    <p className="text-sm text-gray-600 mb-2">
-                      ✅ Optional for approval | ⚠️{" "}
-                      <span className="font-semibold text-red-600">
-                        Required for rejection
+                    <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Optional for approval
+                      </span>
+                      <span>|</span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        <span className="font-semibold text-red-600">Required for rejection</span>
                       </span>
                     </p>
                     <textarea
@@ -641,8 +681,12 @@ const SOBagianDetailModal = ({
                       placeholder="Add your comments here... (Required if rejecting)"
                     />
                     {showValidationError && (
-                      <p className="text-red-600 text-sm mt-2 font-semibold">
-                        ⚠️ Rejection reason is required!
+                      <p className="text-red-600 text-sm mt-2 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        Rejection reason is required!
                       </p>
                     )}
                   </div>
@@ -810,7 +854,15 @@ const SOBagianChangeRequests = () => {
       return;
     }
 
-    if (!confirm("Are you sure you want to approve this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to approve this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -854,14 +906,27 @@ const SOBagianChangeRequests = () => {
 
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments) {
-      alert("⚠️ Please provide comments for revision.");
+      Swal.fire({
+        title: "Perhatian",
+        text: "Mohon isi komentar untuk revisi terlebih dahulu.",
+        icon: "warning",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    if (!confirm("Are you sure you want to send this request for revision?"))
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to send this request for revision?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
-
-    try {
+    } try {
       setActionLoading(true);
       const response = await soBagianChangeRequestsAPI.revisi(
         requestId,
@@ -905,7 +970,15 @@ const SOBagianChangeRequests = () => {
 
     setShowValidationError(false);
 
-    if (!confirm("Are you sure you want to reject this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to reject this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -931,7 +1004,15 @@ const SOBagianChangeRequests = () => {
   };
 
   const handleCancel = async (requestId) => {
-    if (!confirm("Are you sure you want to cancel this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to cancel this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -1069,7 +1150,13 @@ const SOBagianChangeRequests = () => {
       setShowDetailModal(false);
       setReviewComments("");
       loadRequests();
-      alert(`✅ Changes approved and applied!\n\nDepartment: ${request.department}\nStorage Key: ${storageKey}\nEvent: ${eventName}\n\nThe ${request.department} page will now reflect the changes.`);
+      Swal.fire({
+        title: "Berhasil!",
+        html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen:</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
+        icon: "success",
+        confirmButtonColor: "#16a34a",
+        confirmButtonText: "OK",
+      });
 
       return true;
 
@@ -1278,10 +1365,49 @@ const SOBagianChangeRequests = () => {
                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
 
                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
-                      <span>👤 <strong>{request.requestedBy?.name || "Unknown"}</strong></span>
-                      <span>🏢 {request.department}</span>
-                      <span>🔄 {request.changeType}</span>
-                      <span>🕐 {formatDate(request.createdAt)}</span>
+                      <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                          <circle cx="12" cy="8" r="4" fill="#3B82F6" />
+                          <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="#60A5FA" />
+                        </svg>
+                        {" "}<strong>{request.requestedBy?.name || "Unknown"}</strong>
+                      </span>
+
+                      <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                          <rect x="4" y="3" width="16" height="18" rx="1" fill="#F59E0B" />
+                          <rect x="7" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="11.5" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="16" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="7" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="11.5" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="16" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                          <rect x="10" y="15.5" width="4" height="5.5" fill="#FFFBEB" />
+                        </svg>
+                        {" "}{request.department}
+                      </span>
+
+                      <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                          <path
+                            d="M4 4v6h6M20 20v-6h-6M5.5 9A8 8 0 0119.8 9.5M18.5 15A8 8 0 014.2 14.5"
+                            fill="none"
+                            stroke="#10B981"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {" "}{request.changeType}
+                      </span>
+
+                      <span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                          <circle cx="12" cy="12" r="9" fill="#8B5CF6" />
+                          <path d="M12 7v5l3.5 3.5" fill="none" stroke="#F5F3FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {" "}{formatDate(request.createdAt)}
+                      </span>
                     </div>
 
                     {(request.firstApprovedBy || request.secondApprovedBy) && (
@@ -1289,13 +1415,13 @@ const SOBagianChangeRequests = () => {
                         {request.firstApprovedBy && (
                           <span className="inline-flex items-center gap-1 mr-3">
                             <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                            Approved: {request.firstApprovedBy?.name}
+                            Approved : {request.firstApprovedBy?.name}
                           </span>
                         )}
                         {request.secondApprovedBy ? (
                           <span className="inline-flex items-center gap-1">
                             <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                            Director: {request.secondApprovedBy?.name}
+                            Director : {request.secondApprovedBy?.name}
                           </span>
                         ) : request.status === "waiting_director_approval" ? (
                           <span className="text-blue-500">🕒 Waiting for Director Approval</span>

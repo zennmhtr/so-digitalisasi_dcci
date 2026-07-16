@@ -26,7 +26,7 @@ const OrganizationDemo = () => {
           id: "mio-1",
           code: "MIO1.0",
           title: "MI & SHE",
-          name: "ELIATA DUMAR GINTING",
+          name: "WAHYU KARTIKO ADI",
           empId: "23190806",
         },
         {
@@ -88,31 +88,28 @@ const OrganizationDemo = () => {
           <div className="flex space-x-4 mb-6">
             <button
               onClick={() => setDemoMode("comparison")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                demoMode === "comparison"
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${demoMode === "comparison"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+                }`}
             >
               Problem vs Solution
             </button>
             <button
               onClick={() => setDemoMode("features")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                demoMode === "features"
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${demoMode === "features"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+                }`}
             >
               Features Overview
             </button>
             <button
               onClick={() => setDemoMode("implementation")}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                demoMode === "implementation"
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${demoMode === "implementation"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+                }`}
             >
               Technical Implementation
             </button>
@@ -173,8 +170,11 @@ const OrganizationDemo = () => {
 
             {/* Solutions */}
             <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-green-800 mb-4">
-                ✅ Solusi Advanced Editor
+              <h2 className="text-xl font-bold text-green-800 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Solusi Advanced Editor
               </h2>
               <div className="space-y-4">
                 <div className="bg-white rounded-lg p-4 border border-green-200">

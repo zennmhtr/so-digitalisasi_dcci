@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Plus, Trash2, Save, Send } from "lucide-react";
+import Swal from 'sweetalert2';
 
 const JobdescForm = ({
   user,
@@ -160,7 +161,6 @@ const JobdescForm = ({
       return;
     }
 
-    // Konfirmasi sebelum submit
     const confirmMessage = existingJobdesc
       ? "Are you sure you want to update this job description? Changes will be saved directly."
       : "Are you sure you want to submit this job description for approval? It will go through the approval process.";
@@ -213,7 +213,7 @@ const JobdescForm = ({
               {existingJobdesc ? "Edit" : "Create"} Job Description
             </h3>
             <p className="text-gray-600 text-sm mt-1">
-              Employee: <span className="font-medium">{user.name}</span> (
+              Employee : <span className="font-medium">{user.name}</span> (
               {user.noPNK})
             </p>
             {!existingJobdesc && (

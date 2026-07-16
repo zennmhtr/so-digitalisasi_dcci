@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import { usersAPI, rolesAPI, departmentsAPI } from '../services/api';
+import Swal from 'sweetalert2';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -100,10 +101,25 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure you want to delete this user?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       try {
         await usersAPI.delete(userId);
         fetchUsers();
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'User has been deleted successfully.',
+          icon: 'success',
+          timer: 3000,
+          showConfirmButton: false
+        });
       } catch (error) {
         console.error('Error deleting user:', error);
         alert('Error deleting user. Please try again.');
@@ -113,19 +129,19 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const dataToSend = { ...formData };
       if (editingUser && !dataToSend.password) {
         delete dataToSend.password;
       }
-      
+
       if (editingUser) {
         await usersAPI.update(editingUser._id, dataToSend);
       } else {
         await usersAPI.create(dataToSend);
       }
-      
+
       fetchUsers();
       setIsModalOpen(false);
       setFormData({
@@ -137,6 +153,13 @@ const UserManagement = () => {
         role: '',
         department: '',
         status: 'active'
+      });
+      Swal.fire({
+        title: editingUser ? 'Updated!' : 'Added!',
+        text: editingUser ? 'User has been updated successfully.' : 'New user has been added successfully.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
       });
     } catch (error) {
       console.error('Error saving user:', error);
@@ -171,7 +194,7 @@ const UserManagement = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button 
+        <button
           onClick={handleAdd}
           className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
         >
@@ -247,11 +270,10 @@ const UserManagement = () => {
                       {user.department?.name || user.department}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}>
                         {user.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>

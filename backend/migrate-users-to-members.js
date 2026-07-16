@@ -10,8 +10,6 @@ require('dotenv').config();
 const migrateUsersToMembers = async () => {
   try {
     console.log('🔄 Starting migration: Users to Members');
-
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,

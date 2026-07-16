@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { soChangeRequestsAPI } from "../services/api";
+import StaticOrgChart from "../components/StaticOrgChart";
+import Swal from 'sweetalert2';
 
 const SOPreview = ({ proposedData, currentData }) => {
   console.log("🔍 SOPreview Debug:", {
@@ -23,12 +25,6 @@ const SOPreview = ({ proposedData, currentData }) => {
   const newOrg = proposedData.organizationData;
   const oldOrg = currentData?.organizationData || null;
 
-  console.log("📊 Org Data:", {
-    newOrg: newOrg,
-    oldOrg: oldOrg,
-    hasOldOrg: !!oldOrg,
-  });
-
   if (!proposedData?.organizationData) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -38,6 +34,7 @@ const SOPreview = ({ proposedData, currentData }) => {
     );
   }
 
+  // ─── 1. getChangeSummary ────────────────────────────────────────
   const getChangeSummary = () => {
     const summary = {
       headerChanges: [],
@@ -52,17 +49,13 @@ const SOPreview = ({ proposedData, currentData }) => {
       },
     };
 
-    if (!oldOrg) {
-      console.log("⚠️ No old data - treating as new structure");
-      return summary;
-    }
+    if (!oldOrg) return summary;
 
     const generateItemKey = (item) => {
       if (item.code) return `code:${item.code.trim().toUpperCase()}`;
       if (item.id) return `id:${item.id}`;
       if (item.label) return `label:${item.label.trim().toUpperCase()}`;
-      if (item.title)
-        return `title:${item.title.trim().toUpperCase().substring(0, 30)}`;
+      if (item.title) return `title:${item.title.trim().toUpperCase().substring(0, 30)}`;
       return `fallback:${JSON.stringify(item).substring(0, 50)}`;
     };
 
@@ -72,52 +65,13 @@ const SOPreview = ({ proposedData, currentData }) => {
     };
 
     const compareItems = (oldItem, newItem) => {
-      const changes = {
-        name: false,
-        empId: false,
-        title: false,
-        label: false,
-        code: false,
-      };
-
+      const changes = { name: false, empId: false, title: false, label: false, code: false };
       let hasChanges = false;
-
-      if (normalize(oldItem.name) !== normalize(newItem.name)) {
-        changes.name = true;
-        hasChanges = true;
-        console.log(`🔄 Name changed: "${oldItem.name}" → "${newItem.name}"`);
-      }
-
-      if (normalize(oldItem.empId) !== normalize(newItem.empId)) {
-        changes.empId = true;
-        hasChanges = true;
-        console.log(
-          `🔄 EmpId changed: "${oldItem.empId}" → "${newItem.empId}"`
-        );
-      }
-
-      if (normalize(oldItem.title) !== normalize(newItem.title)) {
-        changes.title = true;
-        hasChanges = true;
-        console.log(
-          `🔄 Title changed: "${oldItem.title}" → "${newItem.title}"`
-        );
-      }
-
-      if (normalize(oldItem.label) !== normalize(newItem.label)) {
-        changes.label = true;
-        hasChanges = true;
-        console.log(
-          `🔄 Label changed: "${oldItem.label}" → "${newItem.label}"`
-        );
-      }
-
-      if (normalize(oldItem.code) !== normalize(newItem.code)) {
-        changes.code = true;
-        hasChanges = true;
-        console.log(`🔄 Code changed: "${oldItem.code}" → "${newItem.code}"`);
-      }
-
+      if (normalize(oldItem.name) !== normalize(newItem.name)) { changes.name = true; hasChanges = true; }
+      if (normalize(oldItem.empId) !== normalize(newItem.empId)) { changes.empId = true; hasChanges = true; }
+      if (normalize(oldItem.title) !== normalize(newItem.title)) { changes.title = true; hasChanges = true; }
+      if (normalize(oldItem.label) !== normalize(newItem.label)) { changes.label = true; hasChanges = true; }
+      if (normalize(oldItem.code) !== normalize(newItem.code)) { changes.code = true; hasChanges = true; }
       return { hasChanges, changes };
     };
 
@@ -125,11 +79,7 @@ const SOPreview = ({ proposedData, currentData }) => {
       Object.keys(newOrg.header).forEach((key) => {
         if (key === "effectiveDate") return;
         if (normalize(newOrg.header[key]) !== normalize(oldOrg.header[key])) {
-          summary.headerChanges.push({
-            field: key,
-            old: oldOrg.header[key] || "-",
-            new: newOrg.header[key] || "-",
-          });
+          summary.headerChanges.push({ field: key, old: oldOrg.header[key] || "-", new: newOrg.header[key] || "-" });
         }
       });
     }
@@ -137,10 +87,7 @@ const SOPreview = ({ proposedData, currentData }) => {
     if (newOrg.signatures && oldOrg.signatures) {
       ["preparedBy", "middleBy", "approvedBy"].forEach((sigType) => {
         if (newOrg.signatures[sigType] && oldOrg.signatures[sigType]) {
-          if (
-            normalize(newOrg.signatures[sigType].name) !==
-            normalize(oldOrg.signatures[sigType].name)
-          ) {
+          if (normalize(newOrg.signatures[sigType].name) !== normalize(oldOrg.signatures[sigType].name)) {
             summary.signatureChanges.push({
               field: `${sigType} - Name`,
               old: oldOrg.signatures[sigType].name || "-",
@@ -152,23 +99,16 @@ const SOPreview = ({ proposedData, currentData }) => {
     }
 
     if (newOrg.commissioners && oldOrg.commissioners) {
-      if (
-        normalize(newOrg.commissioners.president?.name) !==
-        normalize(oldOrg.commissioners.president?.name)
-      ) {
+      if (normalize(newOrg.commissioners.president?.name) !== normalize(oldOrg.commissioners.president?.name)) {
         summary.commissionerChanges.push({
           field: "President Commissioner",
           old: oldOrg.commissioners.president?.name || "-",
           new: newOrg.commissioners.president?.name || "-",
         });
       }
-
       const oldComms = oldOrg.commissioners.commissioners || [];
       const newComms = newOrg.commissioners.commissioners || [];
-      if (
-        JSON.stringify(oldComms.map(normalize)) !==
-        JSON.stringify(newComms.map(normalize))
-      ) {
+      if (JSON.stringify(oldComms.map(normalize)) !== JSON.stringify(newComms.map(normalize))) {
         summary.commissionerChanges.push({
           field: "Commissioners List",
           old: oldComms.join(", ") || "-",
@@ -177,60 +117,21 @@ const SOPreview = ({ proposedData, currentData }) => {
       }
     }
 
-    const sections = [
-      "bod",
-      "management",
-      "divisions",
-      "departments",
-      "sections",
-    ];
-
-    sections.forEach((section) => {
+    ["bod", "management", "divisions", "departments", "sections"].forEach((section) => {
       const newItems = newOrg.structure?.[section] || [];
       const oldItems = oldOrg.structure?.[section] || [];
-
-      console.log(`\n📊 Comparing section: ${section.toUpperCase()}`);
-      console.log(
-        `   Old items: ${oldItems.length}, New items: ${newItems.length}`
-      );
-
-      const oldItemsMap = new Map();
-      oldItems.forEach((item) => {
-        const key = generateItemKey(item);
-        oldItemsMap.set(key, item);
-        console.log(
-          `   📌 Old key: ${key} → ${item.name || item.label || item.title}`
-        );
-      });
-
-      const newItemsMap = new Map();
-      newItems.forEach((item) => {
-        const key = generateItemKey(item);
-        newItemsMap.set(key, item);
-        console.log(
-          `   📌 New key: ${key} → ${item.name || item.label || item.title}`
-        );
-      });
+      const oldItemsMap = new Map(oldItems.map(item => [generateItemKey(item), item]));
+      const newItemsMap = new Map(newItems.map(item => [generateItemKey(item), item]));
 
       newItems.forEach((newItem) => {
         const key = generateItemKey(newItem);
         const oldItem = oldItemsMap.get(key);
-
         if (!oldItem) {
           summary.structureChanges[section].added.push(newItem);
-          console.log(`   ✅ ADDED: ${key}`);
         } else {
           const comparison = compareItems(oldItem, newItem);
-
           if (comparison.hasChanges) {
-            summary.structureChanges[section].modified.push({
-              old: oldItem,
-              new: newItem,
-              changes: comparison.changes,
-            });
-            console.log(`   ✏️ MODIFIED: ${key}`, comparison.changes);
-          } else {
-            console.log(`   ⏸️ No changes: ${key}`);
+            summary.structureChanges[section].modified.push({ old: oldItem, new: newItem, changes: comparison.changes });
           }
         }
       });
@@ -239,218 +140,102 @@ const SOPreview = ({ proposedData, currentData }) => {
         const key = generateItemKey(oldItem);
         if (!newItemsMap.has(key)) {
           summary.structureChanges[section].removed.push(oldItem);
-          console.log(`   ❌ REMOVED: ${key}`);
         }
       });
-    });
-
-    console.log("\n📈 Summary:", {
-      headerChanges: summary.headerChanges.length,
-      signatureChanges: summary.signatureChanges.length,
-      commissionerChanges: summary.commissionerChanges.length,
-      structureChanges: Object.entries(summary.structureChanges).map(
-        ([key, val]) => ({
-          section: key,
-          added: val.added.length,
-          modified: val.modified.length,
-          removed: val.removed.length,
-        })
-      ),
     });
 
     return summary;
   };
 
+  // ─── 2. getLayoutChangeSummary ──────────────────────────────────
+  const getLayoutChangeSummary = () => {
+    if (!oldOrg) return { positionChanges: [], connectionChanges: { added: [], removed: [] }, sizeChanges: [] };
+
+    const positionChanges = [];
+    const sizeChanges = [];
+
+    const newPositions = newOrg.positions || {};
+    const oldPositions = oldOrg.positions || {};
+    const allPosKeys = new Set([...Object.keys(newPositions), ...Object.keys(oldPositions)]);
+
+    allPosKeys.forEach(key => {
+      const oldPos = oldPositions[key];
+      const newPos = newPositions[key];
+      if (!oldPos && newPos) {
+        positionChanges.push({ key, type: 'added', old: null, new: newPos });
+      } else if (oldPos && !newPos) {
+        positionChanges.push({ key, type: 'removed', old: oldPos, new: null });
+      } else if (oldPos && newPos) {
+        const dx = Math.abs((oldPos.x || 0) - (newPos.x || 0));
+        const dy = Math.abs((oldPos.y || 0) - (newPos.y || 0));
+        if (dx > 5 || dy > 5) {
+          positionChanges.push({ key, type: 'moved', old: oldPos, new: newPos, dx: Math.round(dx), dy: Math.round(dy) });
+        }
+      }
+    });
+
+    const newSizes = newOrg.sizes || {};
+    const oldSizes = oldOrg.sizes || {};
+    const allSizeKeys = new Set([...Object.keys(newSizes), ...Object.keys(oldSizes)]);
+
+    allSizeKeys.forEach(key => {
+      const o = oldSizes[key];
+      const n = newSizes[key];
+      if (o && n && (Math.abs((o.width || 0) - (n.width || 0)) > 2 || Math.abs((o.height || 0) - (n.height || 0)) > 2)) {
+        sizeChanges.push({ key, old: o, new: n });
+      }
+    });
+
+    const newConns = newOrg.connections || [];
+    const oldConns = oldOrg.connections || [];
+    const connKey = (c) => `${c.from}->${c.to}`;
+    const oldConnMap = new Map(oldConns.map(c => [connKey(c), c]));
+    const newConnMap = new Map(newConns.map(c => [connKey(c), c]));
+    const addedConns = newConns.filter(c => !oldConnMap.has(connKey(c)));
+    const removedConns = oldConns.filter(c => !newConnMap.has(connKey(c)));
+
+    return { positionChanges, connectionChanges: { added: addedConns, removed: removedConns }, sizeChanges };
+  };
+
+  // ─── 3. Panggil keduanya ────────────────────────────────────────
   const changeSummary = getChangeSummary();
+  const layoutSummary = getLayoutChangeSummary();
 
-  const renderComparisonBox = (change, section) => {
-    const { old: oldItem, new: newItem, changes } = change;
-
-    return (
-      <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
-        <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
-          {/* SEBELUM */}
-          <div className="p-4 bg-red-50">
-            <div className="flex items-center justify-between mb-3">
-              <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
-                SEBELUM
-              </span>
-              <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">
-                {oldItem.code || oldItem.id}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {oldItem.title && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">
-                    Jabatan:
-                  </p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {oldItem.title}
-                  </p>
-                </div>
-              )}
-              {oldItem.label && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">Label:</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {oldItem.label}
-                  </p>
-                </div>
-              )}
-              {oldItem.name && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">Nama:</p>
-                  <p className="text-base font-bold text-gray-900">
-                    {oldItem.name || "TBD"}
-                  </p>
-                </div>
-              )}
-              {oldItem.empId && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">
-                    Employee ID:
-                  </p>
-                  <p className="text-sm font-mono text-gray-800">
-                    {oldItem.empId || "-"}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* SESUDAH */}
-          <div className="p-4 bg-green-50">
-            <div className="flex items-center justify-between mb-3">
-              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
-                SESUDAH
-              </span>
-              <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">
-                {newItem.code || newItem.id}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {newItem.title && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">
-                    Jabatan:
-                  </p>
-                  <p
-                    className={`text-sm font-bold ${changes.title
-                      ? "text-green-700 bg-green-200 px-2 py-1 rounded"
-                      : "text-gray-900"
-                      }`}
-                  >
-                    {newItem.title}
-                  </p>
-                </div>
-              )}
-              {newItem.label && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">Label:</p>
-                  <p
-                    className={`text-sm font-bold ${changes.label
-                      ? "text-green-700 bg-green-200 px-2 py-1 rounded"
-                      : "text-gray-900"
-                      }`}
-                  >
-                    {newItem.label}
-                  </p>
-                </div>
-              )}
-              {newItem.name && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">Nama:</p>
-                  <p
-                    className={`text-base font-bold ${changes.name
-                      ? "text-green-700 bg-green-200 px-2 py-1 rounded"
-                      : "text-gray-900"
-                      }`}
-                  >
-                    {newItem.name || "TBD"}
-                  </p>
-                </div>
-              )}
-              {newItem.empId && (
-                <div>
-                  <p className="text-xs text-gray-600 font-semibold">
-                    Employee ID:
-                  </p>
-                  <p
-                    className={`text-sm font-mono ${changes.empId
-                      ? "text-green-700 bg-green-200 px-2 py-1 rounded"
-                      : "text-gray-800"
-                      }`}
-                  >
-                    {newItem.empId || "-"}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderSimpleComparison = (field, oldValue, newValue) => {
-    return (
-      <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
-        <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
-          <div className="p-4 bg-red-50">
-            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full mb-3 inline-block">
-              SEBELUM
-            </span>
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">{field}:</p>
-              <p className="text-sm font-bold text-gray-900">
-                {oldValue || "-"}
-              </p>
-            </div>
-          </div>
-          <div className="p-4 bg-green-50">
-            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full mb-3 inline-block">
-              SESUDAH
-            </span>
-            <div>
-              <p className="text-xs text-gray-600 font-semibold">{field}:</p>
-              <p className="text-sm font-bold text-green-700 bg-green-200 px-2 py-1 rounded inline-block">
-                {newValue || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const hasLayoutChanges =
+    layoutSummary.positionChanges.length > 0 ||
+    layoutSummary.connectionChanges.added.length > 0 ||
+    layoutSummary.connectionChanges.removed.length > 0 ||
+    layoutSummary.sizeChanges.length > 0;
 
   const hasAnyChanges =
     changeSummary.headerChanges.length > 0 ||
     changeSummary.signatureChanges.length > 0 ||
     changeSummary.commissionerChanges.length > 0 ||
     Object.values(changeSummary.structureChanges).some(
-      (section) =>
-        section.added.length > 0 ||
-        section.modified.length > 0 ||
-        section.removed.length > 0
-    );
+      (s) => s.added.length > 0 || s.modified.length > 0 || s.removed.length > 0
+    ) ||
+    hasLayoutChanges; // ← sekarang termasuk layout
 
+  // ─── 4. Early returns ───────────────────────────────────────────
   if (!currentData || !oldOrg) {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-6 h-6 text-yellow-600 mt-0.5" />
           <div>
-            <h4 className="font-bold text-yellow-800 text-lg">
-              ⚠️ Data SEBELUM Tidak Tersedia
+            <h4 className="font-bold text-yellow-800 text-lg flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-yellow-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              Data SEBELUM Tidak Tersedia
             </h4>
             <p className="text-sm text-yellow-700 mt-2">
-              Sistem tidak memiliki data struktur sebelumnya (currentData).
-              Tidak dapat menampilkan perbandingan perubahan.
+              Sistem tidak memiliki data struktur sebelumnya (currentData). Tidak dapat menampilkan perbandingan perubahan.
             </p>
             <p className="text-sm text-yellow-700 mt-2 font-semibold">
-              Solusi: Pastikan data tersimpan di localStorage sebelum submit
-              changes.
+              Solusi: Pastikan data tersimpan di localStorage sebelum submit changes.
             </p>
           </div>
         </div>
@@ -462,16 +247,13 @@ const SOPreview = ({ proposedData, currentData }) => {
     return (
       <div className="text-center py-12">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Tidak Ada Perubahan Terdeteksi
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Data sama antara SEBELUM dan SESUDAH.
-        </p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Tidak Ada Perubahan Terdeteksi</h3>
+        <p className="text-gray-600 mb-4">Data sama antara SEBELUM dan SESUDAH.</p>
       </div>
     );
   }
 
+  // ─── 5. Render helpers ──────────────────────────────────────────
   const sectionNames = {
     bod: "Board of Directors",
     management: "Management Functions",
@@ -480,19 +262,71 @@ const SOPreview = ({ proposedData, currentData }) => {
     sections: "Section Heads / Engineering Product Leaders",
   };
 
+  const renderComparisonBox = (change) => {
+    const { old: oldItem, new: newItem, changes } = change;
+    return (
+      <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
+        <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
+          <div className="p-4 bg-red-50">
+            <div className="flex items-center justify-between mb-3">
+              <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">SEBELUM</span>
+              <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">{oldItem.code || oldItem.id}</span>
+            </div>
+            <div className="space-y-2">
+              {oldItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan:</p><p className="text-sm font-bold text-gray-900">{oldItem.title}</p></div>}
+              {oldItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label:</p><p className="text-sm font-bold text-gray-900">{oldItem.label}</p></div>}
+              {oldItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama:</p><p className="text-base font-bold text-gray-900">{oldItem.name}</p></div>}
+              {oldItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID:</p><p className="text-sm font-mono text-gray-800">{oldItem.empId}</p></div>}
+            </div>
+          </div>
+          <div className="p-4 bg-green-50">
+            <div className="flex items-center justify-between mb-3">
+              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">SESUDAH</span>
+              <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">{newItem.code || newItem.id}</span>
+            </div>
+            <div className="space-y-2">
+              {newItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan:</p><p className={`text-sm font-bold ${changes.title ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.title}</p></div>}
+              {newItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label:</p><p className={`text-sm font-bold ${changes.label ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.label}</p></div>}
+              {newItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama:</p><p className={`text-base font-bold ${changes.name ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.name}</p></div>}
+              {newItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID:</p><p className={`text-sm font-mono ${changes.empId ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-800"}`}>{newItem.empId}</p></div>}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSimpleComparison = (field, oldValue, newValue) => (
+    <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
+      <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
+        <div className="p-4 bg-red-50">
+          <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full mb-3 inline-block">SEBELUM</span>
+          <div><p className="text-xs text-gray-600 font-semibold">{field}:</p><p className="text-sm font-bold text-gray-900">{oldValue || "-"}</p></div>
+        </div>
+        <div className="p-4 bg-green-50">
+          <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full mb-3 inline-block">SESUDAH</span>
+          <div><p className="text-xs text-gray-600 font-semibold">{field}:</p><p className="text-sm font-bold text-green-700 bg-green-200 px-2 py-1 rounded inline-block">{newValue || "-"}</p></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── 6. Main render ─────────────────────────────────────────────
   return (
     <div className="space-y-6">
+
       {/* Header Changes */}
       {changeSummary.headerChanges.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            📋 Perubahan Header ({changeSummary.headerChanges.length})
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Perubahan Header ({changeSummary.headerChanges.length})
           </h3>
           <div className="space-y-4">
             {changeSummary.headerChanges.map((change, idx) => (
-              <div key={idx}>
-                {renderSimpleComparison(change.field, change.old, change.new)}
-              </div>
+              <div key={idx}>{renderSimpleComparison(change.field, change.old, change.new)}</div>
             ))}
           </div>
         </div>
@@ -501,14 +335,15 @@ const SOPreview = ({ proposedData, currentData }) => {
       {/* Signature Changes */}
       {changeSummary.signatureChanges.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ✍️ Perubahan Tanda Tangan ({changeSummary.signatureChanges.length})
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+            Perubahan Tanda Tangan ({changeSummary.signatureChanges.length})
           </h3>
           <div className="space-y-4">
             {changeSummary.signatureChanges.map((change, idx) => (
-              <div key={idx}>
-                {renderSimpleComparison(change.field, change.old, change.new)}
-              </div>
+              <div key={idx}>{renderSimpleComparison(change.field, change.old, change.new)}</div>
             ))}
           </div>
         </div>
@@ -517,113 +352,209 @@ const SOPreview = ({ proposedData, currentData }) => {
       {/* Commissioner Changes */}
       {changeSummary.commissionerChanges.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            👔 Perubahan Komisaris ({changeSummary.commissionerChanges.length})
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            Perubahan Komisaris ({changeSummary.commissionerChanges.length})
           </h3>
           <div className="space-y-4">
             {changeSummary.commissionerChanges.map((change, idx) => (
-              <div key={idx}>
-                {renderSimpleComparison(change.field, change.old, change.new)}
-              </div>
+              <div key={idx}>{renderSimpleComparison(change.field, change.old, change.new)}</div>
             ))}
           </div>
         </div>
       )}
 
       {/* Structure Changes */}
-      {Object.entries(changeSummary.structureChanges).map(
-        ([section, changes]) => {
-          const hasChanges =
-            changes.added.length > 0 ||
-            changes.modified.length > 0 ||
-            changes.removed.length > 0;
+      {Object.entries(changeSummary.structureChanges).map(([section, changes]) => {
+        const hasChanges = changes.added.length > 0 || changes.modified.length > 0 || changes.removed.length > 0;
+        if (!hasChanges) return null;
+        return (
+          <div key={section}>
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              {sectionNames[section]} - Perubahan
+            </h3>
 
-          if (!hasChanges) return null;
-
-          return (
-            <div key={section}>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                🏢 {sectionNames[section]} - Perubahan
-              </h3>
-
-              {/* Modified Items */}
-              {changes.modified.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">
-                    ✏️ Data yang Diubah ({changes.modified.length})
-                  </h4>
-                  <div className="space-y-4">
-                    {changes.modified.map((change, idx) => (
-                      <div key={idx}>
-                        {renderComparisonBox(change, section)}
-                      </div>
-                    ))}
-                  </div>
+            {changes.modified.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Data yang Diubah ({changes.modified.length})
+                </h4>
+                <div className="space-y-4">
+                  {changes.modified.map((change, idx) => <div key={idx}>{renderComparisonBox(change)}</div>)}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Added Items */}
-              {changes.added.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">
-                    ✅ Data Baru ({changes.added.length})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {changes.added.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-green-50 border-2 border-green-500 rounded-lg p-4"
-                      >
-                        <p className="font-bold">
-                          {item.code}: {item.name || item.label}
-                        </p>
-                        {item.title && (
-                          <p className="text-sm text-gray-600">{item.title}</p>
-                        )}
-                        {item.empId && (
-                          <p className="text-xs text-gray-500">
-                            ID: {item.empId}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            {changes.added.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Data Baru ({changes.added.length})
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {changes.added.map((item, idx) => (
+                    <div key={idx} className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+                      <p className="font-bold">{item.code}: {item.name || item.label}</p>
+                      {item.title && <p className="text-sm text-gray-600">{item.title}</p>}
+                      {item.empId && <p className="text-xs text-gray-500">ID: {item.empId}</p>}
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Removed Items */}
-              {changes.removed.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-md font-semibold text-gray-800 mb-3">
-                    ❌ Data yang Dihapus ({changes.removed.length})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {changes.removed.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-red-50 border-2 border-red-500 rounded-lg p-4 opacity-75"
-                      >
-                        <p className="font-bold line-through">
-                          {item.code}: {item.name || item.label}
-                        </p>
-                        {item.title && (
-                          <p className="text-sm text-gray-600 line-through">
-                            {item.title}
-                          </p>
-                        )}
-                        {item.empId && (
-                          <p className="text-xs text-gray-500 line-through">
-                            ID: {item.empId}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            {changes.removed.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Data yang Dihapus ({changes.removed.length})
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {changes.removed.map((item, idx) => (
+                    <div key={idx} className="bg-red-50 border-2 border-red-500 rounded-lg p-4 opacity-75">
+                      <p className="font-bold line-through">{item.code}: {item.name || item.label}</p>
+                      {item.title && <p className="text-sm text-gray-600 line-through">{item.title}</p>}
+                      {item.empId && <p className="text-xs text-gray-500 line-through">ID: {item.empId}</p>}
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* ── Layout Changes ─────────────────────────────────────── */}
+      {hasLayoutChanges && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="5 9 2 12 5 15" /><polyline points="9 5 12 2 15 5" />
+              <polyline points="15 19 12 22 9 19" /><polyline points="19 9 22 12 19 15" />
+              <line x1="2" y1="12" x2="22" y2="12" /><line x1="12" y1="2" x2="12" y2="22" />
+            </svg>
+            Perubahan Layout/Posisi Box
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border-2 border-red-400 rounded-lg overflow-hidden">
+              <div className="bg-red-500 px-4 py-2 flex items-center gap-2">
+                <span className="text-white text-sm font-bold">SEBELUM</span>
+                <span className="text-red-200 text-xs">— Struktur Lama</span>
+              </div>
+              <div
+                className="overflow-auto bg-gray-50"
+                style={{ height: '550px' }}
+              >
+                <div style={{
+                  zoom: 0.35,
+                  width: `${100 / 0.35}%`,
+                  transformOrigin: 'top left',
+                  pointerEvents: 'none',
+                }}>
+                  <StaticOrgChart
+                    organizationData={oldOrg}
+                    onCodeClick={() => { }}
+                    employeeJobdescStatus={{}}
+                  />
+                </div>
+              </div>
             </div>
-          );
-        }
+
+            <div className="border-2 border-green-400 rounded-lg overflow-hidden">
+              <div className="bg-green-500 px-4 py-2 flex items-center gap-2">
+                <span className="text-white text-sm font-bold">SESUDAH</span>
+                <span className="text-green-200 text-xs">— Struktur Baru</span>
+              </div>
+              <div
+                className="overflow-auto bg-gray-50"
+                style={{ height: '550px' }}
+              >
+                <div style={{
+                  zoom: 0.35,
+                  width: `${100 / 0.35}%`,
+                  transformOrigin: 'top left',
+                  pointerEvents: 'none',
+                }}>
+                  <StaticOrgChart
+                    organizationData={newOrg}
+                    onCodeClick={() => { }}
+                    employeeJobdescStatus={{}}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {layoutSummary.positionChanges.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-bold text-blue-800 mb-2">
+                Detail Pergeseran ({layoutSummary.positionChanges.length} box berubah posisi):
+              </p>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {layoutSummary.positionChanges.map((change, idx) => (
+                  <div key={idx} className="text-xs font-mono text-blue-700 flex items-center gap-2">
+                    <span className="bg-blue-200 px-1.5 py-0.5 rounded font-bold">{change.key}</span>
+                    {change.type === 'moved' && <span>geser {change.dx}px horizontal, {change.dy}px vertikal</span>}
+                    {change.type === 'added' && <span className="text-green-700">box baru ditambahkan</span>}
+                    {change.type === 'removed' && <span className="text-red-700">box dihapus</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(layoutSummary.connectionChanges.added.length > 0 || layoutSummary.connectionChanges.removed.length > 0) && (
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                Perubahan Line/Koneksi ({layoutSummary.connectionChanges.added.length + layoutSummary.connectionChanges.removed.length})
+              </h3>
+              <div className="space-y-3">
+                {layoutSummary.connectionChanges.added.map((conn, idx) => (
+                  <div key={`add-${idx}`} className="bg-green-50 border-2 border-green-500 rounded-lg p-4 flex items-center gap-3">
+                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex-shrink-0">DITAMBAHKAN</span>
+                    <div className="flex items-center gap-2 font-mono text-sm">
+                      <span className="bg-white border border-gray-300 rounded px-2 py-1 font-bold">{conn.from}</span>
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                      <span className="bg-white border border-gray-300 rounded px-2 py-1 font-bold">{conn.to}</span>
+                    </div>
+                  </div>
+                ))}
+                {layoutSummary.connectionChanges.removed.map((conn, idx) => (
+                  <div key={`rem-${idx}`} className="bg-red-50 border-2 border-red-500 rounded-lg p-4 flex items-center gap-3">
+                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full flex-shrink-0">DIHAPUS</span>
+                    <div className="flex items-center gap-2 font-mono text-sm opacity-60">
+                      <span className="bg-white border border-gray-300 rounded px-2 py-1 font-bold line-through">{conn.from}</span>
+                      <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                      <span className="bg-white border border-gray-300 rounded px-2 py-1 font-bold line-through">{conn.to}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -706,7 +637,15 @@ const SOChangeRequests = () => {
       return;
     }
 
-    if (!confirm("Are you sure you want to approve this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to approve this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -756,14 +695,27 @@ const SOChangeRequests = () => {
 
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments) {
-      alert("⚠️ Please provide comments for revision.");
+      Swal.fire({
+        title: "Perhatian",
+        text: "Mohon isi komentar untuk revisi terlebih dahulu.",
+        icon: "warning",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    if (!confirm("Are you sure you want to send this request for revision?"))
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to send this request for revision?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
-
-    try {
+    } try {
       setActionLoading(true);
       const response = await soChangeRequestsAPI.revisi(
         requestId,
@@ -808,7 +760,15 @@ const SOChangeRequests = () => {
 
     setShowValidationError(false);
 
-    if (!confirm("Are you sure you want to reject this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to reject this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -834,7 +794,15 @@ const SOChangeRequests = () => {
   };
 
   const handleCancel = async (requestId) => {
-    if (!confirm("Are you sure you want to cancel this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to cancel this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -878,17 +846,13 @@ const SOChangeRequests = () => {
         }
 
         console.log("✅ Changes applied to dashboard localStorage");
-
-        // Dispatch custom event so Dashboard (if open in same tab) picks up changes immediately
         window.dispatchEvent(
           new CustomEvent("dashboard-data-updated", {
             detail: proposedData.organizationData,
           })
         );
 
-        alert(
-          "✅ Request approved successfully! Dashboard will reload to show changes."
-        );
+        alert("Request approved successfully! Dashboard will reload to show changes.");
 
         window.location.href = "/";
 
@@ -936,8 +900,9 @@ const SOChangeRequests = () => {
         console.log("✅ Changes applied to dashboard (old format)");
 
         alert(
-          "✅ Request approved successfully! Dashboard will reload to show changes."
+          "Request approved successfully! Dashboard will reload to show changes."
         );
+
         window.location.href = "/";
 
         return true;
@@ -1134,9 +1099,47 @@ const SOChangeRequests = () => {
                   <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
 
                   <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
-                    <span>👤 <strong>{request.requestedBy?.name}</strong></span>
-                    <span>📋 {request.affectedSection}</span>
-                    <span>🕐 {formatDate(request.createdAt)}</span>
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                        <circle cx="12" cy="8" r="4" fill="#3B82F6" />
+                        <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="#60A5FA" />
+                      </svg>
+                      {" "}<strong>{request.requestedBy?.name || "Unknown"}</strong>
+                    </span>
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                        <rect x="4" y="3" width="16" height="18" rx="1" fill="#F59E0B" />
+                        <rect x="7" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="11.5" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="16" y="6" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="7" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="11.5" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="16" y="10.5" width="2.5" height="2.5" fill="#FFFBEB" />
+                        <rect x="10" y="15.5" width="4" height="5.5" fill="#FFFBEB" />
+                      </svg>
+                      {" "}{request.department || "Tidak ada departemen"}
+                    </span>
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                        <path
+                          d="M4 4v6h6M20 20v-6h-6M5.5 9A8 8 0 0119.8 9.5M18.5 15A8 8 0 014.2 14.5"
+                          fill="none"
+                          stroke="#10B981"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {" "}{request.changeType}
+                    </span>
+
+                    <span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: "inline", verticalAlign: "-3px", marginRight: 4 }}>
+                        <circle cx="12" cy="12" r="9" fill="#8B5CF6" />
+                        <path d="M12 7v5l3.5 3.5" fill="none" stroke="#F5F3FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {" "}{formatDate(request.createdAt)}
+                    </span>
                   </div>
 
                   {(request.firstApprovedBy || request.secondApprovedBy) && (
@@ -1144,17 +1147,23 @@ const SOChangeRequests = () => {
                       {request.firstApprovedBy && (
                         <span className="inline-flex items-center gap-1 mr-3">
                           <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                          Director: {request.firstApprovedBy?.name}
+                          Director : {request.firstApprovedBy?.name}
 
                         </span>
                       )}
                       {request.secondApprovedBy ? (
                         <span className="inline-flex items-center gap-1">
                           <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                          Presiden Director: {request.secondApprovedBy?.name}
+                          Presiden Director : {request.secondApprovedBy?.name}
                         </span>
                       ) : request.status === "waiting_second_approval" ? (
-                        <span className="text-blue-500">🕒 Waiting for Second Approval</span>
+                        <span className="text-blue-500 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Waiting for Second Approval
+                        </span>
                       ) : null}
                     </div>
                   )}
@@ -1304,7 +1313,7 @@ const SOChangeRequests = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="font-semibold text-gray-700">
-                          Requested by:
+                          Requested by :
                         </span>
                         <p className="text-gray-600">
                           {selectedRequest.requestedBy?.name}
@@ -1312,7 +1321,7 @@ const SOChangeRequests = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-700">
-                          Date:
+                          Date :
                         </span>
                         <p className="text-gray-600">
                           {formatDate(selectedRequest.createdAt)}
@@ -1320,7 +1329,7 @@ const SOChangeRequests = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-700">
-                          Affected Section:
+                          Affected Section :
                         </span>
                         <p className="text-gray-600">
                           {selectedRequest.affectedSection}
@@ -1328,7 +1337,7 @@ const SOChangeRequests = () => {
                       </div>
                       <div>
                         <span className="font-semibold text-gray-700">
-                          Change Type:
+                          Change Type :
                         </span>
                         <p className="text-gray-600">
                           {selectedRequest.changeType}
@@ -1342,14 +1351,14 @@ const SOChangeRequests = () => {
                     selectedRequest.secondApprovedBy) && (
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-3">
-                          Approval Progress:
+                          Approval Progress :
                         </h4>
                         <div className="space-y-2">
                           {selectedRequest.firstApprovedBy && (
                             <div className="flex items-center gap-2 text-sm">
                               <CheckCircle className="w-5 h-5 text-green-500" />
                               <span>
-                                <strong>Director:</strong>{" "}
+                                <strong>Director :</strong>{" "}
                                 {selectedRequest.firstApprovedBy.name}
                               </span>
                               {selectedRequest.firstApprovedAt && (
@@ -1377,7 +1386,7 @@ const SOChangeRequests = () => {
                             <div className="flex items-center gap-2 text-sm text-blue-600">
                               <Clock className="w-5 h-5" />
                               <span>
-                                <strong>Presiden Director:</strong> Pending
+                                <strong>Presiden Director :</strong> Pending
                               </span>
                             </div>
                           ) : null}
@@ -1389,7 +1398,7 @@ const SOChangeRequests = () => {
                   {selectedRequest.reviewComments && (
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3">
-                        Review Comments:
+                        Review Comments :
                       </h4>
                       <div
                         className={`border-l-4 p-4 ${selectedRequest.status === "rejected"
@@ -1421,12 +1430,23 @@ const SOChangeRequests = () => {
                       <div>
                         <label className="block font-semibold text-gray-900 mb-2">
                           <MessageSquare className="inline w-5 h-5 mr-2" />
-                          Review Comments:
+                          Review Comments :
                         </label>
-                        <p className="text-sm text-gray-600 mb-2">
-                          ✅ Optional for approval | ⚠️{" "}
-                          <span className="font-semibold text-red-600">
-                            Required for rejection
+                        <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Optional for approval
+                          </span>
+                          <span>|</span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            </svg>
+                            <span className="font-semibold text-red-600">Required for rejection</span>
                           </span>
                         </p>
                         <textarea
@@ -1443,8 +1463,12 @@ const SOChangeRequests = () => {
                           placeholder="Add your comments here... (Required if rejecting)"
                         />
                         {showValidationError && (
-                          <p className="text-red-600 text-sm mt-2 font-semibold">
-                            ⚠️ Rejection reason is required!
+                          <p className="text-red-600 text-sm mt-2 font-semibold flex items-center gap-1">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            </svg>
+                            Rejection reason is required!
                           </p>
                         )}
                       </div>
@@ -1453,7 +1477,6 @@ const SOChangeRequests = () => {
               )}
             </div>
 
-            {/* Modal Footer - same as before */}
             {/* Modal Footer */}
             {canApprove &&
               ["pending", "waiting_second_approval"].includes(

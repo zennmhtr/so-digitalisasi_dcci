@@ -19,7 +19,7 @@ const FinanceDepartment = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -47,7 +47,7 @@ const FinanceDepartment = () => {
     setLoadingJobdesc(true);
     setJobdescData(null);
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -332,17 +332,21 @@ const FinanceDepartment = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -408,10 +412,10 @@ const FinanceDepartment = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(FINANCE & ACCOUNTING DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">({orgData.header.title})</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -438,8 +442,8 @@ const FinanceDepartment = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRDGA&IT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -513,8 +517,8 @@ const FinanceDepartment = () => {
                 <div className="p-3 flex-1 text-center flex flex-col justify-center">
                   <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">{orgData.header.title || "FINANCE & ACCOUNTING"}</p>
                   <hr className="my-2 border-gray-300" />
-                  <p className="text-sm leading-tight">{orgData.header.head}</p>
-                  <p className="text-sm leading-tight">{orgData.header.empId}</p>
+                  <p className="text-sm font-bold leading-tight">{orgData.header.head}</p>
+                  <p className="text-sm leading-tight">({orgData.header.empId})</p>
                 </div>
               </div>
             </div>
@@ -523,7 +527,6 @@ const FinanceDepartment = () => {
             <div className="space-y-4 flex flex-col items-center">
               <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[400px] w-[290px]">
                 <div className="flex flex-col h-full">
-                  {/* Header */}
                   <div className="flex border-b border-gray-400">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
                       <p className="text-sm font-bold"></p>

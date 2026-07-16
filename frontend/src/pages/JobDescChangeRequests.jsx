@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { jobDescChangeRequestsAPI } from "../services/api";
+import Swal from 'sweetalert2';
 
 const JobDescChangeRequests = () => {
   const { user } = useAuth();
@@ -114,7 +115,15 @@ const JobDescChangeRequests = () => {
       return;
     }
 
-    if (!confirm("Are you sure you want to approve this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to approve this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -158,14 +167,27 @@ const JobDescChangeRequests = () => {
 
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments) {
-      alert("⚠️ Please provide comments for revision.");
+      Swal.fire({
+        title: "Perhatian",
+        text: "Mohon isi komentar untuk revisi terlebih dahulu.",
+        icon: "warning",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    if (!confirm("Are you sure you want to send this request for revision?"))
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to send this request for revision?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
-
-    try {
+    } try {
       setActionLoading(true);
       const response = await jobDescChangeRequestsAPI.revisi(
         requestId,
@@ -209,7 +231,15 @@ const JobDescChangeRequests = () => {
 
     setShowValidationError(false);
 
-    if (!confirm("Are you sure you want to reject this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to reject this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -235,7 +265,15 @@ const JobDescChangeRequests = () => {
   };
 
   const handleCancel = async (requestId) => {
-    if (!confirm("Are you sure you want to cancel this request?")) {
+    const confirmResult = await Swal.fire({
+      title: "Are you sure you want to cancel this request?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (!confirmResult.isConfirmed) {
       return;
     }
 
@@ -460,7 +498,7 @@ const JobDescChangeRequests = () => {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">JobDesc Change Requests</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Job Description Change Requests</h1>
           <p className="text-gray-500 text-sm mt-1">
             Review and approve Job Description change requests
           </p>
@@ -537,8 +575,19 @@ const JobDescChangeRequests = () => {
                     <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{request.description}</p>
 
                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mt-2">
-                      <span>👤 <strong>{request.requestedBy?.name || "unknown"}</strong></span>
-                      <span>🕐 {formatDate(request.createdAt)}</span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                        </svg>
+                        <strong>{request.requestedBy?.name || "unknown"}</strong>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {formatDate(request.createdAt)}
+                      </span>
                     </div>
 
                     {(request.firstApprovedBy || request.secondApprovedBy) && (
@@ -546,17 +595,23 @@ const JobDescChangeRequests = () => {
                         {request.firstApprovedBy && (
                           <span className="inline-flex items-center gap-1 mr-3">
                             <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                            Approved: {request.firstApprovedBy?.name}
+                            Approved : {request.firstApprovedBy?.name}
                             {request.firstApprovedAt ? ` (${formatDate(request.firstApprovedAt)})` : ""}
                           </span>
                         )}
                         {request.secondApprovedBy ? (
                           <span className="inline-flex items-center gap-1">
                             <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                            Director: {request.secondApprovedBy?.name}
+                            Director : {request.secondApprovedBy?.name}
                           </span>
                         ) : request.status === "waiting_director_approval" ? (
-                          <span className="text-blue-500">🕒 Waiting for Director Approval</span>
+                          <span className="text-blue-500 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Waiting for Director Approval
+                          </span>
                         ) : null}
                       </div>
                     )}
@@ -811,7 +866,7 @@ const JobDescChangeRequests = () => {
               {selectedRequest.reviewComments && (
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-3">
-                    Review Comments:
+                    Review Comments :
                   </h4>
                   <div
                     className={`border-l-4 p-4 ${selectedRequest.status === "rejected"
@@ -841,10 +896,21 @@ const JobDescChangeRequests = () => {
                       <MessageSquare className="inline w-5 h-5 mr-2" />
                       Review Comments:
                     </h4>
-                    <p className="text-sm text-gray-600 mb-2">
-                      ✅ Optional for approval | ⚠️{" "}
-                      <span className="font-semibold text-red-600">
-                        Required for rejection
+                    <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Optional for approval
+                      </span>
+                      <span>|</span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        <span className="font-semibold text-red-600">Required for rejection</span>
                       </span>
                     </p>
                     <textarea
@@ -861,8 +927,12 @@ const JobDescChangeRequests = () => {
                       placeholder="Add your comments here... (Required if rejecting"
                     />
                     {showValidationError && (
-                      <p className="text-red-600 text-sm mt-2 font-semibold">
-                        ⚠️ Rejection reason is required!
+                      <p className="text-red-600 text-sm mt-2 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        Rejection reason is required!
                       </p>
                     )}
                   </div>

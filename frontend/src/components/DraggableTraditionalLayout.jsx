@@ -15,12 +15,12 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (!organizationData) return;
 
     const initialPositions = {};
-    
+
     const defaultPositions = {
       'commissioners-header': { x: 400, y: 20 },
       'president-commissioner': { x: 250, y: 100 },
       'commissioners-list': { x: 470, y: 100 },
-      
+
       'header-bod': { x: 50, y: 250 },
       'header-management': { x: 250, y: 250 },
       'header-division': { x: 450, y: 250 },
@@ -36,9 +36,9 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.bod) {
       organizationData.structure.bod.forEach((item, index) => {
         const key = `bod-${item.id}`;
-        initialPositions[key] = organizationData.positions?.[key] || { 
-          x: 50, 
-          y: 320 + index * 90 
+        initialPositions[key] = organizationData.positions?.[key] || {
+          x: 50,
+          y: 320 + index * 90
         };
       });
     }
@@ -47,14 +47,13 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.management) {
       organizationData.structure.management.forEach((item, index) => {
         const key = `management-${item.id}`;
-        let yPos = 500; 
-        
-        if (item.code === 'MIO1.0') yPos = 500;
-        else if (item.code === 'MDO1.0') yPos = 590; 
+        let yPos = 500;
+
+        if (item.code === 'MD1.0') yPos = 500;
         else if (item.code === 'MRO1.0') yPos = 760;
         else if (item.code === 'CRO1.0') yPos = 850;
         else if (item.code === 'CO2.0') yPos = 940;
-        
+
         initialPositions[key] = organizationData.positions?.[key] || { x: 250, y: yPos };
       });
     }
@@ -66,7 +65,7 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
         let yPos = 650; //
         if (index === 1) yPos = 750;
         if (index === 2) yPos = 850;
-        
+
         initialPositions[key] = organizationData.positions?.[key] || { x: 450, y: yPos };
       });
     }
@@ -84,10 +83,10 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
           5: 1180, // QA/QC/DOC
           6: 1450  // MARKETING (Aftermarket)
         };
-        
-        initialPositions[key] = organizationData.positions?.[key] || { 
-          x: 650, 
-          y: spacingMap[index] || (540 + index * 90) 
+
+        initialPositions[key] = organizationData.positions?.[key] || {
+          x: 650,
+          y: spacingMap[index] || (540 + index * 90)
         };
       });
     }
@@ -96,8 +95,8 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
     if (organizationData.structure?.sections) {
       organizationData.structure.sections.forEach((item, index) => {
         const key = `section-${item.id}`;
-        let yPos = 320 + index * 90; 
-        
+        let yPos = 320 + index * 90;
+
         const specialPositions = {
           3: 750,  // MARKETING after large gap
           4: 840,  // ENGINEERING
@@ -112,11 +111,11 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
           13: 1650, // PURCHASING
           14: 1740  // FINANCE
         };
-        
+
         if (specialPositions[index] !== undefined) {
           yPos = specialPositions[index];
         }
-        
+
         initialPositions[key] = organizationData.positions?.[key] || { x: 850, y: yPos };
       });
     }
@@ -220,9 +219,9 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
         <div className="flex justify-between items-center mb-4 pointer-events-auto">
           <div className="flex items-center">
             <div className="w-24 h-24 flex items-center justify-center mr-4 p-2">
-              <img 
-                src="/logo/Logo DG New 2022.png" 
-                alt="Dharma Group Logo" 
+              <img
+                src="/logo/Logo DG New 2022.png"
+                alt="Dharma Group Logo"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -237,25 +236,65 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
               {/* Prepared By */}
               <div className="text-center border-r border-gray-400 pr-4">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Prepared By :</p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}</p>
-                <p className="text-xs text-gray-500">Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}</p>
+                {organizationData.signatures?.preparedBy?.image ? (
+                  <img
+                    src={organizationData.signatures.preparedBy.image}
+                    alt="ttd"
+                    className="h-12 object-contain mx-auto my-2"
+                  />
+                ) : (
+                  <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
+                )}
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.preparedBy?.name || 'Diki Wahyudi'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Prep Date : {organizationData.signatures?.preparedBy?.date || '08/09/2025'}
+                </p>
               </div>
 
-              {/* Middle - Bambang Wuryanto */}
+              {/* Middle - Checked By */}
               <div className="text-center border-r border-gray-400 pr-4">
-                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">{organizationData.signatures?.middleBy?.title || 'Bambang Wuryanto'}</p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}</p>
-                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}</p>
+                <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">
+                  {organizationData.signatures?.middleBy?.title || 'Checked By :'}
+                </p>
+                {/* Gambar tanda tangan */}
+                {organizationData.signatures?.middleBy?.image ? (
+                  <img
+                    src={organizationData.signatures.middleBy.image}
+                    alt="ttd"
+                    className="h-12 object-contain mx-auto my-2"
+                  />
+                ) : (
+                  <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
+                )}
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.middleBy?.name || 'Bambang Wuryanto'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Checked Date : {organizationData.signatures?.middleBy?.date || '08/09/2025'}
+                </p>
               </div>
 
               {/* Approved By */}
               <div className="text-center">
                 <p className="text-xs font-bold border-b border-gray-400 pb-1 mb-2">Approved By :</p>
-                <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
-                <p className="text-xs font-semibold underline mb-1">{organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}</p>
-                <p className="text-xs text-gray-500">Prepared Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}</p>
+                {/* Gambar tanda tangan */}
+                {organizationData.signatures?.approvedBy?.image ? (
+                  <img
+                    src={organizationData.signatures.approvedBy.image}
+                    alt="ttd"
+                    className="h-12 object-contain mx-auto my-2"
+                  />
+                ) : (
+                  <div className="border-b border-gray-300 mx-auto w-20 mb-16"></div>
+                )}
+                <p className="text-xs font-semibold underline mb-1">
+                  {organizationData.signatures?.approvedBy?.name || 'Eko Maryanto'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Approved Date : {organizationData.signatures?.approvedBy?.date || '08/09/2025'}
+                </p>
               </div>
             </div>
           </div>
@@ -348,14 +387,13 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
           const mdo2 = organizationData.structure.management.find(m => m.code === 'MDO2.0');
           return (
             <DraggableCard key="mdo-combined" itemKey={`management-${item.id}`}>
-              <div className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] w-44 ${
-                mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
-              }`}
-              onClick={() => {
-                if (mdo2?.clickable && mdo2?.route && canViewSODetails) {
-                  navigate(mdo2.route);
-                }
-              }}
+              <div className={`bg-white border border-gray-400 rounded shadow-sm min-h-[170px] w-44 ${mdo2?.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                }`}
+                onClick={() => {
+                  if (mdo2?.clickable && mdo2?.route && canViewSODetails) {
+                    navigate(mdo2.route);
+                  }
+                }}
               >
                 <div className="flex flex-col h-full">
                   {/* Header row */}
@@ -364,7 +402,7 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
                       <p className="text-xs font-semibold leading-tight">{item.title}</p>
                     </div>
                   </div>
-                  
+
                   {/* First content row (MDO1.0) */}
                   <div className="flex border-b border-gray-300 flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
@@ -375,7 +413,7 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
                       <p className="text-xs leading-tight">({item.empId})</p>
                     </div>
                   </div>
-                  
+
                   {/* Second content row (MDO2.0) */}
                   <div className="flex flex-1">
                     <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
@@ -398,14 +436,13 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
         } else {
           return (
             <DraggableCard key={item.id} itemKey={`management-${item.id}`}>
-              <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-44 ${
-                item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
-              }`}
-              onClick={() => {
-                if (item.clickable && item.route && canViewSODetails) {
-                  navigate(item.route);
-                }
-              }}
+              <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-44 ${item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+                }`}
+                onClick={() => {
+                  if (item.clickable && item.route && canViewSODetails) {
+                    navigate(item.route);
+                  }
+                }}
               >
                 <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
                   <p className="text-xs font-bold">{item.code}</p>
@@ -437,14 +474,13 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
       {/* Draggable Department Cards */}
       {organizationData.structure?.departments?.map((item) => (
         <DraggableCard key={item.id} itemKey={`department-${item.id}`}>
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-44 ${
-            item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
-          }`}
-          onClick={() => {
-            if (item.clickable && item.route && canViewSODetails) {
-              navigate(item.route);
-            }
-          }}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-44 ${item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+            }`}
+            onClick={() => {
+              if (item.clickable && item.route && canViewSODetails) {
+                navigate(item.route);
+              }
+            }}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
               <p className="text-xs font-bold">{item.code}</p>
@@ -465,14 +501,13 @@ const DraggableTraditionalLayout = ({ organizationData, onDataChange }) => {
       {/* Draggable Section Cards */}
       {organizationData.structure?.sections?.map((item) => (
         <DraggableCard key={item.id} itemKey={`section-${item.id}`}>
-          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-48 ${
-            item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
-          }`}
-          onClick={() => {
-            if (item.clickable && item.route && canViewSODetails) {
-              navigate(item.route);
-            }
-          }}
+          <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-48 ${item.clickable && canViewSODetails ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200' : ''
+            }`}
+            onClick={() => {
+              if (item.clickable && item.route && canViewSODetails) {
+                navigate(item.route);
+              }
+            }}
           >
             <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-12 flex items-center justify-center">
               <p className="text-xs font-bold">{item.code}</p>

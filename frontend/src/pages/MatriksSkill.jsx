@@ -1,68 +1,65 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { matriksSkillChangeRequestsAPI } from "../services/api";
 import api from "../services/api";
+import { getSignatureInfo, SIGNATURE_IMAGES, DEPARTMENT_SIGNER, DEFAULT_APPROVER } from "../config/signatures";
 
 const DEPARTMENT_ICONS = {
     "quality-assurance": (
-        // Checklist / magnifier
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
     ),
     "management-representative": (
-        // Badge / shield
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
     ),
     "finance": (
-        // Currency / money
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
     ),
     "hrga-it": (
-        // Users / people
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 12h.01M9 15h.01M15 9h.01M15 12h.01M15 15h.01M11 21v-4h2v4"
+            />
         </svg>
     ),
     "management-development": (
-        // Chart / growth
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
     ),
     "manufactur-battery": (
-        // Battery
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M17 7h1a2 2 0 012 2v6a2 2 0 01-2 2h-1M3 7h14a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V9a2 2 0 012-2zm5 5h4" />
         </svg>
     ),
     "manufacturing-cable": (
-        // Cable / link
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
     ),
     "Marketing Battery": (
-        // Lightning / energy
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
     ),
     "marketing-engineering": (
-        // Cog / gear
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -71,21 +68,18 @@ const DEPARTMENT_ICONS = {
         </svg>
     ),
     "mi-she": (
-        // Shield check / safety
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v4m0 4h.01" />
         </svg>
     ),
     "ppic": (
-        // Clipboard list / planning
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01" />
         </svg>
     ),
     "purchasing": (
-        // Shopping cart / box
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -579,12 +573,12 @@ const DEPARTMENTS_DATA = [
         id: "mi-she",
         name: "MI & SHE",
         color: "bg-yellow-500",
-        borderColor: "#eaff00ff",
-        iconColor: "#eaff00ff",
+        borderColor: "#F5004F",
+        iconColor: "#F5004F",
         matriksData: {
             judul: "Matriks Kompetensi",
-            divisi: "MI SHE",
-            departemen: "MI SHE",
+            divisi: "MI & SHE",
+            departemen: "MI & SHE",
             tglEfektif: "27 Maret 2026",
             kompetensi: [
                 "Alat Ukur",
@@ -629,8 +623,8 @@ const DEPARTMENTS_DATA = [
         id: "ppic",
         name: "PPIC",
         color: "bg-blue-500",
-        borderColor: "#00ffd0ff",
-        iconColor: "#00ffd0ff",
+        borderColor: "#00C68D",
+        iconColor: "#00C68D",
         matriksData: {
             judul: "Matriks Kompetensi",
             divisi: "PPIC",
@@ -799,98 +793,136 @@ const PieChart = ({ value }) => {
     );
 };
 
-const DocHeader = ({ data }) => (
+const DocHeader = ({ data }) => {
+  const deptName = data.departemen || "";
+  const signer =
+    DEPARTMENT_SIGNER[deptName] ||
+    DEPARTMENT_SIGNER[deptName.replace(/ Department$/i, "").trim()] ||
+    DEPARTMENT_SIGNER[deptName.replace(/ Dept\.?$/i, "").trim()] ||
+    (() => {
+      const deptUpper = deptName.toUpperCase();
+      const matchedKey = Object.keys(DEPARTMENT_SIGNER).find(key =>
+        deptUpper.includes(key.toUpperCase()) ||
+        key.toUpperCase().includes(deptUpper)
+      );
+      return matchedKey ? DEPARTMENT_SIGNER[matchedKey] : { name: "DEPT. HEAD", role: "DEPT. HEAD", signatureKey: null };
+    })();
+
+  const dibuatSignature = signer.signatureKey ? SIGNATURE_IMAGES[signer.signatureKey] ?? null : null;
+  const disetujuiSignature = SIGNATURE_IMAGES[DEFAULT_APPROVER.signatureKey] ?? null;
+
+  return (
     <div style={{ border: "1px solid #9ca3af", backgroundColor: "#fff", width: "100%" }}>
-        <div style={{ display: "flex", borderBottom: "1px solid #9ca3af" }}>
-
-            {/* Logo */}
-            <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                borderRight: "1px solid #9ca3af",
-                padding: "10px 16px",
-                minWidth: "200px",
-            }}>
-                <img
-                    src="/logo/dcci.png"
-                    alt="PT DCI"
-                    style={{ height: "56px", objectFit: "contain" }}
-                    onError={(e) => {
-                        e.target.style.display = "none";
-                        if (e.target.nextSibling) e.target.nextSibling.style.display = "flex";
-                    }}
-                />
-                <div style={{ display: "none", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-                    <div style={{
-                        width: 48, height: 48, borderRadius: "50%",
-                        backgroundColor: "#1e3a8a",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        marginBottom: 4,
-                    }}>
-                        <span style={{ color: "#fff", fontWeight: "bold", fontSize: 12 }}>DCI</span>
-                    </div>
-                    <span style={{ fontSize: 10, fontWeight: "bold", color: "#1e3a8a", lineHeight: 1.2 }}>
-                        PT DHARMA<br />CONTROLCABLE IND.
-                    </span>
-                </div>
-            </div>
-
-            {/* Judul tengah */}
-            <div style={{
-                flex: 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: "10px 16px",
-                borderRight: "1px solid #9ca3af",
-            }}>
-                <span style={{ fontSize: 18, fontWeight: "bold", letterSpacing: "0.05em", color: "#111827", textTransform: "uppercase" }}>
-                    {data.judul}
-                </span>
-            </div>
-
-            {/* Kotak Dibuat / Diperiksa / Disetujui */}
-            {["DIBUAT", "DISETUJUI"].map((label, i) => (
-                <div key={i} style={{
-                    borderLeft: "1px solid #9ca3af",
-                    width: "100px",
-                    display: "flex",
-                    flexDirection: "column",
-                    backgroundColor: "#fff",
-                }}>
-                    <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
-                        <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>{label}</span>
-                    </div>
-                    <div style={{ flex: 1, minHeight: "60px" }} />
-                    <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center" }}>
-                        <span style={{ fontSize: 7, color: "#6b7280" }}>Nama & Ttd</span>
-                    </div>
-                </div>
-            ))}
-
+      <div style={{ display: "flex", borderBottom: "1px solid #9ca3af" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          borderRight: "1px solid #9ca3af",
+          padding: "10px 16px",
+          minWidth: "200px",
+        }}>
+          <img
+            src="/logo/dcci.png"
+            alt="PT DCI"
+            style={{ height: "56px", objectFit: "contain" }}
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderTop: "none" }}>
-            {[
-                ["Divisi", data.divisi],
-                ["Departemen", data.departemen],
-                ["Tgl Efektif", data.tglEfektif],
-            ].map(([label, value], i) => (
-                <div
-                    key={i}
-                    style={{
-                        padding: "6px 12px",
-                        borderRight: i < 2 ? "1px solid #9ca3af" : "none",
-                        fontSize: 12,
-                    }}
-                >
-                    <span style={{ fontWeight: 600, color: "#374151" }}>{label}</span>
-                    <span style={{ color: "#6b7280" }}> : </span>
-                    <span style={{ color: "#111827" }}>{value}</span>
-                </div>
-            ))}
+        <div style={{
+          flex: 1,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "10px 16px",
+          borderRight: "1px solid #9ca3af",
+        }}>
+          <span style={{ fontSize: 18, fontWeight: "bold", letterSpacing: "0.05em", color: "#111827", textTransform: "uppercase" }}>
+            {data.judul}
+          </span>
         </div>
+
+        <div style={{
+          borderLeft: "1px solid #9ca3af",
+          width: "120px",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#fff",
+        }}>
+          <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
+            <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DIBUAT</span>
+          </div>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
+            {dibuatSignature ? (
+              <img
+                src={dibuatSignature}
+                alt={`TTD ${signer.name}`}
+                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            ) : null}
+          </div>
+          <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
+              {signer.name}
+            </span>
+            <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
+              {signer.role}
+            </span>
+          </div>
+        </div>
+
+        <div style={{
+          borderLeft: "1px solid #9ca3af",
+          width: "120px",
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#fff",
+        }}>
+          <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
+            <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DISETUJUI</span>
+          </div>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
+            {disetujuiSignature ? (
+              <img
+                src={disetujuiSignature}
+                alt={`TTD ${DEFAULT_APPROVER.name}`}
+                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            ) : null}
+          </div>
+          <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
+              {DEFAULT_APPROVER.name}
+            </span>
+            <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
+              {DEFAULT_APPROVER.role}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderTop: "none" }}>
+        {[
+          ["Divisi", data.divisi],
+          ["Departemen", data.departemen],
+          ["Tanggal Efektif", data.tglEfektif],
+        ].map(([label, value], i) => (
+          <div key={i} style={{
+            padding: "6px 12px",
+            borderRight: i < 2 ? "1px solid #9ca3af" : "none",
+            fontSize: 12,
+          }}>
+            <span style={{ fontWeight: 600, color: "#374151" }}>{label}</span>
+            <span style={{ color: "#6b7280" }}> : </span>
+            <span style={{ color: "#111827" }}>{value}</span>
+          </div>
+        ))}
+      </div>
     </div>
-);
+  );
+};
 
-const MatriksTable = ({ data, isEditMode, onEdit }) => {
+const MatriksTable = ({ data, isEditMode, onEdit, onEditKompetensi, selectedRows = new Set(), onToggleSelect, onToggleSelectAll }) => {
     const headerBg = "#1f3864";
     const headerBg2 = "#2e4a7a";
     const headerText = "#ffffff";
@@ -911,10 +943,11 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
         padding: "3px 5px",
         fontSize: 11,
         whiteSpace: "nowrap",
+        textAlign: "center",
     };
 
     return (
-        <div style={{ overflowX: "auto", marginTop: 0, width: "100%" }}>
+        <div style={{ overflowX: "auto", overflowY: "visible", marginTop: 0, width: "100%" }}>
             <style>{`
                 .matriks-table {
                     border-collapse: collapse !important;
@@ -929,9 +962,18 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                     border: 1px solid #d1d5db !important;
                 }
             `}</style>
-            <table className="matriks-table" style={{ borderCollapse: "collapse", fontSize: 11, width: "100%", minWidth: "100%" }}>
+            <table className="matriks-table" style={{ borderCollapse: "collapse", fontSize: 11, width: "100%", minWidth: "100%", overflow: "visible" }}>
                 <thead>
                     <tr>
+                        {isEditMode && (
+                            <th rowSpan={2} style={{ ...thStyle, minWidth: 36, backgroundColor: "white", color: "#000000", verticalAlign: "middle" }}>
+                                <input
+                                    type="checkbox"
+                                    checked={data.karyawan.length > 0 && data.karyawan.every((_, idx) => selectedRows.has(idx))}
+                                    onChange={onToggleSelectAll}
+                                />
+                            </th>
+                        )}
                         {[
                             { label: "No", minW: 32, rowSpan: 2 },
                             { label: "NPK", minW: 85, rowSpan: 2 },
@@ -944,6 +986,7 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                                 {label}
                             </th>
                         ))}
+
                         <th
                             colSpan={data.kompetensi.length}
                             style={{ ...thStyle, backgroundColor: "white", color: "#000000" }}
@@ -960,22 +1003,66 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                             <th
                                 key={i}
                                 style={{
-                                    border: "1px solid #6b7280",
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    fontSize: 10,
+                                    border: "1px solid #d1d5db",
                                     backgroundColor: "white",
-                                    color: "#000000",
-                                    writingMode: "vertical-rl",
-                                    transform: "rotate(180deg)",
-                                    minWidth: 34,
-                                    maxWidth: 34,
-                                    height: 130,
+                                    padding: 0,
+                                    height: isEditMode ? "auto" : 160,
+                                    minWidth: isEditMode ? 140 : 32,
+                                    maxWidth: isEditMode ? 140 : 32,
+                                    width: isEditMode ? 140 : 32,
                                     verticalAlign: "bottom",
-                                    padding: "4px 2px",
+                                    position: "relative",
+                                    overflow: "hidden",
                                 }}
                             >
-                                {k}
+                                {isEditMode ? (
+                                    <textarea
+                                        style={{
+                                            width: "100%",
+                                            minHeight: 80,
+                                            border: "1px solid #93c5fd",
+                                            borderRadius: 4,
+                                            padding: "6px 8px",
+                                            fontSize: 12,
+                                            fontWeight: "bold",
+                                            lineHeight: 1.4,
+                                            textAlign: "left",
+                                            resize: "vertical",
+                                            backgroundColor: "#fff",
+                                            color: "#000",
+                                            boxSizing: "border-box",
+                                        }}
+                                        value={k}
+                                        onChange={(e) => onEditKompetensi(i, e.target.value)}
+                                    />
+                                ) : (
+                                    <div style={{
+                                        display: "flex",
+                                        alignItems: "flex-end",
+                                        justifyContent: "flex-start",
+                                        height: "100%",
+                                        width: "100%",
+                                        paddingBottom: 6,
+                                        paddingLeft: 4,
+                                    }}>
+                                        <span style={{
+                                            display: "block",
+                                            writingMode: "vertical-rl",
+                                            textOrientation: "mixed",
+                                            transform: "rotate(180deg)",
+                                            fontSize: 10,
+                                            fontWeight: "bold",
+                                            color: "#111827",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxHeight: 150,
+                                            lineHeight: 1.2,
+                                        }}>
+                                            {k}
+                                        </span>
+                                    </div>
+                                )}
                             </th>
                         ))}
                     </tr>
@@ -984,9 +1071,20 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                 <tbody>
                     {data.karyawan.map((kar, kIdx) => (
                         <React.Fragment key={kar.npk}>
-
-                            {/* ── Baris 1: K (Kompetensi) ── */}
                             <tr>
+                                {/* Checkbox select */}
+                                {isEditMode && (
+                                    <td
+                                        rowSpan={4}
+                                        style={{ ...tdFixed, textAlign: "center", backgroundColor: "white" }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedRows.has(kIdx)}
+                                            onChange={() => onToggleSelect(kIdx)}
+                                        />
+                                    </td>
+                                )}
                                 {/* No */}
                                 <td
                                     rowSpan={4}
@@ -1024,6 +1122,7 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                                         />
                                     ) : kar.jabatan}
                                 </td>
+
                                 {/* Bagian */}
                                 <td rowSpan={4} style={{ ...tdFixed, backgroundColor: "white" }}>
                                     {isEditMode ? (
@@ -1086,7 +1185,6 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                                 </td>
                             </tr>
 
-                            {/* ── Baris 2: SK (Standar Kompetensi) ── */}
                             <tr>
                                 <td style={{ ...tdFixed, fontWeight: 600, backgroundColor: "white", color: "#000000", textAlign: "center" }}>
                                     Standar Kompetensi
@@ -1123,7 +1221,6 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                                 })}
                             </tr>
 
-                            {/* ── Baris 3: Metode Fulfillment ── */}
                             <tr>
                                 <td style={{ ...tdFixed, fontWeight: 600, backgroundColor: "white", color: "#000000", textAlign: "center" }}>
                                     Metode Fulfillment
@@ -1160,7 +1257,6 @@ const MatriksTable = ({ data, isEditMode, onEdit }) => {
                                 })}
                             </tr>
 
-                            {/* ── Baris 4: Schedule Fulfillment ── */}
                             <tr>
                                 <td style={{ ...tdFixed, fontWeight: 600, backgroundColor: "white", color: "#000000", textAlign: "center" }}>
                                     Schedule Fulfillment
@@ -1268,7 +1364,41 @@ const MatriksSkill = () => {
 
     const [selectedDept, setSelectedDept] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // Auto-select dept dari Dashboard click
+    useEffect(() => {
+        const targetDeptId = localStorage.getItem('matriks_target_dept');
+        if (targetDeptId) {
+            localStorage.removeItem('matriks_target_dept');
+            const found = DEPARTMENTS_DATA.find(d => d.id === targetDeptId);
+            if (found) setSelectedDept(found);
+        }
+    }, []);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [selectedRows, setSelectedRows] = useState(new Set());
+    useEffect(() => {
+        setSelectedRows(new Set());
+    }, [selectedDept, isEditMode]);
+
+    const toggleSelectRow = (idx) => {
+        setSelectedRows((prev) => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx);
+            else next.add(idx);
+            return next;
+        });
+    };
+
+    const toggleSelectAllRows = () => {
+        const dept = deptData[selectedDept?.id];
+        if (!dept?.karyawan?.length) return;
+        const allSelected = dept.karyawan.every((_, idx) => selectedRows.has(idx));
+        if (allSelected) {
+            setSelectedRows(new Set());
+        } else {
+            setSelectedRows(new Set(dept.karyawan.map((_, idx) => idx)));
+        }
+    };
 
     const [deptData, setDeptData] = useState(() => {
         const init = {};
@@ -1292,10 +1422,7 @@ const MatriksSkill = () => {
                         const updated = { ...prev };
                         response.data.data.forEach((item) => {
                             if (item.deptId && item.matriksData) {
-                                // ✅ Ambil defaultData dari DEPARTMENTS_DATA
                                 const defaultDept = DEPARTMENTS_DATA.find(d => d.id === item.deptId);
-
-                                // ✅ Paksa header fields selalu dari kode (DEPARTMENTS_DATA)
                                 if (defaultDept) {
                                     item.matriksData.tglEfektif = defaultDept.matriksData.tglEfektif;
                                     item.matriksData.judul = defaultDept.matriksData.judul;
@@ -1453,18 +1580,18 @@ const MatriksSkill = () => {
     };
 
     const departmentPermissions = {
-        "Quality Assurance": ["QA Department", "Manage Users"],
-        "Management Representative": ["Management Representative", "Manage Users"],
-        "Finance": ["Finance Department", "Manage Users"],
-        "HRGA & IT": ["HRGA & IT Department", "Manage Users"],
-        "Management Development": ["Management Development", "Manage Users"],
-        "Manufacturing Battery": ["Manufacturing Battery", "Manage Users"],
-        "Manufacturing Cable": ["Manufacturing Cable", "Manage Users"],
-        "Marketing Battery": ["Marketing Battery Department", "Manage Users"],
-        "Marketing Engineering": ["Marketing Engineering", "Manage Users"],
-        "MI SHE": ["MI & SHE", "Manage Users"],
-        "PPIC": ["PPIC", "Manage Users"],
-        "Purchasing": ["Purchasing", "Manage Users"],
+        "Quality Assurance": ["QA Department"],
+        "Management Representative": ["Management Representative"],
+        "Finance": ["Finance Department"],
+        "HRGA & IT": ["HRGA & IT Department"],
+        "Management Development": ["Management Development"],
+        "Manufacturing Battery": ["Manufacturing Battery"],
+        "Manufacturing Cable": ["Manufacturing Cable"],
+        "Marketing Battery": ["Marketing Battery Department"],
+        "Marketing Engineering": ["Marketing Engineering"],
+        "MI & SHE": ["MI & SHE"],
+        "PPIC": ["PPIC"],
+        "Purchasing": ["Purchasing"],
     };
 
     const canEditDept = React.useCallback((deptName) => {
@@ -1475,6 +1602,20 @@ const MatriksSkill = () => {
         if (userDeptName === deptName) return true;
         const required = departmentPermissions[deptName] || [];
         return required.some((p) => perms.includes(p));
+    }, [user]);
+
+    const visibleDepartments = React.useMemo(() => {
+        if (!user) return [];
+        const perms = typeof user?.role === "object" ? (user?.role?.permissions ?? []) : [];
+        const filtered = DEPARTMENTS_DATA.filter((dept) => {
+            const required = departmentPermissions[dept.name] || [];
+            return required.some((p) => perms.includes(p));
+        });
+        if (filtered.length === 0 && perms.includes("Matriks Skill Editor")) {
+            return DEPARTMENTS_DATA;
+        }
+
+        return filtered;
     }, [user]);
 
     const handleEdit = (deptId, karyawanIdx, field, colIdx, value) => {
@@ -1493,7 +1634,55 @@ const MatriksSkill = () => {
         });
     };
 
+    const handleEditKompetensi = (deptId, kompetensiIdx, value) => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[deptId]));
+            dept.kompetensi[kompetensiIdx] = value;
+            next[deptId] = dept;
+            return next;
+        });
+    };
+
+    const handleDeleteKaryawan = (deptId, karyawanIdx) => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[deptId]));
+            dept.karyawan.splice(karyawanIdx, 1);
+            dept.karyawan.forEach((k, i) => { k.no = i + 1; });
+            next[deptId] = dept;
+            return next;
+        });
+    };
+
+    const handleDeleteLastKaryawan = (deptId) => {
+        setDeptData((prev) => {
+            const dept = prev[deptId];
+            if (!dept.karyawan || dept.karyawan.length === 0) return prev;
+            const next = { ...prev };
+            const newDept = JSON.parse(JSON.stringify(dept));
+            newDept.karyawan.pop();
+            next[deptId] = newDept;
+            return next;
+        });
+    };
+
+    const handleDeleteSelectedKaryawan = (deptId, indices) => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[deptId]));
+            const sortedIndices = [...indices].sort((a, b) => b - a);
+            sortedIndices.forEach((idx) => dept.karyawan.splice(idx, 1));
+            dept.karyawan.forEach((k, i) => { k.no = i + 1; });
+            next[deptId] = dept;
+            return next;
+        });
+    };
+
     const [showRequestModal, setShowRequestModal] = useState(false);
+    const [showDeleteKompetensiModal, setShowDeleteKompetensiModal] = useState(false);
+    const [selectedKompetensiToDelete, setSelectedKompetensiToDelete] = useState(new Set());
+
     const [requestForm, setRequestForm] = useState({
         title: "",
         description: "",
@@ -1502,6 +1691,12 @@ const MatriksSkill = () => {
     });
     const [submitLoading, setSubmitLoading] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const handleSave = () => {
         if (!selectedDept) return;
@@ -1574,6 +1769,43 @@ const MatriksSkill = () => {
             next[selectedDept.id] = dept;
             return next;
         });
+        showToast("Data Karyawan baru berhasil ditambahkan")
+    };
+
+    const handleAddKompetensi = () => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[selectedDept.id]));
+            dept.kompetensi.push("Kompetensi Baru");
+            dept.karyawan.forEach((k) => {
+                k.kompetensiValues.push(null);
+                k.standarKompetensi.push(null);
+                k.metodeFulfillment.push(null);
+                k.scheduleFulfillment.push(null);
+            });
+            next[selectedDept.id] = dept;
+            return next;
+        });
+        showToast("Data Kompetensi baru berhasil ditambahkan")
+    };
+
+    const handleDeleteKompetensi = (indicesToDelete) => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[selectedDept.id]));
+            const sortedIndices = [...indicesToDelete].sort((a, b) => b - a);
+            sortedIndices.forEach((idx) => {
+                dept.kompetensi.splice(idx, 1);
+                dept.karyawan.forEach((k) => {
+                    k.kompetensiValues.splice(idx, 1);
+                    k.standarKompetensi.splice(idx, 1);
+                    k.metodeFulfillment.splice(idx, 1);
+                    k.scheduleFulfillment.splice(idx, 1);
+                });
+            });
+            next[selectedDept.id] = dept;
+            return next;
+        });
     };
 
     if (!user || dataLoading) {
@@ -1594,40 +1826,56 @@ const MatriksSkill = () => {
                         Pilih department untuk melihat matriks skill kompetensi
                     </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {DEPARTMENTS_DATA.map((dept) => (
-                        <button
-                            key={dept.id}
-                            onClick={() => { setSelectedDept(dept); setIsEditMode(false); }}
-                            className="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-200 p-5 text-left hover:scale-[1.02] group"
-                            style={{ borderLeft: `4px solid ${dept.borderColor}` }}
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className="p-3 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: dept.iconColor }}>
-                                    {DEPARTMENT_ICONS[dept.id] ?? (
-                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                                            {dept.name}
-                                        </h3>
+                {visibleDepartments.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "60px 20px", color: "#9ca3af" }}>
+                        <svg width="48" height="48" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" style={{ margin: "0 auto 16px", display: "block" }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <p style={{ fontSize: 15, fontWeight: 600, color: "#374151" }}>
+                            Tidak ada akses department
+                        </p>
+                        <p style={{ fontSize: 13, marginTop: 4 }}>
+                            Hubungi administrator untuk mendapatkan akses.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {visibleDepartments.map((dept) => (
+                            <button
+                                key={dept.id}
+                                onClick={() => { setSelectedDept(dept); setIsEditMode(false); }}
+                                className="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-200 p-5 text-left hover:scale-[1.02] group"
+                                style={{ borderLeft: `4px solid ${dept.borderColor}` }}
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: dept.iconColor }}>
+                                        {DEPARTMENT_ICONS[dept.id] ?? (
+                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        )}
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        {deptData[dept.id]?.karyawan?.length || 0} karyawan
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                        {deptData[dept.id]?.kompetensi?.length || 0} kompetensi
-                                    </p>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                                {dept.name}
+                                            </h3>
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            {deptData[dept.id]?.karyawan?.length || 0} karyawan
+                                        </p>
+                                        <p className="text-xs text-gray-400">
+                                            {deptData[dept.id]?.kompetensi?.length || 0} kompetensi
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }
@@ -1636,6 +1884,12 @@ const MatriksSkill = () => {
 
     return (
         <div>
+            <style>{`
+                @keyframes slideInRight {
+                from { transform: translateX(100px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }}`}
+            </style>
+
             <div style={{ padding: "16px 24px 32px" }}>
                 <div
                     className="no-print"
@@ -1679,16 +1933,49 @@ const MatriksSkill = () => {
                                     cursor: "pointer",
                                     backgroundColor: isEditMode ? "#dcfce7" : "#dbeafe",
                                     color: isEditMode ? "#166534" : "#1d4ed8",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
                                 }}
                             >
-                                {isEditMode ? "👁 View Mode" : "✏️ Edit Mode"}
+                                {isEditMode ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View Mode
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Edit Mode
+                                    </>
+                                )}
                             </button>
                         ) : (
-                            <span style={{
-                                padding: "4px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                                backgroundColor: "#f3f4f6", color: "#9ca3af", cursor: "default",
-                            }} title="Anda tidak memiliki akses edit untuk department ini">
-                                👁 View Only
+                            <span
+                                style={{
+                                    padding: "4px 12px",
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    backgroundColor: "#f3f4f6",
+                                    color: "#9ca3af",
+                                    cursor: "default",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                }}
+                                title="Anda tidak memiliki akses edit untuk department ini"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View Only
                             </span>
                         )}
                     </div>
@@ -1709,6 +1996,96 @@ const MatriksSkill = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
                                 Tambah
+                            </button>
+                        )}
+                        {isEditMode && (
+                            <button
+                                onClick={handleAddKompetensi}
+                                style={{
+                                    backgroundColor: "#0891b2", color: "#fff",
+                                    padding: "6px 16px", borderRadius: 8,
+                                    fontSize: 12, fontWeight: 600,
+                                    border: "none", cursor: "pointer",
+                                    display: "flex", alignItems: "center", gap: 6,
+                                }}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Kompetensi
+                            </button>
+                        )}
+                        {isEditMode && (
+                            <button
+                                onClick={() => {
+                                    setSelectedKompetensiToDelete(new Set());
+                                    setShowDeleteKompetensiModal(true);
+                                }}
+                                disabled={!deptData[selectedDept.id]?.kompetensi?.length}
+                                style={{
+                                    backgroundColor: deptData[selectedDept.id]?.kompetensi?.length ? "#dc2626" : "#fca5a5",
+                                    color: "#fff",
+                                    padding: "6px 16px", borderRadius: 8,
+                                    fontSize: 12, fontWeight: 600,
+                                    border: "none",
+                                    cursor: deptData[selectedDept.id]?.kompetensi?.length ? "pointer" : "not-allowed",
+                                    display: "flex", alignItems: "center", gap: 6,
+                                }}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Kompetensi
+                            </button>
+                        )}
+                        {isEditMode && (
+                            <button
+                                onClick={async () => {
+                                    if (selectedRows.size === 0) {
+                                        alert("Pilih minimal satu baris karyawan yang ingin dihapus (centang di kolom paling kiri).");
+                                        return;
+                                    }
+                                    const dept = deptData[selectedDept.id];
+                                    const namesToDelete = dept.karyawan
+                                        .filter((_, idx) => selectedRows.has(idx))
+                                        .map((k) => k.nama || "tanpa nama")
+                                        .join(", ");
+
+                                    const result = await Swal.fire({
+                                        title: `Hapus ${selectedRows.size} karyawan terpilih?`,
+                                        html: `<pre class="text-left text-sm text-gray-700 bg-gray-50 p-3 rounded-lg max-h-48 overflow-y-auto">${namesToDelete}</pre>`,
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#ef4444',
+                                        cancelButtonColor: '#6b7280',
+                                        confirmButtonText: 'Ya, Hapus',
+                                        cancelButtonText: 'Batal',
+                                    });
+
+                                    if (result.isConfirmed) {
+                                        const deletedCount = selectedRows.size;
+                                        handleDeleteSelectedKaryawan(selectedDept.id, selectedRows);
+                                        setSelectedRows(new Set());
+                                        showToast(`${deletedCount} Data Karyawan berhasil dihapus`, "error");
+                                    }
+                                }}
+                                disabled={selectedRows.size === 0}
+                                style={{
+                                    backgroundColor: selectedRows.size > 0 ? "#dc2626" : "#fca5a5",
+                                    color: "#fff",
+                                    padding: "6px 16px", borderRadius: 8,
+                                    fontSize: 12, fontWeight: 600,
+                                    border: "none",
+                                    cursor: selectedRows.size > 0 ? "pointer" : "not-allowed",
+                                    display: "flex", alignItems: "center", gap: 6,
+                                }}
+                            >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Hapus {selectedRows.size > 0 ? `(${selectedRows.size})` : ""}
                             </button>
                         )}
                         {isEditMode && (
@@ -1843,8 +2220,147 @@ const MatriksSkill = () => {
                                             <div style={{ width: 14, height: 14, border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
                                             Mengirim...
                                         </>
-                                    ) : "📤 Submit Request"}
+                                    ) : (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 15 16" style={{ flexShrink: 0 }}>
+                                                <path fill="currentColor" d="M12.49 7.14L3.44 2.27c-.76-.41-1.64.3-1.4 1.13l1.24 4.34q.075.27 0 .54l-1.24 4.34c-.24.83.64 1.54 1.4 1.13l9.05-4.87a.98.98 0 0 0 0-1.72Z" />
+                                            </svg>
+                                            Submit Request
+                                        </>
+                                    )}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showDeleteKompetensiModal && (
+                    <div style={{
+                        position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.55)",
+                        zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+                    }}>
+                        <div style={{
+                            backgroundColor: "#fff", borderRadius: 12, width: "100%", maxWidth: 480,
+                            boxShadow: "0 20px 60px rgba(0,0,0,0.25)", overflow: "hidden",
+                        }}>
+                            {/* Header */}
+                            <div style={{ padding: "18px 24px", borderBottom: "1px solid #e5e7eb", backgroundColor: "#fef2f2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                    <h2 style={{ fontWeight: 700, fontSize: 17, color: "#991b1b", margin: 0 }}>Hapus Kompetensi</h2>
+                                    <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Pilih kompetensi yang ingin dihapus</p>
+                                </div>
+                                <button onClick={() => setShowDeleteKompetensiModal(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: "#9ca3af" }}>×</button>
+                            </div>
+
+                            {/* Body - daftar kompetensi */}
+                            <div style={{ padding: "16px 24px", maxHeight: 360, overflowY: "auto" }}>
+                                {/* Select All */}
+                                <div
+                                    style={{
+                                        display: "flex", alignItems: "center", gap: 10,
+                                        padding: "8px 10px", marginBottom: 8,
+                                        backgroundColor: "#f9fafb", borderRadius: 8,
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() => {
+                                        const dept = deptData[selectedDept.id];
+                                        const allSelected = dept.kompetensi.every((_, idx) => selectedKompetensiToDelete.has(idx));
+                                        if (allSelected) {
+                                            setSelectedKompetensiToDelete(new Set());
+                                        } else {
+                                            setSelectedKompetensiToDelete(new Set(dept.kompetensi.map((_, idx) => idx)));
+                                        }
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        readOnly
+                                        checked={
+                                            deptData[selectedDept.id]?.kompetensi?.length > 0 &&
+                                            deptData[selectedDept.id].kompetensi.every((_, idx) => selectedKompetensiToDelete.has(idx))
+                                        }
+                                    />
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>
+                                        Pilih Semua ({deptData[selectedDept.id]?.kompetensi?.length} kompetensi)
+                                    </span>
+                                </div>
+
+                                {deptData[selectedDept.id]?.kompetensi?.map((k, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            display: "flex", alignItems: "flex-start", gap: 10,
+                                            padding: "8px 10px", marginBottom: 4,
+                                            backgroundColor: selectedKompetensiToDelete.has(idx) ? "#fef2f2" : "#fff",
+                                            border: `1px solid ${selectedKompetensiToDelete.has(idx) ? "#fca5a5" : "#e5e7eb"}`,
+                                            borderRadius: 8, cursor: "pointer",
+                                            transition: "all 0.15s",
+                                        }}
+                                        onClick={() => {
+                                            setSelectedKompetensiToDelete((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(idx)) next.delete(idx);
+                                                else next.add(idx);
+                                                return next;
+                                            });
+                                        }}
+                                    >
+                                        <input type="checkbox" readOnly checked={selectedKompetensiToDelete.has(idx)} style={{ marginTop: 2, flexShrink: 0 }} />
+                                        <span style={{ fontSize: 12, color: "#374151", lineHeight: 1.4 }}>
+                                            <span style={{ color: "#9ca3af", marginRight: 6 }}>{idx + 1}.</span>
+                                            {k}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Footer */}
+                            <div style={{ padding: "14px 24px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#f9fafb" }}>
+                                <span style={{ fontSize: 12, color: selectedKompetensiToDelete.size > 0 ? "#dc2626" : "#9ca3af", fontWeight: 500 }}>
+                                    {selectedKompetensiToDelete.size > 0
+                                        ? `${selectedKompetensiToDelete.size} kompetensi dipilih`
+                                        : "Belum ada yang dipilih"}
+                                </span>
+                                <div style={{ display: "flex", gap: 10 }}>
+                                    <button
+                                        onClick={() => setShowDeleteKompetensiModal(false)}
+                                        style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid #d1d5db", backgroundColor: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (selectedKompetensiToDelete.size === 0) return;
+                                            const result = await Swal.fire({
+                                                title: `Hapus ${selectedKompetensiToDelete.size} kompetensi?`,
+                                                text: "Data nilai kompetensi karyawan untuk kolom ini juga akan ikut dihapus.",
+                                                icon: "warning",
+                                                showCancelButton: true,
+                                                confirmButtonColor: "#ef4444",
+                                                cancelButtonColor: "#6b7280",
+                                                confirmButtonText: "Ya, Hapus",
+                                                cancelButtonText: "Batal",
+                                            });
+                                            if (result.isConfirmed) {
+                                                const deletedCount = selectedKompetensiToDelete.size;
+                                                handleDeleteKompetensi(selectedKompetensiToDelete);
+                                                setShowDeleteKompetensiModal(false);
+                                                setSelectedKompetensiToDelete(new Set());
+                                                showToast(`${deletedCount} Data Kompetensi berhasil dihapus`, "error");
+                                            }
+                                        }}
+                                        disabled={selectedKompetensiToDelete.size === 0}
+                                        style={{
+                                            padding: "8px 18px", borderRadius: 8, border: "none",
+                                            backgroundColor: selectedKompetensiToDelete.size > 0 ? "#dc2626" : "#fca5a5",
+                                            color: "#fff",
+                                            cursor: selectedKompetensiToDelete.size > 0 ? "pointer" : "not-allowed",
+                                            fontSize: 13, fontWeight: 600,
+                                        }}
+                                    >
+                                        Hapus {selectedKompetensiToDelete.size > 0 ? `(${selectedKompetensiToDelete.size})` : ""}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1852,17 +2368,66 @@ const MatriksSkill = () => {
 
                 <div className="matriks-print-container">
                     <DocHeader data={currentData} />
-
                     <MatriksTable
                         data={currentData}
                         isEditMode={isEditMode}
                         onEdit={(kIdx, field, ci, val) =>
                             handleEdit(selectedDept.id, kIdx, field, ci, val)
                         }
+                        onEditKompetensi={(ci, val) =>
+                            handleEditKompetensi(selectedDept.id, ci, val)
+                        }
+                        selectedRows={selectedRows}
+                        onToggleSelect={toggleSelectRow}
+                        onToggleSelectAll={toggleSelectAllRows}
                     />
                     <Keterangan />
                 </div>
             </div>
+            {toast && (
+                <div style={{
+                    position: "fixed",
+                    bottom: 24,
+                    right: 24,
+                    zIndex: 9999,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "12px 18px",
+                    borderRadius: 10,
+                    backgroundColor: toast.type === "success" ? "#16a34a" : "#dc2626",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                    animation: "slideInRight 0.3s ease",
+                    minWidth: 260,
+                    maxWidth: 380,
+                }}>
+                    {toast.type === "success" ? (
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    ) : (
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    )}
+                    <span>{toast.message}</span>
+                    <button
+                        onClick={() => setToast(null)}
+                        style={{
+                            background: "none", border: "none", color: "#fff",
+                            cursor: "pointer", marginLeft: "auto",
+                            padding: 0, display: "flex", alignItems: "center", opacity: 0.8,
+                        }}
+                    >
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

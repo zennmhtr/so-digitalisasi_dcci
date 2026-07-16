@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import { departmentsAPI } from '../services/api';
+import Swal from 'sweetalert2';
 
 const Department = () => {
   const [departments, setDepartments] = useState([]);
@@ -56,7 +57,15 @@ const Department = () => {
   };
 
   const handleDelete = async (deptId) => {
-    if (window.confirm('Are you sure you want to delete this department?')) {
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure you want to delete this department?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes'
+    });
+    if (confirmResult.isConfirmed) {
       try {
         await departmentsAPI.delete(deptId);
         fetchDepartments();

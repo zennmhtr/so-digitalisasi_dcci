@@ -167,8 +167,8 @@
   "_id": {
     "$oid": "690c1df801e848a06615dee9"
   },
-  "code": "HRGA & IT ",
-  "name": "HRGA & IT Department",
+  "code": "HRDGA & IT ",
+  "name": "HRDGA & IT Department",
   "description": "...",
   "createdAt": {
     "$date": "2025-11-06T04:03:04.189Z"

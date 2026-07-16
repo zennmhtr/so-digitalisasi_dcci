@@ -208,7 +208,7 @@
     "Menetapkan supplier berdasarkan hasil proses seleksi",
     "Pengajuan kontrak pembelian dengan supplier",
     "Pengajuan penetapan harga dan share order supplier",
-    "Persetujuan order supplir (PO)",
+    "Persetujuan order supplier (PO)",
     "Melakukan evaluasi performance supplier secara berkala",
     "Melakukan evaluasi biaya pembelian & pengadaan (Purchase Expense)"
   ],
@@ -2126,7 +2126,7 @@
     "$oid": "6a0aae9cd909ffb81bf191e2"
   },
   "user": null,
-  "memberName": "RIF'QI FATHAH",
+  "memberName": "RIFQI FATHAH",
   "memberNoPNK": "23230017",
   "memberEmail": null,
   "memberPosition": "Staff",
@@ -4247,11 +4247,11 @@
     "$date": "2026-03-27T00:00:00.000Z"
   },
   "revisi": "0",
-  "division": "-",
-  "positionTitle": "PPIC & DELIVERY GROUP HEAD",
-  "reportsTo": "PPIC & WAREHOUSE UNIT HEAD",
+  "division": "PLANT",
+  "positionTitle": "PPIC & DELIVERY DEPT. HEAD",
+  "reportsTo": "DIRECTOR",
   "responsibilities": [
-    "Membuat rencana produksi mingguan dan harian untuk manufaktu (outer dan inner)",
+    "Membuat rencana produksi mingguan dan harian untuk manufaktur (outer dan inner)",
     "Memasukkan data semi finish good setiap harinya",
     "Melakukan monitoring planning produksi manufaktur",
     "Melakukan follow-up antar proses (manufakture ke assembling)",
@@ -9883,7 +9883,7 @@
   "memberEmail": "eliatadumarginting@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c190101e848a06615ddba"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10082,7 +10082,7 @@
   "memberEmail": "bobisaputra@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c190101e848a06615ddba"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10180,7 +10180,7 @@
   "memberEmail": "afkafikriaiman@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c190101e848a06615ddba"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10280,7 +10280,7 @@
   "memberEmail": "tarjo@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c190101e848a06615ddba"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10380,7 +10380,7 @@
   "memberEmail": "zeluweysaaaasa@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c190101e848a06615ddba"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10480,7 +10480,7 @@
   "memberEmail": "dwipurwanto@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10593,7 +10593,7 @@
   "memberEmail": "mbagussantoso@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10699,7 +10699,7 @@
   "memberEmail": "sucipurwanto@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10812,7 +10812,7 @@
   "memberEmail": "nurdianto@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -10921,7 +10921,7 @@
   "memberEmail": "sucipurwanto@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"
@@ -11030,7 +11030,7 @@
   "memberEmail": "sucipurwanto@dcci.com",
   "memberPosition": "Staff",
   "department": {
-    "$oid": "690c195501e848a06615ddbf"
+    "$oid": "690c19de01e848a06615ddc9"
   },
   "tanggal": {
     "$date": "2026-03-27T00:00:00.000Z"

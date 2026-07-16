@@ -18,7 +18,7 @@ const ManufacturBattery = () => {
 
   const checkAllEmployeeJobdescStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions`, {
+      const response = await fetch(`/api/jobdescriptions`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -46,7 +46,7 @@ const ManufacturBattery = () => {
     setLoadingJobdesc(true);
     setJobdescData(null);
     try {
-      const response = await fetch(`http://localhost:3001/api/jobdescriptions?limit=200`, {
+      const response = await fetch(`/api/jobdescriptions?limit=200`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -470,17 +470,21 @@ const ManufacturBattery = () => {
       <div className="mb-4 flex justify-between print:hidden">
         <button
           onClick={() => navigate('/')}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
         >
-          ← Back to Main Dashboard
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Main Dashboard
         </button>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setShowPrintOptions(!showPrintOptions)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Print Settings
-          </button>
           <button
             onClick={handlePrint}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -546,10 +550,10 @@ const ManufacturBattery = () => {
               </div>
               <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: '160px' }}>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
-                  <h2 className="text-xl font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-1">(MANUFACTURING BATTERY DEPARTMENT)</h3>
-                  <p className="text-md text-gray-500">Effective Date : 16 Maret 2026</p>
+                  <h1 className="text-md ont-bold text-gray-800 mb-2">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-l font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">({orgData.header.title})</h3>
+                  <p className="text-s text-gray-500">Effective Date : 16 Maret 2026</p>
                 </div>
               </div>
               <div className="text-right">
@@ -576,8 +580,8 @@ const ManufacturBattery = () => {
                       <div className="p-3 flex flex-col justify-end h-32">
                         <div className="h-16"></div>
                         <div className="text-center">
-                          <p className="text-sm font-bold text-black underline leading-tight">DIKI WAHYUDI</p>
-                          <p className="text-sm text-black leading-tight">HRGAIT DEPT. HEAD</p>
+                          <p className="text-sm font-bold text-black underline leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm text-black leading-tight">DIRECTOR</p>
                         </div>
                       </div>
                     </div>
@@ -666,7 +670,7 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.header.title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.header.head}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.header.head}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.header.empId})</p>
                 </div>
               </div>
@@ -682,7 +686,7 @@ const ManufacturBattery = () => {
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[0].title}</p>
                     <hr className="my-1 border-gray-300" />
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[0].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[0].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[0].empId})</p>
                   </div>
                 </div>
@@ -691,7 +695,7 @@ const ManufacturBattery = () => {
                     {renderCodeButton(orgData.positions[1])}
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-xs leading-tight uppercase">{orgData.positions[1].name}</p>
+                    <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[1].name}</p>
                     <p className="text-xs leading-tight uppercase">({orgData.positions[1].empId})</p>
                   </div>
                 </div>
@@ -706,7 +710,7 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[2].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[2].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[2].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[2].empId})</p>
                 </div>
               </div>
@@ -720,7 +724,7 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[3].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">({orgData.positions[3].empId})</p>
+                  <p className="text-xs font-bold leading-tight uppercase">({orgData.positions[3].empId})</p>
                 </div>
               </div>
             </div>
@@ -734,19 +738,19 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[4].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[4].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[4].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[4].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[5].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[5].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[5].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[6].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[6].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[6].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[7].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[7].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[7].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[8].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[8].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[8].empId})</p>
                 </div>
               </div>
@@ -758,16 +762,16 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[9].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[9].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[9].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[9].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[10].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[10].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[10].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[11].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[11].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[11].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[12].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[12].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[12].empId})</p>
                 </div>
               </div>
@@ -779,25 +783,25 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[13].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[13].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[13].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[13].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[14].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[14].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[14].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[15].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[15].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[15].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[16].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[16].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[16].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[17].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[17].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[17].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[18].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[18].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[18].empId})</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">{orgData.positions[19].name}</p>
+                  <p className="text-xs font-bold leading-tight uppercase">{orgData.positions[19].name}</p>
                   <p className="text-xs leading-tight uppercase">({orgData.positions[19].empId})</p>
                 </div>
               </div>
@@ -809,7 +813,7 @@ const ManufacturBattery = () => {
                 <div className="p-2 flex-1 text-center flex flex-col justify-center">
                   <p className="text-xs font-semibold mb-1 leading-tight uppercase">{orgData.positions[20].title}</p>
                   <hr className="my-1 border-gray-300" />
-                  <p className="text-xs leading-tight uppercase">({orgData.positions[20].empId})</p>
+                  <p className="text-xs font-bold leading-tight uppercase">({orgData.positions[20].empId})</p>
                 </div>
               </div>
             </div>

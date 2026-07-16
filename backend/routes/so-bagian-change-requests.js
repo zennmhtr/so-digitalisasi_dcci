@@ -3,7 +3,84 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const SOBagianChangeRequest = require("../models/SOBagianChangeRequest");
+const SOBagianData = require("../models/SOBagianData");
 const router = express.Router();
+
+const DEPARTMENT_NAME_TO_BAGIAN_ID = {
+  "Finance": "finance",
+  "Finance Department": "finance",
+  "HRGA & IT": "hrga-it",
+  "HRGA & IT Department": "hrga-it",
+  "Management Development": "management-development",
+  "Management Representative": "management-representative",
+  "Manufacturing Battery": "manufactur-battery",
+  "Manufacturing Cable": "manufacturing-cable",
+  "Marketing Battery": "marketing-battery",
+  "Marketing Battery Department": "marketing-battery",
+  "Marketing Engineering": "marketing-engineering",
+  "MI & SHE": "mi-she",
+  "PPIC": "ppic",
+  "Purchasing": "purchasing",
+  "QA": "qa",
+  "QA Department": "qa",
+  "QA (Quality Assurance)": "qa",
+};
+
+async function applyBoxChangesFromStructure(request) {
+  try {
+    const orgData = request.proposedData?.organizationData;
+    const deptId = orgData?.departmentId;
+    const positions = orgData?.structure?.positions;
+
+    if (!deptId || !Array.isArray(positions)) return;
+
+    const pendingBoxes = positions.filter(
+      (p) => p.pendingAction === "add" || p.pendingAction === "delete"
+    );
+    if (pendingBoxes.length === 0) return;
+
+    const record = await SOBagianData.findOne({ bagianId: deptId });
+    if (!record) {
+      console.log(`⚠️ applyBoxChangesFromStructure: SOBagianData untuk "${deptId}" tidak ditemukan, dilewati.`);
+      return;
+    }
+
+    let changed = false;
+
+    for (const box of pendingBoxes) {
+      if (box.pendingAction === "add") {
+        const exists = record.boxes.some((b) => b.id === box.id);
+        if (!exists) {
+          record.boxes.push({
+            id: box.id,
+            code: box.code || "",
+            title: box.title || "",
+            name: box.name || "",
+            empId: box.empId || "",
+            column: box.column,
+            parentId: box.groupKey || null,
+            order: box.order || 0,
+          });
+          changed = true;
+          console.log(`✅ Box "${box.name}" ditambahkan permanen ke ${deptId}`);
+        }
+      } else if (box.pendingAction === "delete") {
+        const before = record.boxes.length;
+        record.boxes = record.boxes.filter((b) => b.id !== box.id);
+        if (record.boxes.length !== before) {
+          changed = true;
+          console.log(`✅ Box "${box.name}" dihapus permanen dari ${deptId}`);
+        }
+      }
+    }
+
+    if (changed) {
+      await record.save();
+    }
+  } catch (err) {
+    console.error("⚠️ Failed to apply box changes from structure:", err);
+  }
+}
 
 const getDepartmentApprovalPermission = (departmentName) => {
   const mapping = {
@@ -27,6 +104,31 @@ const isUserManager = (userPermissions) => {
   return userPermissions.some(
     (perm) => perm.startsWith("Manager") && perm.endsWith("Approval")
   );
+};
+
+const applyApprovedPositions = async (request) => {
+  try {
+    const orgData = request.proposedData?.organizationData;
+    const deptId = orgData?.departmentId;
+    const positions = orgData?.positions;
+
+    console.log("🐛 DEBUG applyApprovedPositions:", { deptId, positionsType: typeof positions, positions });
+
+    if (!deptId || positions === undefined || positions === null) {
+      console.log("🐛 DEBUG - guard triggered, skipping. deptId:", deptId, "positions:", positions);
+      return;
+    }
+
+    await SOBagianData.findOneAndUpdate(
+      { bagianId: deptId },
+      { $set: { positions } },
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ Positions applied to SOBagianData for dept: ${deptId} (${Object.keys(positions).length} entries)`);
+  } catch (err) {
+    console.error("⚠️ Failed to apply positions to SOBagianData:", err);
+  }
 };
 
 router.get("/", auth, async (req, res) => {
@@ -223,7 +325,7 @@ router.post(
 
       console.log("📥 Received currentData:", currentData ? "YES" : "NO");
       console.log("📥 CurrentData structure:", JSON.stringify(currentData, null, 2));
-
+      console.log("🐛 DEBUG proposedData.organizationData.positions RECEIVED:", JSON.stringify(proposedData?.organizationData?.positions));
       const changeRequest = new SOBagianChangeRequest({
         title,
         description,
@@ -402,6 +504,9 @@ router.put(
           request.markModified("proposedData");
           await request.save();
 
+          await applyApprovedPositions(request);
+          await applyBoxChangesFromStructure(request);
+
           const populated = await SOBagianChangeRequest.findById(request._id)
             .populate("requestedBy", "name email department")
             .populate("firstApprovedBy", "name email")
@@ -533,6 +638,9 @@ router.put(
 
           request.markModified("proposedData");
           await request.save();
+
+          await applyApprovedPositions(request);
+          await applyBoxChangesFromStructure(request);
 
           const populated = await SOBagianChangeRequest.findById(request._id)
             .populate("requestedBy", "name email department")
