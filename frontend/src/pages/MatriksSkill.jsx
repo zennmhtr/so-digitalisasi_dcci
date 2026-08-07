@@ -2,9 +2,14 @@ import React, { useState, useEffect } from "react";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { matriksSkillChangeRequestsAPI } from "../services/api";
+import { matriksSkillChangeRequestsAPI, matriksSkillDepartmentsAPI } from "../services/api";
 import api from "../services/api";
 import { getSignatureInfo, SIGNATURE_IMAGES, DEPARTMENT_SIGNER, DEFAULT_APPROVER } from "../config/signatures";
+import {
+    Battery, Cable, ShieldCheck, Users, DollarSign, Cpu, TrendingUp,
+    Factory, Megaphone, ClipboardList, ShoppingCart, HeartPulse, Wrench,
+    FlaskConical, Truck, Building2, Zap, FileCheck2, Palette, Boxes,
+} from "lucide-react";
 
 const DEPARTMENT_ICONS = {
     "quality-assurance": (
@@ -85,6 +90,96 @@ const DEPARTMENT_ICONS = {
                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
     ),
+};
+
+const DEFAULT_KOMPETENSI_TEMPLATE = [
+    "Alat Ukur",
+    "Membaca Gambar",
+    "Standar Quality Product",
+    "Hood Lock (BZ230, BZ240, BZ350, BZ330, BZD30, BZ070)",
+    "Cable Assy Back Door (D80,D38 D21)",
+    "Fuel Lid (D88, D30, D21)",
+    "Fuel Lid D72",
+    "Fuel Lid D55",
+    "Fuel Lid D26",
+    "Luggage (OD 450, 430, 490)",
+    "Fuel Lid ( K-00 & K-10 )",
+    "Throttle K1-AA ( A & B )",
+    "Throttle K2S ( A & B )",
+    "Choke (KVR, KFL, KVY)",
+    "Speedometer (All type)",
+    "Seat Lock ( K2S )",
+    "Clutch K45- (N40,N00)",
+    "Seat Lock (K41, K59, KZR,K15)",
+    "Seat Lock K97,K0JA,K0WA",
+    "Fuel Lid K97",
+    "Front Brake (K60, K93, K60R, K1A-N11, K1A-N21, K1A-N91)",
+    "Rear Brake (K81, KVB)",
+    "Rear Brake (K60, K93),K0JA",
+    "Rear Brake (K1A-N11, K1A-N21, K1A-N91)",
+    "VISUAL FRONT BRAKE (K60R,K93,K1A-N11,K1A-N21)",
+    "Cable Assy, Parking Brake, LH (59760-16800)",
+    "Cable Assy, Parking Brake, RH (59770-16800)",
+];
+
+const AUTO_COLOR_PALETTE = [
+    { bg: "#0891b2", border: "#0891b2" }, // cyan
+    { bg: "#7c3aed", border: "#7c3aed" }, // violet
+    { bg: "#ea580c", border: "#ea580c" }, // orange
+    { bg: "#16a34a", border: "#16a34a" }, // green
+    { bg: "#db2777", border: "#db2777" }, // pink
+    { bg: "#ca8a04", border: "#ca8a04" }, // yellow-dark
+    { bg: "#4f46e5", border: "#4f46e5" }, // indigo
+    { bg: "#059669", border: "#059669" }, // emerald
+    { bg: "#dc2626", border: "#dc2626" }, // red
+    { bg: "#0284c7", border: "#0284c7" }, // sky
+];
+
+const AUTO_ICON_KEYWORDS = [
+    { keywords: ["battery", "baterai", "aki"], icon: Battery },
+    { keywords: ["cable", "kabel"], icon: Cable },
+    { keywords: ["quality", "qa", "qc", "kualitas"], icon: ShieldCheck },
+    { keywords: ["hr", "hrd", "hrga", "personalia", "sdm"], icon: Users },
+    { keywords: ["finance", "keuangan", "accounting", "akuntansi"], icon: DollarSign },
+    { keywords: ["it", "teknologi", "information technology", "sistem"], icon: Cpu },
+    { keywords: ["management development", "pengembangan", "development"], icon: TrendingUp },
+    { keywords: ["manufactur", "produksi", "production", "pabrik"], icon: Factory },
+    { keywords: ["marketing", "pemasaran", "sales"], icon: Megaphone },
+    { keywords: ["ppic", "planning", "perencanaan"], icon: ClipboardList },
+    { keywords: ["purchasing", "procurement", "pembelian"], icon: ShoppingCart },
+    { keywords: ["mi & she", "safety", "keselamatan", "she", "k3"], icon: HeartPulse },
+    { keywords: ["maintenance", "perawatan", "teknik"], icon: Wrench },
+    { keywords: ["research", "development", "rnd", "r&d", "penelitian"], icon: FlaskConical },
+    { keywords: ["logistic", "warehouse", "gudang", "distribusi"], icon: Truck },
+    { keywords: ["engineering", "rekayasa"], icon: Zap },
+    { keywords: ["representative", "perwakilan"], icon: FileCheck2 },
+    { keywords: ["design", "desain", "kreatif"], icon: Palette },
+    { keywords: ["inventory", "stock", "stok"], icon: Boxes },
+];
+
+const hashString = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+};
+
+const getAutoDeptStyle = (name, bagianId) => {
+    const lower = (name || "").toLowerCase();
+    const matched = AUTO_ICON_KEYWORDS.find(({ keywords }) =>
+        keywords.some((kw) => lower.includes(kw))
+    );
+    const IconComponent = matched ? matched.icon : Building2;
+    const paletteIndex = hashString(bagianId || name || "x") % AUTO_COLOR_PALETTE.length;
+    const { bg, border } = AUTO_COLOR_PALETTE[paletteIndex];
+    return {
+        icon: <IconComponent className="w-7 h-7" />,
+        color: "bg-slate-500",
+        borderColor: border,
+        iconColor: bg,
+    };
 };
 
 const DEPARTMENTS_DATA = [
@@ -610,7 +705,7 @@ const DEPARTMENTS_DATA = [
                 "Cable Assy, Parking Brake, RH (59770-16800)",
             ],
             karyawan: [
-                { no: 1, npk: "23190806", nama: "ELIATA DUMAR GINTING", jabatan: "MI & SHE (5R-SMK3-ISO 14001)", bagian: "MI SHE", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
+                { no: 1, npk: "23240005", nama: "WAHYU KARTIKO ADI", jabatan: "MDEV, MI & SHE", bagian: "MI SHE", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
                 { no: 2, npk: "23240175", nama: "BOBI SAPUTRA", jabatan: "MI", bagian: "MI SHE", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
                 { no: 3, npk: "23230122", nama: "AFKA FIKRI AIMAN", jabatan: "SHE (5R-SMK3-ISO 14001)", bagian: "MI SHE", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
                 { no: 4, npk: "23090096", nama: "TARJO", jabatan: "SHE (5R-SMK3-ISO 14001)", bagian: "MI SHE", kompetensiValues: [], standarKompetensi: [], metodeFulfillment: Array(27).fill(null), scheduleFulfillment: Array(27).fill(null) },
@@ -793,133 +888,214 @@ const PieChart = ({ value }) => {
     );
 };
 
-const DocHeader = ({ data }) => {
-  const deptName = data.departemen || "";
-  const signer =
-    DEPARTMENT_SIGNER[deptName] ||
-    DEPARTMENT_SIGNER[deptName.replace(/ Department$/i, "").trim()] ||
-    DEPARTMENT_SIGNER[deptName.replace(/ Dept\.?$/i, "").trim()] ||
-    (() => {
-      const deptUpper = deptName.toUpperCase();
-      const matchedKey = Object.keys(DEPARTMENT_SIGNER).find(key =>
-        deptUpper.includes(key.toUpperCase()) ||
-        key.toUpperCase().includes(deptUpper)
-      );
-      return matchedKey ? DEPARTMENT_SIGNER[matchedKey] : { name: "DEPT. HEAD", role: "DEPT. HEAD", signatureKey: null };
-    })();
+const getSignatureByName = (name) => {
+    if (!name) return null;
+    const clean = name.replace(/\*\*/g, "").trim().toUpperCase();
+    const matchedKey = Object.keys(SIGNATURE_IMAGES).find(key =>
+        key.toUpperCase() === clean || clean.includes(key.toUpperCase()) || key.toUpperCase().includes(clean)
+    );
+    return matchedKey ? SIGNATURE_IMAGES[matchedKey] : null;
+};
 
-  const dibuatSignature = signer.signatureKey ? SIGNATURE_IMAGES[signer.signatureKey] ?? null : null;
-  const disetujuiSignature = SIGNATURE_IMAGES[DEFAULT_APPROVER.signatureKey] ?? null;
+const DocHeader = ({ data, isEditMode = false, onEditMeta = null }) => {
+    const deptName = data.departemen || "";
+    const defaultSigner =
+        DEPARTMENT_SIGNER[deptName] ||
+        DEPARTMENT_SIGNER[deptName.replace(/ Department$/i, "").trim()] ||
+        DEPARTMENT_SIGNER[deptName.replace(/ Dept\.?$/i, "").trim()] ||
+        (() => {
+            const deptUpper = deptName.toUpperCase();
+            const matchedKey = Object.keys(DEPARTMENT_SIGNER).find(key =>
+                deptUpper.includes(key.toUpperCase()) ||
+                key.toUpperCase().includes(deptUpper)
+            );
+            return matchedKey ? DEPARTMENT_SIGNER[matchedKey] : { name: "DEPT. HEAD", role: "DEPT. HEAD", signatureKey: null };
+        })();
 
-  return (
-    <div style={{ border: "1px solid #9ca3af", backgroundColor: "#fff", width: "100%" }}>
-      <div style={{ display: "flex", borderBottom: "1px solid #9ca3af" }}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          borderRight: "1px solid #9ca3af",
-          padding: "10px 16px",
-          minWidth: "200px",
-        }}>
-          <img
-            src="/logo/dcci.png"
-            alt="PT DCI"
-            style={{ height: "56px", objectFit: "contain" }}
-            onError={(e) => { e.target.style.display = "none"; }}
-          />
+    const dibuatName = data.dibuatName ?? defaultSigner.name;
+    const dibuatRole = data.dibuatRole ?? defaultSigner.role;
+    const disetujuiName = data.disetujuiName ?? DEFAULT_APPROVER.name;
+    const disetujuiRole = data.disetujuiRole ?? DEFAULT_APPROVER.role;
+
+    const dibuatSignature = getSignatureByName(dibuatName);
+    const disetujuiSignature = getSignatureByName(disetujuiName);
+
+    return (
+        <div style={{ border: "1px solid #9ca3af", backgroundColor: "#fff", width: "100%" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid #9ca3af" }}>
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRight: "1px solid #9ca3af",
+                    padding: "10px 16px",
+                    minWidth: "200px",
+                }}>
+                    <img
+                        src="/logo/dcci.png"
+                        alt="PT DCI"
+                        style={{ height: "56px", objectFit: "contain" }}
+                        onError={(e) => { e.target.style.display = "none"; }}
+                    />
+                </div>
+
+                <div style={{
+                    flex: 1,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    padding: "10px 16px",
+                    borderRight: "1px solid #9ca3af",
+                }}>
+                    <span style={{ fontSize: 18, fontWeight: "bold", letterSpacing: "0.05em", color: "#111827", textTransform: "uppercase" }}>
+                        {data.judul}
+                    </span>
+                </div>
+
+                <div style={{
+                    borderLeft: "1px solid #9ca3af",
+                    width: "120px",
+                    display: "flex",
+                    flexDirection: "column",
+                    backgroundColor: "#fff",
+                }}>
+                    <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
+                        <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DIBUAT</span>
+                    </div>
+
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
+                        {dibuatSignature ? (
+                            <img
+                                src={dibuatSignature}
+                                alt={`TTD ${dibuatName}`}
+                                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                            />
+                        ) : null}
+                    </div>
+                    <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+                        {isEditMode && onEditMeta ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={dibuatName}
+                                    onChange={(e) => onEditMeta("dibuatName", e.target.value)}
+                                    style={{ fontSize: 8, fontWeight: "bold", textAlign: "center", border: "1px solid #93c5fd", borderRadius: 3, padding: "1px 2px", background: "#eff6ff", outline: "none", width: "100%" }}
+                                    placeholder="Nama"
+                                />
+                                <input
+                                    type="text"
+                                    value={dibuatRole}
+                                    onChange={(e) => onEditMeta("dibuatRole", e.target.value)}
+                                    style={{ fontSize: 8, textAlign: "center", border: "1px solid #93c5fd", borderRadius: 3, padding: "1px 2px", background: "#eff6ff", outline: "none", width: "100%" }}
+                                    placeholder="Jabatan"
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
+                                    {dibuatName}
+                                </span>
+                                <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
+                                    {dibuatRole}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <div style={{
+                    borderLeft: "1px solid #9ca3af",
+                    width: "120px",
+                    display: "flex",
+                    flexDirection: "column",
+                    backgroundColor: "#fff",
+                }}>
+                    <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
+                        <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DISETUJUI</span>
+                    </div>
+
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
+                        {disetujuiSignature ? (
+                            <img
+                                src={disetujuiSignature}
+                                alt={`TTD ${disetujuiName}`}
+                                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                            />
+                        ) : null}
+                    </div>
+                    <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+                        {isEditMode && onEditMeta ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={disetujuiName}
+                                    onChange={(e) => onEditMeta("disetujuiName", e.target.value)}
+                                    style={{ fontSize: 8, fontWeight: "bold", textAlign: "center", border: "1px solid #93c5fd", borderRadius: 3, padding: "1px 2px", background: "#eff6ff", outline: "none", width: "100%" }}
+                                    placeholder="Nama"
+                                />
+                                <input
+                                    type="text"
+                                    value={disetujuiRole}
+                                    onChange={(e) => onEditMeta("disetujuiRole", e.target.value)}
+                                    style={{ fontSize: 8, textAlign: "center", border: "1px solid #93c5fd", borderRadius: 3, padding: "1px 2px", background: "#eff6ff", outline: "none", width: "100%" }}
+                                    placeholder="Jabatan"
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
+                                    {disetujuiName}
+                                </span>
+                                <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
+                                    {disetujuiRole}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderTop: "none" }}>
+                {[
+                    ["Divisi", data.divisi, "divisi"],
+                    ["Departemen", data.departemen, "departemen"],
+                    ["Tanggal Efektif", data.tglEfektif, "tglEfektif"],
+                ].map(([label, value, field], i) => (
+                    <div key={i} style={{
+                        padding: "6px 12px",
+                        borderRight: i < 2 ? "1px solid #9ca3af" : "none",
+                        fontSize: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                    }}>
+                        <span style={{ fontWeight: 600, color: "#374151" }}>{label}</span>
+                        <span style={{ color: "#6b7280" }}> : </span>
+                        {isEditMode && onEditMeta ? (
+                            <input
+                                type={field === "tglEfektif" ? "date" : "text"}
+                                defaultValue={field === "tglEfektif"
+                                    ? (value ? new Date(value.split(" ").reverse().join("-")).toISOString().split("T")[0] : "")
+                                    : value}
+                                onBlur={(e) => onEditMeta(field, e.target.value)}
+                                style={{
+                                    border: "1px solid #93c5fd",
+                                    borderRadius: 4,
+                                    padding: "1px 6px",
+                                    fontSize: 11,
+                                    color: "#111827",
+                                    background: "#eff6ff",
+                                    outline: "none",
+                                    flex: 1,
+                                    minWidth: 0,
+                                }}
+                            />
+                        ) : (
+                            <span style={{ color: "#111827" }}>{value}</span>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
-
-        <div style={{
-          flex: 1,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "10px 16px",
-          borderRight: "1px solid #9ca3af",
-        }}>
-          <span style={{ fontSize: 18, fontWeight: "bold", letterSpacing: "0.05em", color: "#111827", textTransform: "uppercase" }}>
-            {data.judul}
-          </span>
-        </div>
-
-        <div style={{
-          borderLeft: "1px solid #9ca3af",
-          width: "120px",
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#fff",
-        }}>
-          <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
-            <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DIBUAT</span>
-          </div>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
-            {dibuatSignature ? (
-              <img
-                src={dibuatSignature}
-                alt={`TTD ${signer.name}`}
-                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-              />
-            ) : null}
-          </div>
-          <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
-              {signer.name}
-            </span>
-            <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
-              {signer.role}
-            </span>
-          </div>
-        </div>
-
-        <div style={{
-          borderLeft: "1px solid #9ca3af",
-          width: "120px",
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#fff",
-        }}>
-          <div style={{ borderBottom: "1px solid #9ca3af", padding: "4px 6px", textAlign: "center" }}>
-            <span style={{ fontSize: 9, fontWeight: "bold", color: "#111827" }}>DISETUJUI</span>
-          </div>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", minHeight: "60px" }}>
-            {disetujuiSignature ? (
-              <img
-                src={disetujuiSignature}
-                alt={`TTD ${DEFAULT_APPROVER.name}`}
-                style={{ maxHeight: "45px", maxWidth: "100px", objectFit: "contain" }}
-                onError={(e) => { e.target.style.display = "none"; }}
-              />
-            ) : null}
-          </div>
-          <div style={{ borderTop: "1px solid #9ca3af", padding: "3px 6px", textAlign: "center", minHeight: "32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <span style={{ fontSize: 8, fontWeight: "bold", textDecoration: "underline", lineHeight: 1.3, display: "block" }}>
-              {DEFAULT_APPROVER.name}
-            </span>
-            <span style={{ fontSize: 8, color: "#374151", lineHeight: 1.3, display: "block" }}>
-              {DEFAULT_APPROVER.role}
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderTop: "none" }}>
-        {[
-          ["Divisi", data.divisi],
-          ["Departemen", data.departemen],
-          ["Tanggal Efektif", data.tglEfektif],
-        ].map(([label, value], i) => (
-          <div key={i} style={{
-            padding: "6px 12px",
-            borderRight: i < 2 ? "1px solid #9ca3af" : "none",
-            fontSize: 12,
-          }}>
-            <span style={{ fontWeight: 600, color: "#374151" }}>{label}</span>
-            <span style={{ color: "#6b7280" }}> : </span>
-            <span style={{ color: "#111827" }}>{value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    );
 };
 
 const MatriksTable = ({ data, isEditMode, onEdit, onEditKompetensi, selectedRows = new Set(), onToggleSelect, onToggleSelectAll }) => {
@@ -979,7 +1155,7 @@ const MatriksTable = ({ data, isEditMode, onEdit, onEditKompetensi, selectedRows
                             { label: "NPK", minW: 85, rowSpan: 2 },
                             { label: "NAMA", minW: 165, rowSpan: 2 },
                             { label: "JABATAN", minW: 110, rowSpan: 2 },
-                            { label: "BAGIAN", minW: 130, rowSpan: 2 },
+                            { label: "DEPARTEMEN", minW: 130, rowSpan: 2 },
                             { label: "SK / K", minW: 120, rowSpan: 2 },
                         ].map(({ label, minW, rowSpan }) => (
                             <th key={label} rowSpan={rowSpan} style={{ ...thStyle, minWidth: minW, backgroundColor: "white", color: "#000000", verticalAlign: "middle" }}>
@@ -1361,19 +1537,87 @@ const Keterangan = () => (
 const MatriksSkill = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-
     const [selectedDept, setSelectedDept] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [customDepartments, setCustomDepartments] = useState([]);
+    const [pendingDeptRequests, setPendingDeptRequests] = useState([]);
+    const [showAddDeptModal, setShowAddDeptModal] = useState(false);
+    const [addDeptForm, setAddDeptForm] = useState({ bagianId: "", name: "" });
+    const [addDeptSubmitting, setAddDeptSubmitting] = useState(false);
 
-    // Auto-select dept dari Dashboard click
+    const [showRenameDeptModal, setShowRenameDeptModal] = useState(false);
+    const [renameDeptTarget, setRenameDeptTarget] = useState(null);
+    const [renameDeptValue, setRenameDeptValue] = useState("");
+    const [renameDeptSubmitting, setRenameDeptSubmitting] = useState(false);
+
+    useEffect(() => {
+        const loadCustomDepartments = async () => {
+            try {
+                const res = await matriksSkillDepartmentsAPI.getAll();
+                setCustomDepartments(res.data?.data || []);
+            } catch (err) {
+                console.error("Gagal load custom Matriks Skill departments:", err);
+            }
+        };
+        loadCustomDepartments();
+    }, []);
+
+    useEffect(() => {
+        const loadPendingDeptRequests = async () => {
+            try {
+                const res = await matriksSkillChangeRequestsAPI.getAll();
+                const all = res.data?.data || res.data || [];
+                const relevant = all.filter(
+                    (r) =>
+                        ["department-add", "department-rename", "department-delete"].includes(r.changeType) &&
+                        ["pending", "waiting_director_approval"].includes(r.status)
+                );
+                setPendingDeptRequests(relevant);
+            } catch (err) {
+                console.error("Gagal load pending Matriks Skill department requests:", err);
+            }
+        };
+        loadPendingDeptRequests();
+    }, []);
+
+    const allDepartments = React.useMemo(() => {
+        const hardcodedIds = new Set(DEPARTMENTS_DATA.map((d) => d.id));
+        const customMapped = customDepartments
+            .filter((d) => !hardcodedIds.has(d.bagianId))
+            .map((d) => {
+                const autoStyle = getAutoDeptStyle(d.name, d.bagianId);
+                return {
+                    id: d.bagianId,
+                    name: d.name,
+                    color: autoStyle.color,
+                    borderColor: autoStyle.borderColor,
+                    iconColor: autoStyle.iconColor,
+                    icon: autoStyle.icon,
+                    isCustomDept: true,
+                    matriksData: {
+                        judul: "MATRIKS KOMPETENSI",
+                        divisi: d.name,
+                        departemen: d.name,
+                        tglEfektif: "27 Maret 2026",
+                        kompetensi: [...DEFAULT_KOMPETENSI_TEMPLATE],
+                        karyawan: [],
+                    },
+                };
+            });
+        return [...DEPARTMENTS_DATA, ...customMapped];
+    }, [customDepartments]);
+
+    const isDeptPending = (deptId, type) =>
+        pendingDeptRequests.some((r) => r.proposedData?.departmentData?.bagianId === deptId && r.changeType === type);
+
     useEffect(() => {
         const targetDeptId = localStorage.getItem('matriks_target_dept');
         if (targetDeptId) {
             localStorage.removeItem('matriks_target_dept');
-            const found = DEPARTMENTS_DATA.find(d => d.id === targetDeptId);
+            const found = allDepartments.find(d => d.id === targetDeptId);
             if (found) setSelectedDept(found);
         }
-    }, []);
+    }, [allDepartments]);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [selectedRows, setSelectedRows] = useState(new Set());
     useEffect(() => {
@@ -1407,6 +1651,18 @@ const MatriksSkill = () => {
         });
         return init;
     });
+
+    useEffect(() => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            allDepartments.forEach((d) => {
+                if (!next[d.id]) {
+                    next[d.id] = JSON.parse(JSON.stringify(d.matriksData));
+                }
+            });
+            return next;
+        });
+    }, [allDepartments]);
 
     const [dataLoading, setDataLoading] = useState(false);
     const [dataInitialized, setDataInitialized] = useState(false);
@@ -1607,15 +1863,25 @@ const MatriksSkill = () => {
     const visibleDepartments = React.useMemo(() => {
         if (!user) return [];
         const perms = typeof user?.role === "object" ? (user?.role?.permissions ?? []) : [];
-        const filtered = DEPARTMENTS_DATA.filter((dept) => {
+        if (perms.includes("Manage Users")) return allDepartments;
+
+        const userDeptName = user?.department?.name;
+        const filtered = allDepartments.filter((dept) => {
+            if (userDeptName === dept.name) return true;
             const required = departmentPermissions[dept.name] || [];
             return required.some((p) => perms.includes(p));
         });
         if (filtered.length === 0 && perms.includes("Matriks Skill Editor")) {
-            return DEPARTMENTS_DATA;
+            return allDepartments;
         }
 
         return filtered;
+    }, [user, allDepartments]);
+
+    const canRequestNewMatriksDept = React.useMemo(() => {
+        if (!user) return false;
+        const perms = typeof user?.role === "object" ? (user?.role?.permissions ?? []) : [];
+        return perms.includes("Manage Users") || perms.includes("Matriks Skill Editor") || perms.some((p) => p.startsWith("Manager") && p.endsWith("Approval"));
     }, [user]);
 
     const handleEdit = (deptId, karyawanIdx, field, colIdx, value) => {
@@ -1698,6 +1964,145 @@ const MatriksSkill = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
+    const handleAddDepartment = async () => {
+        if (!addDeptForm.bagianId.trim() || !addDeptForm.name.trim()) {
+            Swal.fire({ icon: "warning", title: "Peringatan", text: "ID dan Nama departemen wajib diisi.", confirmButtonColor: "#f59e0b" });
+            return;
+        }
+        try {
+            setAddDeptSubmitting(true);
+            await matriksSkillChangeRequestsAPI.create({
+                title: `Tambah Departemen Matriks Skill : ${addDeptForm.name}`,
+                description: `Menambahkan departemen baru "${addDeptForm.name}" ke Matriks Skill Kompetensi`,
+                changeType: "department-add",
+                priority: "medium",
+                department: addDeptForm.name,
+                proposedData: {
+                    departmentData: {
+                        action: "add",
+                        bagianId: addDeptForm.bagianId,
+                        name: addDeptForm.name,
+                    },
+                },
+            });
+            setShowAddDeptModal(false);
+            setAddDeptForm({ bagianId: "", name: "" });
+            await Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: "Request tambah departemen berhasil dikirim dan menunggu persetujuan.",
+                confirmButtonColor: "#16a34a",
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            const res = await matriksSkillChangeRequestsAPI.getAll();
+            const all = res.data?.data || res.data || [];
+            setPendingDeptRequests(all.filter((r) =>
+                ["department-add", "department-rename", "department-delete"].includes(r.changeType) &&
+                ["pending", "waiting_director_approval"].includes(r.status)
+            ));
+        } catch (error) {
+            console.error("Error submitting department add request:", error);
+            Swal.fire({ icon: "error", title: "Gagal!", text: error.response?.data?.message || "Gagal mengirim request.", confirmButtonColor: "#dc2626" });
+        } finally {
+            setAddDeptSubmitting(false);
+        }
+    };
+
+    const refreshPendingDeptRequests = async () => {
+        try {
+            const res = await matriksSkillChangeRequestsAPI.getAll();
+            const all = res.data?.data || res.data || [];
+            setPendingDeptRequests(all.filter((r) =>
+                ["department-add", "department-rename", "department-delete"].includes(r.changeType) &&
+                ["pending", "waiting_director_approval"].includes(r.status)
+            ));
+        } catch (err) {
+            console.error("Gagal refresh pending Matriks Skill department requests:", err);
+        }
+    };
+
+    const handleRenameDepartment = async () => {
+        if (!renameDeptValue.trim() || !renameDeptTarget) return;
+        try {
+            setRenameDeptSubmitting(true);
+            await matriksSkillChangeRequestsAPI.create({
+                title: `Rename Departemen Matriks Skill : ${renameDeptTarget.name} → ${renameDeptValue}`,
+                description: `Mengubah nama departemen dari "${renameDeptTarget.name}" menjadi "${renameDeptValue}"`,
+                changeType: "department-rename",
+                priority: "medium",
+                department: renameDeptTarget.name,
+                proposedData: {
+                    departmentData: {
+                        action: "rename",
+                        bagianId: renameDeptTarget.id,
+                        newName: renameDeptValue.trim(),
+                    },
+                },
+            });
+            setShowRenameDeptModal(false);
+            setRenameDeptTarget(null);
+            setRenameDeptValue("");
+            await Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: "Request rename departemen berhasil dikirim dan menunggu persetujuan.",
+                confirmButtonColor: "#16a34a",
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            await refreshPendingDeptRequests();
+        } catch (error) {
+            console.error("Error submitting department rename request:", error);
+            Swal.fire({ icon: "error", title: "Gagal!", text: error.response?.data?.message || "Gagal mengirim request.", confirmButtonColor: "#dc2626" });
+        } finally {
+            setRenameDeptSubmitting(false);
+        }
+    };
+
+    const handleDeleteDepartment = async (dept) => {
+        const result = await Swal.fire({
+            title: `Hapus Departemen "${dept.name}"?`,
+            text: "Permintaan hapus akan menunggu approval Director.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Ya, Konfirmasi Hapus",
+            cancelButtonText: "Batal",
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+            await matriksSkillChangeRequestsAPI.create({
+                title: `Hapus Departemen Matriks Skill : ${dept.name}`,
+                description: `Menghapus departemen "${dept.name}" dari Matriks Skill Kompetensi`,
+                changeType: "department-delete",
+                priority: "medium",
+                department: dept.name,
+                proposedData: {
+                    departmentData: {
+                        action: "delete",
+                        bagianId: dept.id,
+                        name: dept.name,
+                    },
+                },
+            });
+            await Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: "Request hapus departemen berhasil dikirim dan menunggu persetujuan.",
+                confirmButtonColor: "#16a34a",
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            await refreshPendingDeptRequests();
+        } catch (error) {
+            console.error("Error submitting department delete request:", error);
+            Swal.fire({ icon: "error", title: "Gagal!", text: error.response?.data?.message || "Gagal mengirim request.", confirmButtonColor: "#dc2626" });
+        }
+    };
+
     const handleSave = () => {
         if (!selectedDept) return;
         setRequestForm({
@@ -1711,7 +2116,7 @@ const MatriksSkill = () => {
 
     const handleSubmitRequest = async () => {
         if (!requestForm.title.trim() || !requestForm.description.trim()) {
-            alert("⚠️ Judul dan deskripsi harus diisi.");
+            await Swal.fire({ icon: "warning", title: "Peringatan", text: "Judul dan deskripsi harus diisi.", confirmButtonColor: "#f59e0b" });
             return;
         }
 
@@ -1737,15 +2142,41 @@ const MatriksSkill = () => {
             const response = await matriksSkillChangeRequestsAPI.create(payload);
             if (response.data.success) {
                 setShowRequestModal(false);
-                setSubmitSuccess(true);
-                setTimeout(() => setSubmitSuccess(false), 4000);
+                setSubmitSuccess(false);
+                await Swal.fire({
+                    icon: "success",
+                    title: "Berhasil!",
+                    text: "Change request berhasil dikirim dan menunggu persetujuan.",
+                    confirmButtonColor: "#16a34a",
+                    confirmButtonText: "OK",
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
             }
         } catch (error) {
             console.error("Error submitting change request:", error);
-            alert(error.response?.data?.message || "Gagal mengirim change request.");
+            await Swal.fire({ icon: "error", title: "Gagal!", text: error.response?.data?.message || "Gagal mengirim change request.", confirmButtonColor: "#dc2626" });
         } finally {
             setSubmitLoading(false);
         }
+    };
+
+    const handleEditMeta = (deptId, field, value) => {
+        setDeptData((prev) => {
+            const next = { ...prev };
+            const dept = JSON.parse(JSON.stringify(next[deptId]));
+            if (field === 'tglEfektif') {
+                const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                const d = new Date(value);
+                if (!isNaN(d)) {
+                    dept[field] = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                }
+            } else {
+                dept[field] = value;
+            }
+            next[deptId] = dept;
+            return next;
+        });
     };
 
     const handleAddKaryawan = () => {
@@ -1820,12 +2251,85 @@ const MatriksSkill = () => {
     if (!selectedDept) {
         return (
             <div className="p-6">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Matriks Skill Kompetensi</h1>
-                    <p className="text-gray-500 mt-1 text-sm">
-                        Pilih department untuk melihat matriks skill kompetensi
-                    </p>
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Matriks Skill Kompetensi</h1>
+                        <p className="text-gray-500 mt-1 text-sm">
+                            Pilih department untuk melihat matriks skill kompetensi
+                        </p>
+                    </div>
+                    {canRequestNewMatriksDept && (
+                        <button
+                            onClick={() => setShowAddDeptModal(true)}
+                            className="bg-[#007DCC] hover:bg-[#0066A6] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Matriks Skill
+                        </button>
+                    )}
                 </div>
+
+                {showAddDeptModal && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+                            <h2 className="text-lg font-bold mb-4">Tambah Departemen Matriks Skill</h2>
+                            <div className="space-y-3">
+                                <input
+                                    placeholder="ID/Slug (contoh: rnd-battery)"
+                                    value={addDeptForm.bagianId}
+                                    onChange={(e) => setAddDeptForm((f) => ({ ...f, bagianId: e.target.value.toLowerCase().replace(/\s+/g, "-") }))}
+                                    className="w-full border rounded-md px-3 py-2 text-sm"
+                                />
+                                <input
+                                    placeholder="Nama Departemen *"
+                                    value={addDeptForm.name}
+                                    onChange={(e) => setAddDeptForm((f) => ({ ...f, name: e.target.value }))}
+                                    className="w-full border rounded-md px-3 py-2 text-sm"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-3">
+                                Departemen baru akan tampil kosong (tanpa kompetensi/karyawan) — bisa diisi lewat Edit Mode setelah disetujui.
+                            </p>
+                            <div className="flex gap-2 mt-5">
+                                <button onClick={handleAddDepartment} disabled={addDeptSubmitting} className="flex-1 bg-[#007DCC] hover:bg-[#0066A6] text-white rounded-md py-2 disabled:opacity-60">
+                                    {addDeptSubmitting ? "Mengirim..." : "Konfirmasi"}
+                                </button>
+                                <button onClick={() => setShowAddDeptModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showRenameDeptModal && renameDeptTarget && (
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+                            <h2 className="text-lg font-bold mb-4">Rename Departemen</h2>
+                            <input
+                                value={renameDeptValue}
+                                onChange={(e) => setRenameDeptValue(e.target.value)}
+                                className="w-full border rounded-md px-3 py-2 text-sm"
+                            />
+                            <div className="flex gap-2 mt-5">
+                                <button
+                                    onClick={handleRenameDepartment}
+                                    disabled={renameDeptSubmitting}
+                                    className="flex-1 bg-[#007DCC] hover:bg-[#0066A6] text-white rounded-md py-2 disabled:opacity-60"
+                                >
+                                    {renameDeptSubmitting ? "Mengirim..." : "Konfirmasi"}
+                                </button>
+                                <button
+                                    onClick={() => { setShowRenameDeptModal(false); setRenameDeptTarget(null); }}
+                                    className="flex-1 bg-gray-200 rounded-md py-2"
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {visibleDepartments.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "60px 20px", color: "#9ca3af" }}>
                         <svg width="48" height="48" fill="none" stroke="currentColor"
@@ -1843,36 +2347,82 @@ const MatriksSkill = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {visibleDepartments.map((dept) => (
-                            <button
-                                key={dept.id}
-                                onClick={() => { setSelectedDept(dept); setIsEditMode(false); }}
-                                className="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-200 p-5 text-left hover:scale-[1.02] group"
-                                style={{ borderLeft: `4px solid ${dept.borderColor}` }}
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: dept.iconColor }}>
-                                        {DEPARTMENT_ICONS[dept.id] ?? (
-                                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <div key={dept.id} className="relative">
+                                {isDeptPending(dept.id, "department-add") && (
+                                    <span className="absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-amber-500 z-10">
+                                        Menunggu Persetujuan
+                                    </span>
+                                )}
+                                {isDeptPending(dept.id, "department-rename") && (
+                                    <span className="absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-amber-500 z-10">
+                                        Pending Rename
+                                    </span>
+                                )}
+                                {isDeptPending(dept.id, "department-delete") && (
+                                    <span className="absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-red-500 z-10">
+                                        Menunggu Hapus
+                                    </span>
+                                )}
+                                {canRequestNewMatriksDept && (
+                                    <div className="absolute top-2 right-2 flex gap-1 z-10">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setRenameDeptTarget(dept);
+                                                setRenameDeptValue(dept.name);
+                                                setShowRenameDeptModal(true);
+                                            }}
+                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                            title="Rename"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
-                                        )}
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteDepartment(dept);
+                                            }}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                            title="Hapus"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                                                {dept.name}
-                                            </h3>
+                                )}
+                                <button
+                                    onClick={() => { setSelectedDept(dept); setIsEditMode(false); }}
+                                    className="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-200 p-5 text-left hover:scale-[1.02] group w-full"
+                                    style={{ borderLeft: `4px solid ${dept.borderColor}` }}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: dept.iconColor }}>
+                                            {DEPARTMENT_ICONS[dept.id] ?? dept.icon ?? (
+                                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            )}
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            {deptData[dept.id]?.karyawan?.length || 0} karyawan
-                                        </p>
-                                        <p className="text-xs text-gray-400">
-                                            {deptData[dept.id]?.kompetensi?.length || 0} kompetensi
-                                        </p>
+                                        <div className="flex-1 pr-12">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                                    {dept.name}
+                                                </h3>
+                                            </div>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {deptData[dept.id]?.karyawan?.length || 0} karyawan
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {deptData[dept.id]?.kompetensi?.length || 0} kompetensi
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                            </button>
+                                </button>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -2367,7 +2917,7 @@ const MatriksSkill = () => {
                 )}
 
                 <div className="matriks-print-container">
-                    <DocHeader data={currentData} />
+                    <DocHeader data={currentData} isEditMode={isEditMode} onEditMeta={(field, value) => handleEditMeta(selectedDept.id, field, value)} />
                     <MatriksTable
                         data={currentData}
                         isEditMode={isEditMode}

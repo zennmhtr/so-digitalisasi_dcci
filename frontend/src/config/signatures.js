@@ -37,20 +37,57 @@ export const DEPARTMENT_SIGNER = {
   "Marketing Battery Department":    { name: "RENDRA PRAMONO",  role: "DEPT. HEAD", signatureKey: "Rendra Pramono" },
   "Marketing Battery":               { name: "RENDRA PRAMONO",  role: "DEPT. HEAD", signatureKey: "Rendra Pramono" },
   "Marketing Engineering":           { name: "ANDREAS AGUNG S.",    role: "DEPT. HEAD", signatureKey: "Andreas Agung" },
-  "MI & SHE":                        { name: "ELIATA DUMAR GINTING", role: "SECT. HEAD", signatureKey: "Eliata Dumar" },
+  "MI & SHE":                        { name: "DIKI WAHYUDI*", role: "DEPT. HEAD", signatureKey: "Diki Wahyudi" },
   "PPIC":                            { name: "DIKI WAHYUDI",   role: "DEPT. HEAD", signatureKey: "Diki Wahyudi" },
-  "Purchasing":                      { name: "DIKI WAHYUDI* / FAKHDARENI*",   role: "SECT. HEAD", signatureKey: "Diki Wahyudi" },
+  "Purchasing":                      { name: "DIKI WAHYUDI*",   role: "SECT. HEAD", signatureKey: "Diki Wahyudi" },
   "QA (Quality Assurance)":          { name: "M BAGUS SANTOSO", role: "DEPT. HEAD", signatureKey: "Bagus Santoso" },
   "QA (QUALITY ASSURANCE)":          { name: "M BAGUS SANTOSO", role: "DEPT. HEAD", signatureKey: "Bagus Santoso" },
   "Quality Assurance":               { name: "M BAGUS SANTOSO", role: "DEPT. HEAD", signatureKey: "Bagus Santoso" },
 };
 
-export const getSignatureInfo = (jobdesc, isFullyApproved = false) => {
+// Cari gambar tanda tangan berdasarkan NAMA (bukan key hardcode per-departemen),
+// supaya nama yang diambil dinamis dari SO Bagian header tetap bisa ketemu gambarnya.
+const findSignatureImageByName = (name) => {
+  if (!name) return null;
+  const normalize = (s) => s.replace(/[*]+/g, "").trim().toLowerCase();
+  const target = normalize(name);
+  const foundKey = Object.keys(SIGNATURE_IMAGES).find((key) => {
+    const normKey = normalize(key);
+    return target === normKey || target.includes(normKey) || normKey.includes(target);
+  });
+  return foundKey ? SIGNATURE_IMAGES[foundKey] : null;
+};
+
+export const getSignatureInfo = (jobdesc, isFullyApproved = false, dynamicSigner = null) => {
   const deptName =
     jobdesc?.department?.name ||
     (typeof jobdesc?.department === "string" ? jobdesc.department : "") ||
     "";
 
+  // 1) Prioritas utama: data dinamis dari header SO Bagian (preparedByName/checkedByName)
+  //    yang di-fetch oleh JobdescViewer. Kalau ada dan nama-nya terisi, ini yang dipakai —
+  //    otomatis ikut berubah kalau Prepared By/Checked By diubah di SO Bagian Editor,
+  //    tanpa perlu edit file config ini.
+  if (dynamicSigner?.dibuat?.name) {
+    return {
+      dibuat: {
+        name: dynamicSigner.dibuat.name,
+        role: dynamicSigner.dibuat.role || "DEPT. HEAD",
+        signature: findSignatureImageByName(dynamicSigner.dibuat.name),
+      },
+      disetujui: {
+        name: dynamicSigner.disetujui?.name || DEFAULT_APPROVER.name,
+        role: dynamicSigner.disetujui?.role || DEFAULT_APPROVER.role,
+        signature:
+          findSignatureImageByName(dynamicSigner.disetujui?.name) ||
+          SIGNATURE_IMAGES[DEFAULT_APPROVER.signatureKey] ||
+          null,
+      },
+    };
+  }
+
+  // 2) Fallback: config statis lama (dipakai kalau data SO Bagian departemen ini
+  //    belum berhasil di-fetch, atau departemen belum pernah diedit lewat SO Bagian Editor)
   let signer = DEPARTMENT_SIGNER[deptName];
 
   if (!signer) {

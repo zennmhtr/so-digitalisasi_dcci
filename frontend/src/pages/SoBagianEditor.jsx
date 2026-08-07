@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
-import { soBagianChangeRequestsAPI, soBagianDataAPI } from "../services/api";
+import { soBagianChangeRequestsAPI, soBagianDataAPI, soBagianDepartmentsAPI } from "../services/api";
 import JobdescViewer from "../components/JobdescViewer";
 import Swal from "sweetalert2";
 import { SIGNATURE_IMAGES, DEPARTMENT_SIGNER, DEFAULT_APPROVER } from "../config/signatures";
@@ -32,9 +32,60 @@ const departmentColumns = {
 };
 
 const departmentGroups = {
+  "finance": {
+    "SECTION HEAD": ["FINANCE DEPARTMENT"],
+    "STAFF": ["FINANCE & ACCOUNTING"],
+  },
+  "management-representative": {
+    "SECTION HEAD": ["MANAGEMENT REPRESENTATIVE DEPARTMENT"],
+    "STAFF": ["MANAGEMENT REPRESENTATIVE"],
+  },
+  "marketing-battery": {
+    "DEPARTMENT HEAD": ["MARKETING BATTERY DEPARTMENT"],
+    "STAFF/SPECIALIST": ["AUX & POWER BATTERY MARKETING", "ESS MARKETING"],
+  },
+  "purchasing": {
+    "SECTION HEAD": ["PURCHASING DEPARTMENT"],
+    "STAFF LEVEL": ["CONTROLCABLE", "BATTERY", "GENERAL & LEGAL", "SUBCONT"],
+  },
+  "management-development": {
+    "STAFF": ["MANAGEMENT DEVELOPEMENT/PDCA"],
+  },
+  "mi-she": {
+    "SECTION HEAD": ["MI & SHE DEPARTMENT"],
+    "STAFF LEVEL": ["MI", "SHE (5R-SMK3-ISO 14001)"],
+  },
   "hrga-it": {
-    "SECTION HEAD": ["HRGA & IT DEPARTMENT"],
+    "DEPARTMENT HEAD": ["HRDGA & IT"],
+    "SECTION HEAD": ["HRGA & IT"],
     "STAFF LEVEL": ["HRD", "GENERAL AFFAIR & IND. RELATIONS", "INFORMATION TECHNOLOGY"],
+  },
+  "qa": {
+    "DEPARTMENT HEAD": ["QA DEPARTMENT"],
+    "UNIT/STAFF LEVEL": ["QUALITY ASSURANCE PROCESS (UNIT)"],
+    "OPERATOR/ADMIN": ["QUALITY ASSURANCE PROCESS", "LAB & KALIBRASI", "VENDOR MANAGEMENT", "CLAIM & COMPLAIN", "ADMINISTRASI"],
+  },
+  "marketing-engineering": {
+    "DEPARTMENT HEAD": ["MARKETING ENGINEERING DEPARTMENT"],
+    "SECTION HEAD": ["SALES & MARKETING CONTROLCABLE (SECTION)", "ENGINEERING CONTROLCABLE"],
+    "STAFF": ["SALES & MARKETING CONTROLCABLE", "CUSTOMER REPRESENTATIVE", "PRODUCT & QUALITY ENGINEERING CABLE", "PROCESS ENGINEERING CABLE", "NEW BUSINESS DEVELOPMENT"],
+  },
+  "manufactur-battery": {
+    "SENIOR ENGINEER": ["MANUFACTURING BATTERY DEPARTMENT"],
+    "ENGINEER": ["BATTERY PRODUCTION", "QUALITY ASSURANCE", "BATTERY PME"],
+    "TEAM MEMBER/TECHNICIAN": ["AUXILIARY BATTERY PRODUCT", "BESS PRODUCT", "BEV PRODUCT", "QUALITY CHECK"],
+  },
+  "ppic": {
+    "DEPARTMENT HEAD": ["PPIC DEPARTMENT"],
+    "UNIT HEAD/STAFF": ["PPC CONTROLCABLE", "BATTERY & AHM OES", "WHS CONTROLCABLE"],
+    "GROUP HEAD": ["CONTROLCABLE"],
+    "MEMBER": ["PROD PLAN", "DN/MANIFEST", "DELIVERY", "BATTERY", "SUPPLIER CONTROL", "MRP", "RM & OHP", "SUPPLY"],
+  },
+  "manufacturing-cable": {
+    "SECTION HEAD": ["MANUFACTURING CABLE DEPARTMENT"],
+    "STAFF / UNIT HEAD": ["MANUFACTURING UNIT", "ASSEMBLING UNIT", "PRODUCTION ENGINEERING (UNIT HEAD)"],
+    "GROUP HEAD": ["GROUP CO & CI", "GROUP PO", "GROUP ASSEMBLING"],
+    "TEAM MEMBER/ADMIN": ["COMPONENT OUTER & COMPONENT INNER", "PROSES OUTER", "MAINTENANCE", "PRODUCTION ENGINEERING (STAFF)", "ASSEMBLING", "QUALITY CONTROL PROCESS", "QUALITY CONTROL INCOMING", "ADMINISTRATION"],
   },
 };
 
@@ -53,6 +104,7 @@ const DraggablePositionBox = ({
 
   const onMouseDown = (e) => {
     if (!isEditMode) return;
+    if (e.target.closest(".so-drag-editable")) return; // biarkan klik di field editable jalan normal, jangan drag
     e.preventDefault();
     e.stopPropagation();
     startRef.current = { x: e.clientX, y: e.clientY, posX: pos.x, posY: pos.y };
@@ -148,7 +200,7 @@ const DraggableStack = ({ deptId, columnKey, boxPositions, setPositionsForDept, 
   );
 };
 
-const SoBagianEditor = () => {
+const SoBagianEditor = ({ previewMode = false, previewDepartmentId = null } = {}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -183,6 +235,190 @@ const SoBagianEditor = () => {
   });
 
   const [boxPositions, setBoxPositions] = useState({});
+  const [dbDepartments, setDbDepartments] = useState([]);
+  const [pendingDeptRequests, setPendingDeptRequests] = useState([]);
+  const [showAddDeptModal, setShowAddDeptModal] = useState(false);
+  const [addDeptForm, setAddDeptForm] = useState({ bagianId: "", name: "", route: "", color: "bg-slate-500" });
+  const [showRenameDeptModal, setShowRenameDeptModal] = useState(false);
+  const [renameDeptTarget, setRenameDeptTarget] = useState(null);
+  const [renameDeptValue, setRenameDeptValue] = useState("");
+
+  const [customColumnsByDept, setCustomColumnsByDept] = useState({});
+  const [columnLabels, setColumnLabels] = useState({});
+  const [hiddenColumns, setHiddenColumns] = useState({});
+
+  const getBaseColumnsForDept = (deptId) =>
+    departmentColumns[deptId] || selectedDepartment?.columns || [
+      "BOARD OF DIRECTOR",
+      "DEPARTMENT HEAD",
+      "SECTION HEAD",
+      "STAFF",
+    ];
+
+  const isColumnHidden = (deptId, colKey) =>
+    !!hiddenColumns[deptId]?.[colKey] ||
+    !!departmentData[deptId]?.header?.hiddenColumns?.[colKey];
+
+  const getColumnsForDept = (deptId) => {
+    const all =
+      customColumnsByDept[deptId] ||
+      departmentData[deptId]?.header?.customColumns ||
+      getBaseColumnsForDept(deptId);
+    return all.filter((c) => !isColumnHidden(deptId, c));
+  };
+
+  const getColumnLabel = (deptId, colKey) =>
+    columnLabels[deptId]?.[colKey] ||
+    departmentData[deptId]?.header?.columnLabels?.[colKey] ||
+    colKey;
+
+  const renameColumn = (deptId, colKey, newLabel) => {
+    setColumnLabels((prev) => ({
+      ...prev,
+      [deptId]: { ...(prev[deptId] || {}), [colKey]: newLabel },
+    }));
+    setDepartmentData((prev) => {
+      const d = { ...prev[deptId] };
+      d.header = {
+        ...d.header,
+        columnLabels: { ...(d.header?.columnLabels || {}), [colKey]: newLabel },
+      };
+      return { ...prev, [deptId]: d };
+    });
+  };
+
+  const countBoxesInColumn = (deptId, colKey) => {
+    return (departmentData[deptId]?.positions || []).filter(
+      (p) => p.column === colKey && p.pendingAction !== "delete"
+    ).length;
+  };
+
+  const deleteColumn = (deptId, colKey) => {
+    const remainingCols = getColumnsForDept(deptId);
+    if (remainingCols.length <= 1) {
+      alert("Minimal harus ada 1 header yang tersisa.");
+      return;
+    }
+    const boxCount = countBoxesInColumn(deptId, colKey);
+    const label = getColumnLabel(deptId, colKey);
+
+    Swal.fire({
+      title: `Hapus Header "${label}"?`,
+      html:
+        boxCount > 0
+          ? `Header ini beserta <b>${boxCount} box</b> di dalamnya akan dihapus. Perubahan perlu di-submit untuk approval.`
+          : `Header ini akan dihapus dari struktur organisasi.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      confirmButtonText: "Ya, Hapus Header",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      if (boxCount > 0) {
+        const boxesToDelete = (departmentData[deptId]?.positions || []).filter(
+          (p) => p.column === colKey && p.pendingAction !== "delete"
+        );
+        boxesToDelete.forEach((b) => handleRemoveCustomBox(deptId, b.id));
+      }
+
+      setHiddenColumns((prev) => ({
+        ...prev,
+        [deptId]: { ...(prev[deptId] || {}), [colKey]: true },
+      }));
+      setDepartmentData((prev) => {
+        const d = { ...prev[deptId] };
+        d.header = {
+          ...d.header,
+          hiddenColumns: { ...(d.header?.hiddenColumns || {}), [colKey]: true },
+        };
+        return { ...prev, [deptId]: d };
+      });
+
+      if (!isEditMode) setIsEditMode(true);
+    });
+  };
+
+  const restoreColumn = (deptId, colKey) => {
+    setHiddenColumns((prev) => {
+      const d = { ...(prev[deptId] || {}) };
+      delete d[colKey];
+      return { ...prev, [deptId]: d };
+    });
+    setDepartmentData((prev) => {
+      const d = { ...prev[deptId] };
+      const newHiddenColumns = { ...(d.header?.hiddenColumns || {}) };
+      delete newHiddenColumns[colKey];
+      d.header = { ...d.header, hiddenColumns: newHiddenColumns };
+      return { ...prev, [deptId]: d };
+    });
+  };
+
+  const getHiddenColumnsForDept = (deptId) => {
+    const all = customColumnsByDept[deptId] || getBaseColumnsForDept(deptId);
+    return all.filter((c) => isColumnHidden(deptId, c));
+  };
+
+  // --- Add Header (sama seperti sebelumnya) ---
+  const [showAddHeaderModal, setShowAddHeaderModal] = useState(false);
+  const [addHeaderForm, setAddHeaderForm] = useState({ name: "", afterColumn: "" });
+
+  const openAddHeaderModal = () => {
+    const cols = getColumnsForDept(selectedDepartment.id);
+    setAddHeaderForm({ name: "", afterColumn: cols[cols.length - 1] || "" });
+    setShowAddHeaderModal(true);
+  };
+
+  const handleAddHeader = () => {
+    const name = addHeaderForm.name.trim().toUpperCase();
+    if (!name) {
+      alert("Nama header wajib diisi");
+      return;
+    }
+    const deptId = selectedDepartment.id;
+    const currentCols = customColumnsByDept[deptId] || getBaseColumnsForDept(deptId);
+    if (currentCols.includes(name)) {
+      alert("Header dengan nama tersebut sudah ada");
+      return;
+    }
+    const insertIndex = addHeaderForm.afterColumn
+      ? currentCols.indexOf(addHeaderForm.afterColumn) + 1
+      : currentCols.length;
+    const newCols = [...currentCols];
+    newCols.splice(insertIndex, 0, name);
+
+    setCustomColumnsByDept((prev) => ({ ...prev, [deptId]: newCols }));
+    // Simpan juga ke departmentData supaya ikut ter-submit ke change request
+    setDepartmentData((prev) => {
+      const d = { ...prev[deptId] };
+      d.header = {
+        ...d.header,
+        customColumns: newCols,
+      };
+      return { ...prev, [deptId]: d };
+    });
+    setShowAddHeaderModal(false);
+    if (!isEditMode) setIsEditMode(true);
+  };
+
+  const handleRemoveHeader = (deptId, colName, baseCols = []) => {
+    if (baseCols.includes(colName)) {
+      alert("Header bawaan tidak bisa dihapus dari sini");
+      return;
+    }
+    const hasBoxes = (departmentData[deptId]?.positions || []).some(
+      (p) => p.isCustom && p.column === colName && p.pendingAction !== "delete"
+    );
+    if (hasBoxes) {
+      alert("Hapus semua box di header ini dulu sebelum menghapus headernya");
+      return;
+    }
+    setCustomColumnsByDept((prev) => ({
+      ...prev,
+      [deptId]: (prev[deptId] || getColumnsForDept(deptId)).filter((c) => c !== colName),
+    }));
+  };
 
   const setPositionsForDept = (deptId) => (updater) => {
     setBoxPositions((prev) => ({
@@ -210,6 +446,52 @@ const SoBagianEditor = () => {
   };
 
   const [positionsDirty, setPositionsDirty] = useState({});
+  const [hiddenStructuralBoxes, setHiddenStructuralBoxes] = useState({});
+  const isStructuralBoxHidden = (deptId, boxKey) => {
+    if (hiddenStructuralBoxes[`${deptId}:${boxKey}`]) return true;
+    return !!departmentData[deptId]?.header?.hiddenBoxes?.[boxKey];
+  };
+
+  const hideStructuralBox = (deptId, boxKey, boxTitle) => {
+    setHiddenStructuralBoxes((prev) => ({
+      ...prev,
+      [`${deptId}:${boxKey}`]: true,
+    }));
+    setDepartmentData((prev) => {
+      const d = { ...prev[deptId] };
+      d.header = {
+        ...d.header,
+        hiddenBoxes: { ...(d.header?.hiddenBoxes || {}), [boxKey]: true },
+      };
+      return { ...prev, [deptId]: d };
+    });
+    if (!isEditMode) setIsEditMode(true);
+  };
+
+  const deleteBoxWithData = (deptId, boxKey, boxLabel, items) => {
+    Swal.fire({
+      title: `Hapus Box "${boxLabel}" beserta semua datanya?`,
+      html: `Box ini beserta <b>${items.length} data karyawan</b> di dalamnya akan dihapus. Perubahan perlu di-submit untuk approval.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#b91c1c",
+      confirmButtonText: "Ya, Hapus Semua",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        items.forEach((item) => handleRemoveCustomBox(deptId, item.id));
+        setDepartmentData((prev) => {
+          const d = { ...prev[deptId] };
+          d.header = {
+            ...d.header,
+            hiddenBoxes: { ...(d.header?.hiddenBoxes || {}), [boxKey]: true },
+          };
+          return { ...prev, [deptId]: d };
+        });
+        if (!isEditMode) setIsEditMode(true);
+      }
+    });
+  };
 
   const setPositionsForDeptTracked = (deptId) => (updater) => {
     setBoxPositions((prev) => ({
@@ -279,6 +561,49 @@ const SoBagianEditor = () => {
     }
   };
 
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const res = await soBagianDepartmentsAPI.getAll();
+        setDbDepartments(res.data?.data || []);
+      } catch (err) {
+        console.error("Gagal load departemen:", err);
+      }
+    };
+    loadDepartments();
+  }, []);
+
+  useEffect(() => {
+    if (previewMode && previewDepartmentId && dbDepartments.length > 0) {
+      const target = dbDepartments.find(
+        (d) => d.id === previewDepartmentId || d._id === previewDepartmentId
+      );
+      if (target) {
+        setSelectedDepartment(target);
+        setSidebarVisible(false);
+        setIsEditMode(false);
+      }
+    }
+  }, [previewMode, previewDepartmentId, dbDepartments]);
+
+  useEffect(() => {
+    const loadPendingDeptRequests = async () => {
+      try {
+        const res = await soBagianChangeRequestsAPI.getAll();
+        const all = res.data?.data || res.data || [];
+        const relevant = all.filter(
+          (r) =>
+            ["department-add", "department-rename", "department-delete"].includes(r.changeType) &&
+            ["pending", "waiting_director_approval"].includes(r.status)
+        );
+        setPendingDeptRequests(relevant);
+      } catch (err) {
+        console.error("Gagal load pending department requests:", err);
+      }
+    };
+    loadPendingDeptRequests();
+  }, []);
+
 
   useEffect(() => {
     if (selectedDepartment) {
@@ -333,7 +658,8 @@ const SoBagianEditor = () => {
           "PPIC1.3.4": ["RM", "OHP", "PPIC1.3.4"],
           "PPIC1.3.5": ["RM", "PPIC1.3.5"],
           "HRD1.0": ["HRD", "HRD1.0"],
-          "HRD1.1": ["HRD", "PERSONALIA", "HRD1.1"],
+          "HRD1.1": ["HRD", "POD STAFF", "HRD1.1"],
+          "HRD1.1.1": ["HRD", "PERSONALIA", "HRD1.1"],
           "HRD2.0": ["POD"],
           "GA1.1": ["GA", "GA1.1"],
           "GA1.2": ["GA", "GA1.2"],
@@ -356,7 +682,7 @@ const SoBagianEditor = () => {
           "QAC1.1.2": ["QA OPERATOR HEAD", "QAC1.1.2"],
           "QAC1.1.3": ["LAB", "KALIBRASI", "QAC1.1.3"],
           "QAC1.1.4": ["QA PROJECT", "QAC1.1.4"],
-          "QAC1.1.5": ["CLAIM", "COMPLAIN", "QAC1.1.5"],
+          "QAC1.1.5": ["CLAIM", "COMPLAIN", "ADMINISTRASI", "QAC1.1.5"],
           "QAC2.0": ["QA BATTERY", "QAC2.0"],
           "PRD1.0": ["PROD", "PRD1.0"],
           "PRD1.1": ["MANUFACTURING UNIT", "PRD1.1", "PRODUCTION"],
@@ -383,7 +709,7 @@ const SoBagianEditor = () => {
           "MIO1.0": ["MI & SHE", "SHE", "MIO1.0"],
           "MIO1.1": ["MANAGEMENT IMPROVEMENT", "MIO1.1"],
           "MIO1.2": ["SHE", "MIO1.2"],
-          "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MDO1.0"],
+          "MDO1.0": ["MANAGEMENT DEVELOPMENT", "PDCA", "MI & SHE", "MDO1.0"],
           "MDO2.0": ["MDO2.0"],
           "MRO1.0": ["MR", "MRO1.0"],
           "MRO1.1": ["MR STAFF"],
@@ -542,14 +868,14 @@ const SoBagianEditor = () => {
         positions: [
           {
             id: "hrd-2",
-            code: "HRD2.0",
+            code: "HRD1.1",
             title: "HRGA & IT",
             name: "VERONICA HANI M.**",
             empId: "23240206",
           },
           {
             id: "hrd-3",
-            code: "HRD1.1",
+            code: "HRD1.1.1",
             title: "HRD",
             name: "THARISA ARRAHMA R.",
             empId: "23230072",
@@ -688,176 +1014,7 @@ const SoBagianEditor = () => {
             title: "DIRECTOR"
           },
         },
-        positions: [
-          {
-            id: "prd-2-1",
-            code: "PRD2.1",
-            title: "BATTERY PRODUCTION",
-            name: "YEREMIA SOTYA",
-            empId: "23230135",
-            group: "ENGINEER",
-          },
-          {
-            id: "prd-2-2",
-            code: "PRD2.2",
-            title: "BATTERY PRODUCTION",
-            name: "ASEP AGUNG WIGUNA",
-            empId: "23190805",
-            group: "ENGINEER",
-          },
-          {
-            id: "prd-2-3",
-            code: "PRD2.3",
-            title: "QUALITY ASSURANCE",
-            name: "ADHITYA SATIAWA SURYADATA",
-            empId: "23230091",
-            group: "ENGINEER",
-          },
-          {
-            id: "prd-3-0",
-            code: "PRD3.0",
-            title: "BATTERY PME",
-            name: "TBR",
-            empId: "-",
-            group: "ENGINEER",
-          },
-          {
-            id: "prd-2-1-1-1",
-            code: "PRD2.1.1",
-            title: "AUXILIARY BATTERY PRODUCT",
-            name: "RIZAL GUNAWAN",
-            empId: "23230055",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-1-2",
-            code: "PRD2.1.1",
-            title: "AUXILIARY BATTERY PRODUCT",
-            name: "MUH. NANDER",
-            empId: "23120193",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-1-3",
-            code: "PRD2.1.1",
-            title: "AUXILIARY BATTERY PRODUCT",
-            name: "GANTIANTO",
-            empId: "23120145",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-1-4",
-            code: "PRD2.1.1",
-            title: "AUXILIARY BATTERY PRODUCT",
-            name: "TARMUDIN",
-            empId: "23120184",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-1-5",
-            code: "PRD2.1.1",
-            title: "AUXILIARY BATTERY PRODUCT",
-            name: "DEDI SUKMA",
-            empId: "23110110",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-2-1",
-            code: "PRD2.1.2",
-            title: "BESS PRODUCT",
-            name: "EKO DAMAR WAHYUDI",
-            empId: "23230115",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-2-2",
-            code: "PRD2.1.2",
-            title: "BESS PRODUCT",
-            name: "WIDODO",
-            empId: "23120197",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-2-3",
-            code: "PRD2.1.2",
-            title: "BESS PRODUCT",
-            name: "SUPRIYONO",
-            empId: "23110119",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-2-4",
-            code: "PRD2.1.2",
-            title: "BESS PRODUCT",
-            name: "PUTRI LESTARI",
-            empId: "23240229",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-1",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "RIZIQ RIDWAN",
-            empId: "23210079",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-2",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "AINA WAKHORIDAH",
-            empId: "23230053",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-3",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "DENDI SETIAWAN",
-            empId: "23230054",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-4",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "GALIH SOMAT",
-            empId: "23230116",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-5",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "M. YUNUS ARIFAI",
-            empId: "23120192",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-6",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "DODIK",
-            empId: "23120161",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-1-3-7",
-            code: "PRD2.1.3",
-            title: "BEV PRODUCT",
-            name: "NACA RODIANA HENDRAYANA",
-            empId: "23120199",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-          {
-            id: "prd-2-3-1",
-            code: "PRD2.3.1",
-            title: "QUALITY CHECK",
-            name: "TBR",
-            empId: "-",
-            group: "TEAM MEMBER/TECHNICIAN",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -890,280 +1047,7 @@ const SoBagianEditor = () => {
             title: "DIRECTOR"
           },
         },
-        positions: [
-          {
-            id: "prd1-1",
-            code: "PRD1.1",
-            title: "MANUFACTURING UNIT",
-            name: "DADI ROSADI",
-            empId: "23060049",
-          },
-          {
-            id: "prd1-2",
-            code: "PRD1.2",
-            title: "ASSEMBLING UNIT",
-            name: "M. SUGIARTO",
-            empId: "23050024",
-          },
-          {
-            id: "prd1-0-1",
-            code: "PRD1.0.1",
-            title: "PRODUCTION ENGINEERING",
-            name: "CHOIRUL AMIN",
-            empId: "23110109",
-          },
-          {
-            id: "prd1-1-1",
-            code: "PRD1.1.1",
-            title: "GROUP CO&CI",
-            name: "AGUS PURWANTORO",
-            empId: "23120139",
-          },
-          {
-            id: "prd1-1-1",
-            code: "PRD1.1.1",
-            title: "GROUP CO&CI",
-            name: "AJI BABAN",
-            empId: "23120156",
-          },
-          {
-            id: "prd1-1-2",
-            code: "PRD1.1.2",
-            title: "GROUP PO",
-            name: "MAYAR SANTOSO",
-            empId: "23090089",
-          },
-          {
-            id: "prd1-1-2",
-            code: "PRD1.1.2",
-            title: "GROUP PO",
-            name: "IWAN SUPRIYADI",
-            empId: "23110114",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "PIKI TAOFIK",
-            empId: "23110117",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "DEDY IRWANSYAH",
-            empId: "23120132",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "AGUNG BASUKI",
-            empId: "23070072",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "YULIANTO",
-            empId: "23110122",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "SOPAN",
-            empId: "23110118",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "MUJIATI",
-            empId: "23120164",
-          },
-          {
-            id: "prd1-2-1",
-            code: "PRD1.2.1",
-            title: "GROUP ASSEMBLING",
-            name: "HIDAYATUL",
-            empId: "23120165",
-          },
-          {
-            id: "prd1-1-3",
-            code: "PRD1.1.3",
-            title: "COMPONENT OUTER & COMPONENT INNER",
-            name: "TEAM MEMBER",
-            empId: "-",
-          },
-          {
-            id: "prd1-1-4",
-            code: "PRD1.1.4",
-            title: "PROSES OUTER",
-            name: "TEAM MEMBER",
-            empId: "-",
-          },
-          {
-            id: "prd1-1-5",
-            code: "PRD1.1.5",
-            title: "MAINTENANCE",
-            name: "TRI YULIYANTO",
-            empId: "23110120",
-          },
-          {
-            id: "prd1-1-6",
-            code: "PRD1.1.6",
-            title: "MAINTENANCE",
-            name: "AHMAD DAYU ZAINI",
-            empId: "23180703",
-          },
-          {
-            id: "prd1-1-7",
-            code: "PRD1.1.7",
-            title: "PRODUCTION ENGINEERING",
-            name: "HANA OKTA",
-            empId: "23120155",
-          },
-          {
-            id: "prd1-2-2",
-            code: "PRD1.2.2",
-            title: "ASSEMBLING",
-            name: "TEAM MEMBER",
-            empId: "-",
-          },
-          {
-            id: "prd1-2-3",
-            code: "PRD1.2.3",
-            title: "QUALITY CONTROL PROCESS",
-            name: "SUGIHARTO (COORD)",
-            empId: "23120137",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "CIPTO RAHMAD SASONO",
-            empId: "23060047",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "DENDI SETYAWAN",
-            empId: "23120146",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "HERI MOHAMMAD AFANDI",
-            empId: "23120138",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "INDRI NOVITA SARI",
-            empId: "23110113",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "PARTO",
-            empId: "23120140",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "SUPANTO",
-            empId: "23090091",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "WANTO",
-            empId: "23110121",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "JUPRI SAHALA",
-            empId: "23120154",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "ARIYANTO",
-            empId: "23120219",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-2-4",
-            code: "PRD1.2.4",
-            title: "QUALITY CONTROL PROCESS",
-            name: "TEAM MEMBER",
-            empId: "-",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-2",
-            code: "PRD1.0.2",
-            title: "QUALITY CONTROL INCOMING",
-            name: "MAULANA MALIK IBRAHIM",
-            empId: "23220078",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-3",
-            code: "PRD1.0.3",
-            title: "QUALITY CONTROL INCOMING",
-            name: "MOH. NURHIDAYAT",
-            empId: "23120181",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-4",
-            code: "PRD1.0.4",
-            title: "ADMINISTRATION",
-            name: "DWI WIDYASTUTI",
-            empId: "23120191",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-5",
-            code: "PRD1.0.5",
-            title: "ADMINISTRATION",
-            name: "MELINDA SURYANI HASIBUAN",
-            empId: "23230008",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-6",
-            code: "PRD1.0.6",
-            title: "ADMINISTRATION",
-            name: "RIRIN ERLINA",
-            empId: "23120217",
-            group: "TEAM MEMBER/ADMIN",
-          },
-          {
-            id: "prd1-0-7",
-            code: "PRD1.0.7",
-            title: "ADMINISTRATION",
-            name: "ANDI PUTRA MALBA SYAGGAF",
-            empId: "23230027",
-            group: "TEAM MEMBER/ADMIN",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -1229,99 +1113,7 @@ const SoBagianEditor = () => {
             title: "DIRECTOR"
           },
         },
-        positions: [
-          {
-            id: "mkt1-1",
-            code: "MKT1.1",
-            title: "SALES & MARKETING CONTROLCABLE",
-            name: "SAVITRI OCTAVIANI",
-            empId: "23130254",
-          },
-          {
-            id: "eng1-0",
-            code: "ENG1.0",
-            title: "ENGINEERING CONTROLCABLE",
-            name: "SUGIYARTO",
-            empId: "23060041",
-          },
-          {
-            id: "mkt1-1-1",
-            code: "MKT1.1.1",
-            title: "SALES & MARKETING CONTROLCABLE",
-            name: "RIKA TRI HARMELIA",
-            empId: "23110101",
-          },
-          {
-            id: "mkt1-1-2",
-            code: "MKT1.1.2",
-            title: "SALES & MARKETING CONTROLCABLE",
-            name: "KHANSA Z.H",
-            empId: "23230110",
-          },
-          {
-            id: "mkt1-1-3",
-            code: "MKT1.1.3",
-            title: "CUSTOMER REPRESENTATIVE",
-            name: "SUMIYARTO",
-            empId: "23030015",
-          },
-          {
-            id: "eng1-1",
-            code: "ENG1.1",
-            title: "PRODUCT & QUALITY ENGINEERING CABLE",
-            name: "NUR DWI WAHYONO",
-            empId: "23120160",
-          },
-          {
-            id: "eng1-1",
-            code: "ENG1.1",
-            title: "PRODUCT & QUALITY ENGINEERING CABLE",
-            name: "ALIF PRIATNA",
-            empId: "23190773",
-          },
-          {
-            id: "eng1-1",
-            code: "ENG1.1",
-            title: "PRODUCT & QUALITY ENGINEERING CABLE",
-            name: "ANNISA SEPTIYANING CHOIR*",
-            empId: "23240228",
-          },
-          {
-            id: "eng1-2",
-            code: "ENG1.2",
-            title: "PROCESS ENGINEERING CABLE",
-            name: "MUHAMMAD SYARIFUDIN",
-            empId: "23190727",
-          },
-          {
-            id: "eng1-2",
-            code: "ENG1.2",
-            title: "PROCESS ENGINEERING CABLE",
-            name: "AHMAD JAELANI SIDIK*",
-            empId: "23240227",
-          },
-          {
-            id: "eng1-2",
-            code: "ENG1.2",
-            title: "PROCESS ENGINEERING CABLE",
-            name: "DEDI SETIADI",
-            empId: "23120143",
-          },
-          {
-            id: "eng1-3",
-            code: "ENG1.3",
-            title: "NEW BUSINESS DEVELOPMENT",
-            name: "ANNISA SETIYANING CHOIR*",
-            empId: "23240228",
-          },
-          {
-            id: "eng1-3",
-            code: "ENG1.3",
-            title: "NEW BUSINESS DEVELOPMENT",
-            name: "AHMAD JAELANI SIDIK*",
-            empId: "23240227",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -1387,113 +1179,7 @@ const SoBagianEditor = () => {
             title: "DIRECTOR"
           },
         },
-        positions: [
-          {
-            id: "ppic1-1",
-            code: "PPIC1.1",
-            title: "PPC CONTROLCABLE",
-            name: "ADE AKHMAD FAUZI*",
-            empId: "23090093",
-          },
-          {
-            id: "ppic1-2",
-            code: "PPIC1.2",
-            title: "BATTERY & AHM OES",
-            name: "BUCHORI**",
-            empId: "23120159",
-          },
-          {
-            id: "ppic1-3",
-            code: "PPIC1.3",
-            title: "WHS CONTROLCABLE",
-            name: "ANANG SUTAMTOMO**",
-            empId: "23080082",
-          },
-          {
-            id: "ppic1-3-1",
-            code: "PPIC1.3.1",
-            title: "CONTROLCABLE",
-            name: "SETIYONO",
-            empId: "23090090",
-          },
-          {
-            id: "ppic1-1-1",
-            code: "PPIC1.1.1",
-            title: "PROD PLAN",
-            name: "ERLI SULIANTO",
-            empId: "23070073",
-          },
-          {
-            id: "ppic1-1-2",
-            code: "PPIC1.1.2",
-            title: "DN/MANIFEST",
-            name: "EFRAIN TAMBUNAN",
-            empId: "23110111",
-          },
-          {
-            id: "ppic1-1-3",
-            code: "PPIC1.1.3",
-            title: "DELIVERY",
-            name: "SUDARMANTO",
-            empId: "23120151",
-          },
-          {
-            id: "ppic1-1-4",
-            code: "PPIC1.1.4",
-            title: "DELIVERY",
-            name: "OPERATOR",
-            empId: "-",
-          },
-          {
-            id: "ppic1-2-1",
-            code: "PPIC1.2.1",
-            title: "BATTERY",
-            name: "SRI NATIN",
-            empId: "231202130",
-          },
-          {
-            id: "ppic1-2-2",
-            code: "PPIC1.2.2",
-            title: "BATTERY STAFF",
-            name: "M. HAMAM MUCHLISIN",
-            empId: "23120174",
-          },
-          {
-            id: "ppic1-3-2",
-            code: "PPIC1.3.2",
-            title: "SUPPLIER CONTROL",
-            name: "SULASTRI",
-            empId: "23120190",
-          },
-          {
-            id: "ppic1-3-3",
-            code: "PPIC1.3.3",
-            title: "MRP",
-            name: "LAILA FITRIYAH",
-            empId: "23120196",
-          },
-          {
-            id: "ppic1-3-4",
-            code: "PPIC1.3.4",
-            title: "RM & OHP",
-            name: "SUPRIYANTO",
-            empId: "23120153",
-          },
-          {
-            id: "ppic1-3-5",
-            code: "PPIC1.3.5",
-            title: "HASIL PRODUKGAS",
-            name: "RAGIL PAMUNGKAS",
-            empId: "23120134",
-          },
-          {
-            id: "ppic1-3-6",
-            code: "PPIC1.3.6",
-            title: "SUPPLY",
-            name: "OPERATOR (2)",
-            empId: "-",
-          },
-        ],
+        positions: [],
       },
     },
     {
@@ -1559,46 +1245,39 @@ const SoBagianEditor = () => {
             title: "DIRECTOR"
           },
         },
-        positions: [
-          {
-            id: "qac1-1-1",
-            code: "QAC1.1.1",
-            title: "QUALITY ASSURANCE PROCESS",
-            name: "DWI PURWANTO",
-            empId: "23050023",
-          },
-          {
-            id: "qac1-1-2",
-            code: "QAC1.1.2",
-            title: "QUALITY ASSURANCE PROCESS",
-            name: "SUCI PURWANTO",
-            empId: "23120149",
-          },
-          {
-            id: "qac1-1-3",
-            code: "QAC1.1.3",
-            title: "LAB & KALIBRASI",
-            name: "NURDIANTO",
-            empId: "23160477",
-          },
-          {
-            id: "qac1-1-4",
-            code: "QAC1.1.4",
-            title: "VENDOR MANAGEMENT",
-            name: "SUCI PURWANTO*",
-            empId: "23120149",
-          },
-          {
-            id: "qac1-1-5",
-            code: "QAC1.1.5",
-            title: "CLAIM & COMPLAIN",
-            name: "CANDRA MAULANA",
-            empId: "23230082",
-          },
-        ],
+        positions: [],
       },
     },
   ];
+
+  const allDepartments = React.useMemo(() => {
+    const hardcodedIds = new Set(departments.map((d) => d.id));
+    const customFromDb = dbDepartments
+      .filter((d) => !hardcodedIds.has(d.bagianId))
+      .map((d) => ({
+        id: d.bagianId,
+        name: d.name,
+        route: d.route,
+        color: d.color,
+        columns: d.columns,
+        groups: d.groups,
+        isCustomDept: true,
+        structure: {
+          header: { title: d.name, effectiveDate: "16 Maret 2026" },
+          positions: [],
+        },
+      }));
+
+    const dbNameMap = {};
+    dbDepartments.forEach((d) => { dbNameMap[d.bagianId] = d.name; });
+
+    const hardcodedWithLatestName = departments.map((d) => ({
+      ...d,
+      name: dbNameMap[d.id] || d.name,
+    }));
+
+    return [...hardcodedWithLatestName, ...customFromDb];
+  }, [dbDepartments]);
 
   const departmentPermissions = {
     "Finance Department": ["Finance Department", "Manage Users"],
@@ -1623,21 +1302,21 @@ const SoBagianEditor = () => {
     const userDepartmentName = user?.department?.name;
 
     if (userPermissions.includes("Manage Users")) {
-      return departments;
+      return allDepartments;
     }
 
-    return departments.filter((d) => {
+    return allDepartments.filter((d) => {
       if (userDepartmentName === d.name) return true;
 
       const required = departmentPermissions[d.name] || [];
       return required.some((perm) => userPermissions.includes(perm));
     });
-  }, [user, departments]);
+  }, [user, allDepartments]);
 
   useEffect(() => {
     const initialData = {};
     const originalData = {};
-    departments.forEach((dept) => {
+    allDepartments.forEach((dept) => {
       const savedData = localStorage.getItem(`so-bagian-${dept.id}`);
       if (savedData) {
         try {
@@ -1653,9 +1332,9 @@ const SoBagianEditor = () => {
         originalData[dept.id] = JSON.parse(JSON.stringify(dept.structure));
       }
     });
-    setDepartmentData(initialData);
-    setOriginalDepartmentData(originalData);
-  }, []);
+    setDepartmentData((prev) => ({ ...initialData, ...prev }));
+    setOriginalDepartmentData((prev) => ({ ...originalData, ...prev }));
+  }, [allDepartments]);
 
   useEffect(() => {
     if (!selectedDepartment) return;
@@ -1684,7 +1363,21 @@ const SoBagianEditor = () => {
               isCustom: true,
             }));
             const merged = [...nonCustomPositions, ...dbBoxesMapped];
-            return { ...prev, [deptId]: { ...dept, positions: merged } };
+            return {
+              ...prev,
+              [deptId]: {
+                ...dept,
+                positions: merged,
+                header: {
+                  ...(record.header || {}),
+                  ...dept.header,
+                  hiddenBoxes: {
+                    ...((record.header || {}).hiddenBoxes || {}),
+                    ...((dept.header || {}).hiddenBoxes || {}),
+                  },
+                },
+              },
+            };
           });
         }
       } catch (err) {
@@ -1775,7 +1468,7 @@ const SoBagianEditor = () => {
   };
 
   const openAddBoxModal = () => {
-    const cols = departmentColumns[selectedDepartment.id] || [];
+    const cols = getColumnsForDept(selectedDepartment.id);
     setAddBoxForm({
       column: cols[cols.length - 1] || "",
       afterId: "",
@@ -1836,7 +1529,7 @@ const SoBagianEditor = () => {
       const afterBox = customInColumn.find((p) => p.id === addBoxForm.afterId);
       order = afterBox ? afterBox.order + 0.5 : customInColumn.length;
     } else {
-      order = customInColumn.length > 0 ? Math.min(...customInColumn.map((p) => p.order)) - 1 : 0;
+      order = customInColumn.length > 0 ? Math.max(...customInColumn.map((p) => p.order)) + 1 : 0;
     }
     const newPosition = {
       id: newId,
@@ -1965,6 +1658,77 @@ const SoBagianEditor = () => {
     }
   };
 
+  const submitDepartmentChangeRequest = async (changeType, title, description, deptData) => {
+    try {
+      await soBagianChangeRequestsAPI.create({
+        title,
+        description,
+        changeType,
+        department: deptData.name || deptData.bagianId,
+        proposedData: { departmentData: { ...deptData, action: changeType.replace("department-", "") } },
+      });
+      await Swal.fire({ title: "Berhasil!", text: "Request submitted untuk approval.", icon: "success", timer: 2000, showConfirmButton: false });
+      const res = await soBagianChangeRequestsAPI.getAll();
+      const all = res.data?.data || res.data || [];
+      setPendingDeptRequests(all.filter((r) =>
+        ["department-add", "department-rename", "department-delete"].includes(r.changeType) &&
+        ["pending", "waiting_director_approval"].includes(r.status)
+      ));
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Gagal submit request");
+    }
+  };
+
+  const handleAddDepartment = () => {
+    if (!addDeptForm.bagianId.trim() || !addDeptForm.name.trim()) {
+      alert("ID dan Nama departemen wajib diisi");
+      return;
+    }
+    submitDepartmentChangeRequest(
+      "department-add",
+      `Tambah Departemen : ${addDeptForm.name}`,
+      `Menambahkan departemen baru "${addDeptForm.name}"`,
+      addDeptForm
+    );
+    setShowAddDeptModal(false);
+    setAddDeptForm({ bagianId: "", name: "", route: "", color: "bg-slate-500" });
+  };
+
+  const handleRenameDepartment = () => {
+    if (!renameDeptValue.trim()) return;
+    submitDepartmentChangeRequest(
+      "department-rename",
+      `Rename Departemen : ${renameDeptTarget.name} → ${renameDeptValue}`,
+      `Mengubah nama departemen dari "${renameDeptTarget.name}" menjadi "${renameDeptValue}"`,
+      { bagianId: renameDeptTarget.id, oldName: renameDeptTarget.name, newName: renameDeptValue }
+    );
+    setShowRenameDeptModal(false);
+  };
+
+  const handleDeleteDepartment = (dept) => {
+    Swal.fire({
+      title: `Hapus Departemen "${dept.name}"?`,
+      text: "Permintaan hapus akan menunggu approval Director.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      confirmButtonText: "Ya, Konfirmasi Hapus",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        submitDepartmentChangeRequest(
+          "department-delete",
+          `Hapus Departemen : ${dept.name}`,
+          `Menghapus departemen "${dept.name}"`,
+          { bagianId: dept.id, name: dept.name }
+        );
+      }
+    });
+  };
+
+  const isDeptPending = (deptId, type) =>
+    pendingDeptRequests.some((r) => r.proposedData?.departmentData?.bagianId === deptId && r.changeType === type);
+
   const submitForApproval = async () => {
     console.log('🔍 Original header:', JSON.stringify(originalDepartmentData[selectedDepartment.id]?.header));
     console.log('🔍 Current header:', JSON.stringify(departmentData[selectedDepartment.id]?.header));
@@ -1982,6 +1746,7 @@ const SoBagianEditor = () => {
     try {
       const now = new Date();
       const currentStructure = departmentData[selectedDepartment.id];
+      alert("HIDDEN BOXES SAAT SUBMIT: " + JSON.stringify(currentStructure?.header?.hiddenBoxes));
 
       console.log("Selected Department ID:", selectedDepartment.id);
       const originalStructure = originalDepartmentData[selectedDepartment.id] ||
@@ -2217,7 +1982,7 @@ const SoBagianEditor = () => {
             if (e.key === "Enter") handleSave();
             if (e.key === "Escape") setIsEditing(false);
           }}
-          className={`bg-yellow-50 border rounded px-2 py-1 ${className}`}
+          className={`so-drag-editable bg-yellow-50 border rounded px-2 py-1 ${className}`}
           placeholder={placeholder}
           autoFocus
         />
@@ -2226,9 +1991,8 @@ const SoBagianEditor = () => {
     return (
       <span
         onClick={() => isEditMode && setIsEditing(true)}
-        className={
-          isEditMode ? "cursor-pointer hover:bg-yellow-100 rounded px-1" : ""
-        }
+        className={`so-drag-editable ${isEditMode ? "cursor-pointer hover:bg-yellow-100 rounded px-1" : ""
+          }`}
         title={isEditMode ? "Click to edit" : ""}
       >
         {value || placeholder}
@@ -2236,7 +2000,104 @@ const SoBagianEditor = () => {
     );
   };
 
+  const HeaderCell = ({ deptId, colKey }) => {
+    const label = getColumnLabel(deptId, colKey);
+    return (
+      <div className="bg-blue-300 p-3 rounded text-center border border-black relative">
+        {isEditMode ? (
+          <input
+            type="text"
+            value={label}
+            onChange={(e) => renameColumn(deptId, colKey, e.target.value)}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="so-drag-editable font-bold text-xs text-black bg-blue-200 border border-blue-600 rounded px-1 py-1 w-full text-center"
+          />
+        ) : (
+          <h3 className="font-bold text-xs text-black">{label}</h3>
+        )}
+        {isEditMode && (
+          <button
+            onClick={() => deleteColumn(deptId, colKey)}
+            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+            title="Hapus header ini"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const EditableBoxTitle = ({ boxKey, defaultTitle, className = "text-sm font-semibold leading-tight whitespace-nowrap" }) => {
+    const dept = departmentData[selectedDepartment.id];
+    const currentTitle = dept?.header?.groupTitles?.[boxKey] || defaultTitle;
+    if (!isEditMode) {
+      return <p className={className}>{currentTitle}</p>;
+    }
+    return (
+      <input
+        type="text"
+        value={currentTitle}
+        onChange={(e) => {
+          const newTitle = e.target.value;
+          setDepartmentData((prev) => {
+            const d = { ...prev[selectedDepartment.id] };
+            d.header = {
+              ...d.header,
+              groupTitles: { ...(d.header?.groupTitles || {}), [boxKey]: newTitle },
+            };
+            return { ...prev, [selectedDepartment.id]: d };
+          });
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        className={`so-drag-editable ${className} bg-yellow-50 border rounded px-2 py-1 w-full text-center`}
+        placeholder="Judul Box"
+      />
+    );
+  };
+
+  const EditableStaticCode = ({ boxKey, defaultCode, className = "text-sm font-bold" }) => {
+    const dept = departmentData[selectedDepartment.id];
+    const currentCode = dept?.header?.staticCodes?.[boxKey] ?? defaultCode;
+    if (!isEditMode) {
+      return <p className={className}>{currentCode}</p>;
+    }
+    return (
+      <input
+        type="text"
+        value={currentCode}
+        onChange={(e) => {
+          const newCode = e.target.value;
+          setDepartmentData((prev) => {
+            const d = { ...prev[selectedDepartment.id] };
+            d.header = {
+              ...d.header,
+              staticCodes: { ...(d.header?.staticCodes || {}), [boxKey]: newCode },
+            };
+            return { ...prev, [selectedDepartment.id]: d };
+          });
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        className={`so-drag-editable ${className} bg-yellow-50 border rounded px-1 py-0.5 w-full text-center`}
+      />
+    );
+  };
+
   const renderCodeButton = (person) => {
+    if (isEditMode) {
+      return (
+        <input
+          type="text"
+          value={person?.code || ""}
+          onChange={(e) => handleEdit(selectedDepartment.id, "positions", person.id, "code", e.target.value)}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="so-drag-editable text-xs font-bold uppercase bg-yellow-50 border rounded px-1 py-0.5 w-full text-center"
+          placeholder="Code"
+        />
+      );
+    }
     if (!person || !person.empId) {
       return (
         <p className="text-xs font-bold uppercase">{person?.code || ""}</p>
@@ -2292,6 +2153,163 @@ const SoBagianEditor = () => {
       return null;
 
     const dept = departmentData[selectedDepartment.id];
+
+    const knownCustomLayoutIds = [
+      "finance", "hrga-it", "management-development", "management-representative",
+      "manufactur-battery", "manufacturing-cable", "marketing-battery",
+      "marketing-engineering", "mi-she", "ppic", "purchasing", "qa", "rnd", "marketing-bess"
+    ];
+
+    if (!knownCustomLayoutIds.includes(selectedDepartment.id)) {
+      const cols = getColumnsForDept(selectedDepartment.id);
+      return (
+        <div className="print-area bg-white rounded-lg shadow-sm overflow-x-auto border-4 border-black">
+          <div className="min-w-[1400px] relative p-4">
+            <div className="mb-4 border-2 border-black p-3">
+              <div className="flex items-start gap-2">
+                <div className="w-32 flex items-center justify-center p-4 border-2 border-black" style={{ height: "160px" }}>
+                  <img src="/logo/dcci.png" alt="Dharma Group Logo" className="w-full h-full object-contain" />
+                </div>
+                <div className="border-2 border-black p-4 text-center flex items-center justify-center flex-1 mr-1" style={{ height: "160px" }}>
+                  <div className="w-full">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                    <h2 className="text-base font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                    <h3 className="text-sm font-semibold text-gray-600 mb-1">
+                      (<EditableField value={dept.header?.title || selectedDepartment.name} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "title", v)} />)
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Effective Date :{" "}
+                      <EditableField value={dept.header?.effectiveDate || "16 Maret 2026"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "effectiveDate", v)} />
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex space-x-1">
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Prepared by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header?.preparedByName || "") && (
+                              <img src={getSignatureByName(dept.header?.preparedByName || "")} alt="TTD" style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }} onError={(e) => { e.target.style.display = "none"; }} />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField value={dept.header?.preparedByName || ""} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "preparedByName", v)} />
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              <EditableField value={dept.header?.preparedByRole || "DEPARTMENT HEAD"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "preparedByRole", v)} />
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Checked by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header?.checkedByName || "BAMBANG WURYANTO") && (
+                              <img src={getSignatureByName(dept.header?.checkedByName || "BAMBANG WURYANTO")} alt="TTD" style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }} onError={(e) => { e.target.style.display = "none"; }} />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField value={dept.header?.checkedByName || "BAMBANG WURYANTO"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "checkedByName", v)} />
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              <EditableField value={dept.header?.checkedByRole || "DIRECTOR"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "checkedByRole", v)} />
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-60 h-40 border border-black bg-white">
+                        <div className="p-2 border-b border-black bg-white">
+                          <p className="text-sm font-bold text-black">Approved by :</p>
+                        </div>
+                        <div className="p-3 flex flex-col justify-end h-32">
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header?.approvedByName || "EKO MARYANTO") && (
+                              <img src={getSignatureByName(dept.header?.approvedByName || "EKO MARYANTO")} alt="TTD" style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }} onError={(e) => { e.target.style.display = "none"; }} />
+                            )}
+                          </div>
+                          <div className="text-center border-t border-black pt-1">
+                            <p className="text-sm font-bold text-black underline leading-tight">
+                              <EditableField value={dept.header?.approvedByName || "EKO MARYANTO"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "approvedByName", v)} />
+                            </p>
+                            <p className="text-sm text-black leading-tight">
+                              <EditableField value={dept.header?.approvedByRole || "PRESIDENT DIRECTOR"} onSave={(v) => handleEdit(selectedDepartment.id, "header", null, "approvedByRole", v)} />
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+              {cols.map((col) => (
+                <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+              ))}
+            </div>
+            <div className="grid gap-4 relative org-grid" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+              {cols.map((col, colIdx) => (
+                <DraggableStack
+                  key={col}
+                  deptId={selectedDepartment.id}
+                  columnKey={`generic-${col}`}
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={200}
+                >
+                  {colIdx === 0 && (
+                    <>
+                      <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                          <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
+                        </div>
+                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                          <p className="text-sm font-semibold mb-2 leading-tight">
+                            PRESIDENT DIRECTOR
+                          </p>
+                          <hr className="my-2 border-gray-300" />
+                          <p className="text-sm leading-tight">EKO MARYANTO</p>
+                          <p className="text-sm leading-tight">(23200235)</p>
+                        </div>
+                      </div>
+                      <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                          <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
+                        </div>
+                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                          <p className="text-sm font-semibold mb-2 leading-tight">
+                            DIRECTOR
+                          </p>
+                          <hr className="my-2 border-gray-300" />
+                          <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
+                          <p className="text-sm leading-tight">(23200038)</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {renderCustomBoxesInColumn(col)}
+                </DraggableStack>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (selectedDepartment.id === "management-representative") {
       return (
@@ -2460,29 +2478,21 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+              className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -2495,7 +2505,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -2508,7 +2518,7 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -2521,143 +2531,210 @@ const SoBagianEditor = () => {
                 </div>
               </DraggableStack>
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mrep-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mrep-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mrep-col3-dept"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {(() => {
-                  const sectionHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MANAGEMENT REPRESENTATIVE DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "MANAGEMENT REPRESENTATIVE"}
-                            </p>
-                          </div>
-                        </div>
-                        {sectionHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mrep-col3-dept"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "section-head")) return null;
+                    const sectionHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MANAGEMENT REPRESENTATIVE DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && sectionHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "section-head", "Management Representative (Section Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
                           >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && sectionHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "section-head", "Management Representative (Section Head)", sectionHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="section-head" defaultTitle="MANAGEMENT REPRESENTATIVE" />
                             </div>
                           </div>
-                        ))}
+                          {sectionHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mrep-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {(() => {
-                  const staffItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT REPRESENTATIVE" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              MANAGEMENT REPRESENTATIVE
-                            </p>
-                          </div>
-                        </div>
-                        {staffItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+              {!isColumnHidden(selectedDepartment.id, "STAFF") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mrep-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "staff")) return null;
+                    const staffItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT REPRESENTATIVE" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && staffItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "staff", "Management Representative (Staff)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
                           >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && staffItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "staff", "Management Representative (Staff)", staffItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="staff" defaultTitle="MANAGEMENT REPRESENTATIVE" />
                             </div>
                           </div>
-                        ))}
+                          {staffItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("STAFF")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF")}
+                </DraggableStack>
+              )}
+
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mrep-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
           </div>
         </div>
@@ -2832,171 +2909,136 @@ const SoBagianEditor = () => {
 
             {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF LEVEL</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
             <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+              className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               {/* Kolom 1 - Board of Director */}
-              <div className="space-y-4 flex flex-col items-center">
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+              {!isColumnHidden(selectedDepartment.id, "BOARD OF DIRECTOR") && (
+                <div className="space-y-4 flex flex-col items-center">
+                  <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
+                    </div>
+                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
+                        PRESIDENT DIRECTOR
+                      </p>
+                      <hr className="my-2 border-gray-300" />
+                      <p className="text-sm leading-tight">EKO MARYANTO</p>
+                      <p className="text-sm leading-tight">(23200235)</p>
+                    </div>
                   </div>
-                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
-                      PRESIDENT DIRECTOR
-                    </p>
-                    <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">EKO MARYANTO</p>
-                    <p className="text-sm leading-tight">(23200235)</p>
-                  </div>
-                </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                  <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
-                  </div>
-                  <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                    <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
-                      DIRECTOR
-                    </p>
-                    <hr className="my-2 border-gray-300" />
-                    <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
-                    <p className="text-sm leading-tight">(23200038)</p>
+                  <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                    <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                      <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
+                    </div>
+                    <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                      <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
+                        DIRECTOR
+                      </p>
+                      <hr className="my-2 border-gray-300" />
+                      <p className="text-sm leading-tight">BAMBANG WURYANTO</p>
+                      <p className="text-sm leading-tight">(23200038)</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="hrga-it-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="hrga-it-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="hrga-it-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={400}
-              >
-                {(() => {
-                  const sectionHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "HRGA & IT DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "HRGA & IT"}
-                            </p>
-                          </div>
-                        </div>
-                        {sectionHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
-
-              {/* Kolom 4 - Staff Level */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="hrga-it-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={800}
-              >
-                {(() => {
-                  const staffPositions = (dept.positions || []).filter(
-                    (p) => p.column === "STAFF LEVEL" && p.groupKey && p.pendingAction !== "delete"
-                  );
-                  const renderGroupCard = (groupKey, minHeightClass) => {
-                    const items = staffPositions
-                      .filter((p) => p.groupKey === groupKey)
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="hrga-it-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={400}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "section-head")) return null;
+                    const sectionHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "HRGA & IT DEPARTMENT" && p.pendingAction !== "delete")
                       .sort((a, b) => a.order - b.order);
                     return (
-                      <div key={groupKey} className={`bg-white border border-gray-400 rounded shadow-sm w-[280px]`}>
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && sectionHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "section-head", "HRGA & IT (Section Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && sectionHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "section-head", "HRGA & IT (Section Head)", sectionHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                         <div className="flex flex-col h-full">
                           <div className="flex border-b border-gray-400">
                             <div className="p-2 flex-1 text-center bg-gray-100">
-                              <p className="text-sm font-semibold leading-tight">
-                                {groupKey}
-                              </p>
+                              {isEditMode ? (
+                                <input
+                                  type="text"
+                                  value={dept.header?.boxTitle || "HRGA & IT"}
+                                  onChange={(e) =>
+                                    handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
+                                  }
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                  placeholder="Section Title"
+                                />
+                              ) : (
+                                <p className="text-sm font-semibold leading-tight whitespace-nowrap">
+                                  {dept.header?.boxTitle || "HRGA & IT"}
+                                </p>
+                              )}
                             </div>
                           </div>
-                          {items.map((staff, idx) => (
+                          {sectionHeadItems.map((staff, idx) => (
                             <div
                               key={staff.id}
-                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
                             >
                               {isEditMode && (
                                 <button
@@ -3029,53 +3071,200 @@ const SoBagianEditor = () => {
                         </div>
                       </div>
                     );
-                  };
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
-                  const groupDefs = [
-                    { key: "HRD", cls: "" },
-                    { key: "GENERAL AFFAIR & IND. RELATIONS", cls: "" },
-                    { key: "INFORMATION TECHNOLOGY", cls: "" },
-                  ];
+              {/* Kolom 4 - Staff Level */}
+              {!isColumnHidden(selectedDepartment.id, "STAFF LEVEL") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="hrga-it-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={800}
+                >
+                  {(() => {
+                    const staffPositions = (dept.positions || []).filter(
+                      (p) => p.column === "STAFF LEVEL" && p.groupKey && p.pendingAction !== "delete"
+                    );
+                    const renderGroupCard = (groupKey, minHeightClass) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, groupKey)) return null;
+                      const items = staffPositions
+                        .filter((p) => p.groupKey === groupKey)
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={groupKey} className={`bg-white border border-gray-400 rounded shadow-sm w-[280px] relative`}>
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, groupKey, groupKey)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, groupKey, groupKey, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[groupKey] || groupKey}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [groupKey]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+                                  />
+                                ) : (
+                                  <p className="text-sm font-semibold leading-tight">
+                                    {dept.header?.groupTitles?.[groupKey] || groupKey}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
 
-                  return groupDefs.map((g) => renderGroupCard(g.key, g.cls));
-                })()}
-                {(() => {
-                  const customBoxes = (departmentData["hrga-it"]?.positions || [])
-                    .filter((p) => p.isCustom && p.column === "STAFF LEVEL" && !p.groupKey && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return customBoxes.map((p) => (
-                    <div key={p.id} className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm flex min-h-[120px] w-[280px] relative" : "bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px] relative"}>
-                      {isEditMode && (
-                        <button
-                          onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                          title="Hapus"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      )}
-                      <div className={isEditMode ? "bg-purple-50 p-2 text-center border-r border-purple-300 w-20 flex items-center justify-center" : "bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center"}>
-                        {renderCodeButton(p)}
+                    const groupDefs = [
+                      { key: "HRD", cls: "" },
+                      { key: "GENERAL AFFAIR & IND. RELATIONS", cls: "" },
+                      { key: "INFORMATION TECHNOLOGY", cls: "" },
+                    ];
+
+                    return groupDefs.map((g) => renderGroupCard(g.key, g.cls));
+                  })()}
+                  {(() => {
+                    const customBoxes = (departmentData["hrga-it"]?.positions || [])
+                      .filter((p) => p.isCustom && p.column === "STAFF LEVEL" && !p.groupKey && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return customBoxes.map((p) => (
+                      <div key={p.id} className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm min-h-[120px] w-[280px] relative" : "bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px] relative"}>
+                        {isEditMode && (
+                          <button
+                            onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableField
+                                value={p.title}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "title", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-1">
+                            <div className={isEditMode ? "bg-purple-50 p-2 text-center border-r border-purple-300 w-20 flex items-center justify-center" : "bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center"}>
+                              {renderCodeButton(p)}
+                            </div>
+                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                              <EditableField
+                                value={p.name}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "name", value)}
+                                className="text-sm font-semibold leading-tight"
+                              />
+                              <EditableField
+                                value={`(${p.empId})`}
+                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "empId", value.replace(/[()]/g, ""))}
+                                className="text-sm leading-tight"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={p.name}
-                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "name", value)}
-                          className="text-xs font-bold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${p.empId})`}
-                          onSave={(value) => handleEdit(selectedDepartment.id, "positions", p.id, "empId", value.replace(/[()]/g, ""))}
-                          className="text-xs font-bold leading-tight"
-                        />
-                      </div>
-                    </div>
-                  ));
-                })()}
-              </DraggableStack>
-            </div>
+                    ));
+                  })()}
+                </DraggableStack>
+              )}
+              {(() => {
+                const baseCols = ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF LEVEL"];
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`hrga-it-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
+            </div> {/* ← penutup Content Grid */}
+
 
             {/* Notes Section */}
             <div className="mt-8 border-2 border-black p-3 inline-block">
@@ -3166,11 +3355,20 @@ const SoBagianEditor = () => {
                           <p className="text-sm font-bold text-black">Prepared by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.preparedByName || "RENDRA PRAMONO") && (
+                              <img
+                                src={getSignatureByName(dept.header.preparedByName || "RENDRA PRAMONO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
                           <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
                               <EditableField
-                                value={dept.header.preparedByName || ""}
+                                value={dept.header.preparedByName || "RENDRA PRAMONO"}
                                 onSave={(value) =>
                                   handleEdit(selectedDepartment.id, "header", null, "preparedByName", value)
                                 }
@@ -3196,7 +3394,16 @@ const SoBagianEditor = () => {
                           <p className="text-sm font-bold text-black">Checked by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.checkedByName || "BAMBANG WURYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
                           <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
                               <EditableField
@@ -3226,7 +3433,16 @@ const SoBagianEditor = () => {
                           <p className="text-sm font-bold text-black">Approved by :</p>
                         </div>
                         <div className="p-3 flex flex-col justify-end h-32">
-                          <div className="h-16"></div>
+                          <div className="h-16 flex items-center justify-center">
+                            {getSignatureByName(dept.header.approvedByName || "EKO MARYANTO") && (
+                              <img
+                                src={getSignatureByName(dept.header.approvedByName || "EKO MARYANTO")}
+                                alt="TTD"
+                                style={{ maxHeight: "50px", maxWidth: "120px", objectFit: "contain" }}
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
+                            )}
+                          </div>
                           <div className="text-center border-t border-black pt-1">
                             <p className="text-sm font-bold text-black underline leading-tight">
                               <EditableField
@@ -3255,30 +3471,22 @@ const SoBagianEditor = () => {
 
             {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
             <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+              className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               {/* Kolom 1 - Board of Director */}
               <DraggableStack
@@ -3292,7 +3500,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
@@ -3306,7 +3514,7 @@ const SoBagianEditor = () => {
 
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight whitespace-nowrap">
@@ -3320,94 +3528,140 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mdev-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mdev-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mdev-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mdev-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 4 - Staff */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mdev-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={200}
-              >
-                {(() => {
-                  const staffItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT DEVELOPEMENT/PDCA" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              MANAGEMENT DEVELOPEMENT/PDCA
-                            </p>
-                          </div>
-                        </div>
-                        {staffItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+              {!isColumnHidden(selectedDepartment.id, "STAFF") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mdev-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={200}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "staff")) return null;
+                    const staffItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF" && p.groupKey === "MANAGEMENT DEVELOPEMENT/PDCA" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px] relative">
+                        {isEditMode && staffItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "staff", "Management Development/PDCA (Staff)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
                           >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && staffItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "staff", "Management Development/PDCA (Staff)", staffItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="staff" defaultTitle="MANAGEMENT DEVELOPEMENT/PDCA" />
                             </div>
                           </div>
-                        ))}
+                          {staffItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("STAFF")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF")}
+                </DraggableStack>
+              )}
+
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mdev-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             {/* Notes Section */}
@@ -3615,37 +3869,22 @@ const SoBagianEditor = () => {
 
             {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-5 gap-2 mb-4">
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    SENIOR ENGINEER
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">ENGINEER</h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    TEAM MEMBER/TECHNICIAN
-                  </h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
             <div
-              className="grid grid-cols-5 gap-2 relative org-grid"
-              style={{ zIndex: 2 }}
+              className="grid gap-2 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               {/* Kolom 1 - Board of Director */}
               <DraggableStack
@@ -3659,7 +3898,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[230px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -3673,7 +3912,7 @@ const SoBagianEditor = () => {
 
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[230px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -3687,595 +3926,378 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <div className="space-y-4 flex flex-col items-center">
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </div>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="manbat-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Senior Engineer */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="manbat-col3-senior"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.boxTitle || "BATTERY PRODUCTION & PME"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "boxTitle",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.boxTitle || "BATTERY PRODUCTION & PME"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "SENIOR ENGINEER") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="manbat-col3-senior"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "senior-engineer")) return null;
+                    const items = (dept.positions || [])
+                      .filter((p) => p.column === "SENIOR ENGINEER" && p.groupKey === "MANUFACTURING BATTERY DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[230px] relative">
+                        {isEditMode && items.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "senior-engineer", "Battery Production & PME")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && items.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "senior-engineer", "Battery Production & PME", items)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full w-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="senior-engineer" defaultTitle="BATTERY PRODUCTION & PME" />
+                            </div>
+                          </div>
+                          {items.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "PRD2.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("SENIOR ENGINEER")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("SENIOR ENGINEER")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 4 - Engineer */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="manbat-col4-engineer"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={600}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[0]?.title ||
-                              "BATTERY PRODUCTION"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {!isColumnHidden(selectedDepartment.id, "ENGINEER") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="manbat-col4-engineer"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={600}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "BATTERY PRODUCTION", key: "BATTERY PRODUCTION" },
+                      { title: "QUALITY ASSURANCE", key: "QUALITY ASSURANCE" },
+                      { title: "BATTERY PME", key: "BATTERY PME" },
+                    ];
 
-                    {dept.positions?.slice(0, 2).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "ENGINEER" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[220px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+                                  />
+                                ) : (
+                                  <EditableBoxTitle boxKey={key} defaultTitle={title} />
+                                )}
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      );
+                    };
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[2]?.title || "QUALITY ASSURANCE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[2])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[2]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[3]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[3]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[3]?.title || "BATTERY PME"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[3])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[3]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[3]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[3]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("ENGINEER")}
-              </DraggableStack>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("ENGINEER")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 5 - Team Member/Technician */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="manbat-col5-team"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={1400}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[4]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[4]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[4]?.title ||
-                              "AUXILIARY BATTERY PRODUCT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {!isColumnHidden(selectedDepartment.id, "TEAM MEMBER/TECHNICIAN") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="manbat-col5-team"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={1400}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "AUXILIARY BATTERY PRODUCT", key: "AUXILIARY BATTERY PRODUCT" },
+                      { title: "BESS PRODUCT", key: "BESS PRODUCT" },
+                      { title: "BEV PRODUCT", key: "BEV PRODUCT" },
+                      { title: "QUALITY CHECK", key: "QUALITY CHECK" },
+                    ];
 
-                    {dept.positions?.slice(4, 9).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 4 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "TEAM MEMBER/TECHNICIAN" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[230px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+
+                                  />
+                                ) : (
+                                  <p className="text-sm font-semibold leading-tight">{dept.header?.groupTitles?.[key] || title}</p>
+                                )}
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      );
+                    };
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[9]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[9]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[9]?.title ||
-                              "BESS PRODUCT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("TEAM MEMBER/TECHNICIAN")}
+                </DraggableStack>
+              )}
 
-                    {dept.positions?.slice(9, 13).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 3 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[13]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[13]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[13]?.title ||
-                              "BEV PRODUCT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {dept.positions?.slice(13, 20).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 6 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[240px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[20]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[20]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[20]?.title || "QUALITY CHECK"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[20])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[20]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[20]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[20]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[20]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("TEAM MEMBER/TECHNICIAN")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`manbat-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             {/* Notes Section */}
@@ -4483,30 +4505,21 @@ const SoBagianEditor = () => {
 
             {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF LEVEL</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
-            <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+            <div className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               {/* Kolom 1 - Board of Director */}
               <DraggableStack
@@ -4520,7 +4533,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -4534,7 +4547,7 @@ const SoBagianEditor = () => {
 
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -4548,116 +4561,70 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="purch-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="purch-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="purch-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={200}
-              >
-                {(() => {
-                  const sectionHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "PURCHASING DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "PROCUREMENT & PURCHASING"}
-                            </p>
-                          </div>
-                        </div>
-                        {sectionHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
-
-              {/* Kolom 4 - Staff Level */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="purch-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={500}
-              >
-                {(() => {
-                  const groups = [
-                    { title: "CONTROLCABLE", key: "CONTROLCABLE" },
-                    { title: "BATTERY", key: "BATTERY" },
-                    { title: "GENERAL & LEGAL", key: "GENERAL & LEGAL" },
-                    { title: "SUBCONT", key: "SUBCONT" },
-                  ];
-
-                  const renderGroup = ({ title, key }) => {
-                    const items = (dept.positions || [])
-                      .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === key && p.pendingAction !== "delete")
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="purch-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={200}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "section-head")) return null;
+                    const sectionHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "PURCHASING DEPARTMENT" && p.pendingAction !== "delete")
                       .sort((a, b) => a.order - b.order);
                     return (
-                      <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[300px] relative">
+                        {isEditMode && sectionHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "section-head", "Procurement & Purchasing (Section Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && sectionHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "section-head", "Procurement & Purchasing (Section Head)", sectionHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                         <div className="flex flex-col h-full">
                           <div className="flex border-b border-gray-400">
                             <div className="p-2 flex-1 text-center bg-gray-100">
-                              <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
+                              <EditableBoxTitle boxKey="section-head" defaultTitle="PROCUREMENT & PURCHASING" />
                             </div>
                           </div>
-                          {items.map((staff, idx) => (
+                          {sectionHeadItems.map((staff, idx) => (
                             <div
                               key={staff.id}
-                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
                             >
                               {isEditMode && (
                                 <button
@@ -4677,7 +4644,7 @@ const SoBagianEditor = () => {
                                 <EditableField
                                   value={staff.name}
                                   onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                  className="text-sm leading-tight"
+                                  className="text-sm font-semibold leading-tight"
                                 />
                                 <EditableField
                                   value={`(${staff.empId})`}
@@ -4690,12 +4657,128 @@ const SoBagianEditor = () => {
                         </div>
                       </div>
                     );
-                  };
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
-                  return <>{groups.map(renderGroup)}</>;
-                })()}
-                {renderCustomBoxesInColumn("STAFF LEVEL")}
-              </DraggableStack>
+              {/* Kolom 4 - Staff Level */}
+              {!isColumnHidden(selectedDepartment.id, "STAFF LEVEL") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="purch-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={500}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "PROCUREMENT & PURCHASING", key: "PROCUREMENT & PURCHASING" },
+                      { title: "CONTROLCABLE", key: "CONTROLCABLE" },
+                      { title: "BATTERY", key: "BATTERY" },
+                      { title: "GENERAL & LEGAL", key: "GENERAL & LEGAL" },
+                      { title: "SUBCONT", key: "SUBCONT" },
+                    ];
+
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={key} defaultTitle={title} />
+                              </div>
+                            </div>
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF LEVEL")}
+                </DraggableStack>
+              )}
+
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`purch-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             {/* Notes Section */}
@@ -4902,22 +4985,20 @@ const SoBagianEditor = () => {
 
             {/* Header Rows */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF LEVEL</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
-            <div className="grid grid-cols-4 gap-4 relative org-grid" style={{ zIndex: 2 }}>
+            <div className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
+            >
               <DraggableStack
                 deptId={selectedDepartment.id}
                 columnKey="mishe-col1-bod"
@@ -4929,7 +5010,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-xs font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" className="text-xs font-bold" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-2 leading-tight break-words">PRESIDENT DIRECTOR</p>
@@ -4940,7 +5021,7 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-xs font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" className="text-xs font-bold" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-2 leading-tight break-words">DIRECTOR</p>
@@ -4951,150 +5032,223 @@ const SoBagianEditor = () => {
                 </div>
               </DraggableStack>
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mishe-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mishe-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mishe-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={200}
-              >
-                {(() => {
-                  const sectionHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MI & SHE DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "MI & SHE (5R-SMK3-ISO 14001)"}
-                            </p>
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mishe-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={200}
+                >
+                  {(() => {
+                    const sectionBoxKey = "section-head-mi-she-department";
+                    if (isStructuralBoxHidden(selectedDepartment.id, sectionBoxKey)) return null;
+
+                    const sectionHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MI & SHE DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px] relative">
+                        {isEditMode && sectionHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, sectionBoxKey, dept.header?.boxTitle || "MI & SHE (5R-SMK3-ISO 14001)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && sectionHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, sectionBoxKey, dept.header?.boxTitle || "MI & SHE (5R-SMK3-ISO 14001)", sectionHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="section-head" defaultTitle="MI & SHE (5R-SMK3-ISO 14001)" />
+                            </div>
+                          </div>
+                          {sectionHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
+
+              {!isColumnHidden(selectedDepartment.id, "STAFF LEVEL") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mishe-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={500}
+                >
+                  {(() => {
+                    const miItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "MI" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    const sheItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "SHE (5R-SMK3-ISO 14001)" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+
+                    const renderGroup = (title, items) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, title)) return null;
+                      return (
+                        <div key={title} className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, title, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, title, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={title} defaultTitle={title} />
+                              </div>
+                            </div>
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        {sectionHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+                      );
+                    };
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mishe-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={500}
-              >
-                {(() => {
-                  const miItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "MI" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  const sheItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF LEVEL" && p.groupKey === "SHE (5R-SMK3-ISO 14001)" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
+                    return [
+                      renderGroup("MI", miItems),
+                      renderGroup("SHE (5R-SMK3-ISO 14001)", sheItems),
+                    ];
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF LEVEL")}
+                </DraggableStack>
+              )}
 
-                  const renderGroup = (title, items) => (
-                    <div key={title} className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
-                          </div>
-                        </div>
-                        {items.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-
-                  return [
-                    renderGroup("MI", miItems),
-                    renderGroup("SHE (5R-SMK3-ISO 14001)", sheItems),
-                  ];
-                })()}
-                {renderCustomBoxesInColumn("STAFF LEVEL")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mishe-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
             <div className="mt-8 border-2 border-black p-3 inline-block">
               <h3 className="text-sm font-bold mb-2 border-b border-black pb-1">NOTE :</h3>
@@ -5296,29 +5450,21 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-6 gap-3 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF / UNIT HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">TEAM MEMBER/ADMIN</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
-            <div className="grid grid-cols-6 gap-3 relative org-grid" style={{ zIndex: 2 }}>
+            <div className="grid gap-3 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
+            >
 
               {/* KOLOM 1 - BOARD OF DIRECTOR */}
               <DraggableStack
@@ -5330,9 +5476,9 @@ const SoBagianEditor = () => {
                 isEditMode={isEditMode}
                 minHeight={280}
               >
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[240px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-xs font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" className="text-xs font-bold" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-2 leading-tight break-words">
@@ -5344,9 +5490,9 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[240px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-xs font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" className="text-xs font-bold" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-xs font-semibold mb-2 leading-tight break-words">
@@ -5360,672 +5506,444 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* KOLOM 2 - DEPARTMENT HEAD */}
-              <div className="space-y-4 flex flex-col items-center">{renderCustomBoxesInColumn("DEPARTMENT HEAD")}</div>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mancable-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* KOLOM 3 - SECTION HEAD */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mancable-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.boxTitle || "CONTROLCABLE MANUFACTURE"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.header?.boxTitle || "CONTROLCABLE MANUFACTURE"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mancable-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "section-head")) return null;
+                    const items = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "MANUFACTURING CABLE DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[235px] relative">
+                        {isEditMode && items.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "section-head", "Controlcable Manufacture")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && items.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "section-head", "Controlcable Manufacture", items)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="section-head" defaultTitle="CONTROLCABLE MANUFACTURE" className="text-xs font-semibold leading-tight break-words text-center" />
+                            </div>
+                          </div>
+                          {items.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-xs font-semibold leading-tight break-words text-center"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-xs leading-tight text-center"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "PRD1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "head", value)
-                          }
-                          className="text-xs font-semibold leading-tight break-words text-center"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-xs leading-tight text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+                    );
+
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
               {/* KOLOM 4 - STAFF / UNIT HEAD */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mancable-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={420}
-              >
-                {[0, 1, 2].map((idx) => (
-                  <div key={idx} className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                    <div className="flex flex-col h-full">
-                      <div className="flex border-b border-gray-400">
-                        <div className="p-2 flex-1 text-center bg-gray-100">
-                          {isEditMode ? (
-                            <input
-                              type="text"
-                              value={dept.positions[idx]?.title || ""}
-                              onChange={(e) =>
-                                handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "title", e.target.value)
-                              }
-                              className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                              placeholder="Position Title"
-                            />
-                          ) : (
-                            <p className="text-xs font-semibold leading-tight break-words text-center">
-                              {dept.positions[idx]?.title || ""}
-                            </p>
+              {!isColumnHidden(selectedDepartment.id, "STAFF / UNIT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mancable-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={420}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "MANUFACTURING UNIT", key: "MANUFACTURING UNIT" },
+                      { title: "ASSEMBLING UNIT", key: "ASSEMBLING UNIT" },
+                      { title: "PRODUCTION ENGINEERING", key: "PRODUCTION ENGINEERING (UNIT HEAD)" },
+                    ];
+
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "STAFF / UNIT HEAD" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[235px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
                           )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={key} defaultTitle={title} className="text-xs font-semibold leading-tight break-words text-center" />
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-xs font-semibold leading-tight break-words text-center"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-xs leading-tight text-center"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-1">
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(dept.positions[idx])}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={dept.positions[idx]?.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${dept.positions[idx]?.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[idx]?.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {renderCustomBoxesInColumn("STAFF / UNIT HEAD")}
-              </DraggableStack>
+                      );
+                    };
+
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF / UNIT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* KOLOM 5 - GROUP HEAD */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mancable-col5-group"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={900}
-              >
-                {/* GROUP CO & CI - positions 3-4 */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[3]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[3]?.title || "GROUP CO & CI"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(3, 5).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {!isColumnHidden(selectedDepartment.id, "GROUP HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mancable-col5-group"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={900}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "GROUP CO & CI", key: "GROUP CO & CI" },
+                      { title: "GROUP PO", key: "GROUP PO" },
+                      { title: "GROUP ASSEMBLING", key: "GROUP ASSEMBLING" },
+                    ];
 
-                {/* GROUP PO - positions 5-6 */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[5]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[5]?.title || "GROUP PO"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(5, 7).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "GROUP HEAD" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[235px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={key} defaultTitle={title} className="text-xs font-semibold leading-tight break-words text-center" />
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-xs font-semibold leading-tight break-words text-center"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-xs leading-tight text-center"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      );
+                    };
 
-                {/* GROUP ASSEMBLING - positions 7-13 */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[7]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[7]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[7]?.title || "GROUP ASSEMBLING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(7, 14).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 6 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("GROUP HEAD")}
-              </DraggableStack>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("GROUP HEAD")}
+                </DraggableStack>
+              )}
 
               {/* KOLOM 6 - TEAM MEMBER / ADMIN */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mancable-col6-team"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={1800}
-              >
-                {/* positions 14 - COMPONENT OUTER & INNER */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[14]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[14]?.title || "COMPONENT OUTER & COMPONENT INNER"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[14])}
-                      </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[14]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "name", value)
-                          }
-                          className="text-xs font-semibold leading-tight break-words text-center"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[14]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-xs leading-tight text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {!isColumnHidden(selectedDepartment.id, "TEAM MEMBER/ADMIN") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mancable-col6-team"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={1800}
+                >
+                  {/* positions 14 - COMPONENT OUTER & INNER */}
+                  {(() => {
+                    const groups = [
+                      { title: "COMPONENT OUTER & COMPONENT INNER", key: "COMPONENT OUTER & COMPONENT INNER" },
+                      { title: "PROSES OUTER", key: "PROSES OUTER" },
+                      { title: "MAINTENANCE", key: "MAINTENANCE" },
+                      { title: "PRODUCTION ENGINEERING", key: "PRODUCTION ENGINEERING (STAFF)" },
+                      { title: "ASSEMBLING", key: "ASSEMBLING" },
+                      { title: "QUALITY CONTROL PROCESS", key: "QUALITY CONTROL PROCESS" },
+                      { title: "QUALITY CONTROL INCOMING", key: "QUALITY CONTROL INCOMING" },
+                      { title: "ADMINISTRATION", key: "ADMINISTRATION" },
+                    ];
 
-                {/* position 15 - PROSES OUTER */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[15]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[15]?.title || "PROSES OUTER"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[15])}
-                      </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[15]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "name", value)
-                          }
-                          className="text-xs font-semibold leading-tight break-words text-center"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[15]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[15]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-xs leading-tight text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "TEAM MEMBER/ADMIN" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[235px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={key} defaultTitle={title} className="text-xs font-semibold leading-tight break-words text-center" />
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-2 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-xs font-semibold leading-tight break-words text-center"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-xs leading-tight text-center"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
 
-                {/* positions 16-17 - MAINTENANCE */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[16]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[16]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[16]?.title || "MAINTENANCE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(16, 18).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("TEAM MEMBER/ADMIN")}
+                </DraggableStack>
+              )}
 
-                {/* position 18 - PRODUCTION ENGINEERING */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[18]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[18]?.title || "PRODUCTION ENGINEERING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[18])}
-                      </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[18]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "name", value)
-                          }
-                          className="text-xs font-semibold leading-tight break-words text-center"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[18]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[18]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-xs leading-tight text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* position 19 */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[19]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[19]?.title || "PRODUCTION ENGINEERING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[19])}
-                      </div>
-                      <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[19]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "name", value)
-                          }
-                          className="text-xs font-semibold leading-tight break-words text-center"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[19]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[19]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-xs leading-tight text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* positions 20-30 - QUALITY CONTROL PROCESS */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[20]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[20]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[20]?.title || "QUALITY CONTROL PROCESS"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(20, 31).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 10 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* positions 31-32 - QUALITY CONTROL INCOMING */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[31]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[31]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[31]?.title || "QUALITY CONTROL INCOMING"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(31, 33).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 1 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* positions 33-36 - ADMINISTRATION */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[210px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[33]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[33]?.id, "title", e.target.value)
-                            }
-                            className="text-xs font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-xs font-semibold leading-tight break-words text-center">
-                            {dept.positions[33]?.title || "ADMINISTRATION"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(33, 37).map((staff, i) => (
-                      <div key={i} className={`flex border-b border-gray-300 flex-1 ${i === 3 ? "border-b-0" : ""}`}>
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-16 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-2 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-xs font-semibold leading-tight break-words text-center"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-xs leading-tight text-center"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("TEAM MEMBER/ADMIN")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mancable-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             <div className="mt-8 border-2 border-black p-3 inline-block">
@@ -6228,29 +6146,21 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+              className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -6263,7 +6173,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -6276,7 +6186,7 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -6290,144 +6200,211 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="finance-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="finance-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head (FIN1.0, sekarang dari database) */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="finance-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={280}
-              >
-                {(() => {
-                  const sectionHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "FINANCE DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "FINANCE & ACCOUNTING"}
-                            </p>
-                          </div>
-                        </div>
-                        {sectionHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="finance-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={280}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "section-head")) return null;
+                    const sectionHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "SECTION HEAD" && p.groupKey === "FINANCE DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && sectionHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "section-head", "Finance & Accounting (Section Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
                           >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && sectionHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "section-head", "Finance & Accounting (Section Head)", sectionHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="section-head" defaultTitle="FINANCE & ACCOUNTING" />
                             </div>
                           </div>
-                        ))}
+                          {sectionHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === sectionHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="finance-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={280}
-              >
-                {(() => {
-                  const staffItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF" && p.groupKey === "FINANCE & ACCOUNTING" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              FINANCE & ACCOUNTING
-                            </p>
-                          </div>
-                        </div>
-                        {staffItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+              {!isColumnHidden(selectedDepartment.id, "STAFF") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="finance-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={280}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "staff")) return null;
+                    const staffItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF" && p.groupKey === "FINANCE & ACCOUNTING" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px] relative">
+                        {isEditMode && staffItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "staff", "Finance & Accounting (Staff)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
                           >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && staffItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "staff", "Finance & Accounting (Staff)", staffItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="staff" defaultTitle="FINANCE & ACCOUNTING" />
                             </div>
                           </div>
-                        ))}
+                          {staffItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === staffItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("STAFF")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF")}
+                </DraggableStack>
+              )}
+
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`finance-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             <div className="mt-8 border-2 border-black p-3 inline-block">
@@ -6632,31 +6609,20 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    STAFF/SPECIALIST
-                  </h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
-            <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+            <div className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -6669,7 +6635,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -6682,7 +6648,7 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -6696,141 +6662,208 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mktbat-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {(() => {
-                  const deptHeadItems = (dept.positions || [])
-                    .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "MARKETING BATTERY DEPARTMENT" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  return (
-                    <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                              {dept.header?.boxTitle || "MARKETING"}
-                            </p>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mktbat-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "dept-head")) return null;
+                    const deptHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "MARKETING BATTERY DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && deptHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "dept-head", "Marketing (Department Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                        {isEditMode && deptHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "dept-head", "Marketing (Department Head)", deptHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="dept-head" defaultTitle="MARKETING" />
+                            </div>
+                          </div>
+                          {deptHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === deptHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
+
+              {/* Kolom 3 - Section Head */}
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mktbat-col3-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={320}
+                >
+                  {(() => {
+                    const auxItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "AUX & POWER BATTERY MARKETING" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    const essItems = (dept.positions || [])
+                      .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "ESS MARKETING" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+
+                    const renderGroup = (title, items) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, title)) return null;
+                      return (
+                        <div key={title} className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, title, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, title, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={title} defaultTitle={title} />
+                              </div>
+                            </div>
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        {deptHeadItems.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === deptHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+                      );
+                    };
 
-              {/* Kolom 3 - Section Head / Staff */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mktbat-col3-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={320}
-              >
-                {(() => {
-                  const auxItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "AUX & POWER BATTERY MARKETING" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
-                  const essItems = (dept.positions || [])
-                    .filter((p) => p.column === "STAFF/SPECIALIST" && p.groupKey === "ESS MARKETING" && p.pendingAction !== "delete")
-                    .sort((a, b) => a.order - b.order);
+                    return [
+                      renderGroup("AUX & POWER BATTERY MARKETING", auxItems),
+                      renderGroup("ESS MARKETING", essItems),
+                    ];
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF/SPECIALIST")}
+                </DraggableStack>
+              )}
 
-                  const renderGroup = (title, items) => (
-                    <div key={title} className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[280px]">
-                      <div className="flex flex-col h-full">
-                        <div className="flex border-b border-gray-400">
-                          <div className="p-2 flex-1 text-center bg-gray-100">
-                            <p className="text-sm font-semibold leading-tight whitespace-nowrap">{title}</p>
-                          </div>
-                        </div>
-                        {items.map((staff, idx) => (
-                          <div
-                            key={staff.id}
-                            className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
-                          >
-                            {isEditMode && (
-                              <button
-                                onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-                                title="Hapus"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                              {renderCodeButton(staff)}
-                            </div>
-                            <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                              <EditableField
-                                value={staff.name}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
-                                className="text-sm font-semibold leading-tight"
-                              />
-                              <EditableField
-                                value={`(${staff.empId})`}
-                                onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
-                                className="text-sm leading-tight"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-
-                  return (
-                    <>
-                      {renderGroup("AUX & POWER BATTERY MARKETING", auxItems)}
-                      {renderGroup("ESS MARKETING", essItems)}
-                    </>
-                  );
-                })()}
-                {renderCustomBoxesInColumn("STAFF/SPECIALIST")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mktbat-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             <div className="mt-8 border-2 border-black p-3 inline-block">
@@ -7033,29 +7066,20 @@ const SoBagianEditor = () => {
             </div>
 
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    BOARD OF DIRECTOR
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">
-                    DEPARTMENT HEAD
-                  </h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">STAFF</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-4 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
-            <div
-              className="grid grid-cols-4 gap-4 relative org-grid"
-              style={{ zIndex: 2 }}
+            <div className="grid gap-4 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
             >
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -7068,7 +7092,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -7081,7 +7105,7 @@ const SoBagianEditor = () => {
                 </div>
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[280px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">
@@ -7095,587 +7119,343 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mkteng-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.boxTitle || "MARKETING"}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "header",
-                                null,
-                                "boxTitle",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.boxTitle || "MARKETING"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mkteng-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "dept-head")) return null;
+                    const deptHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "MARKETING ENGINEERING DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px] relative">
+                        {isEditMode && deptHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "dept-head", "Marketing (Department Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && deptHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "dept-head", "Marketing (Department Head)", deptHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="dept-head" defaultTitle="MARKETING" />
+                            </div>
+                          </div>
+                          {deptHeadItems.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {deptHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === deptHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "MKT1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "head",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "header",
-                              null,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mkteng-col3-section"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={320}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[290px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[0]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[0]?.title || "SALES & MARKETING CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mkteng-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={320}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "SALES & MARKETING CONTROLCABLE", key: "SALES & MARKETING CONTROLCABLE (SECTION)" },
+                      { title: "ENGINEERING CONTROLCABLE", key: "ENGINEERING CONTROLCABLE" },
+                    ];
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[0])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[0]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[1]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[1]?.title || "ENGINEERING CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "SECTION HEAD" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[290px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                <EditableBoxTitle boxKey={key} defaultTitle={title} />
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[1])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[1]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("SECTION HEAD")}
-              </DraggableStack>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("SECTION HEAD")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 4 - Staff */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="mkteng-col4-staff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={1200}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[2]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title ||
-                              "SALES & MARKETING CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+              {!isColumnHidden(selectedDepartment.id, "STAFF") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="mkteng-col4-staff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={1200}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "SALES & MARKETING CONTROLCABLE", key: "SALES & MARKETING CONTROLCABLE" },
+                      { title: "CUSTOMER REPRESENTATIVE", key: "CUSTOMER REPRESENTATIVE" },
+                      { title: "PRODUCT & QUALITY ENGINEERING CABLE", key: "PRODUCT & QUALITY ENGINEERING CABLE" },
+                      { title: "PROCESS ENGINEERING CABLE", key: "PROCESS ENGINEERING CABLE" },
+                      { title: "NEW BUSINESS DEVELOPMENT", key: "NEW BUSINESS DEVELOPMENT" },
+                    ];
 
-                    {dept.positions?.slice(2, 4).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[4]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[4]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight whitespace-nowrap bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.positions[4]?.title || "CUSTOMER REPRESENTATIVE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "STAFF" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[315px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
 
-                    <div className="flex flex-1 border-b-0">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        <p className="text-sm font-bold">
-                          {renderCodeButton(dept.positions[4])}
-                        </p>
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[4]?.name}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "name",
-                              value
-                            )
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[4]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(
-                              selectedDepartment.id,
-                              "positions",
-                              dept.positions[4]?.id,
-                              "empId",
-                              value.replace(/[()]/g, "")
-                            )
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[5]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[5]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[5]?.title ||
-                              "PRODUCT & QUALITY ENGINEERING CABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                                  />
+                                ) : (
+                                  <EditableBoxTitle boxKey={key} defaultTitle={title} />
+                                )}
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
 
-                    {dept.positions?.slice(5, 8).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[8]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[8]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[8]?.title ||
-                              "PROCESS ENGINEERING CABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("STAFF")}
+                </DraggableStack>
+              )}
 
-                    {dept.positions?.slice(8, 11).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[280px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[11]?.title || ""}
-                            onChange={(e) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                dept.positions[11]?.id,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[11]?.title ||
-                              "NEW BUSINESS DEVELOPMENT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {dept.positions?.slice(11, 13).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex border-b border-gray-300 flex-1 ${i === 2 ? "border-b-0" : ""
-                          }`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "name",
-                                value
-                              )
-                            }
-                            className="text-sm font-semibold leading-tight"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(
-                                selectedDepartment.id,
-                                "positions",
-                                staff.id,
-                                "empId",
-                                value.replace(/[()]/g, "")
-                              )
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("STAFF")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`mkteng-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col)}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             <div className="mt-8 border-2 border-black p-3 inline-block">
@@ -7881,30 +7661,22 @@ const SoBagianEditor = () => {
 
             {/* Column Headers */}
             <div className="mb-4 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-6 gap-3 mb-4">
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">SECTION HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">UNIT HEAD/STAFF</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-3 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">MEMBER</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-6 gap-3 relative org-grid" style={{ zIndex: 2 }}>
+            <div className="grid gap-3 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
+            >
               {/* Kolom 1 - Board of Director */}
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -7917,7 +7689,7 @@ const SoBagianEditor = () => {
               >
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[235px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-1 leading-tight">PRESIDENT DIRECTOR</p>
@@ -7929,7 +7701,7 @@ const SoBagianEditor = () => {
 
                 <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[235px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-14 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-1 leading-tight">DIRECTOR</p>
@@ -7941,648 +7713,476 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="ppic-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.boxTitle || "PPIC"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.header?.boxTitle || "PPIC"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="ppic-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "dept-head")) return null;
+                    const items = (dept.positions || [])
+                      .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "PPIC DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px] relative">
+                        {isEditMode && items.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "dept-head", "PPIC (Department Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && items.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "dept-head", "PPIC (Department Head)", items)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="dept-head" defaultTitle="PPIC" />
+                            </div>
+                          </div>
+                          {items.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight break-words"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "PPIC1.0",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "head", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD", "230px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Section Head (kosong) */}
-              <div className="space-y-3 flex flex-col items-center"></div>
+              {!isColumnHidden(selectedDepartment.id, "SECTION HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="ppic-col3-section"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {renderCustomBoxesInColumn("SECTION HEAD", "230px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 4 - Unit Head/Staff */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="ppic-col4-unitstaff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={400}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || "PPC CONTROLCABLE"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[0]?.title || "PPC CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[0])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {!isColumnHidden(selectedDepartment.id, "UNIT HEAD/STAFF") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="ppic-col4-unitstaff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={400}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "PPC CONTROLCABLE", key: "PPC CONTROLCABLE" },
+                      { title: "BATTERY & AHM OES", key: "BATTERY & AHM OES" },
+                      { title: "WHS CONTROLCABLE", key: "WHS CONTROLCABLE" },
+                    ];
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || "BATTERY & AHM OES"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[1]?.title || "BATTERY & AHM OES"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[1])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "UNIT HEAD/STAFF" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[230px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || "WHS CONTROLCABLE"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title || "WHS CONTROLCABLE"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[2])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("UNIT HEAD/STAFF")}
-              </DraggableStack>
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+                                  />
+                                ) : (
+                                  <EditableBoxTitle boxKey={key} defaultTitle={title} />
+                                )}
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight break-words"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("UNIT HEAD/STAFF", "230px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 5 - Group Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="ppic-col5-grouphead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[3]?.title || "CONTROLCABLE"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[3]?.title || "CONTROLCABLE"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "GROUP HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="ppic-col5-grouphead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "group-head")) return null;
+                    const items = (dept.positions || [])
+                      .filter((p) => p.column === "GROUP HEAD" && p.groupKey === "CONTROLCABLE" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px] relative">
+                        {isEditMode && items.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "group-head", "Controlcable (Group Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && items.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "group-head", "Controlcable (Group Head)", items)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="group-head" defaultTitle="CONTROLCABLE" />
+                            </div>
+                          </div>
+                          {items.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {items.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight break-words"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[3])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[3]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[3]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("GROUP HEAD")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("GROUP HEAD", "230px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 6 - Member */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="ppic-col6-member"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={1300}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[4]?.title || "PROD PLAN"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[4]?.title || "PROD PLAN"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[4])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[4]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[4]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {!isColumnHidden(selectedDepartment.id, "MEMBER") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="ppic-col6-member"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={1300}
+                >
+                  {(() => {
+                    const groups = [
+                      { title: "PROD PLAN", key: "PROD PLAN" },
+                      { title: "DN/MANIFEST", key: "DN/MANIFEST" },
+                      { title: "DELIVERY", key: "DELIVERY" },
+                      { title: "BATTERY", key: "BATTERY" },
+                      { title: "SUPPLIER CONTROL", key: "SUPPLIER CONTROL" },
+                      { title: "MRP", key: "MRP" },
+                      { title: "RM & OHP", key: "RM & OHP" },
+                      { title: "SUPPLY", key: "SUPPLY" },
+                    ];
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[5]?.title || "DN/MANIFEST"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[5]?.title || "DN/MANIFEST"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[5])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[5]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[5]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[5]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "MEMBER" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[230px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[6]?.title || "DELIVERY"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[6]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[6]?.title || "DELIVERY"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(6, 8).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+                                  />
+                                ) : (
+                                  <p className="text-sm font-semibold leading-tight">{dept.header?.groupTitles?.[key] || title}</p>
+                                )}
+                              </div>
+
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight break-words"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-sm font-semibold leading-tight break-words"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      );
+                    };
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[8]?.title || "BATTERY"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[8]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[8]?.title || "BATTERY"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(8, 10).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-sm font-semibold leading-tight break-words"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("MEMBER", "230px")}
+                </DraggableStack>
+              )}
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[10]?.title || "SUPPLIER CONTROL"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[10]?.title || "SUPPLIER CONTROL"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[10])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[10]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[10]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[10]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[11]?.title || "MRP"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[11]?.title || "MRP"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[11])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[11]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[11]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[11]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[12]?.title || "RM & OHP"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[12]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[12]?.title || "RM & OHP"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {dept.positions?.slice(12, 14).map((staff, i) => (
-                      <div
-                        key={i}
-                        className={`flex flex-1 min-h-[60px] ${i < 1 ? "border-b border-gray-300" : ""}`}
-                      >
-                        <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                          {renderCodeButton(staff)}
-                        </div>
-                        <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                          <EditableField
-                            value={staff.name}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)
-                            }
-                            className="text-sm font-semibold leading-tight break-words"
-                          />
-                          <EditableField
-                            value={`(${staff.empId})`}
-                            onSave={(value) =>
-                              handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))
-                            }
-                            className="text-sm leading-tight"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[100px] w-[230px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[14]?.title || "HASIL PRODUKSI"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[14]?.title || "HASIL PRODUKSI"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[14])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[14]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight break-words"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[14]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[14]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("MEMBER")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`ppic-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col, "230px")}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             {/* Notes Section */}
@@ -8789,27 +8389,22 @@ const SoBagianEditor = () => {
 
             {/* Column Headers */}
             <div className="mb-6 relative" style={{ zIndex: 2 }}>
-              <div className="grid grid-cols-5 gap-2 mb-4">
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">BOARD OF DIRECTOR</h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">DEPARTMENT HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">UNIT/STAFF LEVEL</h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">GROUP HEAD</h3>
-                </div>
-                <div className="bg-blue-300 p-2 rounded text-center border border-black">
-                  <h3 className="font-bold text-xs text-black">OPERATOR/ADMIN</h3>
-                </div>
-              </div>
+              {(() => {
+                const cols = getColumnsForDept(selectedDepartment.id);
+                return (
+                  <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}>
+                    {cols.map((col) => (
+                      <HeaderCell key={col} deptId={selectedDepartment.id} colKey={col} />
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Content Grid */}
-            <div className="grid grid-cols-5 gap-2 relative org-grid" style={{ zIndex: 2 }}>
+            <div className="grid gap-2 relative org-grid"
+              style={{ zIndex: 2, gridTemplateColumns: `repeat(${getColumnsForDept(selectedDepartment.id).length}, minmax(0, 1fr))` }}
+            >
               {/* Kolom 1 - Board of Director */}
               <DraggableStack
                 deptId={selectedDepartment.id}
@@ -8820,9 +8415,9 @@ const SoBagianEditor = () => {
                 isEditMode={isEditMode}
                 minHeight={280}
               >
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[250px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.0</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.0`} defaultCode="BOD1.0" />
                   </div>
                   <div className="p-2 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">PRESIDENT DIRECTOR</p>
@@ -8832,9 +8427,9 @@ const SoBagianEditor = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[220px]">
+                <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[120px] w-[250px]">
                   <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-13 flex items-center justify-center">
-                    <p className="text-sm font-bold">BOD1.1</p>
+                    <EditableStaticCode boxKey={`${selectedDepartment.id}-bod1.1`} defaultCode="BOD1.1" />
                   </div>
                   <div className="p-3 flex-1 text-center flex flex-col justify-center">
                     <p className="text-sm font-semibold mb-2 leading-tight">DIRECTOR</p>
@@ -8846,335 +8441,351 @@ const SoBagianEditor = () => {
               </DraggableStack>
 
               {/* Kolom 2 - Department Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="qa-col2-depthead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.header?.boxTitle || "QUALITY ASSURANCE"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "header", null, "boxTitle", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Section Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight whitespace-nowrap">
-                            {dept.header?.boxTitle || "QUALITY ASSURANCE"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "DEPARTMENT HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="qa-col2-depthead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "dept-head")) return null;
+                    const deptHeadItems = (dept.positions || [])
+                      .filter((p) => p.column === "DEPARTMENT HEAD" && p.groupKey === "QA DEPARTMENT" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[260px] relative">
+                        {isEditMode && deptHeadItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "dept-head", "Quality Assurance (Department Head)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && deptHeadItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "dept-head", "Quality Assurance (Department Head)", deptHeadItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="dept-head" defaultTitle="QUALITY ASSURANCE" />
+                            </div>
+                          </div>
+                          {deptHeadItems.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {deptHeadItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === deptHeadItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex border-b border-gray-300 flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton({
-                          code: "QAC1.1",
-                          name: dept.header.head,
-                          empId: dept.header.empId,
-                          title: dept.header.title,
-                        })}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.header.head}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "head", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.header.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "header", null, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("DEPARTMENT HEAD", "220px")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("DEPARTMENT HEAD", "260px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 3 - Unit/Staff Level */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="qa-col3-unitstaff"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                {/* LAB & KALIBRASI - positions[0] */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[0]?.title || "LAB & KALIBRASI"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[0]?.title || "LAB & KALIBRASI"}
-                          </p>
+              {!isColumnHidden(selectedDepartment.id, "UNIT/STAFF LEVEL") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="qa-col3-unitstaff"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  {(() => {
+                    if (isStructuralBoxHidden(selectedDepartment.id, "unit-staff")) return null;
+                    const unitItems = (dept.positions || [])
+                      .filter((p) => p.column === "UNIT/STAFF LEVEL" && p.groupKey === "QUALITY ASSURANCE PROCESS (UNIT)" && p.pendingAction !== "delete")
+                      .sort((a, b) => a.order - b.order);
+                    return (
+                      <div className="bg-white border border-gray-400 rounded shadow-sm w-[260px] relative">
+                        {isEditMode && unitItems.length === 0 && (
+                          <button
+                            onClick={() => hideStructuralBox(selectedDepartment.id, "unit-staff", "Quality Assurance Process (Unit/Staff)")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                            title="Hapus box kosong"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         )}
+                        {isEditMode && unitItems.length > 0 && (
+                          <button
+                            onClick={() => deleteBoxWithData(selectedDepartment.id, "unit-staff", "Quality Assurance Process (Unit/Staff)", unitItems)}
+                            className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                            title="Hapus box beserta semua data"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                        <div className="flex flex-col h-full">
+                          <div className="flex border-b border-gray-400">
+                            <div className="p-2 flex-1 text-center bg-gray-100">
+                              <EditableBoxTitle boxKey="unit-staff" defaultTitle="QUALITY ASSURANCE PROCESS" />
+                            </div>
+                          </div>
+                          {unitItems.length === 0 && (
+                            <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                              Belum ada data
+                            </div>
+                          )}
+                          {unitItems.map((staff, idx) => (
+                            <div
+                              key={staff.id}
+                              className={`flex flex-1 relative ${idx === unitItems.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                            >
+                              {isEditMode && (
+                                <button
+                                  onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                {renderCodeButton(staff)}
+                              </div>
+                              <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                <EditableField
+                                  value={staff.name}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                  className="text-sm font-semibold leading-tight"
+                                />
+                                <EditableField
+                                  value={`(${staff.empId})`}
+                                  onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                  className="text-sm leading-tight"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[0])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[0]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[0]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[0]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("UNIT/STAFF LEVEL", "220px")}
-              </DraggableStack>
+                    );
+                  })()}
+                  {renderCustomBoxesInColumn("UNIT/STAFF LEVEL", "260px")}
+                </DraggableStack>
+              )}
 
               {/* Kolom 4 - Group Head */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="qa-col4-grouphead"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={160}
-              >
-                <div className="[&_.w-\[220px\]]:!w-[280px]">
-                  {renderCustomBoxesInColumn("GROUP HEAD", "220px")}
-                </div>
-              </DraggableStack>
+              {!isColumnHidden(selectedDepartment.id, "GROUP HEAD") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="qa-col4-grouphead"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={160}
+                >
+                  <div className="[&_.w-\[220px\]]:!w-[280px]">
+                    {renderCustomBoxesInColumn("GROUP HEAD", "260px")}
+                  </div>
+                </DraggableStack>
+              )}
 
               {/* Kolom 5 - Operator/Admin */}
-              <DraggableStack
-                deptId={selectedDepartment.id}
-                columnKey="qa-col5-operator"
-                boxPositions={boxPositions}
-                setPositionsForDept={setPositionsForDept}
-                onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
-                isEditMode={isEditMode}
-                minHeight={550}
-              >
-                {/* QUALITY ASSURANCE PROCESS - positions[1] */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[1]?.title || "QUALITY ASSURANCE PROCESS"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[1]?.title || "QUALITY ASSURANCE PROCESS"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[1])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[1]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[1]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[1]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {!isColumnHidden(selectedDepartment.id, "OPERATOR/ADMIN") && (
+                <DraggableStack
+                  deptId={selectedDepartment.id}
+                  columnKey="qa-col5-operator"
+                  boxPositions={boxPositions}
+                  setPositionsForDept={setPositionsForDept}
+                  onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                  isEditMode={isEditMode}
+                  minHeight={550}
+                >
+                  {/* QUALITY ASSURANCE PROCESS */}
+                  {(() => {
+                    const groups = [
+                      { title: "QUALITY ASSURANCE PROCESS", key: "QUALITY ASSURANCE PROCESS" },
+                      { title: "LAB & KALIBRASI", key: "LAB & KALIBRASI" },
+                      { title: "VENDOR MANAGEMENT", key: "VENDOR MANAGEMENT" },
+                      { title: "CLAIM & COMPLAIN", key: "CLAIM & COMPLAIN" },
+                    ];
 
-                {/* QA OPERATOR HEAD - positions[2] */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[2]?.title || "QA OPERATOR HEAD"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[2]?.title || "QA OPERATOR HEAD"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[2])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[2]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[2]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[2]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    const renderGroup = ({ title, key }) => {
+                      if (isStructuralBoxHidden(selectedDepartment.id, key)) return null;
+                      const items = (dept.positions || [])
+                        .filter((p) => p.column === "OPERATOR/ADMIN" && p.groupKey === key && p.pendingAction !== "delete")
+                        .sort((a, b) => a.order - b.order);
+                      return (
+                        <div key={key} className="bg-white border border-gray-400 rounded shadow-sm w-[250px] relative">
+                          {isEditMode && items.length === 0 && (
+                            <button
+                              onClick={() => hideStructuralBox(selectedDepartment.id, key, title)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                              title="Hapus box kosong"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {isEditMode && items.length > 0 && (
+                            <button
+                              onClick={() => deleteBoxWithData(selectedDepartment.id, key, title, items)}
+                              className="absolute -top-2 -left-2 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700 z-10"
+                              title="Hapus box beserta semua data"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex border-b border-gray-400">
+                              <div className="p-2 flex-1 text-center bg-gray-100">
+                                {isEditMode ? (
+                                  <input
+                                    type="text"
+                                    value={dept.header?.groupTitles?.[key] || title}
+                                    onChange={(e) => {
+                                      const newTitle = e.target.value;
+                                      setDepartmentData((prev) => {
+                                        const d = { ...prev[selectedDepartment.id] };
+                                        d.header = {
+                                          ...d.header,
+                                          groupTitles: { ...(d.header.groupTitles || {}), [key]: newTitle },
+                                        };
+                                        return { ...prev, [selectedDepartment.id]: d };
+                                      });
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                                    placeholder="Judul Grup"
+                                  />
+                                ) : (
+                                  <p className="text-sm font-semibold leading-tight">
+                                    {dept.header?.groupTitles?.[key] || title}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {items.length === 0 && (
+                              <div className="flex-1 flex items-center justify-center p-4 text-xs text-gray-400 italic min-h-[70px]">
+                                Belum ada data
+                              </div>
+                            )}
+                            {items.map((staff, idx) => (
+                              <div
+                                key={staff.id}
+                                className={`flex flex-1 relative ${idx === items.length - 1 ? "border-b-0" : "border-b border-gray-300"}`}
+                              >
+                                {isEditMode && (
+                                  <button
+                                    onClick={() => handleRemoveCustomBox(selectedDepartment.id, staff.id)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
+                                    title="Hapus"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                                <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
+                                  {renderCodeButton(staff)}
+                                </div>
+                                <div className="p-3 flex-1 text-center flex flex-col justify-center">
+                                  <EditableField
+                                    value={staff.name}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "name", value)}
+                                    className="text-sm font-semibold leading-tight"
+                                  />
+                                  <EditableField
+                                    value={`(${staff.empId})`}
+                                    onSave={(value) => handleEdit(selectedDepartment.id, "positions", staff.id, "empId", value.replace(/[()]/g, ""))}
+                                    className="text-sm leading-tight"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    };
 
-                {/* VENDOR MANAGEMENT - positions[3] */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[3]?.title || "VENDOR MANAGEMENT"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[3]?.title || "VENDOR MANAGEMENT"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[3])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[3]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[3]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[3]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    return groups.map(renderGroup);
+                  })()}
+                  {renderCustomBoxesInColumn("OPERATOR/ADMIN", "250px")}
+                </DraggableStack>
+              )}
 
-                {/* CLAIM & COMPLAIN - positions[4] */}
-                <div className="bg-white border border-gray-400 rounded shadow-sm min-h-[120px] w-[220px]">
-                  <div className="flex flex-col h-full">
-                    <div className="flex border-b border-gray-400">
-                      <div className="p-2 flex-1 text-center bg-gray-100">
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={dept.positions[4]?.title || "CLAIM & COMPLAIN"}
-                            onChange={(e) =>
-                              handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "title", e.target.value)
-                            }
-                            className="text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
-                            placeholder="Position Title"
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold leading-tight">
-                            {dept.positions[4]?.title || "CLAIM & COMPLAIN"}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-1">
-                      <div className="bg-gray-100 p-2 text-center border-r border-gray-400 w-20 flex items-center justify-center">
-                        {renderCodeButton(dept.positions[4])}
-                      </div>
-                      <div className="p-3 flex-1 text-center flex flex-col justify-center">
-                        <EditableField
-                          value={dept.positions[4]?.name}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "name", value)
-                          }
-                          className="text-sm font-semibold leading-tight"
-                        />
-                        <EditableField
-                          value={`(${dept.positions[4]?.empId})`}
-                          onSave={(value) =>
-                            handleEdit(selectedDepartment.id, "positions", dept.positions[4]?.id, "empId", value.replace(/[()]/g, ""))
-                          }
-                          className="text-sm leading-tight"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {renderCustomBoxesInColumn("OPERATOR/ADMIN", "220px")}
-              </DraggableStack>
+              {(() => {
+                const baseCols = getBaseColumnsForDept(selectedDepartment.id);
+                const extraCols = getColumnsForDept(selectedDepartment.id).filter((c) => !baseCols.includes(c));
+                return extraCols.map((col) => (
+                  <DraggableStack
+                    key={col}
+                    deptId={selectedDepartment.id}
+                    columnKey={`qa-extra-${col}`}
+                    boxPositions={boxPositions}
+                    setPositionsForDept={setPositionsForDept}
+                    onDirty={() => setPositionsDirty((prev) => ({ ...prev, [selectedDepartment.id]: true }))}
+                    isEditMode={isEditMode}
+                    minHeight={160}
+                  >
+                    {renderCustomBoxesInColumn(col, "250px")}
+                  </DraggableStack>
+                ));
+              })()}
             </div>
 
             {/* Notes Section */}
@@ -9224,7 +8835,7 @@ const SoBagianEditor = () => {
     return customBoxes.map((p) => (
       <div
         key={p.id}
-        className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm min-h-[120px] relative" : "bg-white border border-gray-400 rounded shadow-sm min-h-[120px] relative"}
+        className={isEditMode ? "bg-white border-2 border-purple-400 rounded shadow-sm relative" : "bg-white border border-gray-400 rounded shadow-sm relative"}
         style={{ width }}
       >
         {p.pendingAction && (
@@ -9236,17 +8847,28 @@ const SoBagianEditor = () => {
           <button
             onClick={() => handleRemoveCustomBox(selectedDepartment.id, p.id)}
             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 z-10"
-            title="Remove"
+            title="Hapus box beserta data"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
         )}
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full rounded overflow-hidden">
           <div className="flex border-b border-gray-400">
             <div className="p-2 flex-1 text-center bg-gray-100">
-              <p className="text-sm font-semibold leading-tight">{p.title}</p>
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={p.title}
+                  onChange={(e) => handleEdit(selectedDepartment.id, "positions", p.id, "title", e.target.value)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="so-drag-editable text-sm font-semibold leading-tight bg-yellow-50 border rounded px-2 py-1 w-full text-center"
+                  placeholder="Title"
+                />
+              ) : (
+                <p className="text-sm font-semibold leading-tight">{p.title}</p>
+              )}
             </div>
           </div>
           {/* Baris bawah: Kode di kiri, Nama + NPK di kanan */}
@@ -9356,6 +8978,7 @@ const SoBagianEditor = () => {
                 user={{
                   name: selectedJob.name,
                   noPNK: selectedJob.empId,
+                  positionCode: selectedJob.code || selectedJob.id || "",
                   department: { name: jobdescData.division || "N/A" },
                 }}
                 jobdesc={jobdescData}
@@ -9396,93 +9019,131 @@ const SoBagianEditor = () => {
               </p>
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-700">
                 Pilih Departemen untuk Edit
               </h2>
+              <button
+                onClick={() => setShowAddDeptModal(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Departemen
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {visibleDepartments.map((dept) => (
-                <button
+                <div
                   key={dept.id}
-                  onClick={() => {
-                    setSelectedDepartment(dept);
-                    setSidebarVisible(false);
-                    const defaultDept = departments.find(d => d.id === dept.id);
-                    setOriginalDepartmentData(prev => ({
-                      ...prev,
-                      [dept.id]: JSON.parse(JSON.stringify(
-                        departmentData[dept.id] || defaultDept?.structure
-                      ))
-                    }));
-                  }}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-left"
+                  className="relative bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {dept.name}
-                    </h3>
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {isDeptPending(dept.id, "department-delete") && (
+                    <span className="absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-red-500 z-10">
+                      Menunggu Hapus
+                    </span>
+                  )}
+                  {isDeptPending(dept.id, "department-rename") && (
+                    <span className="absolute -top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white bg-amber-500 z-10">
+                      Pending Rename
+                    </span>
+                  )}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRenameDeptTarget(dept);
+                        setRenameDeptValue(dept.name);
+                        setShowRenameDeptModal(true);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                      title="Rename"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536M9 13h6m-3-3v6m7-7a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDepartment(dept);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                      title="Hapus"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600">
-                      {departmentData[dept.id]?.header?.head || "TBD"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {departmentData[dept.id]?.positions?.length || 0}{" "}
-                      positions
-                    </p>
-                  </div>
-                </button>
+                  <button
+                    onClick={() => {
+                      setSelectedDepartment(dept);
+                      setSidebarVisible(false);
+                      const defaultDept = allDepartments.find(d => d.id === dept.id);
+                      setOriginalDepartmentData(prev => ({
+                        ...prev,
+                        [dept.id]: JSON.parse(JSON.stringify(
+                          departmentData[dept.id] || defaultDept?.structure
+                        ))
+                      }));
+                    }}
+                    className="text-left w-full"
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800 pr-14">
+                        {dept.name}
+                      </h3>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-600">
+                        {departmentData[dept.id]?.header?.preparedByName || departmentData[dept.id]?.header?.head || "TBD"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {departmentData[dept.id]?.positions?.length || 0}{" "}
+                        positions
+                      </p>
+                    </div>
+                  </button>
+                </div>
               ))}
             </div>
           </div>
+
         ) : selectedDepartment && departmentData[selectedDepartment.id] ? (
           <div className="space-y-4">
             {/* Editor Toolbar */}
-            <div className="bg-white shadow-sm border rounded-lg p-4 no-print">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+            {!previewMode && (
+              <div className="bg-white shadow-sm border rounded-lg p-4 no-print">
+                <div className="flex items-center gap-3 flex-nowrap overflow-x-auto pb-1">
                   <button
                     onClick={() => {
                       setSelectedDepartment(null);
                       setSidebarVisible(true);
                     }}
-                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
+                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 whitespace-nowrap flex-shrink-0"
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
+                      xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     Back to Main Dashboard
                   </button>
 
-                  <h2 className="text-xl font-semibold">
+                  <h2
+                    className="text-lg font-semibold truncate max-w-[320px] flex-shrink mr-2"
+                    title={selectedDepartment.name}
+                  >
                     {selectedDepartment.name}
                   </h2>
+
                   <button
                     onClick={() => setIsEditMode(!isEditMode)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2
-                      ${isEditMode
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 whitespace-nowrap flex-shrink-0
+                    ${isEditMode
                         ? "bg-green-600 hover:bg-green-700 text-white"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                       }`}
@@ -9507,98 +9168,133 @@ const SoBagianEditor = () => {
                       </>
                     )}
                   </button>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Tombol Print */}
-                  <button
-                    onClick={handlePrint}
-                    disabled={isPrinting}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-60"
-                    title="Print / Simpan sebagai PDF"
-                  >
-                    {isPrinting ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
-                        Menyiapkan...
-                      </>
-                    ) : (
-                      <>
+                  <div className="flex items-center gap-3 flex-nowrap ml-auto">
+                    {isEditMode && (
+                      <button
+                        onClick={openAddBoxModal}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Box
+                      </button>
+                    )}
+
+                    {isEditMode && (
+                      <button
+                        onClick={openAddHeaderModal}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Header
+                      </button>
+                    )}
+
+                    {isEditMode && selectedDepartment && getHiddenColumnsForDept(selectedDepartment.id).length > 0 && (
+                      <div className="relative group flex-shrink-0">
+                        <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Header Tersembunyi ({getHiddenColumnsForDept(selectedDepartment.id).length})
+                        </button>
+                        <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg hidden group-hover:block z-50 min-w-[200px]">
+                          {getHiddenColumnsForDept(selectedDepartment.id).map((col) => (
+                            <button
+                              key={col}
+                              onClick={() => restoreColumn(selectedDepartment.id, col)}
+                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 whitespace-nowrap"
+                            >
+                              ↩ {getColumnLabel(selectedDepartment.id, col)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {isEditMode && (
+                      <button
+                        onClick={() => resetPositionsForDept(selectedDepartment.id)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset Layout
+                      </button>
+                    )}
+
+                    {isEditMode && (
+                      <button
+                        onClick={() => openSubmitModal()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        Print / PDF
-                      </>
+                        Submit for Approval
+                      </button>
                     )}
-                  </button>
 
-                  {isEditMode && (
+                    {/* Tombol Print — selalu align kanan total */}
                     <button
-                      onClick={openAddBoxModal}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                      onClick={handlePrint}
+                      disabled={isPrinting}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors duration-200 disabled:opacity-60 whitespace-nowrap flex-shrink-0"
+                      title="Print / Simpan sebagai PDF"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Box
+                      {isPrinting ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                          Menyiapkan...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                            />
+                          </svg>
+                          Print / PDF
+                        </>
+                      )}
                     </button>
-                  )}
-
-                  {isEditMode && (
-                    <button
-                      onClick={() => resetPositionsForDept(selectedDepartment.id)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Reset Layout
-                    </button>
-                  )}
-
-                  {isEditMode && (
-                    <button
-                      onClick={() => openSubmitModal()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      Submit for Approval
-                    </button>
-                  )}
+                  </div>
                 </div>
+
+
+                {showSaveDialog && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-800 font-semibold flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Changes saved successfully!
+                    </p>
+                    <p className="text-green-700 text-sm mt-1">
+                      Department page will reflect these changes immediately.
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {showSaveDialog && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-green-800 font-semibold flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Changes saved successfully!
-                  </p>
-                  <p className="text-green-700 text-sm mt-1">
-                    Department page will reflect these changes immediately.
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Department Structure Editor with Department-Specific Layout */}
             <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
@@ -9756,8 +9452,8 @@ const SoBagianEditor = () => {
                     value={addBoxForm.column}
                     onChange={e => setAddBoxForm(f => ({ ...f, column: e.target.value, afterId: "" }))}
                   >
-                    {(departmentColumns[selectedDepartment.id] || []).map(col => (
-                      <option key={col} value={col}>{col}</option>
+                    {getColumnsForDept(selectedDepartment.id).map(col => (
+                      <option key={col} value={col}>{getColumnLabel(selectedDepartment.id, col)}</option>
                     ))}
                   </select>
                 </div>
@@ -9811,6 +9507,81 @@ const SoBagianEditor = () => {
               <div className="flex gap-2 mt-5">
                 <button onClick={handleAddBox} className="flex-1 bg-blue-500 text-white rounded-md py-2">Tambah</button>
                 <button onClick={() => setShowAddBoxModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddHeaderModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+              <h2 className="text-lg font-bold mb-4">Tambah Header Baru</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Nama Header</label>
+                  <input
+                    placeholder="contoh: GROUP HEAD"
+                    value={addHeaderForm.name}
+                    onChange={(e) => setAddHeaderForm((f) => ({ ...f, name: e.target.value }))}
+                    className="w-full border rounded-md px-3 py-2 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 uppercase">Sisipkan Setelah</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm mt-1"
+                    value={addHeaderForm.afterColumn}
+                    onChange={(e) => setAddHeaderForm((f) => ({ ...f, afterColumn: e.target.value }))}
+                  >
+                    {getColumnsForDept(selectedDepartment.id).map((col) => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button onClick={handleAddHeader} className="flex-1 bg-indigo-600 text-white rounded-md py-2">Tambah</button>
+                <button onClick={() => setShowAddHeaderModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddDeptModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+              <h2 className="text-lg font-bold mb-4">Tambah Departemen Baru</h2>
+              <div className="space-y-3">
+                <input placeholder="ID/Slug (contoh: rnd-battery)" value={addDeptForm.bagianId}
+                  onChange={(e) => setAddDeptForm((f) => ({ ...f, bagianId: e.target.value.toLowerCase().replace(/\s+/g, "-") }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+                <input placeholder="Nama Departemen *" value={addDeptForm.name}
+                  onChange={(e) => setAddDeptForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+                <input placeholder="Route (opsional, contoh: /rnd-battery)" value={addDeptForm.route}
+                  onChange={(e) => setAddDeptForm((f) => ({ ...f, route: e.target.value }))}
+                  className="w-full border rounded-md px-3 py-2 text-sm" />
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                Departemen baru akan tampil dengan layout 4 kolom standar (Board of Director / Department Head / Section Head / Staff).
+              </p>
+              <div className="flex gap-2 mt-5">
+                <button onClick={handleAddDepartment} className="flex-1 bg-emerald-600 text-white rounded-md py-2">Konfirmasi</button>
+                <button onClick={() => setShowAddDeptModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showRenameDeptModal && renameDeptTarget && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200]">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[90vw]">
+              <h2 className="text-lg font-bold mb-4">Rename Departemen</h2>
+              <input value={renameDeptValue} onChange={(e) => setRenameDeptValue(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 text-sm" />
+              <div className="flex gap-2 mt-5">
+                <button onClick={handleRenameDepartment} className="flex-1 bg-blue-600 text-white rounded-md py-2">Konfirmasi</button>
+                <button onClick={() => setShowRenameDeptModal(false)} className="flex-1 bg-gray-200 rounded-md py-2">Batal</button>
               </div>
             </div>
           </div>

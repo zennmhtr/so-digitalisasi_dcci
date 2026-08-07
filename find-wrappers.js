@@ -6,6 +6,6 @@ const lines = content.split('\n');
 for (let i = 2068; i < lines.length - 30; i++) {
   const l = lines[i];
   if (l && (l.includes('"space-y-') || l.includes('"flex flex-col gap-0"'))) {
-    console.log((i+1), l.substring(0, 80));
+    console.log((i + 1), l.substring(0, 80));
   }
 }

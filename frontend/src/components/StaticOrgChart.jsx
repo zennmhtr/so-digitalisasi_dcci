@@ -6,11 +6,16 @@ const StaticOrgChart = ({
   organizationData,
   onCodeClick,
   employeeJobdescStatus = {},
-  highlightedKeys = {},   // { 'department-qa-1': 'modified', 'bod-bod-1': 'moved', ... }
-  isPreview = false,      // true = mode preview (disable click, sembunyikan "click to view")
+  highlightedKeys = {},   
+  isPreview = false,      
+  variant = null,         
+  disableInternalScroll = false, 
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const cardBorderClass =
+    variant === 'before' ? 'border-red-400' : variant === 'after' ? 'border-green-400' : 'border-gray-400';
+  const cardBorderWidth = variant ? 'border-2' : 'border';
 
   const routePermissionMap = {
     "/mi-she": "View MI & SHE SO",
@@ -72,7 +77,6 @@ const StaticOrgChart = ({
     return { width: s?.width ?? defaultW, height: s?.height ?? defaultH };
   };
 
-  // Warna highlight per tipe perubahan
   const highlightStyleMap = {
     added: { outline: '3px solid #22c55e', outlineOffset: '2px', borderRadius: '4px' },
     removed: { outline: '3px solid #ef4444', outlineOffset: '2px', borderRadius: '4px' },
@@ -80,16 +84,45 @@ const StaticOrgChart = ({
     modified: { outline: '3px solid #3b82f6', outlineOffset: '2px', borderRadius: '4px' },
   };
 
+  const highlightBadgeMap = {
+    added: { bg: '#22c55e', label: 'BARU' },
+    removed: { bg: '#ef4444', label: 'DIHAPUS' },
+    moved: { bg: '#f59e0b', label: 'PINDAH' },
+    modified: { bg: '#3b82f6', label: 'DIUBAH' },
+  };
+
   const CardWrapper = ({ posKey, defaultX, defaultY, defaultW, defaultH, style = {}, children }) => {
     const { left, top } = getPos(posKey, defaultX, defaultY);
     const { width, height } = getSize(posKey, defaultW, defaultH);
     const highlightType = highlightedKeys[posKey];
     const highlightStyle = highlightType ? highlightStyleMap[highlightType] || {} : {};
+    const badge = highlightType ? highlightBadgeMap[highlightType] : null;
     return (
       <div
         className="absolute"
         style={{ ...style, left, top, width, height, zIndex: 20, ...highlightStyle }}
       >
+        {badge && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '-9px',
+              right: '-6px',
+              zIndex: 30,
+              background: badge.bg,
+              color: '#fff',
+              fontSize: '7px',
+              fontWeight: 'bold',
+              lineHeight: 1,
+              padding: '2px 4px',
+              borderRadius: '4px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.35)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {badge.label}
+          </span>
+        )}
         {children}
       </div>
     );
@@ -264,7 +297,6 @@ const StaticOrgChart = ({
     if ((item?.code || '').toUpperCase().startsWith('BOD')) {
       return <p className="text-[8px] font-bold uppercase text-gray-600">{item?.code || ''}</p>;
     }
-
     const empId = (item?.empId || '').trim();
     const itemName = (item?.name || '')
       .trim()
@@ -272,11 +304,9 @@ const StaticOrgChart = ({
       .replace(/\*+/g, '')
       .replace(/\s+/g, ' ')
       .trim();
-
     if (!empId && !itemName) {
       return <p className="text-[8px] font-bold uppercase">{item?.code || ''}</p>;
     }
-
     const empIdMatch = empId && empId !== '-' && (
       employeeJobdescStatus[empId] ||
       empId.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
@@ -286,16 +316,12 @@ const StaticOrgChart = ({
       itemName.split(/[\/,]/).some(part => employeeJobdescStatus[part.trim()])
     );
     const hasJobdesc = empIdMatch || nameMatch;
-
     if (!empId || empId === '-') {
       return <p className="text-[8px] font-bold uppercase text-gray-600">{item?.code || ''}</p>;
     }
-
-    // Di mode preview, tidak perlu warna jobdesc — tampilkan netral
     if (isPreview) {
-      return <p className="text-[8px] font-bold uppercase text-gray-700">{item?.code || ''}</p>;
+      return <p className="text-[8px] font-bold uppercase text-blue-600">{item?.code || ''}</p>;
     }
-
     const color = hasJobdesc ? 'text-blue-600 hover:bg-blue-50' : 'text-red-600 hover:bg-red-50';
     const handleCodeClick = (e) => {
       e.stopPropagation();
@@ -432,7 +458,15 @@ const StaticOrgChart = ({
   };
 
   return (
-    <div className="relative overflow-x-auto" style={{ minHeight: '2200px', minWidth: '1200px', backgroundColor: 'transparent' }}>
+    <div
+      className={disableInternalScroll ? "relative" : "relative overflow-x-auto"}
+      style={{
+        minHeight: '2200px',
+        minWidth: '1200px',
+        backgroundColor: 'transparent',
+        ...(disableInternalScroll ? { overflow: 'visible' } : {}),
+      }}
+    >
       {renderConnections()}
 
       {/* ── Header ── */}
@@ -473,7 +507,7 @@ const StaticOrgChart = ({
 
       {/* Commissioners */}
       <CardWrapper posKey="commissioners-header" defaultX={50} defaultY={175} defaultW={272} defaultH={70}>
-        <div className="bg-white border border-gray-400 rounded shadow-sm w-full h-full flex flex-col overflow-hidden">
+        <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm w-full h-full flex flex-col overflow-hidden`}>
           <div className="bg-blue-300 px-2 py-1.5 text-center flex-shrink-0">
             <h3 className="font-bold text-xs text-white leading-tight">{organizationData.uiLabels?.['commissioners-header'] || 'BOARD OF COMMISSIONERS'}</h3>
           </div>
@@ -527,7 +561,7 @@ const StaticOrgChart = ({
       {organizationData.structure?.bod?.map((item, index) => {
         return (
           <CardWrapper key={item.id} posKey={`bod-${item.id}`} defaultX={50} defaultY={320 + index * 90} style={{ width: '176px' }}>
-            <div className="bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full">
+            <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm flex min-h-[80px] w-full h-full`}>
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
                 <p className="text-[8px] font-bold uppercase text-gray-600">{item.code}</p>
               </div>
@@ -545,7 +579,6 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* ── Custom Added Headers ── */}
       {organizationData.structure?.headers?.map((item) => {
         const posKey = `header-${item.id}`;
         return (
@@ -557,7 +590,6 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* Business labels */}
       {organizationData.structure?.business?.map((item, i) => {
         const key = `business-${item.id}`;
         return (
@@ -569,7 +601,6 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* Management */}
       {organizationData.structure?.management?.map((item, i) => {
         const yMap = { 'MD1.0': 590, 'MRO1.0': 760, 'CRO1.0': 850, 'CRO2.0': 940 };
         const dy = yMap[item.code] ?? 500 + i * 90;
@@ -581,7 +612,7 @@ const StaticOrgChart = ({
           const key = `management-${item.id}`;
           return (
             <CardWrapper key={key} posKey={key} defaultX={250} defaultY={dy} defaultW={176} defaultH={170}>
-              <div className="bg-white border border-gray-400 rounded shadow-sm w-full h-full flex flex-col">
+              <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm w-full h-full flex flex-col`}>
                 <div className="flex flex-col h-full">
                   <div className="flex border-b border-gray-300">
                     <div className="p-2 flex-1 text-center bg-gray-100">
@@ -617,7 +648,7 @@ const StaticOrgChart = ({
         const route = getCanonicalRoute(item);
         return (
           <CardWrapper key={item.id} posKey={`management-${item.id}`} defaultX={250} defaultY={dy} style={{ width: '176px' }}>
-            <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
+            <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
                 {renderCodeButton(item)}
               </div>
@@ -646,13 +677,12 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* ── Divisions ── */}
       {organizationData.structure?.divisions?.map((item, index) => {
         const divisionDefaults = { 'MKT2.0': { x: 650, y: 1180 } };
         const def = divisionDefaults[item.code] || { x: 450, y: 650 + index * 100 };
         return (
           <CardWrapper key={item.id} posKey={`division-${item.id}`} defaultX={def.x} defaultY={def.y} style={{ width: '176px' }}>
-            <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
+            <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
                 {renderCodeButton(item)}
               </div>
@@ -678,19 +708,17 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* ── Departments ── */}
       {organizationData.structure?.departments?.map((item, index) => {
         const spacingMap = { 0: 540, 1: 630, 2: 790, 3: 880, 4: 970, 5: 1180, 6: 1450, 7: 1170 };
         const defaultY = spacingMap[index] ?? 540 + index * 90;
         const route = getCanonicalRoute(item);
         return (
           <CardWrapper key={item.id} posKey={`department-${item.id}`} defaultX={650} defaultY={defaultY} style={{ width: '176px' }}>
-            <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
+            <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
                 {renderCodeButton(item)}
               </div>
               <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                {/* Jabatan - klik ke Matriks Skill */}
                 <div
                   className="px-2 py-1 text-center border-b border-gray-300 cursor-pointer hover:bg-blue-50 transition-colors"
                   onClick={(e) => handleTitleClick(e, item)}
@@ -698,7 +726,6 @@ const StaticOrgChart = ({
                 >
                   <p className="text-[8px] font-semibold leading-tight break-words text-black">{item.title}</p>
                 </div>
-                {/* Nama + NPK + Click to SO Bagian - satu box, klik ke SO Bagian */}
                 <div
                   className="px-2 py-1 text-center cursor-pointer hover:bg-indigo-50 transition-colors flex-1 flex flex-col justify-center"
                   onClick={(e) => handleNameClick(e, item)}
@@ -716,19 +743,17 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* ── Sections ── */}
       {organizationData.structure?.sections?.map((item, index) => {
         const specialPositions = { 0: 320, 1: 410, 2: 500, 3: 750, 4: 840, 5: 930, 6: 1020, 7: 1110, 8: 1200, 9: 1290, 10: 1380, 11: 1470 };
         const defaultY = specialPositions[index] ?? 320 + index * 90;
         const route = getCanonicalRoute(item);
         return (
           <CardWrapper key={item.id} posKey={`section-${item.id}`} defaultX={850} defaultY={defaultY} style={{ width: '200px' }}>
-            <div className={`bg-white border border-gray-400 rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
+            <div className={`bg-white ${cardBorderWidth} ${cardBorderClass} rounded shadow-sm flex min-h-[80px] w-full h-full ${clickable(item)}`} onClick={() => handleClick(item)}>
               <div className="bg-gray-100 p-1 text-center border-r border-gray-400 w-10 flex-shrink-0 flex items-center justify-center">
                 {renderCodeButton(item)}
               </div>
               <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                {/* Jabatan - klik ke Matriks Skill */}
                 <div
                   className="px-2 py-1 text-center border-b border-gray-300 cursor-pointer hover:bg-blue-50 transition-colors"
                   onClick={(e) => handleTitleClick(e, item)}
@@ -736,7 +761,6 @@ const StaticOrgChart = ({
                 >
                   <p className="text-[8px] font-semibold leading-tight break-words text-black">{item.title}</p>
                 </div>
-                {/* Nama + NPK + Click to SO Bagian - satu box, klik ke SO Bagian */}
                 <div
                   className="px-2 py-1 text-center cursor-pointer hover:bg-indigo-50 transition-colors flex-1 flex flex-col justify-center"
                   onClick={(e) => handleNameClick(e, item)}
@@ -754,7 +778,6 @@ const StaticOrgChart = ({
         );
       })}
 
-      {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-gray-50 p-4 rounded-lg border border-gray-400 max-w-sm z-30">
         <h4 className="font-bold text-sm mb-2">NOTE:</h4>
         <div className="text-xs space-y-1">

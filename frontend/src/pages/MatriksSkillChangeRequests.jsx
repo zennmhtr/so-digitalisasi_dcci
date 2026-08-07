@@ -660,7 +660,15 @@ const MatriksSkillChangeRequests = () => {
             setActionLoading(true);
             const response = await matriksSkillChangeRequestsAPI.reject(requestId, trimmed);
             if (response.data.success) {
-                alert("❌ Request rejected.");
+                await Swal.fire({
+                    icon: "error",
+                    title: "Ditolak!",
+                    text: "Request telah berhasil ditolak.",
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "OK",
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
                 setShowDetailModal(false);
                 setReviewComments("");
                 loadRequests();
@@ -711,7 +719,7 @@ const MatriksSkillChangeRequests = () => {
             if (!deptId) {
                 Swal.fire({
                     title: "Berhasil!",
-                    html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen:</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
+                    html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen :</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
                     icon: "success",
                     confirmButtonColor: "#16a34a",
                     confirmButtonText: "OK",

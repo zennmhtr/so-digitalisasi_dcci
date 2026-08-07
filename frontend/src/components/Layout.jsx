@@ -277,7 +277,7 @@ const Layout = ({ children, sidebarVisible = true }) => {
             ...(hasSOChangeRequestsAccess
               ? [
                 {
-                  name: "SO Change Requests",
+                  name: "SO Besar Change Requests",
                   href: "/so-change-requests",
                   icon: GitPullRequest,
                 },

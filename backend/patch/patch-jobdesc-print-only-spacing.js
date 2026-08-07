@@ -13,7 +13,7 @@ function check(content, old, label) {
 }
 
 // PATCH 1: ganti className titik dua (mr-8 saat ini) -> mr-2 + class khusus, jadi View kembali normal
-const old1 = '<span className="mr-8"> :</span>';
+const old1 = '<span className="mr-6"> :</span>';
 const new1 = '<span className="mr-2 jobdesc-colon-gap"> :</span>';
 const count1 = check(content, old1, "Patch 1: className titik dua");
 if (count1 !== 4) allOk = false;

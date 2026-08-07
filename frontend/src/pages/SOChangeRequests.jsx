@@ -14,6 +14,100 @@ import { soChangeRequestsAPI } from "../services/api";
 import StaticOrgChart from "../components/StaticOrgChart";
 import Swal from 'sweetalert2';
 
+const SECTION_TO_POSKEY_PREFIX = {
+  bod: "bod",
+  management: "management",
+  divisions: "division",
+  departments: "department",
+  sections: "section",
+};
+
+const generateOrgItemKey = (item) => {
+  if (item.code) return `code:${item.code.trim().toUpperCase()}`;
+  if (item.id) return `id:${item.id}`;
+  if (item.label) return `label:${item.label.trim().toUpperCase()}`;
+  if (item.title) return `title:${item.title.trim().toUpperCase().substring(0, 30)}`;
+  return `fallback:${JSON.stringify(item).substring(0, 50)}`;
+};
+
+const normalizeOrgStr = (str) => {
+  if (str === null || str === undefined) return "";
+  return String(str).trim().toUpperCase();
+};
+
+const orgItemHasChanged = (oldItem, newItem) => {
+  return (
+    normalizeOrgStr(oldItem.name) !== normalizeOrgStr(newItem.name) ||
+    normalizeOrgStr(oldItem.empId) !== normalizeOrgStr(newItem.empId) ||
+    normalizeOrgStr(oldItem.title) !== normalizeOrgStr(newItem.title) ||
+    normalizeOrgStr(oldItem.label) !== normalizeOrgStr(newItem.label) ||
+    normalizeOrgStr(oldItem.code) !== normalizeOrgStr(newItem.code)
+  );
+};
+
+const computeOrgHighlightedKeys = (oldOrg, newOrg) => {
+  const keys = {};
+  if (!oldOrg || !newOrg) return keys;
+
+  Object.entries(SECTION_TO_POSKEY_PREFIX).forEach(([section, prefix]) => {
+    const newItems = newOrg.structure?.[section] || [];
+    const oldItems = oldOrg.structure?.[section] || [];
+    const oldItemsMap = new Map(oldItems.map((item) => [generateOrgItemKey(item), item]));
+    const newItemsMap = new Map(newItems.map((item) => [generateOrgItemKey(item), item]));
+
+    newItems.forEach((newItem) => {
+      const key = generateOrgItemKey(newItem);
+      const oldItem = oldItemsMap.get(key);
+      const posKey = `${prefix}-${newItem.id}`;
+      if (!oldItem) {
+        keys[posKey] = "added";
+      } else if (orgItemHasChanged(oldItem, newItem)) {
+        keys[posKey] = "modified";
+      }
+    });
+
+    oldItems.forEach((oldItem) => {
+      const key = generateOrgItemKey(oldItem);
+      if (!newItemsMap.has(key)) {
+        keys[`${prefix}-${oldItem.id}`] = "removed";
+      }
+    });
+  });
+
+  const newPositions = newOrg.positions || {};
+  const oldPositions = oldOrg.positions || {};
+  const allPosKeys = new Set([...Object.keys(newPositions), ...Object.keys(oldPositions)]);
+  allPosKeys.forEach((key) => {
+    if (keys[key]) return;
+    const oldPos = oldPositions[key];
+    const newPos = newPositions[key];
+    if (oldPos && newPos) {
+      const dx = Math.abs((oldPos.x || 0) - (newPos.x || 0));
+      const dy = Math.abs((oldPos.y || 0) - (newPos.y || 0));
+      if (dx > 5 || dy > 5) keys[key] = "moved";
+    }
+  });
+
+  return keys;
+};
+
+const DiffLegend = () => (
+  <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600">
+    <span className="flex items-center gap-1">
+      <span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> Box Ditambahkan
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> Box Dihapus
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" /> Data Diubah/Rename
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" /> Box Dipindah
+    </span>
+  </div>
+);
+
 const SOPreview = ({ proposedData, currentData }) => {
   console.log("🔍 SOPreview Debug:", {
     hasProposedData: !!proposedData,
@@ -34,7 +128,6 @@ const SOPreview = ({ proposedData, currentData }) => {
     );
   }
 
-  // ─── 1. getChangeSummary ────────────────────────────────────────
   const getChangeSummary = () => {
     const summary = {
       headerChanges: [],
@@ -147,7 +240,6 @@ const SOPreview = ({ proposedData, currentData }) => {
     return summary;
   };
 
-  // ─── 2. getLayoutChangeSummary ──────────────────────────────────
   const getLayoutChangeSummary = () => {
     if (!oldOrg) return { positionChanges: [], connectionChanges: { added: [], removed: [] }, sizeChanges: [] };
 
@@ -197,9 +289,9 @@ const SOPreview = ({ proposedData, currentData }) => {
     return { positionChanges, connectionChanges: { added: addedConns, removed: removedConns }, sizeChanges };
   };
 
-  // ─── 3. Panggil keduanya ────────────────────────────────────────
   const changeSummary = getChangeSummary();
   const layoutSummary = getLayoutChangeSummary();
+  const highlightedKeys = computeOrgHighlightedKeys(oldOrg, newOrg);
 
   const hasLayoutChanges =
     layoutSummary.positionChanges.length > 0 ||
@@ -216,7 +308,6 @@ const SOPreview = ({ proposedData, currentData }) => {
     ) ||
     hasLayoutChanges; // ← sekarang termasuk layout
 
-  // ─── 4. Early returns ───────────────────────────────────────────
   if (!currentData || !oldOrg) {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6">
@@ -253,7 +344,6 @@ const SOPreview = ({ proposedData, currentData }) => {
     );
   }
 
-  // ─── 5. Render helpers ──────────────────────────────────────────
   const sectionNames = {
     bod: "Board of Directors",
     management: "Management Functions",
@@ -273,10 +363,10 @@ const SOPreview = ({ proposedData, currentData }) => {
               <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">{oldItem.code || oldItem.id}</span>
             </div>
             <div className="space-y-2">
-              {oldItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan:</p><p className="text-sm font-bold text-gray-900">{oldItem.title}</p></div>}
-              {oldItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label:</p><p className="text-sm font-bold text-gray-900">{oldItem.label}</p></div>}
-              {oldItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama:</p><p className="text-base font-bold text-gray-900">{oldItem.name}</p></div>}
-              {oldItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID:</p><p className="text-sm font-mono text-gray-800">{oldItem.empId}</p></div>}
+              {oldItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan :</p><p className="text-sm font-bold text-gray-900">{oldItem.title}</p></div>}
+              {oldItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label :</p><p className="text-sm font-bold text-gray-900">{oldItem.label}</p></div>}
+              {oldItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama :</p><p className="text-base font-bold text-gray-900">{oldItem.name}</p></div>}
+              {oldItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID :</p><p className="text-sm font-bold text-gray-800">{oldItem.empId}</p></div>}
             </div>
           </div>
           <div className="p-4 bg-green-50">
@@ -285,10 +375,10 @@ const SOPreview = ({ proposedData, currentData }) => {
               <span className="px-2 py-1 bg-gray-700 text-white text-xs font-bold rounded">{newItem.code || newItem.id}</span>
             </div>
             <div className="space-y-2">
-              {newItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan:</p><p className={`text-sm font-bold ${changes.title ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.title}</p></div>}
-              {newItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label:</p><p className={`text-sm font-bold ${changes.label ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.label}</p></div>}
-              {newItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama:</p><p className={`text-base font-bold ${changes.name ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.name}</p></div>}
-              {newItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID:</p><p className={`text-sm font-mono ${changes.empId ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-800"}`}>{newItem.empId}</p></div>}
+              {newItem.title && <div><p className="text-xs text-gray-600 font-semibold">Jabatan :</p><p className={`text-sm font-bold ${changes.title ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.title}</p></div>}
+              {newItem.label && <div><p className="text-xs text-gray-600 font-semibold">Label :</p><p className={`text-sm font-bold ${changes.label ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.label}</p></div>}
+              {newItem.name && <div><p className="text-xs text-gray-600 font-semibold">Nama :</p><p className={`text-base font-bold ${changes.name ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-900"}`}>{newItem.name}</p></div>}
+              {newItem.empId && <div><p className="text-xs text-gray-600 font-semibold">Employee ID :</p><p className={`text-sm font-bold ${changes.empId ? "text-green-700 bg-green-200 px-2 py-1 rounded" : "text-gray-800"}`}>{newItem.empId}</p></div>}
             </div>
           </div>
         </div>
@@ -311,7 +401,6 @@ const SOPreview = ({ proposedData, currentData }) => {
     </div>
   );
 
-  // ─── 6. Main render ─────────────────────────────────────────────
   return (
     <div className="space-y-6">
 
@@ -332,7 +421,6 @@ const SOPreview = ({ proposedData, currentData }) => {
         </div>
       )}
 
-      {/* Signature Changes */}
       {changeSummary.signatureChanges.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -349,7 +437,6 @@ const SOPreview = ({ proposedData, currentData }) => {
         </div>
       )}
 
-      {/* Commissioner Changes */}
       {changeSummary.commissionerChanges.length > 0 && (
         <div>
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -366,7 +453,6 @@ const SOPreview = ({ proposedData, currentData }) => {
         </div>
       )}
 
-      {/* Structure Changes */}
       {Object.entries(changeSummary.structureChanges).map(([section, changes]) => {
         const hasChanges = changes.added.length > 0 || changes.modified.length > 0 || changes.removed.length > 0;
         if (!hasChanges) return null;
@@ -437,7 +523,6 @@ const SOPreview = ({ proposedData, currentData }) => {
         );
       })}
 
-      {/* ── Layout Changes ─────────────────────────────────────── */}
       {hasLayoutChanges && (
         <div className="space-y-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -448,6 +533,9 @@ const SOPreview = ({ proposedData, currentData }) => {
             </svg>
             Perubahan Layout/Posisi Box
           </h3>
+          <div className="mb-3">
+            <DiffLegend />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="border-2 border-red-400 rounded-lg overflow-hidden">
@@ -469,6 +557,10 @@ const SOPreview = ({ proposedData, currentData }) => {
                     organizationData={oldOrg}
                     onCodeClick={() => { }}
                     employeeJobdescStatus={{}}
+                    isPreview={true}
+                    disableInternalScroll={true}
+                    variant="before"
+                    highlightedKeys={highlightedKeys}
                   />
                 </div>
               </div>
@@ -493,6 +585,10 @@ const SOPreview = ({ proposedData, currentData }) => {
                     organizationData={newOrg}
                     onCodeClick={() => { }}
                     employeeJobdescStatus={{}}
+                    isPreview={true}
+                    disableInternalScroll={true}
+                    variant="after"
+                    highlightedKeys={highlightedKeys}
                   />
                 </div>
               </div>
@@ -560,6 +656,151 @@ const SOPreview = ({ proposedData, currentData }) => {
   );
 };
 
+const SOStructurePreviewModal = ({ organizationData, side, title, onClose, highlightedKeys = {} }) => {
+  const isBefore = side === "before";
+  const [zoomLevel, setZoomLevel] = useState(0.6);
+
+  // ── Drag-to-pan (klik & geser seperti Google Maps) ──────────────
+  const scrollRef = React.useRef(null);
+  const dragState = React.useRef({ isDown: false, startX: 0, startY: 0, scrollLeft: 0, scrollTop: 0, moved: false });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleMouseDown = (e) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragState.current = {
+      isDown: true,
+      startX: e.pageX,
+      startY: e.pageY,
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop,
+      moved: false,
+    };
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    const el = scrollRef.current;
+    const ds = dragState.current;
+    if (!ds.isDown || !el) return;
+    e.preventDefault();
+    const dx = e.pageX - ds.startX;
+    const dy = e.pageY - ds.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) ds.moved = true;
+    el.scrollLeft = ds.scrollLeft - dx;
+    el.scrollTop = ds.scrollTop - dy;
+  };
+
+  const stopDragging = () => {
+    dragState.current.isDown = false;
+    setIsDragging(false);
+  };
+
+  const zoomIn = () => setZoomLevel((z) => Math.min(1.2, +(z + 0.1).toFixed(2)));
+  const zoomOut = () => setZoomLevel((z) => Math.max(0.2, +(z - 0.1).toFixed(2)));
+  const zoomReset = () => setZoomLevel(0.6);
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[300] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] xl:max-w-7xl max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">SO Preview</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{title || "-"}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          {Object.keys(highlightedKeys).length > 0 && (
+            <div className="mb-3">
+              <DiffLegend />
+            </div>
+          )}
+          <div className={`border-2 rounded-lg overflow-hidden ${isBefore ? "border-red-400" : "border-green-400"}`}>
+            <div className={`px-3 py-2 flex items-center justify-between ${isBefore ? "bg-red-500" : "bg-green-500"}`}>
+              <span className="text-white text-sm font-bold">{isBefore ? "SEBELUM" : "SESUDAH"}</span>
+              {organizationData && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={zoomOut}
+                    title="Perkecil"
+                    className="w-7 h-7 flex items-center justify-center rounded bg-white/20 hover:bg-white/30 text-white font-bold"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={zoomReset}
+                    title="Reset zoom"
+                    className="px-2 h-7 flex items-center justify-center rounded bg-white/20 hover:bg-white/30 text-white text-xs font-semibold"
+                  >
+                    {Math.round(zoomLevel * 100)}%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={zoomIn}
+                    title="Perbesar"
+                    className="w-7 h-7 flex items-center justify-center rounded bg-white/20 hover:bg-white/30 text-white font-bold"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
+            <div
+              ref={scrollRef}
+              className={`overflow-auto bg-gray-50 select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+              style={{ height: "70vh" }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={stopDragging}
+              onMouseLeave={stopDragging}
+            >
+              {organizationData ? (
+                <div style={{ zoom: zoomLevel, transformOrigin: "top left" }}>
+                  <StaticOrgChart
+                    organizationData={organizationData}
+                    onCodeClick={() => {}}
+                    employeeJobdescStatus={{}}
+                    isPreview={true}
+                    disableInternalScroll={true}
+                    variant={side}
+                    highlightedKeys={highlightedKeys}
+                  />
+                </div>
+              ) : (
+                <p className="text-center py-10 text-gray-500 italic">
+                  Data {isBefore ? "sebelum" : "sesudah"} tidak tersedia
+                </p>
+              )}
+            </div>
+            {organizationData && (
+              <div className="px-3 py-1.5 bg-gray-100 border-t text-[11px] text-gray-500">
+                Tip: klik &amp; tahan lalu geser untuk menggulir, atau gunakan scrollbar / tombol zoom di atas.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end p-4 border-t">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+          >
+            Close Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SOChangeRequests = () => {
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
@@ -571,6 +812,7 @@ const SOChangeRequests = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
   const [activeTab, setActiveTab] = useState("preview");
+  const [previewSO, setPreviewSO] = useState(null); // { organizationData, side, title }
 
   const isFirstApprover = user?.role?.permissions?.includes(
     "SO Changes Director Approval"
@@ -747,14 +989,18 @@ const SOChangeRequests = () => {
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments || trimmedComments.length === 0) {
       setShowValidationError(true);
-      alert(
-        "⚠️ Please provide a reason for rejection in the Review Comments field."
-      );
-
+      await Swal.fire({
+        icon: "warning",
+        title: "Peringatan",
+        text: "Please provide a reason for rejection in the Review Comments field.",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+        timer: 5000,
+        timerProgressBar: true,
+      });
       setTimeout(() => {
         setShowValidationError(false);
       }, 5000);
-
       return;
     }
 
@@ -780,7 +1026,15 @@ const SOChangeRequests = () => {
       );
 
       if (response.data.success) {
-        alert("❌ Request rejected");
+        await Swal.fire({
+          icon: "error",
+          title: "Ditolak!",
+          text: "Request telah berhasil ditolak.",
+          confirmButtonColor: "#dc2626",
+          confirmButtonText: "OK",
+          timer: 3000,
+          timerProgressBar: true,
+        });
         setShowDetailModal(false);
         setReviewComments("");
         loadRequests();
@@ -1246,7 +1500,6 @@ const SOChangeRequests = () => {
         )}
       </div>
 
-      {/* Detail Modal */}
       {showDetailModal && selectedRequest && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -1270,7 +1523,6 @@ const SOChangeRequests = () => {
                 </button>
               </div>
 
-              {/* Add Tabs */}
               <div className="flex gap-4 mt-4 border-b border-gray-200">
                 <button
                   onClick={() => setActiveTab("preview")}
@@ -1295,13 +1547,56 @@ const SOChangeRequests = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
               {activeTab === "preview" ? (
-                <SOPreview
-                  proposedData={selectedRequest.proposedData}
-                  currentData={selectedRequest.currentData}
-                />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() =>
+                        setPreviewSO({
+                          organizationData: selectedRequest.currentData?.organizationData || null,
+                          side: "before",
+                          title: selectedRequest.title,
+                          highlightedKeys: computeOrgHighlightedKeys(
+                            selectedRequest.currentData?.organizationData,
+                            selectedRequest.proposedData?.organizationData
+                          ),
+                        })
+                      }
+                      className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Preview BEFORE
+                    </button>
+                    <button
+                      onClick={() =>
+                        setPreviewSO({
+                          organizationData: selectedRequest.proposedData?.organizationData || null,
+                          side: "after",
+                          title: selectedRequest.title,
+                          highlightedKeys: computeOrgHighlightedKeys(
+                            selectedRequest.currentData?.organizationData,
+                            selectedRequest.proposedData?.organizationData
+                          ),
+                        })
+                      }
+                      className="px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Preview AFTER
+                    </button>
+                  </div>
+                  <SOPreview
+                    proposedData={selectedRequest.proposedData}
+                    currentData={selectedRequest.currentData}
+                  />
+                </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Request Info */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">
                       {selectedRequest.title}
@@ -1346,7 +1641,6 @@ const SOChangeRequests = () => {
                     </div>
                   </div>
 
-                  {/* Approval Progress */}
                   {(selectedRequest.firstApprovedBy ||
                     selectedRequest.secondApprovedBy) && (
                       <div>
@@ -1394,7 +1688,6 @@ const SOChangeRequests = () => {
                       </div>
                     )}
 
-                  {/* Review Comments */}
                   {selectedRequest.reviewComments && (
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3">
@@ -1422,7 +1715,6 @@ const SOChangeRequests = () => {
                     </div>
                   )}
 
-                  {/* Review Input for Managers */}
                   {canApprove &&
                     ["pending", "waiting_second_approval"].includes(
                       selectedRequest.status
@@ -1477,7 +1769,6 @@ const SOChangeRequests = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
             {canApprove &&
               ["pending", "waiting_second_approval"].includes(
                 selectedRequest.status
@@ -1536,6 +1827,16 @@ const SOChangeRequests = () => {
               )}
           </div>
         </div>
+      )}
+
+      {previewSO && (
+        <SOStructurePreviewModal
+          organizationData={previewSO.organizationData}
+          side={previewSO.side}
+          title={previewSO.title}
+          highlightedKeys={previewSO.highlightedKeys}
+          onClose={() => setPreviewSO(null)}
+        />
       )}
     </div>
   );

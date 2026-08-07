@@ -21,7 +21,7 @@ const matriksSkillChangeRequestSchema = new mongoose.Schema(
         },
         changeType: {
             type: String,
-            enum: ["update", "add", "delete"],
+            enum: ["update", "add", "delete", "department-add", "department-rename", "department-delete"],
             required: true,
         },
         proposedData: {

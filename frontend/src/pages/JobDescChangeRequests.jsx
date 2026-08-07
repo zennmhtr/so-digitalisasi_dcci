@@ -219,10 +219,15 @@ const JobDescChangeRequests = () => {
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments || trimmedComments.length === 0) {
       setShowValidationError(true);
-      alert(
-        "⚠️ Please provide a reason for rejection in the Review Comments field."
-      );
-
+      await Swal.fire({
+        icon: "warning",
+        title: "Peringatan",
+        text: "Please provide a reason for rejection in the Review Comments field.",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+        timer: 5000,
+        timerProgressBar: true,
+      });
       setTimeout(() => {
         setShowValidationError(false);
       }, 5000);
@@ -251,7 +256,15 @@ const JobDescChangeRequests = () => {
       );
 
       if (response.data.success) {
-        alert("❌ Request rejected");
+        await Swal.fire({
+          icon: "error",
+          title: "Ditolak!",
+          text: "Request telah berhasil ditolak.",
+          confirmButtonColor: "#dc2626",
+          confirmButtonText: "OK",
+          timer: 3000,
+          timerProgressBar: true,
+        });
         setShowDetailModal(false);
         setReviewComments("");
         loadRequests();
@@ -549,7 +562,7 @@ const JobDescChangeRequests = () => {
             </p>
           </div>
         ) : (
-          filteredRequests.map((request) => {
+          filteredRequests.filter(r => r !== null && r !== undefined && r._id).map((request) => {
             const userPermissions = user?.role?.permissions || [];
             const isManagerApprover =
               getDepartmentApprovalPermission(request.department) &&
@@ -734,7 +747,7 @@ const JobDescChangeRequests = () => {
                     )}
 
                     {request.status === "pending" &&
-                      request.requestedBy._id === user?.id &&
+                      request.requestedBy?._id === user?.id &&
                       !userPermissions.includes(
                         "SO Changes Director Approval"
                       ) && (
@@ -1109,17 +1122,23 @@ const JobDescChangeRequests = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div className="text-left">
-                          <span className="font-medium">Tanggal: </span>
+                          <span className="font-medium">Tanggal : </span>
                           <span>
                             {previewJobDescData.jobDesc?.tanggal
-                              ? new Date(
-                                previewJobDescData.jobDesc.tanggal
-                              ).toLocaleDateString("id-ID")
-                              : new Date().toLocaleDateString("id-ID")}
+                              ? new Date(previewJobDescData.jobDesc.tanggal).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                              : new Date().toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
                           </span>
                         </div>
                         <div className="text-left">
-                          <span className="font-medium">Revisi: </span>
+                          <span className="font-medium">Revisi : </span>
                           <span>
                             {previewJobDescData.jobDesc?.revisi || "0"}
                           </span>

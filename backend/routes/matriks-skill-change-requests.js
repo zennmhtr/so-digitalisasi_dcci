@@ -3,7 +3,57 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const MatriksSkillChangeRequest = require("../models/MatriksSkillChangeRequest");
+const MatriksSkillDepartment = require("../models/MatriksSkillDepartment");
 const router = express.Router();
+
+async function applyApprovedMatriksDepartmentChanges(request) {
+    try {
+        const deptChange = request.proposedData?.departmentData;
+        if (!deptChange || !deptChange.action) return;
+
+        if (deptChange.action === "add") {
+            const existing = await MatriksSkillDepartment.findOne({ bagianId: deptChange.bagianId });
+
+            if (existing && existing.deletedAt) {
+                existing.deletedAt = null;
+                existing.name = deptChange.name;
+                existing.color = deptChange.color || "bg-slate-500";
+                existing.borderColor = deptChange.borderColor || "#64748b";
+                existing.iconColor = deptChange.iconColor || "#64748b";
+                await existing.save();
+                console.log(`✅ Matriks Skill Department "${deptChange.name}" di-restore dari soft-delete`);
+            } else if (!existing) {
+                const count = await MatriksSkillDepartment.countDocuments();
+                await MatriksSkillDepartment.create({
+                    bagianId: deptChange.bagianId,
+                    name: deptChange.name,
+                    color: deptChange.color || "bg-slate-500",
+                    borderColor: deptChange.borderColor || "#64748b",
+                    iconColor: deptChange.iconColor || "#64748b",
+                    order: count + 1,
+                    isCustom: true,
+                });
+                console.log(`✅ Matriks Skill Department "${deptChange.name}" ditambahkan permanen`);
+            } else {
+                console.log(`ℹ️ Matriks Skill Department "${deptChange.bagianId}" sudah ada dan aktif, dilewati`);
+            }
+        } else if (deptChange.action === "rename") {
+            await MatriksSkillDepartment.findOneAndUpdate(
+                { bagianId: deptChange.bagianId },
+                { $set: { name: deptChange.newName } }
+            );
+            console.log(`✅ Matriks Skill Department "${deptChange.bagianId}" di-rename jadi "${deptChange.newName}"`);
+        } else if (deptChange.action === "delete") {
+            await MatriksSkillDepartment.findOneAndUpdate(
+                { bagianId: deptChange.bagianId },
+                { $set: { deletedAt: new Date() } }
+            );
+            console.log(`✅ Matriks Skill Department "${deptChange.bagianId}" dihapus (soft-delete)`);
+        }
+    } catch (err) {
+        console.error("⚠️ Failed to apply Matriks Skill department changes:", err);
+    }
+}
 
 const getDepartmentApprovalPermission = (departmentName) => {
     const mapping = {
@@ -192,7 +242,9 @@ router.post(
         auth,
         body("title").notEmpty().withMessage("Title is required"),
         body("description").notEmpty().withMessage("Description is required"),
-        body("changeType").isIn(["update", "add", "delete"]).withMessage("Invalid change type"),
+        body("changeType")
+            .isIn(["update", "add", "delete", "department-add", "department-rename", "department-delete"])
+            .withMessage("Invalid change type"),
         body("proposedData").notEmpty().withMessage("Proposed data is required"),
         body("department").notEmpty().withMessage("Department is required"),
     ],
@@ -342,6 +394,10 @@ router.put("/:id/approve", auth, async (req, res) => {
         }
 
         await request.save();
+
+        if (request.status === "approved") {
+            await applyApprovedMatriksDepartmentChanges(request);
+        }
 
         const populatedRequest = await MatriksSkillChangeRequest.findById(request._id)
             .populate({ path: "requestedBy", select: "name email department role", populate: { path: "role", select: "name permissions" } })

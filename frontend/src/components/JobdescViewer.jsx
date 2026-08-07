@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { X, Download, Printer, Edit, Trash2 } from "lucide-react";
 import { getSignatureInfo } from "../config/signatures";
+import { soBagianDepartmentsAPI, soBagianDataAPI } from "../services/api";
 
 const JobdescViewer = ({
   user,
@@ -11,6 +12,56 @@ const JobdescViewer = ({
   viewOnly = false,
   canDelete = false,
 }) => {
+
+  const deptName = jobdesc?.department?.name || "";
+  const [dynamicSigner, setDynamicSigner] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadDynamicSigner = async () => {
+      if (!deptName) return;
+      try {
+        const listRes = await soBagianDepartmentsAPI.getAll();
+        const list = listRes.data?.data || listRes.data || [];
+        const normalize = (s) =>
+          (s || "")
+            .replace(/\s*Department$/i, "")
+            .replace(/\s*Dept\.?$/i, "")
+            .trim()
+            .toLowerCase();
+
+        const target = normalize(deptName);
+        const matched = list.find((d) => {
+          const dn = normalize(d.name);
+          return dn === target || target.includes(dn) || dn.includes(target);
+        });
+
+        if (!matched) return;
+        const deptId = matched.id || matched._id || matched.bagianId;
+        const detailRes = await soBagianDataAPI.get(deptId);
+        const header = detailRes.data?.data?.header || detailRes.data?.header || {};
+
+        if (cancelled) return;
+        setDynamicSigner({
+          dibuat: {
+            name: header.preparedByName || "",
+            role: header.preparedByRole || "",
+          },
+          disetujui: {
+            name: header.checkedByName || "",
+            role: header.checkedByRole || "",
+          },
+        });
+      } catch (err) {
+        console.error("Gagal memuat data signer dinamis dari SO Bagian:", err);
+      }
+    };
+
+    loadDynamicSigner();
+    return () => {
+      cancelled = true;
+    };
+  }, [deptName]);
 
   if (!jobdesc) {
     return (
@@ -67,7 +118,6 @@ const JobdescViewer = ({
       "PPC",
       "MI & SHE",
     ];
-    const deptName = jobdesc?.department?.name || "";
     if (APPROVED_DEPARTMENTS.some(d =>
       deptName.toLowerCase().includes(d.toLowerCase()) ||
       d.toLowerCase().includes(deptName.toLowerCase())
@@ -76,7 +126,7 @@ const JobdescViewer = ({
     return false;
   })();
 
-  const signInfo = getSignatureInfo(jobdesc, isFullyApproved);
+  const signInfo = getSignatureInfo(jobdesc, isFullyApproved, dynamicSigner);
 
   console.log("JobdescViewer - jobdesc data:", jobdesc);
   const handlePrint = () => {
@@ -291,6 +341,11 @@ const JobdescViewer = ({
             <p className="text-gray-600 text-sm mt-1">
               Employee : <span className="font-medium">{user.name}</span> ({user.noPNK})
             </p>
+            {user?.positionCode && (
+              <p className="text-gray-600 text-sm mt-1">
+                ID Jobdesc : <span className="font-medium">( {user.positionCode} )</span>
+              </p>
+            )}
             {isFullyApproved ? (
               <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,10 +411,8 @@ const JobdescViewer = ({
           className="bg-white border-2 border-black print:border-black"
           style={{ fontFamily: "Arial, sans-serif" }}
         >
-          {/* Header Section */}
           <div className="border-b-2 border-black">
             <div className="flex">
-              {/* Logo and Company Section */}
               <div className="w-64 border-r-2 border-black p-2">
                 <div className="flex flex-col items-center">
                   <img

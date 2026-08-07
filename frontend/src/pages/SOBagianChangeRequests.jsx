@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { soBagianChangeRequestsAPI } from "../services/api";
+import SOBagianStructurePreviewModal from "./SOBagianStructurePreviewModal";
 import Swal from 'sweetalert2';
 
-const SOBagianPreview = ({ proposedData, currentData }) => {
+const SOBagianPreview = ({ proposedData, currentData, changeType, onPreviewSOBagian }) => {
   const [showDebug, setShowDebug] = useState(false);
 
   console.log("🔍 SOBagianPreview Debug:", {
@@ -29,6 +30,177 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       <div className="text-center py-8 text-gray-500">
         <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
         <p>No proposed data available</p>
+      </div>
+    );
+  }
+
+  if (["department-add", "department-rename", "department-delete"].includes(changeType)) {
+    const deptData = proposedData.departmentData || {};
+
+    if (changeType === "department-add") {
+      return (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Departemen Baru Diajukan
+          </h3>
+          <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 space-y-2">
+            <div>
+              <span className="text-xs text-gray-600 font-semibold">Nama Departemen :</span>
+              <p className="text-base font-bold text-gray-900">{deptData.name || "-"}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-600 font-semibold">ID/Slug :</span>
+              <p className="text-sm font-mono text-gray-800">{deptData.bagianId || "-"}</p>
+            </div>
+            {deptData.route && (
+              <div>
+                <span className="text-xs text-gray-600 font-semibold">Route :</span>
+                <p className="text-sm font-mono text-gray-800">{deptData.route}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (changeType === "department-rename") {
+      return (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Rename Departemen
+          </h3>
+          <div className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
+            <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
+              <div className="p-4 bg-red-50">
+                <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">BEFORE</span>
+                <p className="text-base font-bold text-gray-900 mt-3">{deptData.oldName || "-"}</p>
+              </div>
+              <div className="p-4 bg-green-50">
+                <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">AFTER</span>
+                <p className="text-base font-bold text-gray-900 mt-3">{deptData.newName || "-"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (changeType === "department-delete") {
+      return (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Departemen Akan Dihapus
+          </h3>
+          <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4 opacity-90">
+            <p className="text-base font-bold text-gray-900 line-through">{deptData.name || "-"}</p>
+            <p className="text-sm text-gray-600 mt-2">
+              Departemen ini beserta seluruh struktur organisasi di dalamnya akan dihapus permanen.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  if (proposedData.departmentData?.action) {
+    const { action, bagianId, name, newName, route, color } = proposedData.departmentData;
+
+    const actionConfig = {
+      add: { label: "Departemen Baru Akan Ditambahkan", color: "green" },
+      rename: { label: "Departemen Akan Di-rename", color: "blue" },
+      delete: { label: "Departemen Akan Dihapus", color: "red" },
+    };
+    const cfg = actionConfig[action] || { label: "Perubahan Departemen", color: "gray" };
+
+    return (
+      <div className={`bg-${cfg.color}-50 border-l-4 border-${cfg.color}-500 p-6 rounded`}>
+        <h4 className={`font-bold text-${cfg.color}-800 text-lg mb-3`}>{cfg.label}</h4>
+        <div className="bg-white rounded p-4 space-y-2 text-sm">
+          <div><span className="text-gray-600">Bagian ID :</span> <strong>{bagianId}</strong></div>
+          {action === "add" && (
+            <>
+              <div><span className="text-gray-600">Nama :</span> <strong>{name}</strong></div>
+              <div><span className="text-gray-600">Route :</span> <strong>{route}</strong></div>
+              <div><span className="text-gray-600">Warna :</span> <strong>{color}</strong></div>
+            </>
+          )}
+          {action === "rename" && (
+            <div><span className="text-gray-600">Nama baru:</span> <strong>{newName}</strong></div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (changeType === "add" && proposedData.boxData) {
+    const box = proposedData.boxData;
+    return (
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Box Baru Diajukan
+        </h3>
+        <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 space-y-2">
+          <div>
+            <span className="text-xs text-gray-600 font-semibold">Kolom/Header:</span>
+            <p className="text-sm font-mono text-gray-800">{box.column || "-"}</p>
+          </div>
+          <div>
+            <span className="text-xs text-gray-600 font-semibold">Title:</span>
+            <p className="text-base font-bold text-gray-900">{box.title || "-"}</p>
+          </div>
+          <div>
+            <span className="text-xs text-gray-600 font-semibold">Nama:</span>
+            <p className="text-base font-bold text-gray-900">{box.name || "-"}</p>
+          </div>
+          <div>
+            <span className="text-xs text-gray-600 font-semibold">Employee ID:</span>
+            <p className="text-sm font-mono text-gray-800">{box.empId || "-"}</p>
+          </div>
+          {box.code && (
+            <div>
+              <span className="text-xs text-gray-600 font-semibold">Code:</span>
+              <p className="text-sm font-mono text-gray-800">{box.code}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (changeType === "delete" && currentData?.removedBox) {
+    const box = currentData.removedBox;
+    return (
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Box Akan Dihapus
+        </h3>
+        <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4 opacity-90">
+          <p className="text-xs text-gray-600 font-semibold">Kolom/Header:</p>
+          <p className="text-sm font-mono text-gray-800 mb-2">{box.column || "-"}</p>
+          <p className="text-base font-bold text-gray-900 line-through">{box.name || "-"}</p>
+          <p className="text-sm text-gray-600 line-through">{box.title || "-"}</p>
+          {box.empId && (
+            <p className="text-sm font-mono text-gray-500 line-through mt-1">({box.empId})</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -94,6 +266,7 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
   const getChangeSummary = () => {
     const summary = {
       headerChanges: [],
+      headerColumnChanges: { renamed: [], added: [], deleted: [], restored: [] },
       positionChanges: {
         added: [],
         modified: [],
@@ -119,6 +292,9 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
         { key: "department", label: "Department" },
         { key: "unitName", label: "Unit Name" },
         { key: "sectionName", label: "Section Name" },
+        { key: "preparedByName", label: "Prepared By" },
+        { key: "checkedByName", label: "Checked By" },
+        { key: "approvedByName", label: "Approved By" },
       ];
 
       headerFields.forEach(({ key, label }) => {
@@ -134,23 +310,75 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
       });
     }
 
-    // ✅ FIX: Jika tidak ada posisi lama, skip position comparison saja
+    const oldColumnLabels = oldHeader?.columnLabels || {};
+    const newColumnLabels = newHeader?.columnLabels || {};
+    const oldHiddenColumns = oldHeader?.hiddenColumns || {};
+    const newHiddenColumns = newHeader?.hiddenColumns || {};
+    const oldCustomColumns = oldHeader?.customColumns || [];
+    const newCustomColumns = newHeader?.customColumns || [];
+
+    summary.headerColumnChanges = {
+      renamed: [],
+      added: [],
+      deleted: [],
+      restored: [],
+    };
+
+    const allLabelKeys = new Set([
+      ...Object.keys(oldColumnLabels),
+      ...Object.keys(newColumnLabels),
+    ]);
+    allLabelKeys.forEach((key) => {
+      const oldLabel = oldColumnLabels[key] || key;
+      const newLabel = newColumnLabels[key] || key;
+      if (oldLabel !== newLabel) {
+        summary.headerColumnChanges.renamed.push({ key, oldLabel, newLabel });
+      }
+    });
+
+    Object.keys(newHiddenColumns).forEach((key) => {
+      if (newHiddenColumns[key] && !oldHiddenColumns[key]) {
+        summary.headerColumnChanges.deleted.push(key);
+      }
+    });
+
+    Object.keys(oldHiddenColumns).forEach((key) => {
+      if (oldHiddenColumns[key] && !newHiddenColumns[key]) {
+        summary.headerColumnChanges.restored.push(key);
+      }
+    });
+
+    newCustomColumns.forEach((col) => {
+      if (!oldCustomColumns.includes(col)) {
+        summary.headerColumnChanges.added.push(col);
+      }
+    });
+
     if (oldPositions.length === 0) {
       return summary;
     }
 
+    const getMatchKey = (pos) => (pos.id ? `id:${pos.id}` : `code:${pos.code || ""}`);
+    const getPosKey = (pos) => pos.id ?? `code:${pos.code}`;
+
     const oldPositionsMap = new Map();
     oldPositions.forEach((pos) => {
-      oldPositionsMap.set(pos.code, pos);
+      oldPositionsMap.set(getPosKey(pos), pos);
     });
 
     const newPositionsMap = new Map();
     newPositions.forEach((pos) => {
-      newPositionsMap.set(pos.code, pos);
+      newPositionsMap.set(getPosKey(pos), pos);
     });
 
     newPositions.forEach((newPos) => {
-      const oldPos = oldPositionsMap.get(newPos.code);
+      const key = getPosKey(newPos);
+      if (newPos.pendingAction === "delete") {
+        summary.positionChanges.removed.push(newPos);
+        return;
+      }
+
+      const oldPos = oldPositionsMap.get(key);
 
       if (!oldPos) {
         summary.positionChanges.added.push(newPos);
@@ -158,7 +386,8 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
         const nameChanged = (newPos.name || "").trim() !== (oldPos.name || "").trim();
         const empIdChanged = (newPos.empId || "").trim() !== (oldPos.empId || "").trim();
         const titleChanged = (newPos.title || "").trim() !== (oldPos.title || "").trim();
-        const hasChanges = nameChanged || empIdChanged || titleChanged;
+        const codeChanged = (newPos.code || "").trim() !== (oldPos.code || "").trim();
+        const hasChanges = nameChanged || empIdChanged || titleChanged || codeChanged;
 
         if (hasChanges) {
           summary.positionChanges.modified.push({
@@ -169,6 +398,7 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
               name: nameChanged,
               empId: empIdChanged,
               title: titleChanged,
+              code: codeChanged,
             }
           });
         }
@@ -176,8 +406,14 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
     });
 
     oldPositions.forEach((oldPos) => {
-      if (!newPositionsMap.has(oldPos.code)) {
-        summary.positionChanges.removed.push(oldPos);
+      const key = getPosKey(oldPos);
+      const stillInNew = newPositionsMap.get(key);
+      const wasDeleted = stillInNew && stillInNew.pendingAction === "delete";
+      if (!newPositionsMap.has(key) || wasDeleted) {
+        const alreadyAdded = summary.positionChanges.removed.some((p) => getPosKey(p) === key);
+        if (!alreadyAdded) {
+          summary.positionChanges.removed.push(oldPos);
+        }
       }
     });
 
@@ -256,6 +492,10 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
 
   const hasAnyChanges =
     changeSummary.headerChanges.length > 0 ||
+    changeSummary.headerColumnChanges.renamed.length > 0 ||
+    changeSummary.headerColumnChanges.added.length > 0 ||
+    changeSummary.headerColumnChanges.deleted.length > 0 ||
+    changeSummary.headerColumnChanges.restored.length > 0 ||
     changeSummary.positionChanges.added.length > 0 ||
     changeSummary.positionChanges.modified.length > 0 ||
     changeSummary.positionChanges.removed.length > 0;
@@ -353,6 +593,90 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
         </div>
       )}
 
+      {/* Header Column Changes (Add/Rename/Delete Header) */}
+      {changeSummary.headerColumnChanges.renamed.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Header Diganti Nama ({changeSummary.headerColumnChanges.renamed.length})
+          </h3>
+          <div className="grid grid-cols-1 gap-3">
+            {changeSummary.headerColumnChanges.renamed.map((change, idx) => (
+              <div key={idx} className="bg-white border-2 border-blue-500 rounded-lg overflow-hidden shadow-md">
+                <div className="grid grid-cols-2 divide-x-2 divide-blue-500">
+                  <div className="p-4 bg-red-50">
+                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">BEFORE</span>
+                    <p className="text-base font-bold text-gray-900 mt-2">{change.oldLabel}</p>
+                  </div>
+                  <div className="p-4 bg-green-50">
+                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">AFTER</span>
+                    <p className="text-base font-bold text-gray-900 mt-2">{change.newLabel}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {changeSummary.headerColumnChanges.added.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Header Baru Ditambahkan ({changeSummary.headerColumnChanges.added.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {changeSummary.headerColumnChanges.added.map((col, idx) => (
+              <div key={idx} className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+                <p className="font-bold">{col}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {changeSummary.headerColumnChanges.deleted.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Header Dihapus ({changeSummary.headerColumnChanges.deleted.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {changeSummary.headerColumnChanges.deleted.map((col, idx) => (
+              <div key={idx} className="bg-red-50 border-2 border-red-500 rounded-lg p-4 opacity-75">
+                <p className="font-bold line-through">{col}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {changeSummary.headerColumnChanges.restored.length > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Header Dimunculkan Kembali ({changeSummary.headerColumnChanges.restored.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {changeSummary.headerColumnChanges.restored.map((col, idx) => (
+              <div key={idx} className="bg-gray-50 border-2 border-gray-400 rounded-lg p-4">
+                <p className="font-bold">{col}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Modified Positions */}
       {changeSummary.positionChanges.modified.length > 0 && (
         <div>
@@ -418,6 +742,118 @@ const SOBagianPreview = ({ proposedData, currentData }) => {
   );
 };
 
+const SoBagianVisualPreview = ({ request, onClose }) => {
+  const deptChange = request.proposedData?.departmentData;
+  const action = deptChange?.action;
+  const deptName = deptChange?.name || deptChange?.newName || request.department;
+
+  const actionLabel = {
+    add: "Departemen Baru Akan Ditambahkan",
+    rename: "Departemen Akan Di-rename",
+    delete: "Departemen Akan Dihapus",
+  }[action] || "Perubahan Struktur Organisasi";
+
+  const cols = ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[300] p-4">
+      <div className="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview SO Bagian
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">{request.department} — {request.title}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="border-4 border-black rounded-lg overflow-hidden">
+            <div className="border-b-2 border-black p-3 flex items-start gap-2">
+              <div className="w-28 flex items-center justify-center p-3 border-2 border-black" style={{ height: "120px" }}>
+                <img src="/logo/dcci.png" alt="Dharma Group Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="border-2 border-black p-3 text-center flex items-center justify-center flex-1" style={{ height: "120px" }}>
+                <div>
+                  <h1 className="text-sm font-bold text-gray-800 mb-1">STRUKTUR ORGANISASI</h1>
+                  <h2 className="text-sm font-semibold text-gray-700 mb-1">PT DHARMA CONTROLCABLE INDONESIA</h2>
+                  <h3 className="text-xs font-semibold text-gray-600">
+                    ({deptName || "—"})
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 ${action === "delete" ? "bg-red-50" : action === "rename" ? "bg-amber-50" : "bg-green-50"}`}>
+              <p className={`text-sm font-bold mb-3 ${action === "delete" ? "text-red-700" : action === "rename" ? "text-amber-700" : "text-green-700"}`}>
+                {actionLabel}
+              </p>
+
+              {action === "rename" && (
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white border-2 border-gray-300 rounded p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">Nama Lama</p>
+                    <p className="text-sm font-bold text-gray-400 line-through">{deptChange?.bagianId ? request.department : ""}</p>
+                  </div>
+                  <div className="bg-white border-2 border-amber-400 rounded p-3 text-center">
+                    <p className="text-xs text-gray-500 mb-1">Nama Baru</p>
+                    <p className="text-sm font-bold text-amber-700">{deptChange?.newName}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-4 gap-2">
+                {cols.map((col) => (
+                  <div key={col} className="bg-blue-300 p-2 rounded text-center border border-black">
+                    <h3 className="font-bold text-[10px] text-black">{col}</h3>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {cols.map((col, idx) => (
+                  <div
+                    key={col}
+                    className={`bg-white border-2 rounded p-3 text-center min-h-[70px] flex items-center justify-center ${action === "delete" ? "border-red-300" : idx === 0 ? "border-blue-400" : "border-gray-300 border-dashed"
+                      }`}
+                  >
+                    {idx === 0 ? (
+                      <p className={`text-xs font-semibold ${action === "delete" ? "text-red-600 line-through" : "text-blue-700"}`}>
+                        {deptName}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-gray-400 italic">Belum ada data</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-4 text-center">
+            Preview struktur dasar — layout akhir dapat disesuaikan lebih lanjut setelah disetujui di SO Bagian Editor.
+          </p>
+        </div>
+
+        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Tutup Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SOBagianDetailModal = ({
   request,
   onClose,
@@ -430,8 +866,12 @@ const SOBagianDetailModal = ({
   setReviewComments,
   showValidationError,
   setShowValidationError,
+  onPreviewSOBagian,
 }) => {
   const [activeTab, setActiveTab] = useState("preview");
+  const [showVisualPreview, setShowVisualPreview] = useState(false);
+  const isDepartmentChangeRequest = !!request.proposedData?.departmentData?.action;
+  const showSOBagianPreviewButton = isDepartmentChangeRequest || request.changeType === "update";
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString("id-ID", {
@@ -531,10 +971,64 @@ const SOBagianDetailModal = ({
 
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === "preview" ? (
-            <SOBagianPreview
-              proposedData={request.proposedData}
-              currentData={request.currentData}
-            />
+            <div className="space-y-4">
+              {showSOBagianPreviewButton && (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      const deptData = request.proposedData?.departmentData || {};
+                      onPreviewSOBagian &&
+                        onPreviewSOBagian({
+                          bagianId: deptData.bagianId,
+                          name: deptData.name || deptData.oldName || request.department,
+                          changeType: request.changeType,
+                          newName: deptData.newName,
+                          currentSnapshot: request.currentData?.departmentData || null,
+                          proposedData: request.proposedData,
+                          currentData: request.currentData,
+                          singleSide: "before",
+                        });
+                    }}
+                    className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Preview BEFORE
+                  </button>
+                  <button
+                    onClick={() => {
+                      const deptData = request.proposedData?.departmentData || {};
+                      onPreviewSOBagian &&
+                        onPreviewSOBagian({
+                          bagianId: deptData.bagianId,
+                          name: deptData.name || deptData.oldName || request.department,
+                          changeType: request.changeType,
+                          newName: deptData.newName,
+                          currentSnapshot: request.currentData?.departmentData || null,
+                          proposedData: request.proposedData,
+                          currentData: request.currentData,
+                          singleSide: "after",
+                        });
+                    }}
+                    className="px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Preview AFTER
+                  </button>
+                </div>
+              )}
+              <SOBagianPreview
+                proposedData={request.proposedData}
+                currentData={request.currentData}
+                changeType={request.changeType}
+                onPreviewSOBagian={onPreviewSOBagian}
+              />
+            </div>
           ) : (
             <div className="space-y-6">
               <div>
@@ -641,6 +1135,10 @@ const SOBagianDetailModal = ({
                 </div>
               )}
 
+              {showVisualPreview && (
+                <SoBagianVisualPreview request={request} onClose={() => setShowVisualPreview(false)} />
+              )}
+
               {canApprove &&
                 ["pending", "waiting_director_approval"].includes(
                   request.status
@@ -648,7 +1146,7 @@ const SOBagianDetailModal = ({
                   <div>
                     <label className="block font-semibold text-gray-900 mb-2">
                       <MessageSquare className="inline w-5 h-5 mr-2" />
-                      Review Comments:
+                      Review Comments :
                     </label>
                     <p className="text-sm text-gray-600 mb-2 flex items-center gap-1 flex-wrap">
                       <span className="flex items-center gap-1">
@@ -764,6 +1262,7 @@ const SOBagianChangeRequests = () => {
   const [reviewComments, setReviewComments] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [previewSOBagian, setPreviewSOBagian] = useState(null); // { bagianId, name }
 
   const getDepartmentApprovalPermission = (departmentName) => {
     const mapping = {
@@ -958,10 +1457,15 @@ const SOBagianChangeRequests = () => {
     const trimmedComments = reviewComments.trim();
     if (!trimmedComments || trimmedComments.length === 0) {
       setShowValidationError(true);
-      alert(
-        "⚠️ Please provide a reason for rejection in the Review Comments field."
-      );
-
+      await Swal.fire({
+        icon: "warning",
+        title: "Peringatan",
+        text: "Please provide a reason for rejection in the Review Comments field.",
+        confirmButtonColor: "#f59e0b",
+        confirmButtonText: "OK",
+        timer: 5000,
+        timerProgressBar: true,
+      });
       setTimeout(() => {
         setShowValidationError(false);
       }, 5000);
@@ -990,7 +1494,15 @@ const SOBagianChangeRequests = () => {
       );
 
       if (response.data.success) {
-        alert("❌ Request rejected");
+        await Swal.fire({
+          icon: "error",
+          title: "Ditolak!",
+          text: "Request telah berhasil ditolak.",
+          confirmButtonColor: "#dc2626",
+          confirmButtonText: "OK",
+          timer: 3000,
+          timerProgressBar: true,
+        });
         setShowDetailModal(false);
         setReviewComments("");
         loadRequests();
@@ -1044,6 +1556,21 @@ const SOBagianChangeRequests = () => {
         console.error("❌ No proposedData found");
         alert("⚠️ Cannot apply changes: No proposed data");
         return false;
+      }
+
+      if (proposedData.departmentData?.action) {
+        setShowDetailModal(false);
+        setReviewComments("");
+        loadRequests();
+        setActionLoading(false);
+        Swal.fire({
+          title: "Berhasil!",
+          html: `Perubahan departemen telah disetujui.<br><br><b>Departemen :</b> ${request.department}`,
+          icon: "success",
+          confirmButtonColor: "#16a34a",
+          confirmButtonText: "OK",
+        });
+        return true;
       }
 
       console.log("📦 Proposed data:", proposedData);
@@ -1112,7 +1639,9 @@ const SOBagianChangeRequests = () => {
 
       const dataToSave = {
         header: JSON.parse(JSON.stringify(structure.header)),
-        positions: JSON.parse(JSON.stringify(structure.positions)),
+        positions: JSON.parse(JSON.stringify(structure.positions)).filter(
+          (p) => p.pendingAction !== "delete"
+        ),
         lastModified: orgData.lastModified || new Date().toISOString(),
         modifiedBy: orgData.modifiedBy || "System",
         approvedAt: request.approvedAt,
@@ -1152,7 +1681,7 @@ const SOBagianChangeRequests = () => {
       loadRequests();
       Swal.fire({
         title: "Berhasil!",
-        html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen:</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
+        html: `Perubahan telah disetujui dan diterapkan.<br><br> <b>Departemen :</b> ${request.department}<br> Halaman ${request.department} akan otomatis menampilkan perubahan ini.`,
         icon: "success",
         confirmButtonColor: "#16a34a",
         confirmButtonText: "OK",
@@ -1587,6 +2116,22 @@ const SOBagianChangeRequests = () => {
           setReviewComments={setReviewComments}
           showValidationError={showValidationError}
           setShowValidationError={setShowValidationError}
+          onPreviewSOBagian={(payload) => setPreviewSOBagian(payload)}
+        />
+      )}
+
+      {/* SO Bagian Structure Preview Modal */}
+      {previewSOBagian && (
+        <SOBagianStructurePreviewModal
+          bagianId={previewSOBagian.bagianId}
+          departmentName={previewSOBagian.name}
+          changeType={previewSOBagian.changeType}
+          newName={previewSOBagian.newName}
+          currentSnapshot={previewSOBagian.currentSnapshot}
+          proposedData={previewSOBagian.proposedData}
+          currentData={previewSOBagian.currentData}
+          singleSide={previewSOBagian.singleSide}
+          onClose={() => setPreviewSOBagian(null)}
         />
       )}
     </div>

@@ -19,10 +19,7 @@ const soBagianDataSchema = new mongoose.Schema({
   bagianId: { type: String, required: true, unique: true },
   bagianName: { type: String, required: true },
   columns: [{ type: String }],
-  header: {
-    effectiveDate: { type: String, default: "" },
-    signatures: { type: mongoose.Schema.Types.Mixed, default: {} },
-  },
+  header: { type: mongoose.Schema.Types.Mixed, default: {} },
   boxes: [boxSchema],
   positions: { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { timestamps: true });

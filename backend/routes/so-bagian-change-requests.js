@@ -3,6 +3,7 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const SOBagianChangeRequest = require("../models/SOBagianChangeRequest");
+const SOBagianDepartment = require("../models/SOBagianDepartment");
 const SOBagianData = require("../models/SOBagianData");
 const router = express.Router();
 
@@ -24,7 +25,63 @@ const DEPARTMENT_NAME_TO_BAGIAN_ID = {
   "QA": "qa",
   "QA Department": "qa",
   "QA (Quality Assurance)": "qa",
+  "RND (Research and Development)": "rnd",
 };
+
+async function applyApprovedDepartmentChanges(request) {
+  try {
+    const deptChange = request.proposedData?.departmentData;
+    if (!deptChange || !deptChange.action) return;
+
+    if (deptChange.action === "add") {
+      const existing = await SOBagianDepartment.findOne({ bagianId: deptChange.bagianId });
+
+      if (existing && existing.deletedAt) {
+        existing.deletedAt = null;
+        existing.name = deptChange.name;
+        existing.route = deptChange.route || `/${deptChange.bagianId}`;
+        existing.color = deptChange.color || "bg-slate-500";
+        if (deptChange.columns && deptChange.columns.length > 0) {
+          existing.columns = deptChange.columns;
+        }
+        existing.groups = deptChange.groups || existing.groups || {};
+        await existing.save();
+        console.log(`✅ Departemen "${deptChange.name}" di-restore dari soft-delete`);
+      } else if (!existing) {
+        const count = await SOBagianDepartment.countDocuments();
+        await SOBagianDepartment.create({
+          bagianId: deptChange.bagianId,
+          name: deptChange.name,
+          route: deptChange.route || `/${deptChange.bagianId}`,
+          color: deptChange.color || "bg-slate-500",
+          columns: deptChange.columns && deptChange.columns.length > 0
+            ? deptChange.columns
+            : ["BOARD OF DIRECTOR", "DEPARTMENT HEAD", "SECTION HEAD", "STAFF"],
+          groups: deptChange.groups || {},
+          order: count + 1,
+          isCustom: true,
+        });
+        console.log(`✅ Departemen "${deptChange.name}" ditambahkan permanen`);
+      } else {
+        console.log(`ℹ️ Departemen "${deptChange.bagianId}" sudah ada dan aktif, dilewati`);
+      }
+    } else if (deptChange.action === "rename") {
+      await SOBagianDepartment.findOneAndUpdate(
+        { bagianId: deptChange.bagianId },
+        { $set: { name: deptChange.newName } }
+      );
+      console.log(`✅ Departemen "${deptChange.bagianId}" di-rename jadi "${deptChange.newName}"`);
+    } else if (deptChange.action === "delete") {
+      await SOBagianDepartment.findOneAndUpdate(
+        { bagianId: deptChange.bagianId },
+        { $set: { deletedAt: new Date() } }
+      );
+      console.log(`✅ Departemen "${deptChange.bagianId}" dihapus (soft-delete)`);
+    }
+  } catch (err) {
+    console.error("⚠️ Failed to apply department changes:", err);
+  }
+}
 
 async function applyBoxChangesFromStructure(request) {
   try {
@@ -37,7 +94,9 @@ async function applyBoxChangesFromStructure(request) {
     const pendingBoxes = positions.filter(
       (p) => p.pendingAction === "add" || p.pendingAction === "delete"
     );
-    if (pendingBoxes.length === 0) return;
+    const customBoxesForSync = positions.filter((p) => p.isCustom && !p.pendingAction);
+
+    if (pendingBoxes.length === 0 && customBoxesForSync.length === 0) return;
 
     const record = await SOBagianData.findOne({ bagianId: deptId });
     if (!record) {
@@ -46,6 +105,29 @@ async function applyBoxChangesFromStructure(request) {
     }
 
     let changed = false;
+
+    for (const box of customBoxesForSync) {
+      const existingIdx = record.boxes.findIndex((b) => b.id === box.id);
+      if (existingIdx !== -1) {
+        const existing = record.boxes[existingIdx];
+        if (
+          existing.title !== (box.title || "") ||
+          existing.name !== (box.name || "") ||
+          existing.empId !== (box.empId || "") ||
+          existing.code !== (box.code || "")
+        ) {
+          record.boxes[existingIdx] = {
+            ...existing.toObject(),
+            code: box.code || "",
+            title: box.title || "",
+            name: box.name || "",
+            empId: box.empId || "",
+          };
+          changed = true;
+          console.log(`✅ Box "${box.name}" (edit teks) disinkronkan permanen ke ${deptId}`);
+        }
+      }
+    }
 
     for (const box of pendingBoxes) {
       if (box.pendingAction === "add") {
@@ -128,6 +210,52 @@ const applyApprovedPositions = async (request) => {
     console.log(`✅ Positions applied to SOBagianData for dept: ${deptId} (${Object.keys(positions).length} entries)`);
   } catch (err) {
     console.error("⚠️ Failed to apply positions to SOBagianData:", err);
+  }
+};
+
+const applyApprovedHeader = async (request) => {
+  try {
+    const orgData = request.proposedData?.organizationData;
+    const deptId = orgData?.departmentId;
+    const header = orgData?.structure?.header;
+
+    if (!deptId || !header) {
+      return;
+    }
+
+    const existing = await SOBagianData.findOne({ bagianId: deptId });
+    const existingHeader = existing?.header || {};
+
+    const mergedHeader = {
+      ...existingHeader,
+      ...header,
+      hiddenBoxes: {
+        ...(existingHeader.hiddenBoxes || {}),
+        ...(header.hiddenBoxes || {}),
+      },
+      groupTitles: {
+        ...(existingHeader.groupTitles || {}),
+        ...(header.groupTitles || {}),
+      },
+      columnLabels: {
+        ...(existingHeader.columnLabels || {}),
+        ...(header.columnLabels || {}),
+      },
+      hiddenColumns: {
+        ...(existingHeader.hiddenColumns || {}),
+        ...(header.hiddenColumns || {}),
+      },
+    };
+
+    await SOBagianData.findOneAndUpdate(
+      { bagianId: deptId },
+      { $set: { header: mergedHeader } },
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ Header applied (merged) to SOBagianData for dept: ${deptId}`);
+  } catch (err) {
+    console.error("⚠️ Failed to apply header to SOBagianData:", err);
   }
 };
 
@@ -284,7 +412,7 @@ router.post(
     body("title").notEmpty().withMessage("Title is required"),
     body("description").notEmpty().withMessage("Description is required"),
     body("changeType")
-      .isIn(["update", "add", "delete"])
+      .isIn(["update", "add", "delete", "department-add", "department-rename", "department-delete"])
       .withMessage("Invalid change type"),
     body("proposedData").notEmpty().withMessage("Proposed data is required"),
     body("department").notEmpty().withMessage("Department is Required"),
@@ -326,6 +454,7 @@ router.post(
       console.log("📥 Received currentData:", currentData ? "YES" : "NO");
       console.log("📥 CurrentData structure:", JSON.stringify(currentData, null, 2));
       console.log("🐛 DEBUG proposedData.organizationData.positions RECEIVED:", JSON.stringify(proposedData?.organizationData?.positions));
+      console.log("🐛 DEBUG proposedData.organizationData.structure.header RECEIVED:", JSON.stringify(proposedData?.organizationData?.structure?.header));
       const changeRequest = new SOBagianChangeRequest({
         title,
         description,
@@ -506,6 +635,8 @@ router.put(
 
           await applyApprovedPositions(request);
           await applyBoxChangesFromStructure(request);
+          await applyApprovedDepartmentChanges(request);
+          await applyApprovedHeader(request);
 
           const populated = await SOBagianChangeRequest.findById(request._id)
             .populate("requestedBy", "name email department")
@@ -641,6 +772,8 @@ router.put(
 
           await applyApprovedPositions(request);
           await applyBoxChangesFromStructure(request);
+          await applyApprovedDepartmentChanges(request);
+          await applyApprovedHeader(request);
 
           const populated = await SOBagianChangeRequest.findById(request._id)
             .populate("requestedBy", "name email department")

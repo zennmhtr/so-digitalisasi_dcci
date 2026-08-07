@@ -903,11 +903,17 @@ const JobdescManagement = () => {
       );
 
       if (response.data.success) {
-        const successMessage = isUpdate
-          ? "Job description update submitted for approval successfully!"
-          : "Job description submitted for approval successfully!";
-
-        alert(successMessage);
+        await Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: isUpdate
+            ? "Update job description berhasil dikirim untuk persetujuan."
+            : "Job description berhasil dikirim untuk persetujuan.",
+          confirmButtonColor: "#16a34a",
+          confirmButtonText: "OK",
+          timer: 3000,
+          timerProgressBar: true,
+        });
 
         setShowJobdescForm(false);
         setShowSubmitConfirmModal(false);
@@ -1604,7 +1610,7 @@ const JobDescriptionForm = ({ member, departmentName, onSave, onCancel }) => {
               Create Job Description
             </h3>
             <p className="text-gray-600 text-sm mt-1">
-              Employee: <span className="font-medium">{member.name}</span> (
+              Employee : <span className="font-medium">{member.name}</span> (
               {member.noPNK})
             </p>
           </div>

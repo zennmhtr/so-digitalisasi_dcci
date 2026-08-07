@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Search, X } from "lucide-react";
-import { rolesAPI } from "../services/api";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Edit, Trash2, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { rolesAPI, departmentsAPI } from "../services/api";
 import Swal from 'sweetalert2';
+
+const ROLES_PER_PAGE = 10;
 
 const RolePermission = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
   const [formData, setFormData] = useState({
@@ -16,7 +19,23 @@ const RolePermission = () => {
     active: true,
   });
 
-  const availablePermissions = {
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    const fetchDepartmentsForPermissions = async () => {
+      try {
+        const res = await departmentsAPI.getAll();
+        if (res.data.success) {
+          setDepartments(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching departments for permission list:", error);
+      }
+    };
+    fetchDepartmentsForPermissions();
+  }, []);
+
+  const staticPermissions = {
     systemCore: [
       "View Dashboard",
       "Manage Users",
@@ -36,7 +55,9 @@ const RolePermission = () => {
       "SO Changes Director Approval",
       "SO Changes President Director Approval",
     ],
+  };
 
+  const legacyDepartmentPermissions = {
     soBagianChangeRequests: [
       "SO Bagian Request",
       "Manager Finance Approval",
@@ -52,7 +73,6 @@ const RolePermission = () => {
       "Manager Purchasing Approval",
       "Manager QA Approval",
     ],
-
     jobdescDepartments: [
       "Job Desc Request",
       "Finance Department",
@@ -68,7 +88,6 @@ const RolePermission = () => {
       "Purchasing",
       "QA Department",
     ],
-
     soDetailsView: [
       "View Finance SO",
       "View HRGA & IT SO",
@@ -84,6 +103,34 @@ const RolePermission = () => {
       "View QA SO",
     ],
   };
+
+  const availablePermissions = useMemo(() => {
+    const soBagianChangeRequests = [...legacyDepartmentPermissions.soBagianChangeRequests];
+    const jobdescDepartments = [...legacyDepartmentPermissions.jobdescDepartments];
+    const soDetailsView = [...legacyDepartmentPermissions.soDetailsView];
+
+    departments.forEach((dept) => {
+      const name = dept.name;
+      if (!name) return;
+
+      if (!soBagianChangeRequests.some((p) => p.includes(name))) {
+        soBagianChangeRequests.push(`Manager ${name} Approval`);
+      }
+      if (!jobdescDepartments.some((p) => p.includes(name))) {
+        jobdescDepartments.push(name);
+      }
+      if (!soDetailsView.some((p) => p.includes(name))) {
+        soDetailsView.push(`View ${name} SO`);
+      }
+    });
+
+    return {
+      ...staticPermissions,
+      soBagianChangeRequests,
+      jobdescDepartments,
+      soDetailsView,
+    };
+  }, [departments]);
 
   const fetchRoles = async () => {
     try {
@@ -109,6 +156,56 @@ const RolePermission = () => {
       role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       role.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRoles.length / ROLES_PER_PAGE));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedRoles = filteredRoles.slice(
+    (currentPage - 1) * ROLES_PER_PAGE,
+    currentPage * ROLES_PER_PAGE
+  );
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    if (start > 1) {
+      pages.push(1);
+      if (start > 2) pages.push("...");
+    }
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < totalPages) {
+      if (end < totalPages - 1) pages.push("...");
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
 
   const handleAdd = () => {
     setEditingRole(null);
@@ -244,18 +341,18 @@ const RolePermission = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  Name Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
+                  Description Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Permissions
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Active
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -280,7 +377,7 @@ const RolePermission = () => {
                   </td>
                 </tr>
               ) : (
-                filteredRoles.map((role) => (
+                paginatedRoles.map((role) => (
                   <tr key={role._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {role.name}
@@ -332,6 +429,62 @@ const RolePermission = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {!loading && filteredRoles.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Menampilkan{" "}
+              <span className="font-medium">
+                {(currentPage - 1) * ROLES_PER_PAGE + 1}
+              </span>
+              {"–"}
+              <span className="font-medium">
+                {Math.min(currentPage * ROLES_PER_PAGE, filteredRoles.length)}
+              </span>{" "}
+              dari <span className="font-medium">{filteredRoles.length}</span> role
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                title="Halaman sebelumnya"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {getPageNumbers().map((page, idx) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-sm text-gray-400">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`min-w-[36px] px-3 py-2 text-sm rounded-lg border transition-colors ${page === currentPage
+                        ? "bg-primary-600 border-primary-600 text-white font-semibold"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                title="Halaman berikutnya"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}

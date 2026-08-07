@@ -116,6 +116,10 @@ export const soBagianChangeRequestsAPI = {
   delete: (id) => api.delete(`/so-bagian-change-requests/${id}`),
 };
 
+export const soBagianDepartmentsAPI = {
+  getAll: () => api.get("/so-bagian-departments"),
+};
+
 export const jobDescChangeRequestsAPI = {
   getAll: (params) => api.get('/jobdesc-change-requests', { params }),
   getById: (id) => api.get(`/jobdesc-change-requests/${id}`),
@@ -139,5 +143,9 @@ export const matriksSkillChangeRequestsAPI = {
   getAllData: () => api.get('/matriks-skill-change-requests/data/all'),
   initializeData: (data) => api.post('/matriks-skill-change-requests/data/initialize', data),
 }
+
+export const matriksSkillDepartmentsAPI = {
+  getAll: () => api.get('/matriks-skill-departments'),
+};
 
 export default api;

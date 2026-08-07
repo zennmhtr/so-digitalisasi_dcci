@@ -69,9 +69,22 @@ const Department = () => {
       try {
         await departmentsAPI.delete(deptId);
         fetchDepartments();
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Department has been deleted successfully.',
+          icon: 'success',
+          timer: 4000,
+          showConfirmButton: false
+        });
       } catch (error) {
         console.error('Error deleting department:', error);
-        alert('Error deleting department. Please try again.');
+        Swal.fire({
+          title: 'Failed!',
+          text: 'Error deleting department. Please try again.',
+          icon: 'error',
+          timer: 4000,
+          showConfirmButton: false
+        });
       }
     }
   };
@@ -89,9 +102,22 @@ const Department = () => {
       fetchDepartments();
       setIsModalOpen(false);
       setFormData({ code: '', name: '', description: '' });
+      Swal.fire({
+        title: editingDept ? 'Updated!' : 'Added!',
+        text: editingDept ? 'Department has been updated successfully.' : 'New department has been added successfully.',
+        icon: 'success',
+        timer: 4000,
+        showConfirmButton: false
+      });
     } catch (error) {
       console.error('Error saving department:', error);
-      alert('Error saving department. Please try again.');
+      Swal.fire({
+        title: 'Failed!',
+        text: 'Error saving department. Please try again.',
+        icon: 'error',
+        timer: 4000,
+        showConfirmButton: false
+      });
     }
   };
 
@@ -140,12 +166,12 @@ const Department = () => {
                   Code
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  Name Department
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>

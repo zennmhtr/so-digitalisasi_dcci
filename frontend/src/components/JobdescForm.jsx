@@ -162,10 +162,22 @@ const JobdescForm = ({
     }
 
     const confirmMessage = existingJobdesc
-      ? "Are you sure you want to update this job description? Changes will be saved directly."
-      : "Are you sure you want to submit this job description for approval? It will go through the approval process.";
+      ? "Apakah Anda yakin ingin mengupdate job description ini? Perubahan akan disimpan langsung."
+      : "Apakah Anda yakin ingin mengajukan job description ini untuk persetujuan? Akan melalui proses approval.";
 
-    if (!window.confirm(confirmMessage)) {
+    const result = await Swal.fire({
+      title: existingJobdesc ? 'Update Job Description?' : 'Submit Job Description?',
+      text: confirmMessage,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: existingJobdesc ? '#2563eb' : '#16a34a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: existingJobdesc ? 'Ya, Update' : 'Ya, Submit',
+      cancelButtonText: 'Batal',
+      timer: undefined,
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 

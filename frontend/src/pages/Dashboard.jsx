@@ -129,7 +129,7 @@ const Dashboard = () => {
           "PPIC1.3.5": ["HASIL PRODUKSI", "PPIC1.3.5"],
           // HRD
           "HRD1.0": ["HRDGA", "HRGA", "HRD DEPT", "HRD1.0", "HRD"],
-          "HRD1.1": ["HRD", "HRD1.1"],
+          "HRD1.1": ["POD", "HRD1.1"],
           "HRD2.0": ["HRD2.0"],
           "GA1.1": ["GENERAL AFFAIR", "GA1.1"],
           "GA1.2": ["GENERAL AFFAIR", "GA1.2"],
@@ -561,9 +561,9 @@ const Dashboard = () => {
           {
             id: "hrd1-1",
             code: "HRD1.1",
-            title: "HRDGA & IT",
-            name: "THARISA ARRAHMA R.",
-            empId: "23230072",
+            title: "HRGA & IT",
+            name: "VERONICA HANI MUTIARA PALUPI **.",
+            empId: "23240206",
           },
           {
             id: "mkt2-1",

@@ -326,7 +326,7 @@ router.put(
         request.secondApprovedAt = now;
         request.reviewComments =
           (request.reviewComments ? request.reviewComments + "\n" : "") +
-          "Final approval: " +
+          "Final Approval : " +
           (req.body.reviewComments || "");
         request.status = "approved";
 

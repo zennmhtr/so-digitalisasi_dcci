@@ -24,7 +24,7 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
 
     changeType: {
       type: String,
-      enum: ["update", "add", "delete"],
+      enum: ["update", "add", "delete", "department-add", "department-rename", "department-delete"],
       required: true,
     },
 
@@ -104,6 +104,6 @@ const soBagianChangeRequestSchema = new mongoose.Schema(
 
 soBagianChangeRequestSchema.index({ requestedBy: 1, status: 1 });
 soBagianChangeRequestSchema.index({ status: 1, createdAt: -1 });
-soBagianChangeRequestSchema.index(({department: 1, status: 1}));
+soBagianChangeRequestSchema.index(({ department: 1, status: 1 }));
 
 module.exports = mongoose.model("soBagianChangeRequest", soBagianChangeRequestSchema);
